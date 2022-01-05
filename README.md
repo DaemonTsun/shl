@@ -1,2 +1,2 @@
 # shl
-single header library
+single header libraries
