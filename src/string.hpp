@@ -7,9 +7,16 @@
  * wstr(...)    converts parameters to one wstring
  * bstr<C>(...) converts parameters to one basic_string<C>
  *
- * begins_with(s, prefix)       returns true if prefix is a prefix of s
- * ends_with(s, suffix)         returns true if suffix is a suffix of s
- * repl<Replacement, C...>(s)   replaces all occurances of characters C... in string s with Replacement
+ * is_space(c)              returns true if c is a whitespace character
+ * is_newline(c)            returns true if c is a newline character
+ * is_blank(s)              returns true if s is an empty string or only contains
+ *                          whitespaces
+ *
+ * ltrim(s)                 trims whitespaces from the left of string s, in-place
+ * rtrim(s)                 trims whitespaces from the right of string s, in-place
+ * trim(s)                  trims whitespaces from the left and right of string s, in-place
+ * begins_with(s, prefix)   returns true if prefix is a prefix of s
+ * ends_with(s, suffix)     returns true if suffix is a suffix of s
  */
 
 #include <sstream>
@@ -78,52 +85,54 @@ std::wstring wstr(T &&t, Ts &&...ts)
     return bstr<std::wstring::value_type>(std::forward<T>(t), std::forward<Ts>(ts)...);
 }
 
-// trim from start (in place)
-// https://stackoverflow.com/a/217605
-inline void ltrim(std::basic_string<char> &s)
+template<typename CharT>
+inline bool is_space(CharT c)
 {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch)
-    {
-        return !std::isspace(ch);
-    }));
+    if constexpr (std::is_same_v<CharT, wchar_t>)
+        return std::iswspace(static_cast<wint_t>(c));
+    else
+        return std::isspace(c);
 }
 
-inline void wltrim(std::basic_string<wchar_t> &s)
+template<typename CharT>
+inline bool is_newline(CharT c)
 {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](wint_t ch)
+    return c == '\n' || c == '\v' || c == '\f';
+}
+
+template<typename CharT>
+inline bool is_blank(const std::basic_string<CharT> &s)
+{
+    return s.empty() || std::all_of(s.begin(), s.end(), [](CharT c){ return is_space(c); });
+}
+
+// trim from start (in place)
+// https://stackoverflow.com/a/217605
+template<typename CharT>
+inline void ltrim(std::basic_string<CharT> &s)
+{
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](auto ch)
     {
-        return !std::iswspace(ch);
+        return !is_space(ch);
     }));
 }
 
 // trim from end (in place)
-inline void rtrim(std::basic_string<char> &s)
+template<typename CharT>
+inline void rtrim(std::basic_string<CharT> &s)
 {
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch)
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](auto ch)
     {
-        return !std::isspace(ch);
-    }).base(), s.end());
-}
-
-inline void wrtrim(std::basic_string<wchar_t> &s)
-{
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](wint_t ch)
-    {
-        return !std::iswspace(ch);
+        return !is_space(ch);
     }).base(), s.end());
 }
 
 // trim from both ends (in place)
-inline void trim(std::basic_string<char> &s)
+template<typename CharT>
+inline void trim(std::basic_string<CharT> &s)
 {
     ltrim(s);
     rtrim(s);
-}
-
-inline void wtrim(std::basic_string<wchar_t> &s)
-{
-    wltrim(s);
-    wrtrim(s);
 }
 
 template<typename CharT>
@@ -144,48 +153,3 @@ bool ends_with(const std::basic_string<CharT> &value, const std::basic_string<Ch
     return std::equal(suffix.rbegin(), suffix.rend(), value.rbegin());
 }
 
-namespace internal
-{
-    template<typename CharT, CharT R>
-    std::basic_string<CharT> &_repl(std::basic_string<CharT> &s,
-                                    typename std::basic_string<CharT>::size_type i)
-    {
-        return s;
-    }
-
-    template<typename CharT, CharT R, CharT Rep, CharT... Reps>
-    std::basic_string<CharT> &_repl(std::basic_string<CharT> &s,
-                                    typename std::basic_string<CharT>::size_type i)
-    {
-        auto &c = s[i];
-
-        if (c == Rep)
-            c = R;
-
-        return _repl<CharT, R, Reps...>(s, i);
-    }
-}
-
-template<typename CharT, CharT R, CharT... Reps>
-std::basic_string<CharT> &brepl(std::basic_string<CharT> &s)
-{
-    using str_t = std::basic_string<CharT>;
-    using size_type = typename str_t::size_type;
-
-    for (size_type i = 0; i < s.size(); ++i)
-        internal::_repl<CharT, R, Reps...>(s, i);
-
-    return s;
-}
-
-template<char R, char... Reps>
-std::basic_string<char> &repl(std::basic_string<char> &s)
-{
-    return brepl<char, R, Reps...>(s);
-}
-
-template<wchar_t R, wchar_t... Reps>
-std::basic_string<wchar_t> &wrepl(std::basic_string<wchar_t> &s)
-{
-    return brepl<wchar_t, R, Reps...>(s);
-}
