@@ -9,6 +9,11 @@
  *
  * is_space(c)              returns true if c is a whitespace character
  * is_newline(c)            returns true if c is a newline character
+ * is_alpha(c)              returns true if c is an alphabet character
+ * is_digit(c)              returns true if c is a digit
+ * is_hex_digit(c)          returns true if c is a hexadecimal digit
+ * is_alphanum(c)           returns true if is_digit(c) || is_alpha(c)
+ *
  * is_blank(s)              returns true if s is an empty string or only contains
  *                          whitespaces
  *
@@ -98,6 +103,42 @@ template<typename CharT>
 inline bool is_newline(CharT c)
 {
     return c == '\n' || c == '\v' || c == '\f';
+}
+
+template<typename CharT>
+inline bool is_alpha(CharT c)
+{
+    if constexpr (std::is_same_v<CharT, wchar_t>)
+        return std::iswalpha(static_cast<wint_t>(c));
+    else
+        return std::isalpha(c);
+}
+
+template<typename CharT>
+inline bool is_digit(CharT c)
+{
+    if constexpr (std::is_same_v<CharT, wchar_t>)
+        return std::iswdigit(static_cast<wint_t>(c));
+    else
+        return std::isdigit(c);
+}
+
+template<typename CharT>
+inline bool is_hex_digit(CharT c)
+{
+    if constexpr (std::is_same_v<CharT, wchar_t>)
+        return std::iswxdigit(static_cast<wint_t>(c));
+    else
+        return std::isxdigit(c);
+}
+
+template<typename CharT>
+inline bool is_alphanum(CharT c)
+{
+    if constexpr (std::is_same_v<CharT, wchar_t>)
+        return std::iswalnum(static_cast<wint_t>(c));
+    else
+        return std::isalnum(c);
 }
 
 template<typename CharT>
