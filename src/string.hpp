@@ -25,6 +25,14 @@
  *
  * to_integer(s)            converts the given string to an integer
  * to_decimal(s)            converts the given string to a floating point number
+ *
+ * aliases:
+ * to_int -> to_integer<int>
+ * to_long -> to_integer<long>
+ * ...
+ * to_float -> to_decimal<float>
+ * to_double -> to_decimal<double>
+ * ...
  */
 
 #include <sstream>
@@ -249,3 +257,26 @@ OutT to_decimal(const std::basic_string<CharT> &value, size_t *pos = nullptr)
         return stof(value, pos);
     }
 }
+
+// alias functions
+// i fucking hate c++ so much its unreal just give me fucking function aliases
+#define DEFINE_INTEGER_ALIAS(T, NAME) \
+template<typename CharT> T NAME(const std::basic_string<CharT> &value, size_t *pos = nullptr, int base = 10)\
+{ return to_integer<T, CharT>(value, pos, base); }
+
+#define DEFINE_DECIMAL_ALIAS(T, NAME) \
+template<typename CharT> T NAME(const std::basic_string<CharT> &value, size_t *pos = nullptr)\
+{ return to_decimal<T, CharT>(value, pos); }
+
+DEFINE_INTEGER_ALIAS(int, to_int)
+DEFINE_INTEGER_ALIAS(long, to_long)
+DEFINE_INTEGER_ALIAS(long long, to_long_long)
+DEFINE_INTEGER_ALIAS(unsigned int, to_unsigned)
+DEFINE_INTEGER_ALIAS(unsigned long, to_unsigned_long)
+DEFINE_INTEGER_ALIAS(unsigned long long, to_unsigned_long_long)
+DEFINE_DECIMAL_ALIAS(float, to_float)
+DEFINE_DECIMAL_ALIAS(double, to_double)
+DEFINE_DECIMAL_ALIAS(long double, to_long_double)
+
+#undef DEFINE_INTEGER_ALIAS
+#undef DEFINE_DECIMAL_ALIAS
