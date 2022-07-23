@@ -147,11 +147,14 @@ parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_
     return it;
 }
 
-
 template<typename CharT, typename OutT = s64>
 parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input_size, OutT *out = nullptr)
 {
-    static_assert(std::is_integral_v<OutT>);
+    static_assert(std::is_integral_v<OutT>, "parse_integer number type argument must be an integer type");
+
+    if (input == nullptr || it.i >= input_size)
+        throw parse_error(it, input, input_size, "not an integer at ", it);
+
 #define SKIP_BASE(c, it, input, input_size, COND) \
     while (COND(c)) \
     { \
@@ -165,7 +168,7 @@ parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input
     auto c = input[it.i];
     int base = 10;
 
-    if (c == '-')
+    if (c == '-' || c == '+')
     {
         advance(&it);
 
@@ -202,12 +205,37 @@ parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input
 
                 SKIP_BASE(c, it, input, input_size, is_hex_digit);
             }
-            else /* TODO: if 0b1010110 etc */
+            else if (c == 'b' || c == 'B')
             {
+                advance(&it);
+
+                if (it.i >= input_size)
+                    throw parse_error(it, input, input_size, "invalid binary integer at ", start);
+
+                c = input[it.i];
+
+                if (!is_bin_digit(c))
+                    throw parse_error(it, input, input_size, "invalid binary digit ", c, " at ", it, ", hex integer starting at ", start);
+
+                base = 2;
+
+                SKIP_BASE(c, it, input, input_size, is_bin_digit);
+            }
+            else
+            {
+                advance(&it);
+
+                if (it.i >= input_size)
+                    throw parse_error(it, input, input_size, "invalid octal integer at ", start);
+
+                c = input[it.i];
+
+                if (!is_oct_digit(c))
+                    throw parse_error(it, input, input_size, "invalid octal digit ", c, " at ", it, ", hex integer starting at ", start);
+                
                 base = 8;
 
-                // TODO: is_oct_digit?
-                SKIP_BASE(c, it, input, input_size, is_digit);
+                SKIP_BASE(c, it, input, input_size, is_oct_digit);
             }
         }
     }
@@ -231,6 +259,9 @@ parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input
         
     if (out != nullptr)
     {
+        if (base == 2)
+            start.i += 2;
+
         std::basic_string<CharT> str(input + start.i, it.i - start.i);
         *out = to_integer<OutT, CharT>(str, nullptr, base);
     }

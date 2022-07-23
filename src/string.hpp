@@ -11,6 +11,8 @@
  * is_newline(c)            returns true if c is a newline character
  * is_alpha(c)              returns true if c is an alphabet character
  * is_digit(c)              returns true if c is a digit
+ * is_bin_digit(c)          returns true if c is a binary digit (0 or 1)
+ * is_oct_digit(c)          returns true if c is an octal digit (0-7)
  * is_hex_digit(c)          returns true if c is a hexadecimal digit
  * is_alphanum(c)           returns true if is_digit(c) || is_alpha(c)
  *
@@ -133,6 +135,24 @@ inline bool is_digit(CharT c)
         return std::iswdigit(static_cast<wint_t>(c));
     else
         return std::isdigit(c);
+}
+
+template<typename CharT>
+inline bool is_bin_digit(CharT c)
+{
+    if constexpr (std::is_same_v<CharT, wchar_t>)
+        return c == L'0' || c == L'1';
+    else
+        return c == '0' || c == '1';
+}
+
+template<typename CharT>
+inline bool is_oct_digit(CharT c)
+{
+    if constexpr (std::is_same_v<CharT, wchar_t>)
+        return c == L'0' || c == L'1' || c == L'2' || c == L'3' || c == L'4' || c == L'5' || c == L'6' || c == L'7';
+    else
+        return c == '0' || c == '1' || c == '2' || c == '3' || c == '4' || c == '5' || c == '6' || c == '7';
 }
 
 template<typename CharT>

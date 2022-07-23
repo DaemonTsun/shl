@@ -196,6 +196,90 @@ define_test(parse_integer_parses_integer3)
     assert_equal(out, -5678);
 }
 
+define_test(parse_integer_parses_unsigned_integer)
+{
+    SETUP("123123123123");
+
+    u64 out;
+
+    it = parse_integer(it, input, input_size, &out);
+    assert_equal(it.i, 12);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 13);
+    assert_equal(out, 123123123123ull);
+}
+
+define_test(parse_integer_parses_unsigned_integer2)
+{
+    SETUP("-1");
+
+    u64 out;
+
+    it = parse_integer(it, input, input_size, &out);
+    assert_equal(it.i, 2);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 3);
+    assert_equal(out, std::numeric_limits<u64>::max());
+}
+
+define_test(parse_integer_parses_binary_integer)
+{
+    SETUP("0b1010");
+
+    s64 out;
+
+    it = parse_integer(it, input, input_size, &out);
+    assert_equal(it.i, 6);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 7);
+    assert_equal(out, 10);
+}
+
+define_test(parse_integer_parses_binary_integer2)
+{
+    SETUP("0b101014");
+
+    s64 out;
+
+    it = parse_integer(it, input, input_size, &out);
+    assert_equal(it.i, 7);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 8);
+    assert_equal(out, 0b10101);
+}
+
+define_test(parse_integer_parses_octal_integer)
+{
+    SETUP("01234");
+
+    s64 out;
+
+    it = parse_integer(it, input, input_size, &out);
+    assert_equal(it.i, 5);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 6);
+    assert_equal(out, 668);
+}
+
+define_test(parse_integer_parses_octal_integer2)
+{
+    SETUP("0123456789");
+
+    s64 out;
+
+    it = parse_integer(it, input, input_size, &out);
+    assert_equal(it.i, 8);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 9);
+    assert_equal(out, 01234567);
+}
+
 define_test(parse_integer_parses_hex_integer)
 {
     SETUP("0xff");
@@ -266,6 +350,69 @@ define_test(parse_integer_parses_hex_integer5)
     assert_equal(out, 65263);
 }
 
-// TODO: failing parse_integer tests
+define_test(parse_integer_throws_on_nullptr)
+{
+    SETUP(nullptr);
+
+    s64 out;
+
+    assert_error(it = parse_integer(it, input, input_size, &out), parse_error<>)
+    {
+        assert_equal(err.it.i, 0);
+        assert_equal(err.input, nullptr);
+    }
+}
+
+define_test(parse_integer_throws_on_invalid_input)
+{
+    SETUP("xyz");
+
+    s64 out;
+
+    assert_error(it = parse_integer(it, input, input_size, &out), parse_error<>)
+    {
+        assert_equal(err.it.i, 0);
+        assert_equal(err.input, "xyz");
+    }
+}
+
+define_test(parse_integer_throws_on_invalid_input2)
+{
+    SETUP("0x");
+
+    s64 out;
+
+    assert_error(it = parse_integer(it, input, input_size, &out), parse_error<>)
+    {
+        assert_equal(err.it.i, 2);
+        assert_equal(err.input, "0x");
+    }
+}
+
+define_test(parse_integer_throws_on_invalid_input3)
+{
+    SETUP("0b");
+
+    s64 out;
+
+    assert_error(it = parse_integer(it, input, input_size, &out), parse_error<>)
+    {
+        assert_equal(err.it.i, 2);
+        assert_equal(err.input, "0b");
+    }
+}
+
+define_test(parse_integer_throws_on_invalid_input4)
+{
+    SETUP("0xZ");
+
+    s64 out;
+
+    assert_error(it = parse_integer(it, input, input_size, &out), parse_error<>)
+    {
+        assert_equal(err.it.i, 2);
+        assert_equal(err.input, "0xZ");
+    }
+}
 
 define_default_test_main();
