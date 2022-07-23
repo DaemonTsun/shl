@@ -154,4 +154,118 @@ define_test(parse_string_parses_string3)
     assert_equal(out, str(input));
 }
 
+define_test(parse_integer_parses_integer)
+{
+    SETUP("1234");
+
+    s64 out;
+
+    it = parse_integer(it, input, input_size, &out);
+    assert_equal(it.i, 4);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 5);
+    assert_equal(out, 1234);
+}
+
+define_test(parse_integer_parses_integer2)
+{
+    SETUP("1234abcde");
+
+    s64 out;
+
+    it = parse_integer(it, input, input_size, &out);
+    assert_equal(it.i, 4);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 5);
+    assert_equal(out, 1234);
+}
+
+define_test(parse_integer_parses_integer3)
+{
+    SETUP("-5678");
+
+    s64 out;
+
+    it = parse_integer(it, input, input_size, &out);
+    assert_equal(it.i, 5);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 6);
+    assert_equal(out, -5678);
+}
+
+define_test(parse_integer_parses_hex_integer)
+{
+    SETUP("0xff");
+
+    s64 out;
+
+    it = parse_integer(it, input, input_size, &out);
+    assert_equal(it.i, 4);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 5);
+    assert_equal(out, 255);
+}
+
+define_test(parse_integer_parses_hex_integer2)
+{
+    SETUP("0xffghi");
+
+    s64 out;
+
+    it = parse_integer(it, input, input_size, &out);
+    assert_equal(it.i, 4);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 5);
+    assert_equal(out, 255);
+}
+
+define_test(parse_integer_parses_hex_integer3)
+{
+    SETUP("0xdeAdBEeF");
+
+    s64 out;
+
+    it = parse_integer(it, input, input_size, &out);
+    assert_equal(it.i, 10);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 11);
+    assert_equal(out, 3735928559);
+}
+
+define_test(parse_integer_parses_hex_integer4)
+{
+    SETUP("-0xdeAdBEeF");
+
+    s64 out;
+
+    it = parse_integer(it, input, input_size, &out);
+    assert_equal(it.i, 11);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 12);
+    assert_equal(out, -3735928559);
+}
+
+define_test(parse_integer_parses_hex_integer5)
+{
+    SETUP("feef");
+
+    s64 out;
+
+    it = parse_integer(it, input, input_size, &out);
+    assert_equal(it.i, 4);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 5);
+    assert_equal(out, 65263);
+}
+
+// TODO: failing parse_integer tests
+
 define_default_test_main();
