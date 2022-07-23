@@ -218,4 +218,28 @@ define_test(to_integer_overflows_on_unsigned_int)
     assert_equal(to_integer<unsigned int>("4294967296"s), 0);
 }
 
+define_test(to_decimal_converts_to_float)
+{
+    assert_equal(to_decimal<float>("0.1"s), 0.1f);
+    assert_equal(to_decimal<float>("0.0123123"s), 0.0123123f);
+    assert_equal(to_decimal<float>("500"s), 500.0f);
+}
+
+define_test(to_decimal_throws_on_float_overflow)
+{
+    assert_throws(to_decimal<float>("3.5e+38"s), std::exception); // may be different on some platforms
+}
+
+define_test(to_decimal_converts_to_double)
+{
+    assert_equal(to_decimal<double>("0.1"s), 0.1);
+    assert_equal(to_decimal<double>("0.0123123"s), 0.0123123);
+    assert_equal(to_decimal<double>("500"s), 500.0);
+}
+
+define_test(to_decimal_throws_on_double_overflow)
+{
+    assert_throws(to_decimal<double>("1.8e+308"s), std::exception); // may be different on some platforms
+}
+
 define_default_test_main();
