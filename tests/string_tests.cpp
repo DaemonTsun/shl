@@ -169,4 +169,53 @@ define_test(ends_with_returns_false_if_suffix_is_longer_than_string)
     assert_equal(ends_with("hello"s, "whello"s), false);
 }
 
+define_test(to_integer_converts_to_int)
+{
+    assert_equal(to_integer<int>("0"s), 0);
+    assert_equal(to_integer<int>("1234"s), 1234);
+    assert_equal(to_integer<int>("2147483647"s), std::numeric_limits<int>::max()); // may be different on some platforms
+    assert_equal(to_integer<int>("-2147483648"s), std::numeric_limits<int>::min()); // may be different on some platforms
+}
+
+define_test(to_integer_throws_on_int_overflow)
+{
+    assert_throws(to_integer<int>("2147483648"s), std::exception); // may be different on some platforms
+    assert_throws(to_integer<int>("-2147483649"s), std::exception); // may be different on some platforms
+}
+
+define_test(to_integer_converts_to_long)
+{
+    assert_equal(to_integer<long>("0"s), 0);
+    assert_equal(to_integer<long>("1234"s), 1234);
+    assert_equal(to_integer<long>("9223372036854775807"s), std::numeric_limits<long>::max()); // may be different on some platforms
+    assert_equal(to_integer<long>("-9223372036854775808"s), std::numeric_limits<long>::min()); // may be different on some platforms
+}
+
+define_test(to_integer_throws_on_long_overflow)
+{
+    assert_throws(to_integer<long>("9223372036854775808"s), std::exception); // may be different on some platforms
+    assert_throws(to_integer<long>("-9223372036854775809"s), std::exception); // may be different on some platforms
+}
+
+define_test(to_integer_converts_to_long_long)
+{
+    assert_equal(to_integer<long long>("0"s), 0);
+    assert_equal(to_integer<long long>("1234"s), 1234);
+    assert_equal(to_integer<long long>("9223372036854775807"s), std::numeric_limits<long long>::max()); // may be different on some platforms
+    assert_equal(to_integer<long long>("-9223372036854775808"s), std::numeric_limits<long long>::min()); // may be different on some platforms
+}
+
+define_test(to_integer_converts_to_unsigned_int)
+{
+    assert_equal(to_integer<unsigned int>("0"s), 0);
+    assert_equal(to_integer<unsigned int>("1234"s), 1234);
+    assert_equal(to_integer<unsigned int>("4294967295"s), std::numeric_limits<unsigned int>::max()); // may be different on some platforms
+}
+
+define_test(to_integer_overflows_on_unsigned_int)
+{
+    assert_equal(to_integer<unsigned int>("-1"s), std::numeric_limits<unsigned int>::max()); // may be different on some platforms
+    assert_equal(to_integer<unsigned int>("4294967296"s), 0);
+}
+
 define_default_test_main();

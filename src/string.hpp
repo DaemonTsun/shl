@@ -22,10 +22,14 @@
  * trim(s)                  trims whitespaces from the left and right of string s, in-place
  * begins_with(s, prefix)   returns true if prefix is a prefix of s
  * ends_with(s, suffix)     returns true if suffix is a suffix of s
+ *
+ * to_integer(s)            converts the given string to an integer
+ * to_decimal(s)            converts the given string to a floating point number
  */
 
 #include <sstream>
 #include <algorithm>
+#include <type_traits>
 #include <cctype>
 #include <cwctype>
 
@@ -194,3 +198,35 @@ bool ends_with(const std::basic_string<CharT> &value, const std::basic_string<Ch
     return std::equal(suffix.rbegin(), suffix.rend(), value.rbegin());
 }
 
+template<typename OutT = int, typename CharT>
+OutT to_integer(const std::basic_string<CharT> &value, size_t *pos = nullptr, int base = 10)
+{
+    static_assert(std::is_integral_v<OutT>, "to_integer number template argument OutT must be a signed or unsigned integer number type");
+
+    if constexpr (std::is_signed_v<OutT>)
+    {
+        if constexpr (sizeof(OutT) >= sizeof(long long))
+        {
+            return stoll(value, pos, base);
+        }
+        else if constexpr (sizeof(OutT) >= sizeof(long))
+        {
+            return stol(value, pos, base);
+        }
+        else
+        {
+            return stoi(value, pos, base);
+        }
+    }
+    else
+    {
+        if constexpr (sizeof(OutT) >= sizeof(unsigned long long))
+        {
+            return stoull(value, pos, base);
+        }
+        else
+        {
+            return stoul(value, pos, base);
+        }
+    }
+}
