@@ -611,6 +611,55 @@ define_test(parse_decimal_parses_double7)
     assert_equal(out, 1234e5);
 }
 
+define_test(parse_decimal_throw_on_nullptr)
+{
+    SETUP(nullptr);
+
+    float out;
+
+    assert_error(it = parse_decimal(it, input, input_size, &out), parse_error<>)
+    {
+        assert_equal(err.it.i, 0);
+        assert_equal(err.input, nullptr);
+    }
+}
+
+define_test(parse_decimal_throw_on_invalid_input)
+{
+    SETUP("z");
+
+    float out;
+
+    assert_error(it = parse_decimal(it, input, input_size, &out), parse_error<>)
+    {
+        assert_equal(err.it.i, 0);
+    }
+}
+
+define_test(parse_decimal_throw_on_invalid_input2)
+{
+    SETUP(".");
+
+    float out;
+
+    assert_error(it = parse_decimal(it, input, input_size, &out), parse_error<>)
+    {
+        assert_equal(err.it.i, 1);
+    }
+}
+
+define_test(parse_decimal_throw_on_invalid_input3)
+{
+    SETUP("e");
+
+    float out;
+
+    assert_error(it = parse_decimal(it, input, input_size, &out), parse_error<>)
+    {
+        assert_equal(err.it.i, 0);
+    }
+}
+
 // TODO: parse_identifier tests
 
 define_default_test_main();

@@ -280,6 +280,7 @@ parse_iterator parse_decimal(parse_iterator it, const CharT *input, size_t input
 
     parse_iterator start = it;
     auto c = input[it.i];
+    bool has_digits = false;
 
     if (c == '-' || c == '+')
     {
@@ -291,7 +292,16 @@ parse_iterator parse_decimal(parse_iterator it, const CharT *input, size_t input
         c = input[it.i];
     }
 
-    SKIP_COND(c, it, input, input_size, is_digit);
+    while (is_digit(c))
+    {
+        has_digits = true;
+        advance(&it);
+
+        if (it.i >= input_size)
+            break;
+
+        c = input[it.i];
+    }
 
     if (it.i >= input_size)
         goto parse_decimal_end;
@@ -303,15 +313,32 @@ parse_iterator parse_decimal(parse_iterator it, const CharT *input, size_t input
         advance(&it);
 
         if (it.i >= input_size)
-            goto parse_decimal_end;
+        {
+            if (has_digits)
+                goto parse_decimal_end;
+            else
+                throw parse_error(it, input, input_size, "expected decimal number digits at ", it, ", got EOF");
+        }
 
         c = input[it.i];
 
-        SKIP_COND(c, it, input, input_size, is_digit);
+        while (is_digit(c))
+        {
+            has_digits = true;
+            advance(&it);
+
+            if (it.i >= input_size)
+                break;
+
+            c = input[it.i];
+        }
     }
 
     if (c == 'e' || c == 'E')
     {
+        if (!has_digits)
+            throw parse_error(it, input, input_size, "unexpected symbol '", (char)c, "' at ", it, " in decimal number starting at ", start);
+
         advance(&it);
 
         if (it.i >= input_size)
@@ -329,8 +356,20 @@ parse_iterator parse_decimal(parse_iterator it, const CharT *input, size_t input
             c = input[it.i];
         }
 
-        SKIP_COND(c, it, input, input_size, is_digit);
+        while (is_digit(c))
+        {
+            has_digits = true;
+            advance(&it);
+
+            if (it.i >= input_size)
+                break;
+
+            c = input[it.i];
+        }
     }
+
+    if (!has_digits)
+        throw parse_error(it, input, input_size, "not a decimal number at ", start);
         
 parse_decimal_end:
     if (out != nullptr)
