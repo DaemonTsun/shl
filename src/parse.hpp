@@ -68,6 +68,15 @@ public:
     }
 };
 
+#define SKIP_COND(c, it, input, input_size, COND) \
+    while (COND(c)) \
+    { \
+        advance(&it); \
+        if (it.i >= input_size) \
+            break; \
+        c = input[it.i]; \
+    }
+
 template<typename CharT>
 parse_iterator skip_whitespace(parse_iterator it, const CharT *input, size_t input_size)
 {
@@ -155,14 +164,6 @@ parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input
     if (input == nullptr || it.i >= input_size)
         throw parse_error(it, input, input_size, "not an integer at ", it);
 
-#define SKIP_BASE(c, it, input, input_size, COND) \
-    while (COND(c)) \
-    { \
-        advance(&it); \
-        if (it.i >= input_size) \
-            break; \
-        c = input[it.i]; \
-    }
 
     parse_iterator start = it;
     auto c = input[it.i];
@@ -203,7 +204,7 @@ parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input
 
                 base = 16;
 
-                SKIP_BASE(c, it, input, input_size, is_hex_digit);
+                SKIP_COND(c, it, input, input_size, is_hex_digit);
             }
             else if (c == 'b' || c == 'B')
             {
@@ -219,7 +220,7 @@ parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input
 
                 base = 2;
 
-                SKIP_BASE(c, it, input, input_size, is_bin_digit);
+                SKIP_COND(c, it, input, input_size, is_bin_digit);
             }
             else
             {
@@ -235,7 +236,7 @@ parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input
                 
                 base = 8;
 
-                SKIP_BASE(c, it, input, input_size, is_oct_digit);
+                SKIP_COND(c, it, input, input_size, is_oct_digit);
             }
         }
     }
@@ -245,13 +246,13 @@ parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input
         {
             base = 16;
 
-            SKIP_BASE(c, it, input, input_size, is_hex_digit);
+            SKIP_COND(c, it, input, input_size, is_hex_digit);
         }
         else 
         {
             base = 10;
 
-            SKIP_BASE(c, it, input, input_size, is_digit);
+            SKIP_COND(c, it, input, input_size, is_digit);
         }
     }
     else
@@ -267,8 +268,78 @@ parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input
     }
 
     return it;
+}
 
-#undef SKIP_BASE
+template<typename CharT, typename OutT = float>
+parse_iterator parse_decimal(parse_iterator it, const CharT *input, size_t input_size, OutT *out = nullptr)
+{
+    static_assert(std::is_floating_point_v<OutT>, "parse_decimal number type argument must be a floating point number type");
+
+    if (input == nullptr || it.i >= input_size)
+        throw parse_error(it, input, input_size, "not a decimal number at ", it);
+
+    parse_iterator start = it;
+    auto c = input[it.i];
+
+    if (c == '-' || c == '+')
+    {
+        advance(&it);
+
+        if (it.i >= input_size)
+            throw parse_error(it, input, input_size, "not a decimal number at ", start);
+
+        c = input[it.i];
+    }
+
+    SKIP_COND(c, it, input, input_size, is_digit);
+
+    if (it.i >= input_size)
+        goto parse_decimal_end;
+
+    c = input[it.i];
+
+    if (c == '.')
+    {
+        advance(&it);
+
+        if (it.i >= input_size)
+            goto parse_decimal_end;
+
+        c = input[it.i];
+
+        SKIP_COND(c, it, input, input_size, is_digit);
+    }
+
+    if (c == 'e' || c == 'E')
+    {
+        advance(&it);
+
+        if (it.i >= input_size)
+            throw parse_error(it, input, input_size, "exponent at ", it, " of decimal number starting at ", start, " requires a value");
+
+        c = input[it.i];
+
+        if (c == '+' || c == '-')
+        {
+            advance(&it);
+
+            if (it.i >= input_size)
+                throw parse_error(it, input, input_size, "exponent at ", it, " of decimal number starting at ", start, " requires a value");
+
+            c = input[it.i];
+        }
+
+        SKIP_COND(c, it, input, input_size, is_digit);
+    }
+        
+parse_decimal_end:
+    if (out != nullptr)
+    {
+        std::basic_string<CharT> str(input + start.i, it.i - start.i);
+        *out = to_decimal<OutT, CharT>(str, nullptr);
+    }
+
+    return it;
 }
 
 template<typename CharT>
@@ -292,15 +363,7 @@ parse_iterator parse_identifier(parse_iterator it, const CharT *input, size_t in
     if (!is_first_identifier_character(c))
         throw parse_error(it, input, input_size, "invalid identifier character at ", start);
 
-    while (is_identifier_character(c))
-    {
-        advance(&it);
-
-        if (it.i >= input_size)
-            break;
-
-        c = input[it.i];
-    }
+    SKIP_COND(c, it, input, input_size, is_identifier_character);
 
     if (out != nullptr)
         *out = std::basic_string<CharT>(input + start.i, it.i - start.i);

@@ -415,4 +415,202 @@ define_test(parse_integer_throws_on_invalid_input4)
     }
 }
 
+define_test(parse_decimal_parses_float)
+{
+    SETUP("1.0");
+
+    float out;
+
+    it = parse_decimal(it, input, input_size, &out);
+    assert_equal(it.i, 3);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 4);
+    assert_equal(out, 1.0f);
+}
+
+define_test(parse_decimal_parses_float2)
+{
+    SETUP("+.06");
+
+    float out;
+
+    it = parse_decimal(it, input, input_size, &out);
+    assert_equal(it.i, 4);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 5);
+    assert_equal(out, .06f);
+}
+
+define_test(parse_decimal_parses_float3)
+{
+    SETUP("-0.06");
+
+    float out;
+
+    it = parse_decimal(it, input, input_size, &out);
+    assert_equal(it.i, 5);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 6);
+    assert_equal(out, -0.06f);
+}
+
+define_test(parse_decimal_parses_float4)
+{
+    SETUP("1.33e+10");
+
+    float out;
+
+    it = parse_decimal(it, input, input_size, &out);
+    assert_equal(it.i, 8);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 9);
+    assert_equal(out, 1.33e+10f);
+}
+
+define_test(parse_decimal_parses_float5)
+{
+    SETUP("2.5E-12");
+
+    float out;
+
+    it = parse_decimal(it, input, input_size, &out);
+    assert_equal(it.i, 7);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 8);
+    assert_equal(out, 2.5E-12f);
+}
+
+define_test(parse_decimal_parses_float6)
+{
+    SETUP("12341234");
+
+    float out;
+
+    it = parse_decimal(it, input, input_size, &out);
+    assert_equal(it.i, 8);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 9);
+    assert_equal(out, 12341234.f);
+}
+
+define_test(parse_decimal_parses_float7)
+{
+    SETUP("1234e5");
+
+    float out;
+
+    it = parse_decimal(it, input, input_size, &out);
+    assert_equal(it.i, 6);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 7);
+    assert_equal(out, 1234e5);
+}
+
+define_test(parse_decimal_parses_double)
+{
+    SETUP("1.0");
+
+    double out;
+
+    it = parse_decimal(it, input, input_size, &out);
+    assert_equal(it.i, 3);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 4);
+    assert_equal(out, 1.0);
+}
+
+define_test(parse_decimal_parses_double2)
+{
+    SETUP("+.06");
+
+    double out;
+
+    it = parse_decimal(it, input, input_size, &out);
+    assert_equal(it.i, 4);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 5);
+    assert_equal(out, .06);
+}
+
+define_test(parse_decimal_parses_double3)
+{
+    SETUP("-0.06");
+
+    double out;
+
+    it = parse_decimal(it, input, input_size, &out);
+    assert_equal(it.i, 5);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 6);
+    assert_equal(out, -0.06);
+}
+
+define_test(parse_decimal_parses_double4)
+{
+    SETUP("1.33e+10");
+
+    double out;
+
+    it = parse_decimal(it, input, input_size, &out);
+    assert_equal(it.i, 8);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 9);
+    assert_equal(out, 1.33e+10);
+}
+
+define_test(parse_decimal_parses_double5)
+{
+    SETUP("2.5E-12");
+
+    double out;
+
+    it = parse_decimal(it, input, input_size, &out);
+    assert_equal(it.i, 7);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 8);
+    assert_equal(out, 2.5E-12);
+}
+
+define_test(parse_decimal_parses_double6)
+{
+    SETUP("12341234.");
+
+    double out;
+
+    it = parse_decimal(it, input, input_size, &out);
+    assert_equal(it.i, 9);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 10);
+    assert_equal(out, 12341234.);
+}
+
+define_test(parse_decimal_parses_double7)
+{
+    SETUP("1234e5");
+
+    double out;
+
+    it = parse_decimal(it, input, input_size, &out);
+    assert_equal(it.i, 6);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 7);
+    assert_equal(out, 1234e5);
+}
+
+// TODO: parse_identifier tests
+
 define_default_test_main();
