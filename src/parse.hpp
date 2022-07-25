@@ -164,13 +164,17 @@ parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input
     if (input == nullptr || it.i >= input_size)
         throw parse_error(it, input, input_size, "not an integer at ", it);
 
-
     parse_iterator start = it;
+    parse_iterator digit_start = it;
     auto c = input[it.i];
     int base = 10;
+    bool neg = false;
 
     if (c == '-' || c == '+')
     {
+        if (c == '-')
+            neg = true;
+
         advance(&it);
 
         if (it.i >= input_size)
@@ -180,6 +184,8 @@ parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input
         
         if (!is_digit(c))
             throw parse_error(it, input, input_size, "not an integer at ", start);
+
+        digit_start = it;
     }
 
     if (c == '0')
@@ -203,6 +209,7 @@ parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input
                     throw parse_error(it, input, input_size, "invalid hex digit ", c, " at ", it, ", hex integer starting at ", start);
 
                 base = 16;
+                digit_start = it;
 
                 SKIP_COND(c, it, input, input_size, is_hex_digit);
             }
@@ -219,6 +226,7 @@ parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input
                     throw parse_error(it, input, input_size, "invalid binary digit ", c, " at ", it, ", hex integer starting at ", start);
 
                 base = 2;
+                digit_start = it;
 
                 SKIP_COND(c, it, input, input_size, is_bin_digit);
             }
@@ -258,14 +266,52 @@ parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input
     else
         throw parse_error(it, input, input_size, "invalid integer digit ", c, " at ", start);
         
-    if (out != nullptr)
-    {
-        if (base == 2)
-            start.i += 2;
+    if (out == nullptr)
+        return it;
 
-        std::basic_string<CharT> str(input + start.i, it.i - start.i);
-        *out = to_integer<OutT, CharT>(str, nullptr, base);
-    }
+    // do the number calculating
+    // https://github.com/gcc-mirror/gcc/blob/master/libiberty/strtol.c
+	OutT acc = 0;
+	int any = 0;
+    OutT cutoff = std::numeric_limits<OutT>::max();
+	OutT cutlim = cutoff % static_cast<OutT>(base);
+	cutoff /= static_cast<OutT>(base);
+
+	for (int i = digit_start.i; i < it.i; ++i)
+    {
+        c = input[i];
+
+		if (is_digit(c))
+        {
+			c -= '0';
+        }
+		else if (is_alpha(c))
+        {
+			c -= is_upper(c) ? 'A' : 'a';
+            c += 10;
+        }
+		else
+			break;
+
+		if (c >= base)
+			break;
+
+		if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim))
+        {
+			any = -1;
+        }
+		else
+        {
+			any = 1;
+			acc *= base;
+			acc += c;
+		}
+	}
+
+    if (neg)
+		acc = -acc;
+
+    *out = acc;
 
     return it;
 }

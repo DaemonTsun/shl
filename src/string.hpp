@@ -15,6 +15,8 @@
  * is_oct_digit(c)          returns true if c is an octal digit (0-7)
  * is_hex_digit(c)          returns true if c is a hexadecimal digit
  * is_alphanum(c)           returns true if is_digit(c) || is_alpha(c)
+ * is_upper(c)              returns true if c is an uppercase letter
+ * is_lower(c)              returns true if c is an lowercase letter
  *
  * is_blank(s)              returns true if s is an empty string or only contains
  *                          whitespaces
@@ -171,6 +173,24 @@ inline bool is_alphanum(CharT c)
         return std::iswalnum(static_cast<wint_t>(c));
     else
         return std::isalnum(c);
+}
+
+template<typename CharT>
+inline bool is_upper(CharT c)
+{
+    if constexpr (std::is_same_v<CharT, wchar_t>)
+        return std::iswupper(static_cast<wint_t>(c));
+    else
+        return std::isupper(static_cast<wint_t>(c));
+}
+
+template<typename CharT>
+inline bool is_lower(CharT c)
+{
+    if constexpr (std::is_same_v<CharT, wchar_t>)
+        return std::iswlower(static_cast<wint_t>(c));
+    else
+        return std::islower(static_cast<wint_t>(c));
 }
 
 template<typename CharT>
