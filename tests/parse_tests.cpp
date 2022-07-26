@@ -21,7 +21,6 @@ using namespace std::literals;
     }\
     catch (ERR &err)
     
-
 define_test(skip_whitespace_skips_whitespace)
 {
     SETUP("   abc");

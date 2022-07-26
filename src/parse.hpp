@@ -9,10 +9,10 @@
 
 struct parse_iterator
 {
-    u64 i = 0;
-    u64 line_start = 0; // character at file offset where line starts
-    u64 line = 1; // line number, starting at 1
-    u64 line_pos = 1; // character within line, starting at 1
+    u32 i = 0;
+    u32 line_start = 0; // character at file offset where line starts
+    u32 line = 1; // line number, starting at 1
+    u32 line_pos = 1; // character within line, starting at 1
 };
 
 inline void update_iterator_line_pos(parse_iterator *it)
@@ -107,7 +107,7 @@ parse_iterator skip_whitespace(parse_iterator it, const CharT *input, size_t inp
 }
 
 template<typename CharT>
-parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_size, std::basic_string<CharT> *out = nullptr)
+parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_size, std::basic_string<CharT> *out = nullptr, CharT delim = '"')
 {
     parse_iterator start = it;
 
@@ -116,7 +116,7 @@ parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_
 
     auto c = input[it.i];
 
-    if (c != '"')
+    if (c != delim)
         throw parse_error(it, input, input_size, "not a string at ", start);
 
     advance(&it);
@@ -126,7 +126,7 @@ parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_
 
     c = input[it.i];
 
-    while (c != '"')
+    while (c != delim)
     {
         if (is_space(c))
         {
@@ -145,7 +145,7 @@ parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_
         c = input[it.i];
     }
 
-    if (c != '"')
+    if (c != delim)
         throw parse_error(it, input, input_size, "unterminated string starting at ", start);
 
     advance(&it);
@@ -155,6 +155,8 @@ parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_
 
     return it;
 }
+
+// TODO: parse_bool
 
 template<typename CharT, typename OutT = s64>
 parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input_size, OutT *out = nullptr)
@@ -459,4 +461,3 @@ parse_iterator parse_identifier(parse_iterator it, const CharT *input, size_t in
 
     return it;
 }
-
