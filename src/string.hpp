@@ -279,7 +279,7 @@ OutT to_integer(const std::basic_string<CharT> &value, size_t *pos = nullptr, in
     }
 }
 
-template<typename OutT = int, typename CharT>
+template<typename OutT = float, typename CharT>
 OutT to_decimal(const std::basic_string<CharT> &value, size_t *pos = nullptr)
 {
     static_assert(std::is_floating_point_v<OutT>, "to_decimal number template argument OutT must be a floating point number type");

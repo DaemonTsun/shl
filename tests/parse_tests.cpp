@@ -543,7 +543,7 @@ define_test(parse_decimal_parses_double2)
 
 define_test(parse_decimal_parses_double3)
 {
-    SETUP("-0.06");
+    SETUP("-0.06X");
 
     double out;
 
@@ -571,7 +571,7 @@ define_test(parse_decimal_parses_double4)
 
 define_test(parse_decimal_parses_double5)
 {
-    SETUP("2.5E-12");
+    SETUP("2.5E-12X");
 
     double out;
 
@@ -585,7 +585,7 @@ define_test(parse_decimal_parses_double5)
 
 define_test(parse_decimal_parses_double6)
 {
-    SETUP("12341234.");
+    SETUP("12341234.X");
 
     double out;
 
@@ -599,7 +599,7 @@ define_test(parse_decimal_parses_double6)
 
 define_test(parse_decimal_parses_double7)
 {
-    SETUP("1234e5");
+    SETUP("1234e5X");
 
     double out;
 
@@ -660,6 +660,70 @@ define_test(parse_decimal_throw_on_invalid_input3)
     }
 }
 
-// TODO: parse_identifier tests
+define_test(parse_identifier_throws_on_nullptr)
+{
+    SETUP(nullptr);
+
+    std::string out;
+
+    assert_error(it = parse_identifier(it, input, input_size, &out), parse_error<>)
+    {
+        assert_equal(err.it.i, 0);
+    }
+}
+
+define_test(parse_identifier_throws_on_invalid_first_character)
+{
+    SETUP("9abc");
+
+    std::string out;
+
+    assert_error(it = parse_identifier(it, input, input_size, &out), parse_error<>)
+    {
+        assert_equal(err.it.i, 0);
+    }
+}
+
+define_test(parse_identifier_parses_identifier)
+{
+    SETUP("abc");
+
+    std::string out;
+
+    it = parse_identifier(it, input, input_size, &out);
+    assert_equal(it.i, 3);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 4);
+    assert_equal(out, "abc"s);
+}
+
+define_test(parse_identifier_parses_identifier2)
+{
+    SETUP("def ghi");
+
+    std::string out;
+
+    it = parse_identifier(it, input, input_size, &out);
+    assert_equal(it.i, 3);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 4);
+    assert_equal(out, "def"s);
+}
+
+define_test(parse_identifier_parses_identifier3)
+{
+    SETUP("_hello_WORLD");
+
+    std::string out;
+
+    it = parse_identifier(it, input, input_size, &out);
+    assert_equal(it.i, 12);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 13);
+    assert_equal(out, "_hello_WORLD"s);
+}
 
 define_default_test_main();

@@ -442,6 +442,10 @@ inline bool is_identifier_character(CharT c)
 template<typename CharT>
 parse_iterator parse_identifier(parse_iterator it, const CharT *input, size_t input_size, std::basic_string<CharT> *out = nullptr)
 {
+    if (input == nullptr
+     || it.i >= input_size)
+        throw parse_error(it, input, input_size, "not an identifier at", it);
+
     parse_iterator start = it;
     auto c = input[it.i];
 
