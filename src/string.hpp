@@ -29,6 +29,8 @@
  *
  * to_integer(s)            converts the given string to an integer
  * to_decimal(s)            converts the given string to a floating point number
+ * to_upper(c/s)            converts the given character or string to upper case
+ * to_lower(c/s)            converts the given character or string to upper case
  *
  * aliases:
  * to_int -> to_integer<int>
@@ -320,3 +322,35 @@ DEFINE_DECIMAL_ALIAS(long double, to_long_double)
 
 #undef DEFINE_INTEGER_ALIAS
 #undef DEFINE_DECIMAL_ALIAS
+
+template<typename CharT>
+CharT to_upper(CharT c)
+{
+    if constexpr (std::is_same_v<CharT, wchar_t>)
+        return std::towupper(static_cast<wint_t>(c));
+    else
+        return std::toupper(static_cast<wint_t>(c));
+}
+
+template<typename CharT>
+void to_upper(std::basic_string<CharT> &s)
+{
+    std::transform(s.begin(), s.end(), s.begin(),
+                   [](CharT c){ return to_upper(c); });
+}
+
+template<typename CharT>
+CharT to_lower(CharT c)
+{
+    if constexpr (std::is_same_v<CharT, wchar_t>)
+        return std::towlower(static_cast<wint_t>(c));
+    else
+        return std::tolower(static_cast<wint_t>(c));
+}
+
+template<typename CharT>
+void to_lower(std::basic_string<CharT> &s)
+{
+    std::transform(s.begin(), s.end(), s.begin(),
+                   [](CharT c){ return to_lower(c); });
+}

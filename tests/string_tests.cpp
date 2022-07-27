@@ -242,4 +242,40 @@ define_test(to_decimal_throws_on_double_overflow)
     assert_throws(to_decimal<double>("1.8e+308"s), std::exception); // may be different on some platforms
 }
 
+define_test(to_upper_converts_to_upper)
+{
+    assert_equal(to_upper('a'), 'A');
+    assert_equal(to_upper('z'), 'Z');
+    assert_equal(to_upper(' '), ' ');
+    assert_equal(to_upper(L'a'), L'A');
+    assert_equal(to_upper(L'z'), L'Z');
+    assert_equal(to_upper(L'!'), L'!');
+
+    std::string s = "hello world"s;
+    to_upper(s);
+    assert_equal(s, "HELLO WORLD"s);
+
+    std::wstring ws = L"hello world"s;
+    to_upper(ws);
+    assert_equal(ws, L"HELLO WORLD"s);
+}
+
+define_test(to_lower_converts_to_lower)
+{
+    assert_equal(to_lower('A'), 'a');
+    assert_equal(to_lower('Z'), 'z');
+    assert_equal(to_lower(' '), ' ');
+    assert_equal(to_lower(L'A'), L'a');
+    assert_equal(to_lower(L'Z'), L'z');
+    assert_equal(to_lower(L'!'), L'!');
+
+    std::string s = "HELLO WORLD"s;
+    to_lower(s);
+    assert_equal(s, "hello world"s);
+
+    std::wstring ws = L"HELLO WORLD"s;
+    to_lower(ws);
+    assert_equal(ws, L"hello world"s);
+}
+
 define_default_test_main();
