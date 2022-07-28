@@ -32,6 +32,9 @@
  * to_upper(c/s)            converts the given character or string to upper case
  * to_lower(c/s)            converts the given character or string to upper case
  *
+ * copy(src, dest)          copies one string to another
+ * copy(src, dest, n)       copies one string to another, up to n characters
+ *
  * aliases:
  * to_int -> to_integer<int>
  * to_long -> to_integer<long>
@@ -249,6 +252,35 @@ bool ends_with(const std::basic_string<CharT> &value, const std::basic_string<Ch
 }
 
 template<typename OutT = int, typename CharT>
+OutT to_integer(const CharT *value, CharT **pos = nullptr, int base = 10)
+{
+    static_assert(std::is_integral_v<OutT>, "to_integer number template argument OutT must be a signed or unsigned integer number type");
+
+    if constexpr (std::is_signed_v<OutT>)
+    {
+        if constexpr (sizeof(OutT) >= sizeof(long long))
+        {
+            return strtoll(value, pos, base);
+        }
+        else
+        {
+            return strtol(value, pos, base);
+        }
+    }
+    else
+    {
+        if constexpr (sizeof(OutT) >= sizeof(unsigned long long))
+        {
+            return strtoull(value, pos, base);
+        }
+        else
+        {
+            return strtoul(value, pos, base);
+        }
+    }
+}
+
+template<typename OutT = int, typename CharT>
 OutT to_integer(const std::basic_string<CharT> &value, size_t *pos = nullptr, int base = 10)
 {
     static_assert(std::is_integral_v<OutT>, "to_integer number template argument OutT must be a signed or unsigned integer number type");
@@ -282,6 +314,25 @@ OutT to_integer(const std::basic_string<CharT> &value, size_t *pos = nullptr, in
 }
 
 template<typename OutT = float, typename CharT>
+OutT to_decimal(const CharT *value, CharT **pos = nullptr)
+{
+    static_assert(std::is_floating_point_v<OutT>, "to_decimal number template argument OutT must be a floating point number type");
+
+    if constexpr (sizeof(OutT) >= sizeof(long double))
+    {
+        return strtold(value, pos);
+    }
+    else if constexpr (sizeof(OutT) >= sizeof(double))
+    {
+        return strtod(value, pos);
+    }
+    else
+    {
+        return strtof(value, pos);
+    }
+}
+
+template<typename OutT = float, typename CharT>
 OutT to_decimal(const std::basic_string<CharT> &value, size_t *pos = nullptr)
 {
     static_assert(std::is_floating_point_v<OutT>, "to_decimal number template argument OutT must be a floating point number type");
@@ -303,10 +354,16 @@ OutT to_decimal(const std::basic_string<CharT> &value, size_t *pos = nullptr)
 // alias functions
 // i fucking hate c++ so much its unreal just give me fucking function aliases
 #define DEFINE_INTEGER_ALIAS(T, NAME) \
+template<typename CharT> T NAME(const CharT *value, CharT **pos = nullptr, int base = 10)\
+{ return to_integer<T, CharT>(value, pos, base); } \
+\
 template<typename CharT> T NAME(const std::basic_string<CharT> &value, size_t *pos = nullptr, int base = 10)\
-{ return to_integer<T, CharT>(value, pos, base); }
+{ return to_integer<T, CharT>(value, pos, base); } \
 
 #define DEFINE_DECIMAL_ALIAS(T, NAME) \
+template<typename CharT> T NAME(const CharT *value, CharT **pos = nullptr)\
+{ return to_decimal<T, CharT>(value, pos); } \
+\
 template<typename CharT> T NAME(const std::basic_string<CharT> &value, size_t *pos = nullptr)\
 { return to_decimal<T, CharT>(value, pos); }
 
@@ -353,4 +410,22 @@ void to_lower(std::basic_string<CharT> &s)
 {
     std::transform(s.begin(), s.end(), s.begin(),
                    [](CharT c){ return to_lower(c); });
+}
+
+template<typename CharT>
+CharT *copy(const CharT *src, CharT *dst)
+{
+    if constexpr (std::is_same_v<CharT, wchar_t>)
+        return wcscpy(dst, src);
+    else
+        return strcpy(dst, src);
+}
+
+template<typename CharT>
+CharT *copy(const CharT *src, CharT *dst, size_t n)
+{
+    if constexpr (std::is_same_v<CharT, wchar_t>)
+        return wcsncpy(dst, src, n);
+    else
+        return strncpy(dst, src, n);
 }
