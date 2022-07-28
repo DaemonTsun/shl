@@ -46,16 +46,17 @@ public:
     std::string _what;
 
     parse_iterator it;
-    const CharT *input;
+    const CharT *input = nullptr;
     size_t input_size;
 
-    parse_error(const char* msg)
-        : _what(msg)
-    {}
+    parse_error(const char* msg) : _what(msg) {}
+    parse_error(const parse_error& other) = default;
 
     parse_error(parse_iterator pit, const CharT *pinput, size_t pinput_size, const char* msg)
         : _what(msg), it(pit), input(pinput), input_size(pinput_size)
     {}
+
+    parse_error &operator=(const parse_error& other) = default;
 
     template<typename... Ts>
     parse_error(parse_iterator pit, const CharT *pinput, size_t pinput_size, Ts &&... ts)
@@ -107,7 +108,7 @@ parse_iterator skip_whitespace(parse_iterator it, const CharT *input, size_t inp
 }
 
 template<typename CharT>
-parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_size, std::basic_string<CharT> *out = nullptr, CharT delim = '"')
+parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_size, std::basic_string<CharT> *out = nullptr, CharT delim = '"', bool include_delims = false)
 {
     parse_iterator start = it;
 
@@ -151,7 +152,12 @@ parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_
     advance(&it);
 
     if (out != nullptr)
-        *out = std::basic_string<CharT>(input + start.i, it.i - start.i);
+    {
+        if (include_delims)
+            *out = std::basic_string<CharT>(input + start.i, it.i - start.i);
+        else
+            *out = std::basic_string<CharT>(input + start.i + 1, (it.i - start.i) - 2);
+    }
 
     return it;
 }
