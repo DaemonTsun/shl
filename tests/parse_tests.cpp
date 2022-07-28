@@ -725,4 +725,140 @@ define_test(parse_identifier_parses_identifier3)
     assert_equal(out, "_hello_WORLD"s);
 }
 
+define_test(parse_bool_parses_true)
+{
+    SETUP("true");
+
+    bool out;
+
+    it = parse_bool(it, input, input_size, &out);
+    assert_equal(it.i, 4);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 5);
+    assert_equal(out, true);
+}
+
+define_test(parse_bool_parses_true2)
+{
+    SETUP("tRuE  abc");
+
+    bool out;
+
+    it = parse_bool(it, input, input_size, &out);
+    assert_equal(it.i, 4);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 5);
+    assert_equal(out, true);
+}
+
+define_test(parse_bool_parses_false)
+{
+    SETUP("false");
+
+    bool out;
+
+    it = parse_bool(it, input, input_size, &out);
+    assert_equal(it.i, 5);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 6);
+    assert_equal(out, false);
+}
+
+define_test(parse_bool_parses_false2)
+{
+    SETUP("FALse 123");
+
+    bool out;
+
+    it = parse_bool(it, input, input_size, &out);
+    assert_equal(it.i, 5);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 6);
+    assert_equal(out, false);
+}
+
+define_test(parse_bool_throws_on_nullptr)
+{
+    SETUP(nullptr);
+
+    bool out;
+
+    assert_error(it = parse_bool(it, input, input_size, &out), parse_error<>)
+    {
+        assert_equal(err.it.i, 0);
+        assert_equal(err.it.line_start, 0);
+        assert_equal(err.it.line, 1);
+        assert_equal(err.it.line_pos, 1);
+        assert_equal(err.input, nullptr);
+    }
+}
+
+define_test(parse_bool_throws_on_invalid_input)
+{
+    SETUP("");
+
+    bool out;
+
+    assert_error(it = parse_bool(it, input, input_size, &out), parse_error<>)
+    {
+        assert_equal(err.it.i, 0);
+        assert_equal(err.it.line_start, 0);
+        assert_equal(err.it.line, 1);
+        assert_equal(err.it.line_pos, 1);
+        assert_equal(err.input, "");
+    }
+}
+
+define_test(parse_bool_throws_on_invalid_input2)
+{
+    SETUP("t");
+
+    bool out;
+
+    assert_error(it = parse_bool(it, input, input_size, &out), parse_error<>)
+    {
+        assert_equal(err.it.i, 1);
+        assert_equal(err.it.line_start, 0);
+        assert_equal(err.it.line, 1);
+        assert_equal(err.it.line_pos, 2);
+        assert_equal(err.input, "t");
+    }
+}
+
+define_test(parse_bool_throws_on_invalid_input3)
+{
+    SETUP("tr");
+
+    bool out;
+
+    assert_error(it = parse_bool(it, input, input_size, &out), parse_error<>)
+    {
+        assert_equal(err.it.i, 2);
+        assert_equal(err.it.line_start, 0);
+        assert_equal(err.it.line, 1);
+        assert_equal(err.it.line_pos, 3);
+        assert_equal(err.input, "tr");
+    }
+}
+
+define_test(parse_bool_throws_on_invalid_input4)
+{
+    SETUP("tX");
+
+    bool out;
+
+    assert_error(it = parse_bool(it, input, input_size, &out), parse_error<>)
+    {
+        assert_equal(err.it.i, 2);
+        assert_equal(err.it.line_start, 0);
+        assert_equal(err.it.line, 1);
+        assert_equal(err.it.line_pos, 3);
+        assert_equal(err.input, "tX");
+    }
+}
+
 define_default_test_main();

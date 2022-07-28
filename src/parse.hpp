@@ -156,7 +156,64 @@ parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_
     return it;
 }
 
-// TODO: parse_bool
+template<typename CharT>
+parse_iterator parse_bool(parse_iterator it, const CharT *input, size_t input_size, bool *out = nullptr)
+{
+    if (input == nullptr || it.i >= input_size)
+        throw parse_error(it, input, input_size, "not a boolean at ", it);
+
+    parse_iterator start = it;
+    auto c = input[it.i];
+    bool val = true;
+    
+    if (to_lower(c) == 't')
+    {
+        if (it.i + 3 >= input_size)
+        {
+            advance(&it, input_size - it.i);
+            throw parse_error(it, input, input_size, "not a boolean at ", start);
+        }
+
+        for (int i = 0; i < 4;)
+        {
+            c = input[it.i];
+            if (to_lower(c) != "true"[i])
+                throw parse_error(it, input, input_size, "unexpected symbol '", c, "' at ", it, " in boolean");
+
+            advance(&it);
+            ++i;
+        }
+
+        val = true;
+    }
+    else if (to_lower(c) == 'f')
+    {
+        if (it.i + 4 >= input_size)
+        {
+            advance(&it, input_size - it.i);
+            throw parse_error(it, input, input_size, "not a boolean at ", start);
+        }
+
+        for (int i = 0; i < 5;)
+        {
+            c = input[it.i];
+            if (to_lower(c) != "false"[i])
+                throw parse_error(it, input, input_size, "unexpected symbol '", c, "' at ", it, " in boolean");
+
+            advance(&it);
+            ++i;
+        }
+
+        val = false;
+    }
+    else 
+        throw parse_error(it, input, input_size, "unexpected symbol '", c, "' at ", it, " in boolean");
+
+    if (out)
+        *out = val;
+
+    return it;
+}
 
 template<typename CharT, typename OutT = s64>
 parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input_size, OutT *out = nullptr)
@@ -271,49 +328,23 @@ parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input
     if (out == nullptr)
         return it;
 
-    // do the number calculating
-    // https://github.com/gcc-mirror/gcc/blob/master/libiberty/strtol.c
-	OutT acc = 0;
-	int any = 0;
-    OutT cutoff = std::numeric_limits<OutT>::max();
-	OutT cutlim = cutoff % static_cast<OutT>(base);
-	cutoff /= static_cast<OutT>(base);
+    // 64 binary digits + 0b + - + 1
+    constexpr const size_t digit_size = 68;
+    CharT buf[digit_size];
+    size_t len = it.i - digit_start.i;
 
-	for (int i = digit_start.i; i < it.i; ++i)
-    {
-        c = input[i];
+    if (len > digit_size - 1)
+        throw parse_error(it, input, input_size, "integer too large at ", start);
 
-		if (is_digit(c))
-        {
-			c -= '0';
-        }
-		else if (is_alpha(c))
-        {
-			c -= is_upper(c) ? 'A' : 'a';
-            c += 10;
-        }
-		else
-			break;
+    copy(input + digit_start.i, buf, len);
+    buf[len] = 0;
 
-		if (c >= base)
-			break;
-
-		if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim))
-        {
-			any = -1;
-        }
-		else
-        {
-			any = 1;
-			acc *= base;
-			acc += c;
-		}
-	}
+    OutT ret = to_integer<OutT, CharT>(buf, nullptr, base);
 
     if (neg)
-		acc = -acc;
+        ret = -ret;
 
-    *out = acc;
+    *out = ret;
 
     return it;
 }
@@ -420,11 +451,22 @@ parse_iterator parse_decimal(parse_iterator it, const CharT *input, size_t input
         throw parse_error(it, input, input_size, "not a decimal number at ", start);
         
 parse_decimal_end:
-    if (out != nullptr)
-    {
-        std::basic_string<CharT> str(input + start.i, it.i - start.i);
-        *out = to_decimal<OutT, CharT>(str, nullptr);
-    }
+    if (out == nullptr)
+        return it;
+
+    // ok a double can have like 1024 digits, but this will suffice for simple things.
+    // just change it if you need to.
+    constexpr const size_t digit_size = 128;
+    CharT buf[digit_size];
+    size_t len = it.i - start.i;
+
+    if (len > digit_size - 1)
+        throw parse_error(it, input, input_size, "floating point number too large at ", start);
+
+    copy(input + start.i, buf, len);
+    buf[len] = 0;
+
+    *out = to_decimal<OutT, CharT>(buf, nullptr);
 
     return it;
 }

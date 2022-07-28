@@ -172,8 +172,8 @@ define_test(ends_with_returns_false_if_suffix_is_longer_than_string)
 define_test(to_integer_converts_to_int)
 {
     assert_equal(to_integer<int>("0"s), 0);
-    assert_equal(to_integer<int>("1234"s), 1234);
-    assert_equal(to_integer<int>("2147483647"s), std::numeric_limits<int>::max()); // may be different on some platforms
+    assert_equal(to_integer<int>("1234"), 1234);
+    assert_equal(to_integer<int>("2147483647"), std::numeric_limits<int>::max()); // may be different on some platforms
     assert_equal(to_integer<int>("-2147483648"s), std::numeric_limits<int>::min()); // may be different on some platforms
 }
 
