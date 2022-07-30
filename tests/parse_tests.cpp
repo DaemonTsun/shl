@@ -1,5 +1,3 @@
-// TODO: update string tests to include delims
-
 #include <iostream>
 #include <string.h>
 
@@ -123,7 +121,7 @@ define_test(parse_string_parses_string)
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 3);
-    assert_equal(out, "\"\""s);
+    assert_equal(out, ""s);
 }
 
 define_test(parse_string_parses_string2)
@@ -137,12 +135,12 @@ define_test(parse_string_parses_string2)
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 6);
-    assert_equal(out, str(input));
+    assert_equal(out, "abc"s);
 }
 
 define_test(parse_string_parses_string3)
 {
-    SETUP("\"\n\nabc\n  \"");
+    SETUP("\"\n\nabc\n  \"  ");
 
     std::string out;
 
@@ -151,7 +149,49 @@ define_test(parse_string_parses_string3)
     assert_equal(it.line_start, 7);
     assert_equal(it.line, 4);
     assert_equal(it.line_pos, 4);
-    assert_equal(out, str(input));
+    assert_equal(out, "\n\nabc\n  "s);
+}
+
+define_test(parse_string_parses_string_with_delims)
+{
+    SETUP("\"hello\"   ");
+
+    std::string out;
+
+    it = parse_string(it, input, input_size, &out, '"', true);
+    assert_equal(it.i, 7);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 8);
+    assert_equal(out, "\"hello\""s);
+}
+
+define_test(parse_string_parses_string_with_delims2)
+{
+    SETUP("\"hello world\\\" \"  ");
+
+    std::string out;
+
+    it = parse_string(it, input, input_size, &out, '"', true);
+    assert_equal(it.i, 16);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 17);
+    assert_equal(out, "\"hello world\\\" \""s);
+}
+
+define_test(parse_string_parses_string_delims)
+{
+    SETUP("x abc XYZ x");
+
+    std::string out;
+
+    it = parse_string(it, input, input_size, &out, 'x');
+    assert_equal(it.i, 11);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 12);
+    assert_equal(out, " abc XYZ "s);
 }
 
 define_test(parse_integer_parses_integer)
