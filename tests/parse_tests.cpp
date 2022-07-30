@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <string.h>
 
@@ -57,6 +58,8 @@ define_test(skip_whitespace_doesnt_skip_nonwhitespace)
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 1);
 }
+
+// TODO: parse_comment tests
 
 define_test(parse_string_throws_on_nullptr)
 {

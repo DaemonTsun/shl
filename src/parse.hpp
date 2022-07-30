@@ -1,4 +1,74 @@
 
+/* parse.hpp
+ *  depends on string.hpp and number_types.hpp
+ * 
+ * parsing functions
+ * using an iterator (parse_iterator) to keep track of where one is
+ * in a string, this file provides functions which uses this iterator
+ * to parse certain sequences into basic types and strings.
+ *
+ * all parsing functions have the convention
+ *      parse_X(it, input, input_size, ...)
+ *
+ * where X is the thing parsed, 'it' is the iterator, input is a character
+ * pointer of size input_size, and ... are additional arguments, often
+ * for output of parsed values. input_size is treated as the EOF of the
+ * input, not null characters.
+ *
+ * all parsing functions return a new iterator which is directly after the
+ * successfully parsed value.
+ *
+ * if unsuccessful, throws a parse_error with failure information detailing
+ * where the failure occurred.
+ *
+ * the parsing functions (<params> = it, input, input_size):
+ *
+ * skip_whitespace(<params>)
+ *      parses all whitespaces including newlines and returns the new iterator
+ *      at the next non-whitespace symbol or EOF.
+ *      does not throw.
+ *
+ * parse_comment(<params>, [*out], [*success])
+ *      parses a single line or block comment and optionally writes it to *out
+ *      if out is not nullptr.
+ *      also skips whitespaces before the comment.
+ *      also writes to *success if a comment was parsed and success is not
+ *      nullptr.
+ *      does not throw.
+ *
+ * parse_string(<params>, [*out], [delim = '"'], [include_delims = false])
+ *      parses a single string between delimiters [delim], optionally including the
+ *      delimiters if include_delims is true and writes the parsed value to *out if
+ *      out is not nullptr.
+ *      throws on invalid input.
+ *
+ * parse_bool(<params>, [*out])
+ *      parses a single boolean value regardless of case and optionally
+ *      writes the parsed value to *out if out is not nullptr.
+ *      throws on invalid input.
+ *
+ * parse_integer(<params>, [*out])
+ *      parses a single integer value and optionally writes the parsed value
+ *      to *out if out is not nullptr.
+ *      detects bases such as 0b for binary, 0<oct digits> for octal or
+ *      0x for hexadecimal (case insensitive). Base prefix may be omitted for
+ *      hexadecimal values, e.g. DEADBEEF.
+ *      throws on invalid input.
+ *
+ * parse_decimal(<params>, [*out])
+ *      parses a single floating point value and optionally writes the parsed value
+ *      to *out if out is not nullptr.
+ *      supports exponents with e+/-X.
+ *      throws on invalid input.
+ *
+ * parse_identifier(<params>, [*out])
+ *      parses a single identifier and optionally writes the parsed value
+ *      to *out if out is not nullptr.
+ *      an identifier may start with a letter or _ and can contain letters,
+ *      _ or digits.
+ *      throws on invalid input.
+ */
+
 #pragma once
 
 #include <stdexcept>
@@ -105,6 +175,124 @@ parse_iterator skip_whitespace(parse_iterator it, const CharT *input, size_t inp
     }
 
     return it;
+}
+
+template<typename CharT>
+parse_iterator parse_comment(parse_iterator it, const CharT *input, size_t input_size, std::basic_string<CharT> *out = nullptr, bool *success = nullptr)
+{
+    parse_iterator ret = it;
+    parse_iterator comment_start;
+    parse_iterator comment_end;
+
+    bool has_comment;
+
+    it = skip_whitespace(it, input, input_size);
+    CharT c;
+
+    if (input == nullptr || it.i >= input_size)
+    {
+        has_comment = false;
+        goto parse_comment_end;
+    }
+
+    c = input[it.i];
+
+    if (c != '/')
+    {
+        has_comment = false;
+        goto parse_comment_end;
+    }
+
+    advance(&it);
+
+    if (input == nullptr || it.i >= input_size)
+    {
+        has_comment = false;
+        goto parse_comment_end;
+    }
+
+    if (c == '/')
+    {
+        advance(&it);
+
+        comment_start = it;
+
+        // line comment
+        while (it.i < input_size && input[it.i] != '\n')
+            advance(&it);
+
+        comment_end = it;
+
+        if (it.i >= input_size)
+        {
+            ret = it;
+            has_comment = true;
+            goto parse_comment_end;
+        }
+        else
+        // if (input[it.i] == '\n')
+        {
+            it.i++;
+            next_line(&it);
+            update_iterator_line_pos(&it);
+            ret = it;
+            has_comment = true;
+            goto parse_comment_end;
+        }
+    }
+    else if (c == '*')
+    {
+        /* block comment */ 
+        advance(&it);
+
+        comment_start = it;
+        parse_iterator prev = it;
+
+        while (it.i < input_size)
+        {
+            it = skip_whitespace(it, input, input_size);
+
+            if (it.i >= input_size)
+                break;
+
+            c = input[it.i];
+
+            if (c == '*')
+            {
+                advance(&it);
+
+                if (it.i >= input_size)
+                    break;
+
+                c = input[it.i];
+
+                if (c == '/')
+                {
+                    comment_end = prev;
+                    advance(&it);
+                    ret = it;
+                    has_comment = true;
+                    goto parse_comment_end;
+                }
+            }
+
+            prev = it;
+            advance(&it);
+        }
+
+        has_comment = false;
+        goto parse_comment_end;
+    }
+
+parse_comment_end:
+    if (success != nullptr)
+        *success = has_comment;
+
+    if (has_comment && out != nullptr)
+        *out = std::basic_string<CharT>(input + comment_start.i,
+                                        comment_end.i - comment_start.i);
+
+    return ret;
 }
 
 template<typename CharT>
