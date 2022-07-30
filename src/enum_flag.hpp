@@ -1,6 +1,7 @@
 #pragma once
 
 /* enum_flag.hpp
+ *
  * defines the macro ENUM_CLASS_FLAG_OPS which defines
  * operators and functions:
  *      value  - returns the underlying value of the enum
@@ -38,7 +39,7 @@
     constexpr inline bool is_set(T a, T b) { return (a & b) == b; }\
     constexpr inline bool is_set(T a, std::underlying_type_t<T> b) { return (a & b) == b; }\
     constexpr inline bool is_set(std::underlying_type_t<T> a, T b) { return static_cast<T>(a & b) == b; }\
-    constexpr inline T& set(T& a, T b) {return a |= b;} \
-    constexpr inline T& set(T& a, std::underlying_type_t<T> b) {return a |= b;} \
-    constexpr inline T& unset(T& a, T b) {return a &= ~b;} \
-    constexpr inline T& unset(T& a, std::underlying_type_t<T> b) {return a &= ~b; } \
+    constexpr inline T& set(T& a, T b) { return a |= b; } \
+    constexpr inline T& set(T& a, std::underlying_type_t<T> b) { return a |= b; } \
+    constexpr inline T& unset(T& a, T b) { return a &= ~b; } \
+    constexpr inline T& unset(T& a, std::underlying_type_t<T> b) { return a &= ~b; } \
