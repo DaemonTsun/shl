@@ -90,7 +90,7 @@ define_test(parse_string_throws_on_invalid_input)
 {
     SETUP("abc");
 
-    std::string out;
+    parse_range out;
 
     assert_error(it = parse_string(it, input, input_size, &out), parse_error<>)
     {
@@ -103,7 +103,7 @@ define_test(parse_string_throws_on_unterminated_string)
 {
     SETUP("\"abc");
 
-    std::string out;
+    parse_range out;
 
     assert_error(it = parse_string(it, input, input_size, &out), parse_error<>)
     {
@@ -116,7 +116,7 @@ define_test(parse_string_throws_on_unterminated_string2)
 {
     SETUP("\"abc\\\"");
 
-    std::string out;
+    parse_range out;
 
     assert_error(it = parse_string(it, input, input_size, &out), parse_error<>)
     {
@@ -129,84 +129,161 @@ define_test(parse_string_parses_string)
 {
     SETUP("\"\"");
 
-    std::string out;
+    parse_range out;
 
     it = parse_string(it, input, input_size, &out);
+
     assert_equal(it.i, 2);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 3);
-    assert_equal(out, ""s);
+
+    assert_equal(out.start.i, 1);
+    assert_equal(out.start.line_start, 0);
+    assert_equal(out.start.line, 1);
+    assert_equal(out.start.line_pos, 2);
+
+    assert_equal(out.end.i, 1);
+    assert_equal(out.end.line_start, 0);
+    assert_equal(out.end.line, 1);
+    assert_equal(out.end.line_pos, 2);
+
+    std::string str = slice(input, &out);
+    assert_equal(str, ""s);
 }
 
 define_test(parse_string_parses_string2)
 {
     SETUP("\"abc\"");
 
-    std::string out;
+    parse_range out;
 
     it = parse_string(it, input, input_size, &out);
+
     assert_equal(it.i, 5);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 6);
-    assert_equal(out, "abc"s);
+
+    assert_equal(out.start.i, 1);
+    assert_equal(out.start.line_start, 0);
+    assert_equal(out.start.line, 1);
+    assert_equal(out.start.line_pos, 2);
+
+    assert_equal(out.end.i, 4);
+    assert_equal(out.end.line_start, 0);
+    assert_equal(out.end.line, 1);
+    assert_equal(out.end.line_pos, 5);
+
+    std::string str = slice(input, &out);
+    assert_equal(str, "abc"s);
 }
 
 define_test(parse_string_parses_string3)
 {
-    SETUP("\"\n\nabc\n  \"  ");
+    SETUP("\"\nabc\n\"");
 
-    std::string out;
+    parse_range out;
 
     it = parse_string(it, input, input_size, &out);
-    assert_equal(it.i, 10);
-    assert_equal(it.line_start, 7);
-    assert_equal(it.line, 4);
-    assert_equal(it.line_pos, 4);
-    assert_equal(out, "\n\nabc\n  "s);
+
+    assert_equal(it.i, 7);
+    assert_equal(it.line_start, 6);
+    assert_equal(it.line, 3);
+    assert_equal(it.line_pos, 2);
+
+    assert_equal(out.start.i, 1);
+    assert_equal(out.start.line_start, 0);
+    assert_equal(out.start.line, 1);
+    assert_equal(out.start.line_pos, 2);
+
+    assert_equal(out.end.i, 6);
+    assert_equal(out.end.line_start, 6);
+    assert_equal(out.end.line, 3);
+    assert_equal(out.end.line_pos, 1);
+
+    std::string str = slice(input, &out);
+    assert_equal(str, "\nabc\n"s);
 }
 
 define_test(parse_string_parses_string_with_delims)
 {
     SETUP("\"hello\"   ");
 
-    std::string out;
+    parse_range out;
 
     it = parse_string(it, input, input_size, &out, '"', true);
+
     assert_equal(it.i, 7);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 8);
-    assert_equal(out, "\"hello\""s);
+
+    assert_equal(out.start.i, 0);
+    assert_equal(out.start.line_start, 0);
+    assert_equal(out.start.line, 1);
+    assert_equal(out.start.line_pos, 1);
+
+    assert_equal(out.end.i, 7);
+    assert_equal(out.end.line_start, 0);
+    assert_equal(out.end.line, 1);
+    assert_equal(out.end.line_pos, 8);
+
+    std::string str = slice(input, &out);
+    assert_equal(str, "\"hello\""s);
 }
 
 define_test(parse_string_parses_string_with_delims2)
 {
     SETUP("\"hello world\\\" \"  ");
 
-    std::string out;
+    parse_range out;
 
     it = parse_string(it, input, input_size, &out, '"', true);
+
     assert_equal(it.i, 16);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 17);
-    assert_equal(out, "\"hello world\\\" \""s);
+
+    assert_equal(out.start.i, 0);
+    assert_equal(out.start.line_start, 0);
+    assert_equal(out.start.line, 1);
+    assert_equal(out.start.line_pos, 1);
+
+    assert_equal(out.end.i, 16);
+    assert_equal(out.end.line_start, 0);
+    assert_equal(out.end.line, 1);
+    assert_equal(out.end.line_pos, 17);
+
+    std::string str = slice(input, &out);
+    assert_equal(str, "\"hello world\\\" \""s);
 }
 
 define_test(parse_string_parses_string_delims)
 {
     SETUP("x abc XYZ x");
-
-    std::string out;
+    parse_range out;
 
     it = parse_string(it, input, input_size, &out, 'x');
+
     assert_equal(it.i, 11);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 12);
-    assert_equal(out, " abc XYZ "s);
+
+    assert_equal(out.start.i, 1);
+    assert_equal(out.start.line_start, 0);
+    assert_equal(out.start.line, 1);
+    assert_equal(out.start.line_pos, 2);
+
+    assert_equal(out.end.i, 10);
+    assert_equal(out.end.line_start, 0);
+    assert_equal(out.end.line, 1);
+    assert_equal(out.end.line_pos, 11);
+
+    std::string str = slice(input, &out);
+    assert_equal(str, " abc XYZ "s);
 }
 
 define_test(parse_integer_parses_integer)

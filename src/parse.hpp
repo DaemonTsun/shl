@@ -325,7 +325,7 @@ parse_comment_end:
 }
 
 template<typename CharT>
-parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_size, std::basic_string<CharT> *out = nullptr, CharT delim = '"', bool include_delims = false)
+parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_size, parse_range *out, CharT delim = '"', bool include_delims = false)
 {
     parse_iterator start = it;
 
@@ -371,9 +371,17 @@ parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_
     if (out != nullptr)
     {
         if (include_delims)
-            *out = std::basic_string<CharT>(input + start.i, it.i - start.i);
+        {
+            out->start = start;
+            out->end = it;
+        }
         else
-            *out = std::basic_string<CharT>(input + start.i + 1, (it.i - start.i) - 2);
+        {
+            out->start = start;
+            advance(&out->start, 1);
+            out->end = it;
+            advance(&out->end, -1);
+        }
     }
 
     return it;
