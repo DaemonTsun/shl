@@ -38,6 +38,7 @@
  *
  * parse_string(<params>, [*out], [delim = '"'], [include_delims = false])
  *      parses a single string between delimiters [delim], optionally including the
+ *
  *      delimiters if include_delims is true and writes the parsed value to *out if
  *      out is not nullptr.
  *      throws on invalid input.
@@ -71,12 +72,14 @@
 
 #pragma once
 
+#include <assert.h>
 #include <stdexcept>
 #include <ostream>
 
 #include "string.hpp"
 #include "number_types.hpp"
 
+// parse iterator
 struct parse_iterator
 {
     u32 i = 0;
@@ -109,6 +112,32 @@ inline std::basic_ostream<CharT> &operator<<(std::basic_ostream<CharT> &lhs, con
     return lhs << rhs.line << ":" << rhs.line_pos;
 }
 
+// parse range
+struct parse_range
+{
+    parse_iterator start;
+    parse_iterator end;
+};
+
+template<typename CharT>
+inline std::basic_string<CharT> slice(const CharT *input, const parse_range *range)
+{
+    return std::basic_string<CharT>(input + range->start.i, range->end.i - range->start.i);
+}
+
+template<typename CharT>
+inline std::basic_string<CharT> slice(const std::basic_string<CharT> &input, const parse_range *range)
+{
+    return input.substr(range->start.i, range->end.i - range->start.i);
+}
+
+template<typename CharT>
+inline std::basic_ostream<CharT> &operator<<(std::basic_ostream<CharT> &lhs, const parse_range &rhs)
+{
+    return lhs << rhs.start << "-" << rhs.end;
+}
+
+// parse error
 template<typename CharT = char>
 class parse_error : public std::exception
 {
@@ -300,13 +329,13 @@ parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_
 {
     parse_iterator start = it;
 
-    if (input == nullptr || it.i >= input_size)
-        throw parse_error(it, input, input_size, "not a string at ", start);
+    assert(input != nullptr);
+    assert(it.i < input_size);
 
     auto c = input[it.i];
 
     if (c != delim)
-        throw parse_error(it, input, input_size, "not a string at ", start);
+        throw parse_error(it, input, input_size, "unexpected symbol '", c, "' at ", start, ", expected '", delim, "'");
 
     advance(&it);
 
@@ -353,8 +382,8 @@ parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_
 template<typename CharT>
 parse_iterator parse_bool(parse_iterator it, const CharT *input, size_t input_size, bool *out = nullptr)
 {
-    if (input == nullptr || it.i >= input_size)
-        throw parse_error(it, input, input_size, "not a boolean at ", it);
+    assert(input != nullptr);
+    assert(it.i < input_size);
 
     parse_iterator start = it;
     auto c = input[it.i];
@@ -414,8 +443,8 @@ parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input
 {
     static_assert(std::is_integral_v<OutT>, "parse_integer number type argument must be an integer type");
 
-    if (input == nullptr || it.i >= input_size)
-        throw parse_error(it, input, input_size, "not an integer at ", it);
+    assert(input != nullptr);
+    assert(it.i < input_size);
 
     parse_iterator start = it;
     parse_iterator digit_start = it;
@@ -548,8 +577,8 @@ parse_iterator parse_decimal(parse_iterator it, const CharT *input, size_t input
 {
     static_assert(std::is_floating_point_v<OutT>, "parse_decimal number type argument must be a floating point number type");
 
-    if (input == nullptr || it.i >= input_size)
-        throw parse_error(it, input, input_size, "not a decimal number at ", it);
+    assert(input != nullptr);
+    assert(it.i < input_size);
 
     parse_iterator start = it;
     auto c = input[it.i];
@@ -680,9 +709,8 @@ inline bool is_identifier_character(CharT c)
 template<typename CharT>
 parse_iterator parse_identifier(parse_iterator it, const CharT *input, size_t input_size, std::basic_string<CharT> *out = nullptr)
 {
-    if (input == nullptr
-     || it.i >= input_size)
-        throw parse_error(it, input, input_size, "not an identifier at", it);
+    assert(input != nullptr);
+    assert(it.i < input_size);
 
     parse_iterator start = it;
     auto c = input[it.i];

@@ -3,6 +3,8 @@
 #include <string.h>
 
 #include <t1/t1.hpp>
+
+#undef NDEBUG
 #include "../src/parse.hpp"
 
 using namespace std::literals;
@@ -20,6 +22,18 @@ using namespace std::literals;
         EXPR;\
     }\
     catch (ERR &err)
+    
+define_test(skip_whitespace_does_nothing_on_nullptr)
+{
+    SETUP(nullptr);
+
+    it = skip_whitespace(it, input, input_size);
+
+    assert_equal(it.i, 0);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 1);
+}
     
 define_test(skip_whitespace_skips_whitespace)
 {
@@ -60,18 +74,16 @@ define_test(skip_whitespace_doesnt_skip_nonwhitespace)
 }
 
 // TODO: parse_comment tests
-
-define_test(parse_string_throws_on_nullptr)
+define_test(parse_comment_parses_nullptr)
 {
     SETUP(nullptr);
 
-    std::string *out = nullptr;
+    it = parse_comment(it, input, input_size);
 
-    assert_error(it = parse_string(it, input, input_size, out), parse_error<>)
-    {
-        assert_equal(err.it.i, 0);
-        assert_equal(err.input, nullptr);
-    }
+    assert_equal(it.i, 0);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 1);
 }
 
 define_test(parse_string_throws_on_invalid_input)
@@ -393,19 +405,6 @@ define_test(parse_integer_parses_hex_integer5)
     assert_equal(out, 65263);
 }
 
-define_test(parse_integer_throws_on_nullptr)
-{
-    SETUP(nullptr);
-
-    s64 out;
-
-    assert_error(it = parse_integer(it, input, input_size, &out), parse_error<>)
-    {
-        assert_equal(err.it.i, 0);
-        assert_equal(err.input, nullptr);
-    }
-}
-
 define_test(parse_integer_throws_on_invalid_input)
 {
     SETUP("xyz");
@@ -654,19 +653,6 @@ define_test(parse_decimal_parses_double7)
     assert_equal(out, 1234e5);
 }
 
-define_test(parse_decimal_throw_on_nullptr)
-{
-    SETUP(nullptr);
-
-    float out;
-
-    assert_error(it = parse_decimal(it, input, input_size, &out), parse_error<>)
-    {
-        assert_equal(err.it.i, 0);
-        assert_equal(err.input, nullptr);
-    }
-}
-
 define_test(parse_decimal_throw_on_invalid_input)
 {
     SETUP("z");
@@ -698,18 +684,6 @@ define_test(parse_decimal_throw_on_invalid_input3)
     float out;
 
     assert_error(it = parse_decimal(it, input, input_size, &out), parse_error<>)
-    {
-        assert_equal(err.it.i, 0);
-    }
-}
-
-define_test(parse_identifier_throws_on_nullptr)
-{
-    SETUP(nullptr);
-
-    std::string out;
-
-    assert_error(it = parse_identifier(it, input, input_size, &out), parse_error<>)
     {
         assert_equal(err.it.i, 0);
     }
@@ -823,38 +797,6 @@ define_test(parse_bool_parses_false2)
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 6);
     assert_equal(out, false);
-}
-
-define_test(parse_bool_throws_on_nullptr)
-{
-    SETUP(nullptr);
-
-    bool out;
-
-    assert_error(it = parse_bool(it, input, input_size, &out), parse_error<>)
-    {
-        assert_equal(err.it.i, 0);
-        assert_equal(err.it.line_start, 0);
-        assert_equal(err.it.line, 1);
-        assert_equal(err.it.line_pos, 1);
-        assert_equal(err.input, nullptr);
-    }
-}
-
-define_test(parse_bool_throws_on_invalid_input)
-{
-    SETUP("");
-
-    bool out;
-
-    assert_error(it = parse_bool(it, input, input_size, &out), parse_error<>)
-    {
-        assert_equal(err.it.i, 0);
-        assert_equal(err.it.line_start, 0);
-        assert_equal(err.it.line, 1);
-        assert_equal(err.it.line_pos, 1);
-        assert_equal(err.input, "");
-    }
 }
 
 define_test(parse_bool_throws_on_invalid_input2)
