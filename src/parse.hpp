@@ -38,7 +38,6 @@
  *
  * parse_string(<params>, [*out], [delim = '"'], [include_delims = false])
  *      parses a single string between delimiters [delim], optionally including the
- *
  *      delimiters if include_delims is true and writes the parsed value to *out if
  *      out is not nullptr.
  *      throws on invalid input.
@@ -388,6 +387,16 @@ parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_
 }
 
 template<typename CharT>
+parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_size, std::basic_string<CharT> *out = nullptr, CharT delim = '"', bool include_delims = false)
+{
+    parse_range range;
+    it = parse_string(it, input, input_size, &range, delim, include_delims);
+    *out = slice(input, &range);
+
+    return it;
+}
+
+template<typename CharT>
 parse_iterator parse_bool(parse_iterator it, const CharT *input, size_t input_size, bool *out = nullptr)
 {
     assert(input != nullptr);
@@ -715,7 +724,7 @@ inline bool is_identifier_character(CharT c)
 }
 
 template<typename CharT>
-parse_iterator parse_identifier(parse_iterator it, const CharT *input, size_t input_size, std::basic_string<CharT> *out = nullptr)
+parse_iterator parse_identifier(parse_iterator it, const CharT *input, size_t input_size, parse_range *out = nullptr)
 {
     assert(input != nullptr);
     assert(it.i < input_size);
@@ -729,7 +738,20 @@ parse_iterator parse_identifier(parse_iterator it, const CharT *input, size_t in
     SKIP_COND(c, it, input, input_size, is_identifier_character);
 
     if (out != nullptr)
-        *out = std::basic_string<CharT>(input + start.i, it.i - start.i);
+    {
+        out->start = start;
+        out->end = it;
+    }
+
+    return it;
+}
+
+template<typename CharT>
+parse_iterator parse_identifier(parse_iterator it, const CharT *input, size_t input_size, std::basic_string<CharT> *out = nullptr)
+{
+    parse_range range;
+    it = parse_identifier(it, input, input_size, &range);
+    *out = slice(input, &range);
 
     return it;
 }

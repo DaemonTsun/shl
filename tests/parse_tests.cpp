@@ -4,7 +4,6 @@
 
 #include <t1/t1.hpp>
 
-#undef NDEBUG
 #include "../src/parse.hpp"
 
 using namespace std::literals;
@@ -204,6 +203,21 @@ define_test(parse_string_parses_string3)
 
     std::string str = slice(input, &out);
     assert_equal(str, "\nabc\n"s);
+}
+
+define_test(parse_string_parses_string4)
+{
+    SETUP("\"abc\"");
+
+    std::string out;
+
+    it = parse_string(it, input, input_size, &out);
+
+    assert_equal(it.i, 5);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 6);
+    assert_equal(out, "abc"s);
 }
 
 define_test(parse_string_parses_string_with_delims)
