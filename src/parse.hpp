@@ -206,7 +206,7 @@ parse_iterator skip_whitespace(parse_iterator it, const CharT *input, size_t inp
 }
 
 template<typename CharT>
-parse_iterator parse_comment(parse_iterator it, const CharT *input, size_t input_size, std::basic_string<CharT> *out = nullptr, bool *success = nullptr)
+parse_iterator parse_comment(parse_iterator it, const CharT *input, size_t input_size, parse_range *out, bool *success = nullptr)
 {
     parse_iterator ret = it;
     parse_iterator comment_start;
@@ -249,10 +249,9 @@ parse_iterator parse_comment(parse_iterator it, const CharT *input, size_t input
         while (it.i < input_size && input[it.i] != '\n')
             advance(&it);
 
-        comment_end = it;
-
         if (it.i >= input_size)
         {
+            comment_end = it;
             ret = it;
             has_comment = true;
             goto parse_comment_end;
@@ -263,6 +262,7 @@ parse_iterator parse_comment(parse_iterator it, const CharT *input, size_t input
             it.i++;
             next_line(&it);
             update_iterator_line_pos(&it);
+            comment_end = it;
             ret = it;
             has_comment = true;
             goto parse_comment_end;
@@ -274,7 +274,6 @@ parse_iterator parse_comment(parse_iterator it, const CharT *input, size_t input
         advance(&it);
 
         comment_start = it;
-        parse_iterator prev = it;
 
         while (it.i < input_size)
         {
@@ -296,7 +295,9 @@ parse_iterator parse_comment(parse_iterator it, const CharT *input, size_t input
 
                 if (c == '/')
                 {
-                    comment_end = prev;
+                    comment_end = it;
+                    advance(&comment_end, -1);
+
                     advance(&it);
                     ret = it;
                     has_comment = true;
@@ -304,7 +305,6 @@ parse_iterator parse_comment(parse_iterator it, const CharT *input, size_t input
                 }
             }
 
-            prev = it;
             advance(&it);
         }
 
@@ -317,10 +317,31 @@ parse_comment_end:
         *success = has_comment;
 
     if (has_comment && out != nullptr)
-        *out = std::basic_string<CharT>(input + comment_start.i,
-                                        comment_end.i - comment_start.i);
+    {
+        out->start = comment_start;
+        out->end = comment_end;
+    }
 
     return ret;
+}
+
+template<typename CharT>
+parse_iterator parse_comment(parse_iterator it, const CharT *input, size_t input_size, std::basic_string<CharT> *out, bool *success = nullptr)
+{
+    parse_range range;
+
+    it = parse_comment(it, input, input_size, &range, success);
+
+    if (*success)
+        *out = slice(input, &range);
+
+    return it;
+}
+
+template<typename CharT>
+parse_iterator parse_comment(parse_iterator it, const CharT *input, size_t input_size, bool *success = nullptr)
+{
+    return parse_comment(it, input, input_size, static_cast<parse_range*>(nullptr), success);
 }
 
 template<typename CharT>
@@ -387,13 +408,19 @@ parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_
 }
 
 template<typename CharT>
-parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_size, std::basic_string<CharT> *out = nullptr, CharT delim = '"', bool include_delims = false)
+parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_size, std::basic_string<CharT> *out, CharT delim = '"', bool include_delims = false)
 {
     parse_range range;
     it = parse_string(it, input, input_size, &range, delim, include_delims);
     *out = slice(input, &range);
 
     return it;
+}
+
+template<typename CharT>
+parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_size, CharT delim = '"', bool include_delims = false)
+{
+    return parse_string(it, input, input_size, static_cast<parse_range*>(nullptr), delim, include_delims);
 }
 
 template<typename CharT>
@@ -724,7 +751,7 @@ inline bool is_identifier_character(CharT c)
 }
 
 template<typename CharT>
-parse_iterator parse_identifier(parse_iterator it, const CharT *input, size_t input_size, parse_range *out = nullptr)
+parse_iterator parse_identifier(parse_iterator it, const CharT *input, size_t input_size, parse_range *out)
 {
     assert(input != nullptr);
     assert(it.i < input_size);
@@ -747,11 +774,17 @@ parse_iterator parse_identifier(parse_iterator it, const CharT *input, size_t in
 }
 
 template<typename CharT>
-parse_iterator parse_identifier(parse_iterator it, const CharT *input, size_t input_size, std::basic_string<CharT> *out = nullptr)
+parse_iterator parse_identifier(parse_iterator it, const CharT *input, size_t input_size, std::basic_string<CharT> *out)
 {
     parse_range range;
     it = parse_identifier(it, input, input_size, &range);
     *out = slice(input, &range);
 
     return it;
+}
+
+template<typename CharT>
+parse_iterator parse_identifier(parse_iterator it, const CharT *input, size_t input_size)
+{
+    return parse_identifier(it, input, input_size, static_cast<parse_range*>(nullptr));
 }

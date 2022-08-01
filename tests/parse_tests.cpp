@@ -72,7 +72,6 @@ define_test(skip_whitespace_doesnt_skip_nonwhitespace)
     assert_equal(it.line_pos, 1);
 }
 
-// TODO: parse_comment tests
 define_test(parse_comment_parses_nullptr)
 {
     SETUP(nullptr);
@@ -83,6 +82,70 @@ define_test(parse_comment_parses_nullptr)
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 1);
+}
+
+define_test(parse_comment_parses_empty_string)
+{
+    SETUP("");
+
+    it = parse_comment(it, input, input_size);
+
+    assert_equal(it.i, 0);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 1);
+}
+
+define_test(parse_comment_parses_line_comment)
+{
+    SETUP("// hello");
+
+    std::string out;
+    bool success;
+    it = parse_comment(it, input, input_size, &out, &success);
+
+    assert_equal(it.i, 8);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 9);
+
+    assert_equal(success, true);
+    assert_equal(out, " hello"s);
+}
+
+define_test(parse_comment_parses_line_comment2)
+{
+    SETUP("// hello\n world");
+
+    std::string out;
+    bool success;
+    it = parse_comment(it, input, input_size, &out, &success);
+
+    assert_equal(it.i, 9);
+    assert_equal(it.line_start, 9);
+    assert_equal(it.line, 2);
+    assert_equal(it.line_pos, 1);
+
+    assert_equal(success, true);
+    assert_equal(out, " hello\n"s);
+}
+
+define_test(parse_comment_parses_block_comment)
+{
+    SETUP("/* abc def */");
+
+    std::string out;
+    bool success;
+    it = parse_comment(it, input, input_size, &out, &success);
+
+    assert_equal(it.i, 13);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 14);
+
+    assert_equal(success, true);
+    // TODO: fix
+    assert_equal(out, " abc def "s);
 }
 
 define_test(parse_string_throws_on_invalid_input)
