@@ -34,8 +34,25 @@ define_test(parse_object_parses_bool)
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 5);
 
-    assert_equal(obj.type, parsed_object_type::Bool);
-    assert_equal(obj.data.boolean, true);
+    assert_equal(obj.has_value<bool>(), true);
+    assert_equal(obj.get<bool>(), true);
+}
+
+define_test(parse_object_parses_identifier)
+{
+    SETUP("truee");
+
+    parsed_object obj;
+
+    it = parse_object(it, input, input_size, &obj);
+
+    assert_equal(it.i, 5);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 6);
+
+    assert_equal(obj.has_value<parsed_identifier<char>>(), true);
+    assert_equal(obj.get<parsed_identifier<char>>().value, "truee"s);
 }
 
 define_test(parse_object_parses_string)
@@ -51,8 +68,28 @@ define_test(parse_object_parses_string)
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 17);
 
-    assert_equal(obj.type, parsed_object_type::String);
-    assert_equal(obj.data.string, "hello world"s);
+    assert_equal(obj.has_value<std::string>(), true);
+    assert_equal(obj.get<std::string>(), "hello world"s);
+}
+
+define_test(parse_object_parses_number_over_identifier)
+{
+    SETUP(" /* comment */  deadbeef");
+
+    parsed_object obj;
+
+    it = parse_object(it, input, input_size, &obj);
+
+    assert_equal(it.i, 24);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 25);
+
+    assert_equal(obj.has_value<s64>(), true);
+    assert_equal(obj.get<s64>(), 0xdeadbeef);
+
+    s64 x = (s64)obj;
+    assert_equal(x, 0xdeadbeef);
 }
 
 define_default_test_main();

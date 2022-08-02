@@ -147,6 +147,7 @@ public:
     const CharT *input = nullptr;
     size_t input_size;
 
+    parse_error() {}
     parse_error(const char* msg) : _what(msg) {}
     parse_error(const parse_error& other) = default;
 
