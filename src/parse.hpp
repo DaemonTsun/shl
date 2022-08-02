@@ -347,6 +347,21 @@ parse_iterator parse_comment(parse_iterator it, const CharT *input, size_t input
 }
 
 template<typename CharT>
+parse_iterator skip_whitespace_and_comments(parse_iterator it, const CharT *input, size_t input_size)
+{
+    bool ok;
+
+    do
+    {
+        it = parse_comment(it, input, input_size, &ok);
+        it = skip_whitespace(it, input, input_size);
+    } while (ok);
+
+    return it;
+}
+
+
+template<typename CharT>
 parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_size, parse_range *out, CharT delim = '"', bool include_delims = false)
 {
     parse_iterator start = it;

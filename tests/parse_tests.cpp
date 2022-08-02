@@ -188,6 +188,46 @@ define_test(parse_comment_parses_block_comment2)
     assert_equal(str, "\nhello world\n"s);
 }
 
+define_test(skip_whitespace_and_comments_skips_whitespace)
+{
+    SETUP("   abc def");
+    //        ^
+
+    it = skip_whitespace_and_comments(it, input, input_size);
+
+    assert_equal(it.i, 3);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 4);
+}
+
+define_test(skip_whitespace_and_comments_skips_comment)
+{
+    SETUP("/*\nhello world\n*/  abc");
+    //                          ^
+
+    it = skip_whitespace_and_comments(it, input, input_size);
+
+    assert_equal(it.i, 19);
+    assert_equal(it.line_start, 15);
+    assert_equal(it.line, 3);
+    assert_equal(it.line_pos, 5);
+}
+
+define_test(skip_whitespace_and_comments_skips_comments)
+{
+    SETUP(" /*\nhello world\n*/  // this is a line comment\n /*yep*/abc");
+    //                                                             ^
+
+    it = skip_whitespace_and_comments(it, input, input_size);
+
+    assert_equal(it.i, 54);
+    assert_equal(input[it.i], 'a');
+    assert_equal(it.line_start, 46);
+    assert_equal(it.line, 4);
+    assert_equal(it.line_pos, 9);
+}
+
 define_test(parse_string_throws_on_invalid_input)
 {
     SETUP("abc");
