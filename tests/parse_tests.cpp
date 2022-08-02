@@ -134,7 +134,7 @@ define_test(parse_comment_parses_block_comment)
 {
     SETUP("/* abc def */");
 
-    std::string out;
+    parse_range out;
     bool success;
     it = parse_comment(it, input, input_size, &out, &success);
 
@@ -144,8 +144,48 @@ define_test(parse_comment_parses_block_comment)
     assert_equal(it.line_pos, 14);
 
     assert_equal(success, true);
-    // TODO: fix
-    assert_equal(out, " abc def "s);
+
+    assert_equal(out.start.i, 2);
+    assert_equal(out.start.line_start, 0);
+    assert_equal(out.start.line, 1);
+    assert_equal(out.start.line_pos, 3);
+
+    assert_equal(out.end.i, 11);
+    assert_equal(out.end.line_start, 0);
+    assert_equal(out.end.line, 1);
+    assert_equal(out.end.line_pos, 12);
+
+    auto str = slice(input, &out);
+    assert_equal(str, " abc def "s);
+}
+
+define_test(parse_comment_parses_block_comment2)
+{
+    SETUP("/*\nhello world\n*/");
+
+    parse_range out;
+    bool success;
+    it = parse_comment(it, input, input_size, &out, &success);
+
+    assert_equal(it.i, 17);
+    assert_equal(it.line_start, 15);
+    assert_equal(it.line, 3);
+    assert_equal(it.line_pos, 3);
+
+    assert_equal(success, true);
+
+    assert_equal(out.start.i, 2);
+    assert_equal(out.start.line_start, 0);
+    assert_equal(out.start.line, 1);
+    assert_equal(out.start.line_pos, 3);
+
+    assert_equal(out.end.i, 15);
+    assert_equal(out.end.line_start, 15);
+    assert_equal(out.end.line, 3);
+    assert_equal(out.end.line_pos, 1);
+
+    auto str = slice(input, &out);
+    assert_equal(str, "\nhello world\n"s);
 }
 
 define_test(parse_string_throws_on_invalid_input)

@@ -212,7 +212,7 @@ parse_iterator parse_comment(parse_iterator it, const CharT *input, size_t input
     parse_iterator comment_start;
     parse_iterator comment_end;
 
-    bool has_comment;
+    bool has_comment = false;
 
     it = skip_whitespace(it, input, input_size);
     CharT c;
@@ -238,6 +238,8 @@ parse_iterator parse_comment(parse_iterator it, const CharT *input, size_t input
         has_comment = false;
         goto parse_comment_end;
     }
+
+    c = input[it.i];
 
     if (c == '/')
     {
