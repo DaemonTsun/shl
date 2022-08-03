@@ -941,6 +941,22 @@ define_test(parse_decimal_parses_double7)
     assert_equal(out, 1234e5);
 }
 
+define_test(parse_decimal_parses_decimal)
+{
+    SETUP("123456789.987654321e10");
+
+    parse_range out;
+    parse_error err;
+
+    it = parse_decimal(it, input, input_size, &out, &err);
+
+    assert_equal(err.success, true);
+    assert_equal(it.i, 22);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 23);
+}
+
 define_test(parse_decimal_throw_on_invalid_input)
 {
     SETUP("z");
@@ -974,6 +990,23 @@ define_test(parse_decimal_throw_on_invalid_input3)
     assert_error(it = parse_decimal(it, input, input_size, &out), parse_error<>)
     {
         assert_equal(err.it.i, 0);
+    }
+}
+
+define_test(parse_decimal_yields_error_on_invalid_input)
+{
+    SETUP("10e");
+
+    parse_range out;
+    parse_error err;
+
+    it = parse_decimal(it, input, input_size, &out, &err);
+
+    assert_equal(err.success, false);
+
+    assert_error(throw err, parse_error<>)
+    {
+        assert_equal(err.it.i, 3);
     }
 }
 

@@ -500,8 +500,6 @@ parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_
 template<typename CharT>
 parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_size, std::basic_string<CharT> *out, CharT delim = '"', bool include_delims = false)
 {
-    assert(out != nullptr);
-
     parse_range range;
     parse_error<CharT> err;
     it = parse_string(it, input, input_size, &range, &err, delim, include_delims);
@@ -509,7 +507,8 @@ parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_
     if (err)
         throw err;
 
-    *out = slice(input, &range);
+    if (out != nullptr)
+        *out = slice(input, &range);
 
     return it;
 }
@@ -597,8 +596,6 @@ parse_iterator parse_bool(parse_iterator it, const CharT *input, size_t input_si
 template<typename CharT>
 parse_iterator parse_bool(parse_iterator it, const CharT *input, size_t input_size, bool *out = nullptr)
 {
-    assert(out != nullptr);
-
     parse_range range;
     parse_error<CharT> err;
     it = parse_bool(it, input, input_size, &range, &err);
@@ -606,8 +603,9 @@ parse_iterator parse_bool(parse_iterator it, const CharT *input, size_t input_si
     if (err)
         throw err;
 
+    if (out != nullptr)
     // bad check, but fine as long as parse_bool doesnt change
-    *out = to_lower(input[range.start.i]) == 't';
+        *out = to_lower(input[range.start.i]) == 't';
 
     return it;
 }
@@ -873,14 +871,14 @@ parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input
     return it;
 }
 
-template<typename CharT, typename OutT = float>
-parse_iterator parse_decimal(parse_iterator it, const CharT *input, size_t input_size, OutT *out = nullptr)
+template<typename CharT>
+parse_iterator parse_decimal(parse_iterator it, const CharT *input, size_t input_size, parse_range *out, parse_error<CharT> *err)
 {
-    static_assert(std::is_floating_point_v<OutT>, "parse_decimal number type argument must be a floating point number type");
-
     assert(input != nullptr);
     assert(it.i < input_size);
+    assert(err != nullptr);
 
+    err->success = false;
     parse_iterator start = it;
     auto c = input[it.i];
     bool has_digits = false;
@@ -890,7 +888,10 @@ parse_iterator parse_decimal(parse_iterator it, const CharT *input, size_t input
         advance(&it);
 
         if (it.i >= input_size)
-            throw parse_error(it, input, input_size, "not a decimal number at ", start);
+        {
+            *err = parse_error(it, input, input_size, "not a decimal number at ", start);
+            return start;
+        }
 
         c = input[it.i];
     }
@@ -920,7 +921,10 @@ parse_iterator parse_decimal(parse_iterator it, const CharT *input, size_t input
             if (has_digits)
                 goto parse_decimal_end;
             else
-                throw parse_error(it, input, input_size, "expected decimal number digits at ", it, ", got EOF");
+            {
+                *err = parse_error(it, input, input_size, "expected decimal number digits at ", it, ", got EOF");
+                return start;
+            }
         }
 
         c = input[it.i];
@@ -940,12 +944,18 @@ parse_iterator parse_decimal(parse_iterator it, const CharT *input, size_t input
     if (c == 'e' || c == 'E')
     {
         if (!has_digits)
-            throw parse_error(it, input, input_size, "unexpected symbol '", (char)c, "' at ", it, " in decimal number starting at ", start);
+        {
+            *err = parse_error(it, input, input_size, "unexpected symbol '", (char)c, "' at ", it, " in decimal number starting at ", start);
+            return start;
+        }
 
         advance(&it);
 
         if (it.i >= input_size)
-            throw parse_error(it, input, input_size, "exponent at ", it, " of decimal number starting at ", start, " requires a value");
+        {
+            *err = parse_error(it, input, input_size, "exponent at ", it, " of decimal number starting at ", start, " requires a value");
+            return start;
+        }
 
         c = input[it.i];
 
@@ -954,7 +964,10 @@ parse_iterator parse_decimal(parse_iterator it, const CharT *input, size_t input
             advance(&it);
 
             if (it.i >= input_size)
-                throw parse_error(it, input, input_size, "exponent at ", it, " of decimal number starting at ", start, " requires a value");
+            {
+                *err = parse_error(it, input, input_size, "exponent at ", it, " of decimal number starting at ", start, " requires a value");
+                return start;
+            }
 
             c = input[it.i];
         }
@@ -972,9 +985,31 @@ parse_iterator parse_decimal(parse_iterator it, const CharT *input, size_t input
     }
 
     if (!has_digits)
-        throw parse_error(it, input, input_size, "not a decimal number at ", start);
+    {
+        *err = parse_error(it, input, input_size, "not a decimal number at ", start);
+        return start;
+    }
         
 parse_decimal_end:
+    err->success = true;
+    out->start = start;
+    out->end = it;
+
+    return it;
+}
+
+template<typename CharT, typename OutT = float>
+parse_iterator parse_decimal(parse_iterator it, const CharT *input, size_t input_size, OutT *out = nullptr)
+{
+    static_assert(std::is_floating_point_v<OutT>, "parse_decimal number type argument must be a floating point number type");
+
+    parse_range range;
+    parse_error<CharT> err;
+    it = parse_decimal(it, input, input_size, &range, &err);
+
+    if (err)
+        throw err;
+
     if (out == nullptr)
         return it;
 
@@ -982,12 +1017,12 @@ parse_decimal_end:
     // just change it if you need to.
     constexpr const size_t digit_size = 128;
     CharT buf[digit_size];
-    size_t len = it.i - start.i;
+    size_t len = range.end.i - range.start.i;
 
     if (len > digit_size - 1)
-        throw parse_error(it, input, input_size, "floating point number too large at ", start);
+        throw parse_error(it, input, input_size, "floating point number too large at ", range.start);
 
-    copy(input + start.i, buf, len);
+    copy(input + range.start.i, buf, len);
     buf[len] = 0;
 
     *out = to_decimal<OutT, CharT>(buf, nullptr);
