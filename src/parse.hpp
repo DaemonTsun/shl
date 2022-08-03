@@ -500,6 +500,8 @@ parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_
 template<typename CharT>
 parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_size, std::basic_string<CharT> *out, CharT delim = '"', bool include_delims = false)
 {
+    assert(out != nullptr);
+
     parse_range range;
     parse_error<CharT> err;
     it = parse_string(it, input, input_size, &range, &err, delim, include_delims);
@@ -519,10 +521,13 @@ parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_
 }
 
 template<typename CharT>
-parse_iterator parse_bool(parse_iterator it, const CharT *input, size_t input_size, bool *out = nullptr)
+parse_iterator parse_bool(parse_iterator it, const CharT *input, size_t input_size, parse_range *out, parse_error<CharT> *err)
 {
     assert(input != nullptr);
     assert(it.i < input_size);
+    assert(err != nullptr);
+
+    err->success = false;
 
     parse_iterator start = it;
     auto c = input[it.i];
@@ -533,14 +538,18 @@ parse_iterator parse_bool(parse_iterator it, const CharT *input, size_t input_si
         if (it.i + 3 >= input_size)
         {
             advance(&it, input_size - it.i);
-            throw parse_error(it, input, input_size, "not a boolean at ", start);
+            *err = parse_error(it, input, input_size, "not a boolean at ", start);
+            return start;
         }
 
         for (int i = 0; i < 4;)
         {
             c = input[it.i];
             if (to_lower(c) != "true"[i])
-                throw parse_error(it, input, input_size, "unexpected symbol '", c, "' at ", it, " in boolean");
+            {
+                *err = parse_error(it, input, input_size, "unexpected symbol '", c, "' at ", it, " in boolean");
+                return start;
+            }
 
             advance(&it);
             ++i;
@@ -553,14 +562,18 @@ parse_iterator parse_bool(parse_iterator it, const CharT *input, size_t input_si
         if (it.i + 4 >= input_size)
         {
             advance(&it, input_size - it.i);
-            throw parse_error(it, input, input_size, "not a boolean at ", start);
+            *err = parse_error(it, input, input_size, "not a boolean at ", start);
+            return start;
         }
 
         for (int i = 0; i < 5;)
         {
             c = input[it.i];
             if (to_lower(c) != "false"[i])
-                throw parse_error(it, input, input_size, "unexpected symbol '", c, "' at ", it, " in boolean");
+            {
+                *err = parse_error(it, input, input_size, "unexpected symbol '", c, "' at ", it, " in boolean");
+                return start;
+            }
 
             advance(&it);
             ++i;
@@ -569,11 +582,160 @@ parse_iterator parse_bool(parse_iterator it, const CharT *input, size_t input_si
         val = false;
     }
     else 
-        throw parse_error(it, input, input_size, "unexpected symbol '", c, "' at ", it, " in boolean");
+    {
+        *err = parse_error(it, input, input_size, "unexpected symbol '", c, "' at ", it, " in boolean");
+        return start;
+    }
 
-    if (out)
-        *out = val;
+    out->start = start;
+    out->end = it;
+    err->success = true;
 
+    return it;
+}
+
+template<typename CharT>
+parse_iterator parse_bool(parse_iterator it, const CharT *input, size_t input_size, bool *out = nullptr)
+{
+    assert(out != nullptr);
+
+    parse_range range;
+    parse_error<CharT> err;
+    it = parse_bool(it, input, input_size, &range, &err);
+
+    if (err)
+        throw err;
+
+    // bad check, but fine as long as parse_bool doesnt change
+    *out = to_lower(input[range.start.i]) == 't';
+
+    return it;
+}
+
+template<typename CharT>
+parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input_size, parse_range *out, parse_error<CharT> *err)
+{
+    assert(input != nullptr);
+    assert(it.i < input_size);
+    assert(err != nullptr);
+
+    err->success = false;
+    parse_iterator start = it;
+    auto c = input[it.i];
+
+    if (c == '-' || c == '+')
+    {
+        advance(&it);
+
+        if (it.i >= input_size)
+        {
+            *err = parse_error(it, input, input_size, "not an integer at ", start);
+            return start;
+        }
+
+        c = input[it.i];
+        
+        if (!is_digit(c))
+        {
+            *err = parse_error(it, input, input_size, "not an integer at ", start);
+            return start;
+        }
+    }
+
+    if (c == '0')
+    {
+        advance(&it);
+
+        if (it.i < input_size)
+        {
+            c = input[it.i];
+
+            if (c == 'x' || c == 'X')
+            {
+                advance(&it);
+
+                if (it.i >= input_size)
+                {
+                    *err = parse_error(it, input, input_size, "invalid hex integer at ", start);
+                    return start;
+                }
+
+                c = input[it.i];
+
+                if (!is_hex_digit(c))
+                {
+                    *err = parse_error(it, input, input_size, "invalid hex digit ", c, " at ", it, ", hex integer starting at ", start);
+                    return start;
+                }
+
+                SKIP_COND(c, it, input, input_size, is_hex_digit);
+            }
+            else if (c == 'b' || c == 'B')
+            {
+                advance(&it);
+
+                if (it.i >= input_size)
+                {
+                    *err = parse_error(it, input, input_size, "invalid binary integer at ", start);
+                    return start;
+                }
+
+                c = input[it.i];
+
+                if (!is_bin_digit(c))
+                {
+                    *err = parse_error(it, input, input_size, "invalid binary digit ", c, " at ", it, ", hex integer starting at ", start);
+                    return start;
+                }
+
+                SKIP_COND(c, it, input, input_size, is_bin_digit);
+            }
+            else
+            {
+                advance(&it);
+
+                if (it.i >= input_size)
+                {
+                    *err = parse_error(it, input, input_size, "invalid octal integer at ", start);
+                    return start;
+                }
+
+                c = input[it.i];
+
+                if (!is_oct_digit(c))
+                {
+                    *err = parse_error(it, input, input_size, "invalid octal digit ", c, " at ", it, ", hex integer starting at ", start);
+                    return start;
+                }
+                
+                SKIP_COND(c, it, input, input_size, is_oct_digit);
+            }
+        }
+    }
+    else if (is_hex_digit(c))
+    {
+        if (!is_digit(c))
+        {
+            SKIP_COND(c, it, input, input_size, is_hex_digit);
+        }
+        else 
+        {
+            SKIP_COND(c, it, input, input_size, is_digit);
+        }
+    }
+    else
+    {
+        *err = parse_error(it, input, input_size, "invalid integer digit ", c, " at ", start);
+        return start;
+    }
+        
+    if (out == nullptr)
+        return it;
+
+    out->start = start;
+    out->end = it;
+
+    err->success = true;
     return it;
 }
 
@@ -691,7 +853,7 @@ parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input
         return it;
 
     // 64 binary digits + 0b + - + 1
-    constexpr const size_t digit_size = 68;
+    constexpr const size_t digit_size = sizeof(OutT) * 8 + 4;
     CharT buf[digit_size];
     size_t len = it.i - digit_start.i;
 

@@ -228,7 +228,7 @@ define_test(skip_whitespace_and_comments_skips_comments)
     assert_equal(it.line_pos, 9);
 }
 
-define_test(parse_string_throws_on_invalid_input)
+define_test(parse_string_yields_error_on_invalid_input)
 {
     SETUP("abc");
 
@@ -237,6 +237,7 @@ define_test(parse_string_throws_on_invalid_input)
     
     it = parse_string(it, input, input_size, &out, &err);
 
+    assert_equal(err.success, false);
     assert_error(throw err, parse_error<>)
     {
         assert_equal(err.it.i, 0);
@@ -244,7 +245,7 @@ define_test(parse_string_throws_on_invalid_input)
     }
 }
 
-define_test(parse_string_throws_on_unterminated_string)
+define_test(parse_string_yields_error_on_unterminated_string)
 {
     SETUP("\"abc");
 
@@ -253,6 +254,7 @@ define_test(parse_string_throws_on_unterminated_string)
 
     it = parse_string(it, input, input_size, &out, &err);
 
+    assert_equal(err.success, false);
     assert_error(throw err, parse_error<>)
     {
         assert_equal(err.it.i, 4);
@@ -260,7 +262,7 @@ define_test(parse_string_throws_on_unterminated_string)
     }
 }
 
-define_test(parse_string_throws_on_unterminated_string2)
+define_test(parse_string_yields_error_on_unterminated_string2)
 {
     SETUP("\"abc\\\"");
 
@@ -269,6 +271,7 @@ define_test(parse_string_throws_on_unterminated_string2)
 
     it = parse_string(it, input, input_size, &out, &err);
 
+    assert_equal(err.success, false);
     assert_error(throw err, parse_error<>)
     {
         assert_equal(err.it.i, 6);
@@ -476,7 +479,7 @@ define_test(parse_integer_parses_integer)
 
 define_test(parse_integer_parses_integer2)
 {
-    SETUP("1234abcde");
+    SETUP("1234xyz");
 
     s64 out;
 
@@ -500,6 +503,22 @@ define_test(parse_integer_parses_integer3)
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 6);
     assert_equal(out, -5678);
+}
+
+define_test(parse_integer_parses_integer4)
+{
+    SETUP("-0xabc");
+
+    parse_range out;
+    parse_error err;
+
+    it = parse_integer(it, input, input_size, &out, &err);
+    assert_equal(it.i, 6);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 7);
+
+    assert_equal(err.success, true);
 }
 
 define_test(parse_integer_parses_unsigned_integer)
@@ -705,6 +724,24 @@ define_test(parse_integer_throws_on_invalid_input4)
     {
         assert_equal(err.it.i, 2);
         assert_equal(err.input, "0xZ");
+    }
+}
+
+define_test(parse_integer_yields_error_on_invalid_input)
+{
+    SETUP("+");
+
+    parse_range out;
+    parse_error err;
+
+    it = parse_integer(it, input, input_size, &out, &err);
+
+    assert_equal(err.success, false);
+
+    assert_error(throw err, parse_error<>)
+    {
+        assert_equal(err.it.i, 1);
+        assert_equal(err.input, "+");
     }
 }
 
@@ -1020,6 +1057,22 @@ define_test(parse_bool_parses_true2)
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 5);
     assert_equal(out, true);
+}
+
+define_test(parse_bool_parses_true3)
+{
+    SETUP("true");
+
+    parse_range out;
+    parse_error err;
+
+    it = parse_bool(it, input, input_size, &out, &err);
+    assert_equal(it.i, 4);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 5);
+
+    assert_equal(err.success, true);
 }
 
 define_test(parse_bool_parses_false)
