@@ -586,8 +586,12 @@ parse_iterator parse_bool(parse_iterator it, const CharT *input, size_t input_si
         return start;
     }
 
-    out->start = start;
-    out->end = it;
+    if (out != nullptr)
+    {
+        out->start = start;
+        out->end = it;
+    }
+
     err->success = true;
 
     return it;
@@ -727,11 +731,11 @@ parse_iterator parse_integer(parse_iterator it, const CharT *input, size_t input
         return start;
     }
         
-    if (out == nullptr)
-        return it;
-
-    out->start = start;
-    out->end = it;
+    if (out != nullptr)
+    {
+        out->start = start;
+        out->end = it;
+    }
 
     err->success = true;
     return it;
@@ -991,9 +995,14 @@ parse_iterator parse_decimal(parse_iterator it, const CharT *input, size_t input
     }
         
 parse_decimal_end:
+
+    if (out != nullptr)
+    {
+        out->start = start;
+        out->end = it;
+    }
+
     err->success = true;
-    out->start = start;
-    out->end = it;
 
     return it;
 }
@@ -1043,16 +1052,22 @@ inline bool is_identifier_character(CharT c)
 }
 
 template<typename CharT>
-parse_iterator parse_identifier(parse_iterator it, const CharT *input, size_t input_size, parse_range *out)
+parse_iterator parse_identifier(parse_iterator it, const CharT *input, size_t input_size, parse_range *out, parse_error<CharT> *err)
 {
     assert(input != nullptr);
     assert(it.i < input_size);
+    assert(err != nullptr);
+
+    err->success = false;
 
     parse_iterator start = it;
     auto c = input[it.i];
 
     if (!is_first_identifier_character(c))
-        throw parse_error(it, input, input_size, "invalid identifier character at ", start);
+    {
+        *err = parse_error(it, input, input_size, "invalid identifier character at ", start);
+        return start;
+    }
 
     SKIP_COND(c, it, input, input_size, is_identifier_character);
 
@@ -1062,6 +1077,7 @@ parse_iterator parse_identifier(parse_iterator it, const CharT *input, size_t in
         out->end = it;
     }
 
+    err->success = true;
     return it;
 }
 
@@ -1069,8 +1085,14 @@ template<typename CharT>
 parse_iterator parse_identifier(parse_iterator it, const CharT *input, size_t input_size, std::basic_string<CharT> *out)
 {
     parse_range range;
-    it = parse_identifier(it, input, input_size, &range);
-    *out = slice(input, &range);
+    parse_error<CharT> err;
+    it = parse_identifier(it, input, input_size, &range, &err);
+
+    if (err)
+        throw err;
+
+    if (out != nullptr)
+        *out = slice(input, &range);
 
     return it;
 }
