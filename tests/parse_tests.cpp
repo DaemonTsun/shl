@@ -233,8 +233,11 @@ define_test(parse_string_throws_on_invalid_input)
     SETUP("abc");
 
     parse_range out;
+    parse_error err;
+    
+    it = parse_string(it, input, input_size, &out, &err);
 
-    assert_error(it = parse_string(it, input, input_size, &out), parse_error<>)
+    assert_error(throw err, parse_error<>)
     {
         assert_equal(err.it.i, 0);
         assert_equal(err.input, "abc");
@@ -246,8 +249,11 @@ define_test(parse_string_throws_on_unterminated_string)
     SETUP("\"abc");
 
     parse_range out;
+    parse_error err;
 
-    assert_error(it = parse_string(it, input, input_size, &out), parse_error<>)
+    it = parse_string(it, input, input_size, &out, &err);
+
+    assert_error(throw err, parse_error<>)
     {
         assert_equal(err.it.i, 4);
         assert_equal(err.input, "\"abc");
@@ -259,8 +265,11 @@ define_test(parse_string_throws_on_unterminated_string2)
     SETUP("\"abc\\\"");
 
     parse_range out;
+    parse_error err;
 
-    assert_error(it = parse_string(it, input, input_size, &out), parse_error<>)
+    it = parse_string(it, input, input_size, &out, &err);
+
+    assert_error(throw err, parse_error<>)
     {
         assert_equal(err.it.i, 6);
         assert_equal(err.input, "\"abc\\\"");
@@ -272,8 +281,11 @@ define_test(parse_string_parses_string)
     SETUP("\"\"");
 
     parse_range out;
+    parse_error err;
 
-    it = parse_string(it, input, input_size, &out);
+    it = parse_string(it, input, input_size, &out, &err);
+
+    assert_equal(err.success, true);
 
     assert_equal(it.i, 2);
     assert_equal(it.line_start, 0);
@@ -299,8 +311,9 @@ define_test(parse_string_parses_string2)
     SETUP("\"abc\"");
 
     parse_range out;
+    parse_error err;
 
-    it = parse_string(it, input, input_size, &out);
+    it = parse_string(it, input, input_size, &out, &err);
 
     assert_equal(it.i, 5);
     assert_equal(it.line_start, 0);
@@ -326,8 +339,9 @@ define_test(parse_string_parses_string3)
     SETUP("\"\nabc\n\"");
 
     parse_range out;
+    parse_error err;
 
-    it = parse_string(it, input, input_size, &out);
+    it = parse_string(it, input, input_size, &out, &err);
 
     assert_equal(it.i, 7);
     assert_equal(it.line_start, 6);
@@ -368,8 +382,9 @@ define_test(parse_string_parses_string_with_delims)
     SETUP("\"hello\"   ");
 
     parse_range out;
+    parse_error err;
 
-    it = parse_string(it, input, input_size, &out, '"', true);
+    it = parse_string(it, input, input_size, &out, &err, '"', true);
 
     assert_equal(it.i, 7);
     assert_equal(it.line_start, 0);
@@ -395,8 +410,9 @@ define_test(parse_string_parses_string_with_delims2)
     SETUP("\"hello world\\\" \"  ");
 
     parse_range out;
+    parse_error err;
 
-    it = parse_string(it, input, input_size, &out, '"', true);
+    it = parse_string(it, input, input_size, &out, &err, '"', true);
 
     assert_equal(it.i, 16);
     assert_equal(it.line_start, 0);
@@ -421,8 +437,9 @@ define_test(parse_string_parses_string_delims)
 {
     SETUP("x abc XYZ x");
     parse_range out;
+    parse_error err;
 
-    it = parse_string(it, input, input_size, &out, 'x');
+    it = parse_string(it, input, input_size, &out, &err, 'x');
 
     assert_equal(it.i, 11);
     assert_equal(it.line_start, 0);

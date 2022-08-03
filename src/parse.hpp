@@ -9,11 +9,18 @@
  *
  * all parsing functions have the convention
  *      parse_X(it, input, input_size, ...)
+ *      parse_X(it, input, input_size, outrange, err, ...)
+ *      or
+ *      parse_X(it, input, input_size, ..., success)
  *
  * where X is the thing parsed, 'it' is the iterator, input is a character
  * pointer of size input_size, and ... are additional arguments, often
  * for output of parsed values. input_size is treated as the EOF of the
  * input, not null characters.
+ * overloads with outrange and err dont convert the parsed value and dont
+ * throw, instead passing the range in the input where the value is
+ * located at and the error, if an error occurred.
+ * functions that dont throw by default only have a success parameter.
  *
  * all parsing functions return a new iterator which is directly after the
  * successfully parsed value.
@@ -92,9 +99,9 @@ inline void update_iterator_line_pos(parse_iterator *it)
     it->line_pos = (it->i - it->line_start) + 1;
 }
 
-// does not advance line counter
 inline void advance(parse_iterator *it, s64 n = 1)
 {
+    // does not advance line counter
     it->i += n;
     update_iterator_line_pos(it);
 }
@@ -125,9 +132,21 @@ inline std::basic_string<CharT> slice(const CharT *input, const parse_range *ran
 }
 
 template<typename CharT>
+inline void slice(const CharT *input, const parse_range *range, CharT *out)
+{
+    copy(input + range->start.i, out, range->end.i - range->start.i);
+}
+
+template<typename CharT>
 inline std::basic_string<CharT> slice(const std::basic_string<CharT> &input, const parse_range *range)
 {
-    return input.substr(range->start.i, range->end.i - range->start.i);
+    return slice(input.c_str(), range);
+}
+
+template<typename CharT>
+inline void slice(const std::basic_string<CharT> &input, const parse_range *range, CharT *out)
+{
+    slice(input.c_str(), range, out);
 }
 
 template<typename CharT>
@@ -141,6 +160,7 @@ template<typename CharT = char>
 class parse_error : public std::exception
 {
 public:
+    bool success = false;
     std::string _what;
 
     parse_iterator it;
@@ -156,6 +176,9 @@ public:
     {}
 
     parse_error &operator=(const parse_error& other) = default;
+
+    // for "if error" scenarios
+    operator bool() const { return !success; }
 
     template<typename... Ts>
     parse_error(parse_iterator pit, const CharT *pinput, size_t pinput_size, Ts &&... ts)
@@ -202,6 +225,44 @@ parse_iterator skip_whitespace(parse_iterator it, const CharT *input, size_t inp
         else
             break;
     }
+
+    return it;
+}
+
+// sets success to true if at least one whitespace was skipped
+template<typename CharT>
+parse_iterator skip_whitespace(parse_iterator it, const CharT *input, size_t input_size, bool *success)
+{
+    if (input == nullptr || it.i >= input_size)
+    {
+        *success = false;
+        return it;
+    }
+
+    CharT c;
+    bool skipped = false;
+
+    while (it.i < input_size)
+    {
+        c = input[it.i];
+
+        if (is_newline(c))
+        {
+            skipped = true;
+            it.i++;
+            next_line(&it);
+            update_iterator_line_pos(&it);
+        }
+        else if (is_space(c))
+        {
+            skipped = true;
+            advance(&it);
+        }
+        else
+            break;
+    }
+
+    *success = skipped;
 
     return it;
 }
@@ -361,24 +422,31 @@ parse_iterator skip_whitespace_and_comments(parse_iterator it, const CharT *inpu
     return it;
 }
 
-
 template<typename CharT>
-parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_size, parse_range *out, CharT delim = '"', bool include_delims = false)
+parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_size, parse_range *out, parse_error<CharT> *err, CharT delim = '"', bool include_delims = false)
 {
     parse_iterator start = it;
 
     assert(input != nullptr);
+    assert(err != nullptr);
     assert(it.i < input_size);
 
+    err->success = false;
     auto c = input[it.i];
 
     if (c != delim)
-        throw parse_error(it, input, input_size, "unexpected symbol '", c, "' at ", start, ", expected '", delim, "'");
+    {
+        *err = parse_error(it, input, input_size, "unexpected symbol '", c, "' at ", start, ", expected '", delim, "'");
+        return start;
+    }
 
     advance(&it);
 
     if (it.i >= input_size)
-        throw parse_error(it, input, input_size, "unterminated string starting at ", start);
+    {
+        *err = parse_error(it, input, input_size, "unterminated string starting at ", start);
+        return start;
+    }
 
     c = input[it.i];
 
@@ -402,7 +470,10 @@ parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_
     }
 
     if (c != delim)
-        throw parse_error(it, input, input_size, "unterminated string starting at ", start);
+    {
+        *err = parse_error(it, input, input_size, "unterminated string starting at ", start);
+        return start;
+    }
 
     advance(&it);
 
@@ -422,6 +493,7 @@ parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_
         }
     }
 
+    err->success = true;
     return it;
 }
 
@@ -429,7 +501,12 @@ template<typename CharT>
 parse_iterator parse_string(parse_iterator it, const CharT *input, size_t input_size, std::basic_string<CharT> *out, CharT delim = '"', bool include_delims = false)
 {
     parse_range range;
-    it = parse_string(it, input, input_size, &range, delim, include_delims);
+    parse_error<CharT> err;
+    it = parse_string(it, input, input_size, &range, &err, delim, include_delims);
+
+    if (err)
+        throw err;
+
     *out = slice(input, &range);
 
     return it;
