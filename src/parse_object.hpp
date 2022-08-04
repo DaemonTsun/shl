@@ -5,6 +5,17 @@
 #include <variant>
 #include "parse.hpp"
 
+#define PARSE_STRING_DELIM '"'
+#define PARSE_LIST_BRACKETS "[]"
+#define PARSE_LIST_ITEM_DELIM ","
+#define PARSE_TABLE_BRACKETS "{}"
+#define PARSE_TABLE_ITEM_DELIM ","
+
+#define PARSE_LIST_OPENING_BRACKET PARSE_LIST_BRACKETS[0]
+#define PARSE_LIST_CLOSING_BRACKET PARSE_LIST_BRACKETS[1]
+#define PARSE_TABLE_OPENING_BRACKET PARSE_TABLE_BRACKETS[0]
+#define PARSE_TABLE_CLOSING_BRACKET PARSE_TABLE_BRACKETS[1]
+
 template<typename CharT = char>
 struct parsed_identifier
 {
@@ -12,26 +23,29 @@ struct parsed_identifier
 };
 
 template<typename CharT = char>
-struct parsed_object
+struct basic_parsed_object
 {
+    typedef bool bool_type;
+    typedef s64 integer_type;
+    typedef double decimal_type;
     typedef std::basic_string<CharT> string_type;
     typedef parsed_identifier<CharT> identifier_type;
-    typedef std::vector<parsed_object<CharT>> list_type;
-    typedef std::map<string_type, parsed_object<CharT>> table_type;
+    typedef std::vector<basic_parsed_object<CharT>> list_type;
+    typedef std::map<string_type, basic_parsed_object<CharT>> table_type;
 
-    using parsed_object_type =
-        std::variant<bool,
-                     s64,
-                     double,
+    using parsed_object_data_type =
+        std::variant<bool_type,
+                     integer_type,
+                     decimal_type,
                      string_type,
                      identifier_type,
                      list_type, // TODO
                      table_type // TODO
                     >;
 
-    explicit operator bool&()            { return get<bool>(); }
-    explicit operator s64&()             { return get<s64>(); }
-    explicit operator double&()          { return get<double>(); }
+    explicit operator bool_type&()       { return get<bool_type>(); }
+    explicit operator integer_type&()    { return get<integer_type>(); }
+    explicit operator decimal_type&()    { return get<decimal_type>(); }
     explicit operator string_type&()     { return get<string_type>(); }
     explicit operator identifier_type&() { return get<identifier_type>(); }
     explicit operator list_type&()       { return get<list_type>(); }
@@ -43,84 +57,36 @@ struct parsed_object
     template<typename T>
     bool has_value() const { return std::holds_alternative<T>(data); }
 
-    parsed_object_type data;
+    parsed_object_data_type data;
 };
 
-template<typename CharT>
-struct type_parse
-{
-    parse_iterator it;
-    bool parsed = false;
-    parse_error<CharT> error;
-
-    parsed_object<CharT> obj;
-};
+typedef basic_parsed_object<char> parsed_object;
+typedef basic_parsed_object<wchar_t> wparsed_object;
 
 template<typename CharT>
-parse_iterator try_parse_bool_object(parse_iterator it, const CharT *input, size_t input_size, type_parse<CharT> *out)
+parse_iterator parse_number_object(parse_iterator it, const CharT *input, size_t input_size, parse_range *rn, parse_error<CharT> *err, basic_parsed_object<CharT> *obj)
 {
     assert(input != nullptr);
+    assert(err != nullptr);
+    assert(obj != nullptr);
     assert(it.i < input_size);
 
-    try
-    {
-        bool data;
-        it = parse_bool(it, input, input_size, &data);
-        out->obj.data.template emplace<decltype(data)>(data);
-    }
-    catch (parse_error<CharT> &e)
-    {
-        out->error = e;
-        out->parsed = false;
-        return it;
-    }
-
-    out->parsed = true;
-    return it;
-}
-
-template<typename CharT>
-parse_iterator try_parse_string_object(parse_iterator it, const CharT *input, size_t input_size, type_parse<CharT> *out)
-{
-    assert(input != nullptr);
-    assert(it.i < input_size);
-
-    try
-    {
-        std::basic_string<CharT> data;
-        it = parse_string(it, input, input_size, &data);
-        out->obj.data.template emplace<decltype(data)>(data);
-    }
-    catch (parse_error<CharT> &e)
-    {
-        out->error = e;
-        out->parsed = false;
-        return it;
-    }
-
-    out->parsed = true;
-    return it;
-}
-
-template<typename CharT>
-parse_iterator try_parse_number_object(parse_iterator it, const CharT *input, size_t input_size, type_parse<CharT> *out)
-{
-    assert(input != nullptr);
-    assert(it.i < input_size);
+    err->success = false;
 
     auto start = it;
 
     auto int_it = it;
     auto dec_it = it;
-    parse_error<CharT> int_err("");
-    parse_error<CharT> dec_err("");
+    parse_error<CharT> int_err;
+    parse_error<CharT> dec_err;
 
-    s64 integer;
-    double decimal;
+    typename basic_parsed_object<CharT>::integer_type integer;
+    typename basic_parsed_object<CharT>::decimal_type decimal;
 
     try
     {
         int_it = parse_integer(it, input, input_size, &integer);
+        int_err.success = true;
     }
     catch (parse_error<CharT> &err)
     {
@@ -130,85 +96,63 @@ parse_iterator try_parse_number_object(parse_iterator it, const CharT *input, si
     try
     {
         dec_it = parse_decimal(it, input, input_size, &decimal);
+        dec_err.success = true;
     }
     catch (parse_error<CharT> &err)
     {
         dec_err = err;
     }
 
-    if (int_err.input == nullptr && dec_err.input == nullptr)
+    if (int_err.success && dec_err.success)
     {
         // both parsed successfully
         // if equal length -> integer
         // if one is longer than the other, choose that one
-        out->parsed = true;
+        err->success = true;
 
         if (int_it.i >= dec_it.i)
         {
-            out->obj.data.template emplace<decltype(integer)>(integer);
+            obj->data.template emplace<decltype(integer)>(integer);
             it = int_it;
         }
         else
         {
-            out->obj.data.template emplace<decltype(decimal)>(decimal);
+            obj->data.template emplace<decltype(decimal)>(decimal);
             it = dec_it;
         }
     }
-    else if (int_err.input == nullptr)
+    else if (int_err.success)
     {
-        out->parsed = true;
-        out->obj.data.template emplace<decltype(integer)>(integer);
+        err->success = true;
+        obj->data.template emplace<decltype(integer)>(integer);
         it = int_it;
     }
-    else if (dec_err.input == nullptr)
+    else if (dec_err.success)
     {
-        out->parsed = true;
-        out->obj.data.template emplace<decltype(decimal)>(decimal);
+        err->success = true;
+        obj->data.template emplace<decltype(decimal)>(decimal);
         it = dec_it;
     }
     else
     {
         // both failed to parse, eject the longest error
         if (int_err.it.i >= dec_err.it.i)
-        {
-            out->error = int_err;
-            out->parsed = false;
-        }
+            *err = int_err;
         else
-        {
-            out->error = dec_err;
-            out->parsed = false;
-        }
+            *err = dec_err;
+    }
+
+    if (err->success && rn != nullptr)
+    {
+        rn->start = start;
+        rn->end = it;
     }
 
     return it;
 }
 
 template<typename CharT>
-parse_iterator try_parse_identifier_object(parse_iterator it, const CharT *input, size_t input_size, type_parse<CharT> *out)
-{
-    assert(input != nullptr);
-    assert(it.i < input_size);
-
-    try
-    {
-        parsed_identifier<CharT> data;
-        it = parse_identifier(it, input, input_size, &data.value);
-        out->obj.data.template emplace<decltype(data)>(data);
-    }
-    catch (parse_error<CharT> &e)
-    {
-        out->error = e;
-        out->parsed = false;
-        return it;
-    }
-
-    out->parsed = true;
-    return it;
-}
-
-template<typename CharT>
-parse_iterator parse_object(parse_iterator it, const CharT *input, size_t input_size, parsed_object<CharT> *out)
+parse_iterator parse_object(parse_iterator it, const CharT *input, size_t input_size, basic_parsed_object<CharT> *out)
 {
     assert(input != nullptr);
     assert(it.i < input_size);
@@ -221,75 +165,115 @@ parse_iterator parse_object(parse_iterator it, const CharT *input, size_t input_
 
     auto c = input[it.i];
 
-    type_parse<CharT> tp;
+    basic_parsed_object<CharT> ret;
+    parse_error<CharT> err;
 
-    if (c == '"')
+    if (c == PARSE_STRING_DELIM)
     {
-        tp.it = try_parse_string_object(it, input, input_size, &tp);
+        parse_range rn;
+        it = parse_string(it, input, input_size, &rn, &err, PARSE_STRING_DELIM);
+
+        ret.data.template emplace<typename basic_parsed_object<CharT>::string_type>
+            (input + rn.start.i, rn.length());
     }
-    else if (c == '[')
+    else if (c == PARSE_LIST_OPENING_BRACKET)
     {
         // TODO: implement
     }
-    else if (c == '{')
+    else if (c == PARSE_TABLE_OPENING_BRACKET)
     {
         // TODO: implement
     }
     else if (c == '0' || c == '+' || c == '-' || c == '.')
     {
-        tp.it = try_parse_number_object(it, input, input_size, &tp);
+        it = parse_number_object(it, input, input_size, nullptr, &err, &ret);
     }
     else
     {
         // either identifier, boolean or number
-        type_parse<CharT> numobj;
-        numobj.it = try_parse_number_object(it, input, input_size, &numobj);
-        
-        type_parse<CharT> idobj;
-        idobj.it = try_parse_identifier_object(it, input, input_size, &idobj);
-        
-        type_parse<CharT> boolobj;
-        boolobj.it = try_parse_bool_object(it, input, input_size, &boolobj);
+        parse_iterator bool_it;
+        parse_range bool_rn;
+        parse_error<CharT> bool_err;
 
-        if (boolobj.parsed)
+        bool_it = parse_bool(it, input, input_size, &bool_rn, &bool_err);
+        
+        parse_iterator id_it;
+        parse_range id_rn;
+        parse_error<CharT> id_err;
+        id_it = parse_identifier(it, input, input_size, &id_rn, &id_err);
+
+        parse_iterator num_it;
+        parse_error<CharT> num_err;
+        basic_parsed_object<CharT> num_obj;
+        num_it = parse_number_object(it, input, input_size, nullptr, &num_err, &num_obj);
+
+        if (bool_err.success)
         {
-            if (idobj.it.i > boolobj.it.i)
-                tp = idobj;
+            if (id_it.i > bool_it.i)
+            {
+                err.success = true;
+                it = id_it;
+                ret.data.template emplace<typename basic_parsed_object<CharT>::identifier_type>
+                    (parsed_identifier<CharT>{std::basic_string<CharT>{input + id_rn.start.i, id_rn.length()}});
+            }
             else
-                tp = boolobj;
+            {
+                err.success = true;
+                it = bool_it;
+                ret.data.template emplace<typename basic_parsed_object<CharT>::bool_type>
+                    (to_lower(input[bool_rn.start.i]) == 't');
+            }
         }
         else
         {
-            if (idobj.parsed && numobj.parsed)
+            if (id_err.success && num_err.success)
             {
-                if (idobj.it.i > numobj.it.i)
-                    tp = idobj;
+                if (id_it.i > num_it.i)
+                {
+                    err.success = true;
+                    it = id_it;
+                    ret.data.template emplace<typename basic_parsed_object<CharT>::identifier_type>
+                        (parsed_identifier<CharT>{std::basic_string<CharT>{input + id_rn.start.i, id_rn.length()}});
+                }
                 else
-                    tp = numobj;
+                {
+                    err.success = true;
+                    it = num_it;
+                    ret = num_obj;
+                }
             }
-            else if (idobj.parsed)
-                tp = idobj;
-            else if (numobj.parsed)
-                tp = numobj;
+            else if (id_err.success)
+            {
+                err.success = true;
+                it = id_it;
+                ret.data.template emplace<typename basic_parsed_object<CharT>::identifier_type>
+                    (parsed_identifier<CharT>{std::basic_string<CharT>{input + id_rn.start.i, id_rn.length()}});
+            }
+            else if (num_err.success)
+            {
+                err.success = true;
+                it = num_it;
+                ret = num_obj;
+            }
             else
             {
-                // nothing parsed, check errors
-                if (boolobj.error.it.i >= idobj.error.it.i
-                 && boolobj.error.it.i >= numobj.error.it.i)
-                    tp = boolobj;
-                else if (numobj.error.it.i >= idobj.error.it.i)
-                    tp = numobj;
+                // nothing parsed, eject the furthest error
+                if (bool_err.it.i >= id_err.it.i
+                 && bool_err.it.i >= num_err.it.i)
+                    err = bool_err;
+                else if (num_err.it.i >= id_err.it.i)
+                    err = num_err;
                 else
-                    tp = idobj;
+                    err = id_err;
             }
         }
     }
 
-    if (!tp.parsed)
-        throw tp.error;
+    if (err)
+        throw err;
 
     if (out != nullptr)
-        *out = tp.obj;
+        *out = ret;
 
-    return tp.it;
+    return it;
 }

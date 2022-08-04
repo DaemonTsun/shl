@@ -123,18 +123,20 @@ struct parse_range
 {
     parse_iterator start;
     parse_iterator end;
+
+    size_t length() const { return end.i - start.i; }
 };
 
 template<typename CharT>
 inline std::basic_string<CharT> slice(const CharT *input, const parse_range *range)
 {
-    return std::basic_string<CharT>(input + range->start.i, range->end.i - range->start.i);
+    return std::basic_string<CharT>(input + range->start.i, range->length());
 }
 
 template<typename CharT>
 inline void slice(const CharT *input, const parse_range *range, CharT *out)
 {
-    copy(input + range->start.i, out, range->end.i - range->start.i);
+    copy(input + range->start.i, out, range->length());
 }
 
 template<typename CharT>
@@ -1026,7 +1028,7 @@ parse_iterator parse_decimal(parse_iterator it, const CharT *input, size_t input
     // just change it if you need to.
     constexpr const size_t digit_size = 128;
     CharT buf[digit_size];
-    size_t len = range.end.i - range.start.i;
+    size_t len = range.length();
 
     if (len > digit_size - 1)
         throw parse_error(it, input, input_size, "floating point number too large at ", range.start);
