@@ -235,4 +235,49 @@ define_test(parse_object_parses_object_list4)
     assert_equal((s64)z, 3);
 }
 
+define_test(parse_object_throws_on_unterminated_list)
+{
+    SETUP("[1,2");
+
+    parsed_object obj;
+
+    assert_error(it = parse_object(it, input, input_size, &obj), parse_error<>)
+    {
+        assert_equal(err.it.i, 4);
+        assert_equal(err.it.line_start, 0);
+        assert_equal(err.it.line, 1);
+        assert_equal(err.it.line_pos, 5);
+    }
+}
+
+define_test(parse_object_throws_on_unterminated_list2)
+{
+    SETUP("[1,");
+
+    parsed_object obj;
+
+    assert_error(it = parse_object(it, input, input_size, &obj), parse_error<>)
+    {
+        assert_equal(err.it.i, 3);
+        assert_equal(err.it.line_start, 0);
+        assert_equal(err.it.line, 1);
+        assert_equal(err.it.line_pos, 4);
+    }
+}
+
+define_test(parse_object_throws_on_invalid_input)
+{
+    SETUP(" ]");
+
+    parsed_object obj;
+
+    assert_error(it = parse_object(it, input, input_size, &obj), parse_error<>)
+    {
+        assert_equal(err.it.i, 1);
+        assert_equal(err.it.line_start, 0);
+        assert_equal(err.it.line, 1);
+        assert_equal(err.it.line_pos, 2);
+    }
+}
+
 define_default_test_main();

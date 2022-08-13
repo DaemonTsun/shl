@@ -188,6 +188,11 @@ parse_iterator parse_object_list(parse_iterator it, const CharT *input, size_t i
     while (c == PARSE_LIST_ITEM_DELIM)
     {
         advance(&it);
+        it = skip_whitespace_and_comments(it, input, input_size);
+
+        if (it.i >= input_size)
+            throw parse_error(it, input, input_size, "unterminated list starting at ", start);
+
         it = parse_object(it, input, input_size, &obj);
         out->emplace_back(std::move(obj));
 
