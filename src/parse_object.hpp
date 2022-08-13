@@ -9,7 +9,8 @@
 #define PARSE_LIST_BRACKETS "[]"
 #define PARSE_LIST_ITEM_DELIM ','
 #define PARSE_TABLE_BRACKETS "{}"
-#define PARSE_TABLE_ITEM_DELIM ','
+#define PARSE_TABLE_ITEM_DELIM ';'
+#define PARSE_TABLE_KEY_VALUE_DELIM ':'
 
 #define PARSE_LIST_OPENING_BRACKET PARSE_LIST_BRACKETS[0]
 #define PARSE_LIST_CLOSING_BRACKET PARSE_LIST_BRACKETS[1]
@@ -43,16 +44,38 @@ struct basic_parsed_object
                      table_type // TODO
                     >;
 
-    explicit operator bool_type&()       { return get<bool_type>(); }
-    explicit operator integer_type&()    { return get<integer_type>(); }
-    explicit operator decimal_type&()    { return get<decimal_type>(); }
-    explicit operator string_type&()     { return get<string_type>(); }
-    explicit operator identifier_type&() { return get<identifier_type>(); }
-    explicit operator list_type&()       { return get<list_type>(); }
-    explicit operator table_type&()      { return get<table_type>(); }
+    explicit operator bool_type&()                   { return get<bool_type>(); }
+    explicit operator bool_type() const              { return get<bool_type>(); }
+    explicit operator integer_type&()                { return get<integer_type>(); }
+    explicit operator integer_type() const           { return get<integer_type>(); }
+    explicit operator decimal_type&()                { return get<decimal_type>(); }
+    explicit operator decimal_type() const           { return get<decimal_type>(); }
+    explicit operator string_type&()                 { return get<string_type>(); }
+    explicit operator const string_type&() const     { return get<string_type>(); }
+    explicit operator identifier_type&()             { return get<identifier_type>(); }
+    explicit operator const identifier_type&() const { return get<identifier_type>(); }
+    explicit operator list_type&()                   { return get<list_type>(); }
+    explicit operator const list_type&() const       { return get<list_type>(); }
+    explicit operator table_type&()                  { return get<table_type>(); }
+    explicit operator const table_type&() const      { return get<table_type>(); }
+
+    basic_parsed_object<CharT> &operator[](size_t n) 
+    { return get<list_type>()[n]; }
+
+    const basic_parsed_object<CharT> &operator[](size_t n) const
+    { return get<list_type>()[n]; }
+
+    basic_parsed_object<CharT> &operator[](const string_type &i)
+    { return get<table_type>()[i]; }
+
+    const basic_parsed_object<CharT> &operator[](const string_type &i) const
+    { return get<table_type>().at(i); }
 
     template<typename T>
     T &get() { return std::get<T>(data); }
+
+    template<typename T>
+    const T &get() const { return std::get<T>(data); }
 
     template<typename T>
     bool has_value() const { return std::holds_alternative<T>(data); }
@@ -174,6 +197,19 @@ parse_iterator parse_object_list(parse_iterator it, const CharT *input, size_t i
 
     advance(&it);
 
+    it = skip_whitespace_and_comments(it, input, input_size);
+
+    if (it.i >= input_size)
+        throw parse_error(it, input, input_size, "unterminated list starting at ", start);
+
+    c = input[it.i];
+
+    if (c == PARSE_LIST_CLOSING_BRACKET)
+    {
+        advance(&it);
+        return it;
+    }
+
     basic_parsed_object<CharT> obj;
     it = parse_object(it, input, input_size, &obj);
     out->emplace_back(std::move(obj));
@@ -206,6 +242,110 @@ parse_iterator parse_object_list(parse_iterator it, const CharT *input, size_t i
 
     if (c != PARSE_LIST_CLOSING_BRACKET)
         throw parse_error(it, input, input_size, "expected '", PARSE_LIST_CLOSING_BRACKET, "', got unexpected '", c, "' in list at ", it);
+
+    advance(&it);
+
+    return it;
+}
+
+template<typename CharT>
+parse_iterator parse_object_table(parse_iterator it, const CharT *input, size_t input_size, typename basic_parsed_object<CharT>::table_type *out)
+{
+    assert(input != nullptr);
+    assert(it.i < input_size);
+
+    parse_iterator start = it;
+
+    auto c = input[it.i];
+
+    if (c != PARSE_TABLE_OPENING_BRACKET)
+        throw parse_error(it, input, input_size, "expected '", PARSE_TABLE_OPENING_BRACKET, "', got unexpected '", c, "' in table at ", it);
+
+    advance(&it);
+    it = skip_whitespace_and_comments(it, input, input_size);
+
+    if (it.i >= input_size)
+        throw parse_error(it, input, input_size, "unterminated table starting at ", start);
+
+    c = input[it.i];
+
+    if (c == PARSE_TABLE_CLOSING_BRACKET)
+    {
+        advance(&it);
+        return it;
+    }
+
+    typename basic_parsed_object<CharT>::identifier_type ident;
+    it = parse_identifier(it, input, input_size, &ident.value);
+    it = skip_whitespace_and_comments(it, input, input_size);
+
+    if (it.i >= input_size)
+        throw parse_error(it, input, input_size, "expected '", PARSE_TABLE_KEY_VALUE_DELIM, "', got EOF in table starting at ", start);
+
+    c = input[it.i];
+
+    if (c != PARSE_TABLE_KEY_VALUE_DELIM)
+        throw parse_error(it, input, input_size, "expected '", PARSE_TABLE_KEY_VALUE_DELIM, "', got '", c, "' in table at ", it);
+
+    advance(&it);
+
+    basic_parsed_object<CharT> obj;
+    auto nit = parse_object(it, input, input_size, &obj);
+
+    auto dup = out->find(ident.value);
+
+    if (dup != out->end())
+        throw parse_error(it, input, input_size, "duplicate key '", ident.value, "' in table at ", it);
+
+    it = nit;
+    out->insert_or_assign(ident.value, std::move(obj));
+    it = skip_whitespace_and_comments(it, input, input_size);
+
+    if (it.i >= input_size)
+        throw parse_error(it, input, input_size, "unterminated table starting at ", start);
+
+    c = input[it.i];
+
+    while (c == PARSE_TABLE_ITEM_DELIM)
+    {
+        advance(&it);
+        it = skip_whitespace_and_comments(it, input, input_size);
+
+        if (it.i >= input_size)
+            throw parse_error(it, input, input_size, "unterminated table starting at ", start);
+
+        it = parse_identifier(it, input, input_size, &ident.value);
+        it = skip_whitespace_and_comments(it, input, input_size);
+
+        if (it.i >= input_size)
+            throw parse_error(it, input, input_size, "expected '", PARSE_TABLE_KEY_VALUE_DELIM, "', got EOF in table starting at ", start);
+
+        c = input[it.i];
+
+        if (c != PARSE_TABLE_KEY_VALUE_DELIM)
+            throw parse_error(it, input, input_size, "expected '", PARSE_TABLE_KEY_VALUE_DELIM, "', got '", c, "' in table at ", it);
+
+        advance(&it);
+
+        basic_parsed_object<CharT> obj;
+        nit = parse_object(it, input, input_size, &obj);
+        dup = out->find(ident.value);
+
+        if (dup != out->end())
+            throw parse_error(it, input, input_size, "duplicate key '", ident.value, "' in table at ", it);
+
+        it = nit;
+        out->insert_or_assign(ident.value, std::move(obj));
+        it = skip_whitespace_and_comments(it, input, input_size);
+
+        if (it.i >= input_size)
+            throw parse_error(it, input, input_size, "unterminated table starting at ", start);
+
+        c = input[it.i];
+    }
+
+    if (c != PARSE_TABLE_CLOSING_BRACKET)
+        throw parse_error(it, input, input_size, "expected '", PARSE_TABLE_CLOSING_BRACKET, "', got unexpected '", c, "' in table at ", it);
 
     advance(&it);
 
@@ -252,7 +392,13 @@ parse_iterator parse_object(parse_iterator it, const CharT *input, size_t input_
     }
     else if (c == PARSE_TABLE_OPENING_BRACKET)
     {
-        // TODO: implement
+        typename basic_parsed_object<CharT>::table_type table;
+        it = parse_object_table(it, input, input_size, &table);
+
+        err.success = true;
+
+        ret.data.template emplace<typename basic_parsed_object<CharT>::table_type>
+            (std::move(table));
     }
     else if (c == '0' || c == '+' || c == '-' || c == '.')
     {
