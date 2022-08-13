@@ -92,4 +92,147 @@ define_test(parse_object_parses_number_over_identifier)
     assert_equal(x, 0xdeadbeef);
 }
 
+define_test(parse_object_parses_object_list)
+{
+    SETUP("[1,2,3]");
+
+    parsed_object obj;
+
+    it = parse_object(it, input, input_size, &obj);
+
+    assert_equal(it.i, 7);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 8);
+
+    assert_equal(obj.has_value<object_list>(), true);
+
+    auto &list = obj.get<object_list>();
+
+    assert_equal(list.size(), 3);
+
+    auto &x1 = list[0];
+    auto &x2 = list[1];
+    auto &x3 = list[2];
+
+    assert_equal(x1.has_value<s64>(), true);
+    assert_equal(x2.has_value<s64>(), true);
+    assert_equal(x3.has_value<s64>(), true);
+    assert_equal(x1.get<s64>(), 1);
+    assert_equal(x2.get<s64>(), 2);
+    assert_equal(x3.get<s64>(), 3);
+}
+
+define_test(parse_object_parses_object_list2)
+{
+    SETUP("  [  1, 2,3 /*123*/ ] a");
+
+    parsed_object obj;
+
+    it = parse_object(it, input, input_size, &obj);
+
+    assert_equal(it.i, 21);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 22);
+
+    assert_equal(obj.has_value<object_list>(), true);
+
+    auto &list = obj.get<object_list>();
+
+    assert_equal(list.size(), 3);
+
+    auto &x1 = list[0];
+    auto &x2 = list[1];
+    auto &x3 = list[2];
+
+    assert_equal(x1.has_value<s64>(), true);
+    assert_equal(x2.has_value<s64>(), true);
+    assert_equal(x3.has_value<s64>(), true);
+    assert_equal(x1.get<s64>(), 1);
+    assert_equal(x2.get<s64>(), 2);
+    assert_equal(x3.get<s64>(), 3);
+}
+
+define_test(parse_object_parses_object_list3)
+{
+    SETUP("[1, \"2\", 3]");
+
+    parsed_object obj;
+
+    it = parse_object(it, input, input_size, &obj);
+
+    assert_equal(it.i, 11);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 12);
+
+    assert_equal(obj.has_value<object_list>(), true);
+
+    auto &list = obj.get<object_list>();
+
+    assert_equal(list.size(), 3);
+
+    auto &x1 = list[0];
+    auto &x2 = list[1];
+    auto &x3 = list[2];
+
+    assert_equal(x1.has_value<s64>(), true);
+    assert_equal(x2.has_value<std::string>(), true);
+    assert_equal(x3.has_value<s64>(), true);
+    assert_equal(x1.get<s64>(), 1);
+    assert_equal(x2.get<std::string>(), "2"s);
+    assert_equal(x3.get<s64>(), 3);
+}
+
+define_test(parse_object_parses_object_list4)
+{
+    SETUP("[1, \"2\", [[3], true]]");
+
+    parsed_object obj;
+
+    it = parse_object(it, input, input_size, &obj);
+
+    assert_equal(it.i, 21);
+    assert_equal(it.line_start, 0);
+    assert_equal(it.line, 1);
+    assert_equal(it.line_pos, 22);
+
+    assert_equal(obj.has_value<object_list>(), true);
+
+    auto &list = obj.get<object_list>();
+
+    assert_equal(list.size(), 3);
+
+    auto &x1 = list[0];
+    auto &x2 = list[1];
+    auto &x3 = list[2];
+
+    assert_equal(x1.has_value<s64>(), true);
+    assert_equal(x2.has_value<std::string>(), true);
+    assert_equal(x3.has_value<object_list>(), true);
+    assert_equal(x1.get<s64>(), 1);
+    assert_equal(x2.get<std::string>(), "2"s);
+
+    auto &x3l = x3.get<object_list>();
+
+    assert_equal(x3l.size(), 2);
+
+    auto &y1 = x3l[0];
+    auto &y2 = x3l[1];
+
+    assert_equal(y1.has_value<object_list>(), true);
+    assert_equal(y2.has_value<bool>(), true);
+    assert_equal((bool)y2, true);
+
+    auto &y1l = y1.get<object_list>();
+
+    assert_equal(y1l.size(), 1);
+
+    auto &z = y1l[0];
+
+    assert_equal(z.has_value<s64>(), true);
+    assert_equal((s64)z, 3);
+}
+
 define_default_test_main();

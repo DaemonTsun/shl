@@ -7,9 +7,9 @@
 
 #define PARSE_STRING_DELIM '"'
 #define PARSE_LIST_BRACKETS "[]"
-#define PARSE_LIST_ITEM_DELIM ","
+#define PARSE_LIST_ITEM_DELIM ','
 #define PARSE_TABLE_BRACKETS "{}"
-#define PARSE_TABLE_ITEM_DELIM ","
+#define PARSE_TABLE_ITEM_DELIM ','
 
 #define PARSE_LIST_OPENING_BRACKET PARSE_LIST_BRACKETS[0]
 #define PARSE_LIST_CLOSING_BRACKET PARSE_LIST_BRACKETS[1]
@@ -39,7 +39,7 @@ struct basic_parsed_object
                      decimal_type,
                      string_type,
                      identifier_type,
-                     list_type, // TODO
+                     list_type,
                      table_type // TODO
                     >;
 
@@ -61,7 +61,15 @@ struct basic_parsed_object
 };
 
 typedef basic_parsed_object<char> parsed_object;
+typedef typename basic_parsed_object<char>::list_type object_list;
+typedef typename basic_parsed_object<char>::table_type object_table;
+
 typedef basic_parsed_object<wchar_t> wparsed_object;
+typedef typename basic_parsed_object<wchar_t>::list_type wobject_list;
+typedef typename basic_parsed_object<wchar_t>::table_type wobject_table;
+
+template<typename CharT>
+parse_iterator parse_object(parse_iterator it, const CharT *input, size_t input_size, basic_parsed_object<CharT> *out);
 
 template<typename CharT>
 parse_iterator parse_number_object(parse_iterator it, const CharT *input, size_t input_size, parse_range *rn, parse_error<CharT> *err, basic_parsed_object<CharT> *obj)
@@ -152,16 +160,64 @@ parse_iterator parse_number_object(parse_iterator it, const CharT *input, size_t
 }
 
 template<typename CharT>
+parse_iterator parse_object_list(parse_iterator it, const CharT *input, size_t input_size, typename basic_parsed_object<CharT>::list_type *out)
+{
+    assert(input != nullptr);
+    assert(it.i < input_size);
+
+    parse_iterator start = it;
+
+    auto c = input[it.i];
+
+    if (c != PARSE_LIST_OPENING_BRACKET)
+        throw parse_error(it, input, input_size, "expected '", PARSE_LIST_OPENING_BRACKET, "', got unexpected '", c, "' in list at ", it);
+
+    advance(&it);
+
+    basic_parsed_object<CharT> obj;
+    it = parse_object(it, input, input_size, &obj);
+    out->emplace_back(std::move(obj));
+
+    it = skip_whitespace_and_comments(it, input, input_size);
+
+    if (it.i >= input_size)
+        throw parse_error(it, input, input_size, "unterminated list starting at ", start);
+
+    c = input[it.i];
+
+    while (c == PARSE_LIST_ITEM_DELIM)
+    {
+        advance(&it);
+        it = parse_object(it, input, input_size, &obj);
+        out->emplace_back(std::move(obj));
+
+        it = skip_whitespace_and_comments(it, input, input_size);
+
+        if (it.i >= input_size)
+            throw parse_error(it, input, input_size, "unterminated list starting at ", start);
+
+        c = input[it.i];
+    }
+
+    if (c != PARSE_LIST_CLOSING_BRACKET)
+        throw parse_error(it, input, input_size, "expected '", PARSE_LIST_CLOSING_BRACKET, "', got unexpected '", c, "' in list at ", it);
+
+    advance(&it);
+
+    return it;
+}
+
+template<typename CharT>
 parse_iterator parse_object(parse_iterator it, const CharT *input, size_t input_size, basic_parsed_object<CharT> *out)
 {
     assert(input != nullptr);
     assert(it.i < input_size);
 
-    parse_iterator begin = it;
+    parse_iterator start = it;
     it = skip_whitespace_and_comments(it, input, input_size);
 
     if (it.i >= input_size)
-        throw parse_error(it, input, input_size, "no object at ", begin);
+        throw parse_error(it, input, input_size, "no object at ", start);
 
     auto c = input[it.i];
 
@@ -173,12 +229,21 @@ parse_iterator parse_object(parse_iterator it, const CharT *input, size_t input_
         parse_range rn;
         it = parse_string(it, input, input_size, &rn, &err, PARSE_STRING_DELIM);
 
+        if (err)
+            throw err;
+
         ret.data.template emplace<typename basic_parsed_object<CharT>::string_type>
             (input + rn.start.i, rn.length());
     }
     else if (c == PARSE_LIST_OPENING_BRACKET)
     {
-        // TODO: implement
+        typename basic_parsed_object<CharT>::list_type list;
+        it = parse_object_list(it, input, input_size, &list);
+
+        err.success = true;
+
+        ret.data.template emplace<typename basic_parsed_object<CharT>::list_type>
+            (std::move(list));
     }
     else if (c == PARSE_TABLE_OPENING_BRACKET)
     {
