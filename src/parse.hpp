@@ -80,7 +80,7 @@
 
 #include <assert.h>
 #include <stdexcept>
-#include <ostream>
+#include <iosfwd>
 
 #include "string.hpp"
 #include "number_types.hpp"

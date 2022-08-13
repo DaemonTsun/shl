@@ -23,6 +23,12 @@ struct parsed_identifier
     std::basic_string<CharT> value;
 };
 
+template<typename CharT, typename CharT2>
+inline std::basic_ostream<CharT> &operator<<(std::basic_ostream<CharT> &lhs, const parsed_identifier<CharT2> &rhs)
+{
+    return lhs << rhs.value;
+}
+
 template<typename CharT = char>
 struct basic_parsed_object
 {
@@ -82,6 +88,80 @@ struct basic_parsed_object
 
     parsed_object_data_type data;
 };
+
+template<typename CharT, typename CharT2>
+inline std::basic_ostream<CharT> &operator<<(std::basic_ostream<CharT> &lhs, const basic_parsed_object<CharT2> &rhs)
+{
+    if (std::holds_alternative<typename basic_parsed_object<CharT2>::bool_type>(rhs.data))
+        return lhs << (std::get<typename basic_parsed_object<CharT2>::bool_type>(rhs.data) ? "true" : "false");
+    else
+    if (std::holds_alternative<typename basic_parsed_object<CharT2>::integer_type>(rhs.data))
+        return lhs << std::get<typename basic_parsed_object<CharT2>::integer_type>(rhs.data);
+    else
+    if (std::holds_alternative<typename basic_parsed_object<CharT2>::decimal_type>(rhs.data))
+        return lhs << std::get<typename basic_parsed_object<CharT2>::decimal_type>(rhs.data);
+    else
+    if (std::holds_alternative<typename basic_parsed_object<CharT2>::string_type>(rhs.data))
+        return lhs << '"' << std::get<typename basic_parsed_object<CharT2>::string_type>(rhs.data) << '"';
+    else
+    if (std::holds_alternative<typename basic_parsed_object<CharT2>::identifier_type>(rhs.data))
+        return lhs << std::get<typename basic_parsed_object<CharT2>::identifier_type>(rhs.data).value;
+    else
+    if (std::holds_alternative<typename basic_parsed_object<CharT2>::list_type>(rhs.data))
+    {
+        const auto &list = std::get<typename basic_parsed_object<CharT2>::list_type>(rhs.data);
+        lhs << PARSE_LIST_OPENING_BRACKET;
+
+        if (!list.empty())
+        {
+            lhs << list[0];
+
+            for (size_t i = 1; i < list.size(); ++i)
+            {
+                lhs << PARSE_LIST_ITEM_DELIM << ' ';
+                lhs << list[i];
+            }
+        }
+
+        lhs << PARSE_LIST_CLOSING_BRACKET;
+
+        return lhs;
+    }
+    else
+    if (std::holds_alternative<typename basic_parsed_object<CharT2>::table_type>(rhs.data))
+    {
+        const auto &tab = std::get<typename basic_parsed_object<CharT2>::table_type>(rhs.data);
+        lhs << PARSE_TABLE_OPENING_BRACKET;
+
+        if (!tab.empty())
+        {
+            auto it = tab.begin();
+
+            lhs << it->first << ' '
+                << PARSE_TABLE_KEY_VALUE_DELIM << ' '
+                << it->second;
+
+            while (++it != tab.end())
+            {
+                lhs << PARSE_TABLE_ITEM_DELIM << ' '
+                    << it->first << ' '
+                    << PARSE_TABLE_KEY_VALUE_DELIM << ' '
+                    << it->second;
+            }
+        }
+
+        lhs << PARSE_TABLE_CLOSING_BRACKET;
+
+        return lhs;
+    }
+
+    return lhs;
+}
+
+template<typename CharT, typename CharT2>
+inline std::basic_ostream<CharT> &operator<<(std::basic_ostream<CharT> &lhs, const typename basic_parsed_object<CharT2>::table_type &rhs)
+{
+}
 
 typedef basic_parsed_object<char> parsed_object;
 typedef typename basic_parsed_object<char>::list_type object_list;
