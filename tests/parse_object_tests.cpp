@@ -347,7 +347,7 @@ define_test(parse_object_parses_object_table2)
 
 define_test(parse_object_parses_object_table3)
 {
-    SETUP("{a:1; b : \"hello\"}");
+    SETUP("{a:1, b : \"hello\"}");
 
     parsed_object obj;
 
@@ -372,6 +372,34 @@ define_test(parse_object_parses_object_table3)
 
     assert_equal(b.has_value<std::string>(), true);
     assert_equal((std::string)b, "hello"s);
+}
+
+define_test(parsed_object_equality_test)
+{
+    SETUP("{a:1, b : \"hello\"}");
+
+    parsed_object obj1;
+    parsed_object obj2;
+
+    parse_object(it, input, input_size, &obj1);
+    parse_object(it, input, input_size, &obj2);
+
+    assert_equal(obj1, obj2);
+}
+
+define_test(parsed_object_equality_test2)
+{
+    SETUP("{a:1, b : \"hello\"}");
+
+    parsed_object obj1;
+    parsed_object obj2;
+
+    parse_object(it, input, input_size, &obj1);
+
+    auto objstr = str(obj1);
+    parse_object(it, objstr.c_str(), objstr.size(), &obj2);
+
+    assert_equal(obj1, obj2);
 }
 
 define_default_test_main();

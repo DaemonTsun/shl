@@ -1,4 +1,39 @@
 
+/* parse_object.hpp
+ * depends on parse.hpp
+ *
+ * parses strings into objects, similar to json.
+ *
+ * parse_object(it, input, input_size, *obj)
+ *      throws on error or invalid input.
+ *
+ * an object is either a boolean (true, false), a number (integer,
+ * floating point), a string ("..."), an identifier, a list of objects ([x, y, z])
+ * or a table of objects ({a: obj, b: obj}) (where the keys are identifiers).
+ *
+ * example:
+ * {
+ *     name: "John Doe",
+ *     age: 50,
+ *     address: {
+ *          streetAddress: "21 2nd Street",
+ *          city: "New York",
+ *          state: "NY",
+ *          postalCode: "10021-3100"
+ *     },
+ *     phoneNumbers: [
+ *         "212 555-1234",
+ *         "646 555-4567"
+ *     ]
+ * }
+ *
+ * comments can be inserted anywhere between values with C line or multiline comments.
+ *
+ * objects can be cast to their value to obtain a reference or const reference,
+ * the value can also be obtained via the get<T> method or directly via obj.data.
+ * to check whether an object holds a given type, use the .has_value method.
+ */
+
 #pragma once
 
 #include <map>
@@ -9,7 +44,7 @@
 #define PARSE_LIST_BRACKETS "[]"
 #define PARSE_LIST_ITEM_DELIM ','
 #define PARSE_TABLE_BRACKETS "{}"
-#define PARSE_TABLE_ITEM_DELIM ';'
+#define PARSE_TABLE_ITEM_DELIM ','
 #define PARSE_TABLE_KEY_VALUE_DELIM ':'
 
 #define PARSE_LIST_OPENING_BRACKET PARSE_LIST_BRACKETS[0]
@@ -22,6 +57,12 @@ struct parsed_identifier
 {
     std::basic_string<CharT> value;
 };
+
+template<typename CharT>
+constexpr bool operator==(const parsed_identifier<CharT> &lhs, const parsed_identifier<CharT> &rhs)
+{
+    return lhs.value == rhs.value;
+}
 
 template<typename CharT, typename CharT2>
 inline std::basic_ostream<CharT> &operator<<(std::basic_ostream<CharT> &lhs, const parsed_identifier<CharT2> &rhs)
@@ -47,7 +88,7 @@ struct basic_parsed_object
                      string_type,
                      identifier_type,
                      list_type,
-                     table_type // TODO
+                     table_type
                     >;
 
     explicit operator bool_type&()                   { return get<bool_type>(); }
@@ -89,6 +130,12 @@ struct basic_parsed_object
     parsed_object_data_type data;
 };
 
+template<typename CharT>
+constexpr bool operator==(const basic_parsed_object<CharT> &lhs, const basic_parsed_object<CharT> &rhs)
+{
+    return lhs.data == rhs.data;
+}
+
 template<typename CharT, typename CharT2>
 inline std::basic_ostream<CharT> &operator<<(std::basic_ostream<CharT> &lhs, const basic_parsed_object<CharT2> &rhs)
 {
@@ -102,7 +149,7 @@ inline std::basic_ostream<CharT> &operator<<(std::basic_ostream<CharT> &lhs, con
         return lhs << std::get<typename basic_parsed_object<CharT2>::decimal_type>(rhs.data);
     else
     if (std::holds_alternative<typename basic_parsed_object<CharT2>::string_type>(rhs.data))
-        return lhs << '"' << std::get<typename basic_parsed_object<CharT2>::string_type>(rhs.data) << '"';
+        return lhs << PARSE_STRING_DELIM << std::get<typename basic_parsed_object<CharT2>::string_type>(rhs.data) << PARSE_STRING_DELIM;
     else
     if (std::holds_alternative<typename basic_parsed_object<CharT2>::identifier_type>(rhs.data))
         return lhs << std::get<typename basic_parsed_object<CharT2>::identifier_type>(rhs.data).value;
@@ -156,11 +203,6 @@ inline std::basic_ostream<CharT> &operator<<(std::basic_ostream<CharT> &lhs, con
     }
 
     return lhs;
-}
-
-template<typename CharT, typename CharT2>
-inline std::basic_ostream<CharT> &operator<<(std::basic_ostream<CharT> &lhs, const typename basic_parsed_object<CharT2>::table_type &rhs)
-{
 }
 
 typedef basic_parsed_object<char> parsed_object;
