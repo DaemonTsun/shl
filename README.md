@@ -11,7 +11,7 @@ Depends on `print.hpp`. Provides `dprint(...)` and other printing functions whic
 Defines the `ENUM_CLASS_FLAG_OPS` function macro which, when given a `enum class` name, defines operators and functions to work with an enum class flag, e.g. `is_set`, `set`, `unset`, etc.
 
 ### [number_types.hpp](https://github.com/DaemonTsun/shl/blob/master/src/number_types.hpp)
-Defines a few number types like s64, s32, u64, etc.
+Defines a few number types like `s64`, `s32`, `u64`, etc.
 
 ### [string.hpp](https://github.com/DaemonTsun/shl/blob/master/src/string.hpp)
 Defines many common string functions like `trim`, `to_upper`, `to_lower`, `begins_with`, and more.
@@ -36,7 +36,7 @@ An object may look like this by default:
 }
 ```
 
-### [file_stream](https://github.com/DaemonTsun/shl/blob/master/src/file_stream)
+### [file_stream](https://github.com/DaemonTsun/shl/blob/master/src/file_stream.hpp)
 Comes with a cpp file for definitions. Defines the file_stream struct which is a very light wrapper around `FILE*`. Defines a bunch of functions for reading and writing data, calculating size, reading the entire file or reading and writing blocks of data.
 The point of this is to have a more consistent file reading and writing API.
 
