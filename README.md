@@ -37,8 +37,8 @@ An object may look like this by default:
 ```
 
 ### [file_stream](https://github.com/DaemonTsun/shl/blob/master/src/file_stream)
-Comes with a cpp file for definitions. Defines the file_stream struct which is a very light wrapper around FILE*. Defines a bunch of functions for reading and writing data, calculating size, reading the entire file or reading and writing blocks of data.
+Comes with a cpp file for definitions. Defines the file_stream struct which is a very light wrapper around `FILE*`. Defines a bunch of functions for reading and writing data, calculating size, reading the entire file or reading and writing blocks of data.
 The point of this is to have a more consistent file reading and writing API.
 
 ## tests
-if [t1](https://github.com/DaemonTsun/t1) is installed, tests can be run as well using `make tests && make runtests`.
+If [t1](https://github.com/DaemonTsun/t1) is installed, tests can be run as well using `make tests && make runtests`.
