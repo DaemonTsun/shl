@@ -25,9 +25,10 @@ bool open(file_stream *stream, const char *path, const char *mode, bool check_op
         return false;
 
     assert(path != nullptr);
+    assert(mode != nullptr);
     stream->handle = fopen(path, mode);
 
-    if (!is_open(stream))
+    if (stream->handle == nullptr)
         return false;
 
     if (calc_size)
@@ -40,7 +41,17 @@ bool close(file_stream *stream)
 {
     assert(stream != nullptr);
 
-    return fclose(stream->handle) == 0;
+    if (stream->handle == nullptr)
+        return true;
+
+    bool ret = fclose(stream->handle) == 0;
+
+    if (!ret)
+        return ret;
+
+    stream->handle = nullptr;
+
+    return ret;
 }
 
 bool is_open(const file_stream *stream)
@@ -48,6 +59,39 @@ bool is_open(const file_stream *stream)
     assert(stream != nullptr);
 
     return stream->handle != nullptr;
+}
+
+bool is_at_end(file_stream *stream)
+{
+    assert(stream != nullptr);
+    assert(stream->handle != nullptr);
+
+    return feof(stream->handle) != 0;
+}
+
+bool has_error(file_stream *stream)
+{
+    assert(stream != nullptr);
+    assert(stream->handle != nullptr);
+
+    return ferror(stream->handle) != 0;
+}
+
+void clear_error(file_stream *stream)
+{
+    assert(stream != nullptr);
+    assert(stream->handle != nullptr);
+
+    clearerr(stream->handle);
+}
+
+bool is_ok(file_stream *stream)
+{
+    assert(stream != nullptr);
+
+    return (stream->handle != nullptr)
+        && (feof(stream->handle) == 0)
+        && (ferror(stream->handle) == 0);
 }
 
 size_t calculate_file_size(file_stream *stream)
@@ -124,7 +168,7 @@ size_t read(file_stream *stream, void *out, size_t size)
     assert(stream->handle != nullptr);
     assert(out != nullptr);
     
-    return fread(out, size, 1, stream->handle);
+    return fread(out, 1, size, stream->handle);
 }
 
 size_t read(file_stream *stream, void *out, size_t size, size_t nmemb)
@@ -143,7 +187,7 @@ size_t read_at(file_stream *stream, void *out, size_t offset, size_t size)
     assert(out != nullptr);
     
     fseeko(stream->handle, offset, SEEK_SET);
-    return fread(out, size, 1, stream->handle);
+    return fread(out, 1, size, stream->handle);
 }
 
 size_t read_at(file_stream *stream, void *out, size_t offset, size_t size, size_t nmemb)
@@ -162,7 +206,7 @@ size_t read_block(file_stream *stream, void *out)
     assert(stream->handle != nullptr);
     assert(out != nullptr);
 
-    return fread(out, stream->block_size, 1, stream->handle);
+    return fread(out, 1, stream->block_size, stream->handle);
 }
 
 size_t read_block(file_stream *stream, void *out, size_t nth_block)
@@ -170,7 +214,7 @@ size_t read_block(file_stream *stream, void *out, size_t nth_block)
     assert(out != nullptr);
     
     seek_block(stream, nth_block, SEEK_SET);
-    return fread(out, stream->block_size, 1, stream->handle);
+    return fread(out, 1, stream->block_size, stream->handle);
 }
 
 size_t read_blocks(file_stream *stream, void *out, size_t block_count)
