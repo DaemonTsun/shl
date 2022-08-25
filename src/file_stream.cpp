@@ -243,7 +243,7 @@ size_t read_entire_file(file_stream *stream, void *out)
     size_t old_pos = ftello(stream->handle);
     fseeko(stream->handle, 0, SEEK_SET);
 
-    size_t ret = fread(out, stream->size, 1, stream->handle);
+    size_t ret = fread(out, 1, stream->size, stream->handle);
     fseeko(stream->handle, old_pos, SEEK_SET);
 
     return ret;
@@ -255,7 +255,7 @@ size_t write(file_stream *stream, const void *in, size_t size)
     assert(stream->handle != nullptr);
     assert(in != nullptr);
 
-    return fwrite(in, size, 1, stream->handle);
+    return fwrite(in, 1, size, stream->handle);
 }
 
 size_t write(file_stream *stream, const void *in, size_t size, size_t nmemb)
@@ -282,7 +282,7 @@ size_t write_block(file_stream *stream, const void *in)
     assert(stream->handle != nullptr);
     assert(in != nullptr);
 
-    return fwrite(in, stream->block_size, 1, stream->handle);
+    return fwrite(in, 1, stream->block_size, stream->handle);
 }
 
 size_t write_block(file_stream *stream, const void *in, size_t nth_block)
@@ -290,7 +290,7 @@ size_t write_block(file_stream *stream, const void *in, size_t nth_block)
     assert(in != nullptr);
 
     seek_block(stream, nth_block, SEEK_SET);
-    return fwrite(in, stream->block_size, 1, stream->handle);
+    return fwrite(in, 1, stream->block_size, stream->handle);
 }
 
 size_t write_blocks(file_stream *stream, const void *in, size_t block_count)
