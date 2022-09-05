@@ -186,7 +186,9 @@ size_t read_at(file_stream *stream, void *out, size_t offset, size_t size)
     assert(stream->handle != nullptr);
     assert(out != nullptr);
     
-    fseeko(stream->handle, offset, SEEK_SET);
+    if (fseeko(stream->handle, offset, SEEK_SET) != 0)
+        return 0;
+
     return fread(out, 1, size, stream->handle);
 }
 
@@ -196,7 +198,9 @@ size_t read_at(file_stream *stream, void *out, size_t offset, size_t size, size_
     assert(stream->handle != nullptr);
     assert(out != nullptr);
     
-    fseeko(stream->handle, offset, SEEK_SET);
+    if (fseeko(stream->handle, offset, SEEK_SET) != 0)
+        return 0;
+
     return fread(out, size, nmemb, stream->handle);
 }
 
@@ -234,7 +238,7 @@ size_t read_blocks(file_stream *stream, void *out, size_t nth_block, size_t bloc
     return fread(out, stream->block_size, block_count, stream->handle);
 }
 
-size_t read_entire_file(file_stream *stream, void *out)
+size_t read_entire_file(file_stream *stream, void *out, size_t max_size)
 {
     assert(stream != nullptr);
     assert(stream->handle != nullptr);
@@ -243,7 +247,12 @@ size_t read_entire_file(file_stream *stream, void *out)
     size_t old_pos = ftello(stream->handle);
     fseeko(stream->handle, 0, SEEK_SET);
 
-    size_t ret = fread(out, 1, stream->size, stream->handle);
+    size_t sz = stream->size;
+
+    if (sz > max_size)
+        sz = max_size;
+
+    size_t ret = fread(out, 1, sz, stream->handle);
     fseeko(stream->handle, old_pos, SEEK_SET);
 
     return ret;
@@ -272,6 +281,42 @@ size_t write(file_stream *stream, const char *str)
     assert(stream != nullptr);
     assert(stream->handle != nullptr);
     assert(str != nullptr);
+
+    return fputs(str, stream->handle);
+}
+
+size_t write_at(file_stream *stream, const void *in, size_t offset, size_t size)
+{
+    assert(stream != nullptr);
+    assert(stream->handle != nullptr);
+    assert(in != nullptr);
+
+    if (fseeko(stream->handle, offset, SEEK_SET) != 0)
+        return 0;
+
+    return fwrite(in, 1, size, stream->handle);
+}
+
+size_t write_at(file_stream *stream, const void *in, size_t offset, size_t size, size_t nmemb)
+{
+    assert(stream != nullptr);
+    assert(stream->handle != nullptr);
+    assert(in != nullptr);
+
+    if (fseeko(stream->handle, offset, SEEK_SET) != 0)
+        return 0;
+
+    return fwrite(in, size, nmemb, stream->handle);
+}
+
+size_t write_at(file_stream *stream, const char *str, size_t offset)
+{
+    assert(stream != nullptr);
+    assert(stream->handle != nullptr);
+    assert(str != nullptr);
+
+    if (fseeko(stream->handle, offset, SEEK_SET) != 0)
+        return 0;
 
     return fputs(str, stream->handle);
 }

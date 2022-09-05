@@ -34,7 +34,6 @@ size_t block_count(const file_stream *stream);
 
 int seek(file_stream *stream, long offset, int whence = SEEK_SET);
 int seek_block(file_stream *stream, long nth_block, int whence = SEEK_SET);
-int setpos(file_stream *stream, size_t offset);
 size_t tell(file_stream *stream);
 bool getpos(file_stream *stream, fpos_t *pos);
 bool rewind(file_stream *stream);
@@ -69,11 +68,16 @@ size_t read_blocks(file_stream *stream, void *out, size_t block_count);
 size_t read_blocks(file_stream *stream, void *out, size_t nth_block, size_t block_count);
 
 // uses stream->size, make sure its set and out has enough space
-size_t read_entire_file(file_stream *stream, void *out);
+size_t read_entire_file(file_stream *stream, void *out, size_t max_size = -1u);
 
+// returns number of bytes written
 size_t write(file_stream *stream, const void *in, size_t size);
+// returns number of items written
 size_t write(file_stream *stream, const void *in, size_t size, size_t nmemb);
 size_t write(file_stream *stream, const char *str);
+size_t write_at(file_stream *stream, const void *in, size_t offset, size_t size);
+size_t write_at(file_stream *stream, const void *in, size_t offset, size_t size, size_t nmemb);
+size_t write_at(file_stream *stream, const char *str, size_t offset);
 size_t write_block(file_stream *stream, const void *in);
 size_t write_block(file_stream *stream, const void *in, size_t nth_block);
 size_t write_blocks(file_stream *stream, const void *in, size_t block_count);
