@@ -19,15 +19,17 @@ bool open(memory_stream *stream, size_t size, bool check_open = false, bool free
 bool open(memory_stream *stream, char *in, size_t size, bool check_open = false, bool free_on_close = true);
 bool close(memory_stream *stream, bool free = true);
 bool is_open(const memory_stream *stream);
-bool is_at_end(memory_stream *stream);
+bool is_at_end(const memory_stream *stream);
 
 // is_open && !is_at_end
-bool is_ok(memory_stream *stream);
+bool is_ok(const memory_stream *stream);
 
 size_t block_count(const memory_stream *stream);
 // returns a pointer in the data at the current position
 char *current(const memory_stream *stream);
-size_t current_block(const memory_stream *stream);
+char *current_block_start(const memory_stream *stream);
+size_t current_block_number(const memory_stream *stream);
+size_t current_block_offset(const memory_stream *stream);
 
 int seek(memory_stream *stream, long offset, int whence = SEEK_SET);
 int seek_block(memory_stream *stream, long nth_block, int whence = SEEK_SET);

@@ -91,7 +91,7 @@ bool is_ok(const memory_stream *stream)
     assert(stream != nullptr);
 
     return (stream->data != nullptr)
-        && (stream->position >= stream->size);
+        && (stream->position < stream->size);
 }
 
 size_t block_count(const memory_stream *stream)
@@ -108,7 +108,24 @@ char *current(const memory_stream *stream)
     return stream->data + stream->position;
 }
 
-size_t current_block(const memory_stream *stream)
+char *current_block_start(const memory_stream *stream)
+{
+    assert(stream != nullptr);
+    assert(stream->data != nullptr);
+    assert(stream->block_size > 0);
+
+    return stream->data + ((stream->position / stream->block_size) * stream->block_size);
+}
+
+size_t current_block_number(const memory_stream *stream)
+{
+    assert(stream != nullptr);
+    assert(stream->block_size > 0);
+
+    return stream->position / stream->block_size;
+}
+
+size_t current_block_offset(const memory_stream *stream)
 {
     assert(stream != nullptr);
     assert(stream->block_size > 0);
@@ -129,13 +146,8 @@ int seek(memory_stream *stream, long offset, int whence)
     else
         return 1;
 
-    if (stream->position >= stream->size)
-    {
-        if (stream->size == 0)
-            stream->position = 0;
-        else
-            stream->position = stream->size - 1;
-    }
+    if (stream->position > stream->size)
+        stream->position = stream->size;
 
     return 0;
 }
@@ -170,19 +182,22 @@ void rewind(memory_stream *stream)
     stream->position = 0;
 }
 
+#include <iostream>
+
 size_t read(memory_stream *stream, void *out, size_t size)
 {
     assert(stream != nullptr);
     assert(stream->data != nullptr);
     assert(out != nullptr);
+    assert(stream->position < stream->size);
 
     size_t read_size = size;
     size_t rest = stream->size - stream->position;
 
-    if (size > rest)
-        size = rest;
+    if (read_size > rest)
+        read_size = rest;
 
-    if (size > 0)
+    if (read_size > 0)
     {
         memcpy(out, stream->data + stream->position, read_size);
         stream->position += read_size;
@@ -196,6 +211,7 @@ size_t read(memory_stream *stream, void *out, size_t size, size_t nmemb)
     assert(stream != nullptr);
     assert(stream->data != nullptr);
     assert(out != nullptr);
+    assert(stream->position < stream->size);
 
     size_t read_size = size * nmemb;
     size_t rest = stream->size - stream->position;
@@ -237,6 +253,7 @@ size_t read_block(memory_stream *stream, void *out)
     assert(stream != nullptr);
     assert(stream->data != nullptr);
     assert(out != nullptr);
+    assert(stream->position < stream->size);
 
     return read(stream, out, stream->block_size);
 }
@@ -256,6 +273,7 @@ size_t read_blocks(memory_stream *stream, void *out, size_t block_count)
     assert(stream != nullptr);
     assert(stream->data != nullptr);
     assert(out != nullptr);
+    assert(stream->position < stream->size);
 
     return read(stream, out, stream->block_size, block_count);
 }
@@ -265,6 +283,7 @@ size_t read_blocks(memory_stream *stream, void *out, size_t nth_block, size_t bl
     assert(stream != nullptr);
     assert(stream->data != nullptr);
     assert(out != nullptr);
+    assert(stream->position < stream->size);
 
     seek_block(stream, nth_block);
     return read(stream, out, stream->block_size, block_count);
@@ -290,14 +309,15 @@ size_t write(memory_stream *stream, const void *in, size_t size)
     assert(stream != nullptr);
     assert(stream->data != nullptr);
     assert(in != nullptr);
+    assert(stream->position < stream->size);
 
     size_t write_size = size;
     size_t rest = stream->size - stream->position;
 
-    if (size > rest)
-        size = rest;
+    if (write_size > rest)
+        write_size = rest;
 
-    if (size > 0)
+    if (write_size > 0)
     {
         memcpy(stream->data + stream->position, in, write_size);
         stream->position += write_size;
@@ -311,14 +331,15 @@ size_t write(memory_stream *stream, const void *in, size_t size, size_t nmemb)
     assert(stream != nullptr);
     assert(stream->data != nullptr);
     assert(in != nullptr);
+    assert(stream->position < stream->size);
 
     size_t write_size = size * nmemb;
     size_t rest = stream->size - stream->position;
 
-    if (size > rest)
-        size = (rest / size) * size;
+    if (write_size > rest)
+        write_size = (rest / size) * size;
 
-    if (size > 0)
+    if (write_size > 0)
     {
         memcpy(stream->data + stream->position, in, write_size);
         stream->position += write_size;
@@ -352,6 +373,7 @@ size_t write_block(memory_stream *stream, const void *in)
     assert(stream != nullptr);
     assert(stream->data != nullptr);
     assert(in != nullptr);
+    assert(stream->position < stream->size);
 
     return write(stream, in, stream->block_size);
 }
@@ -371,6 +393,7 @@ size_t write_blocks(memory_stream *stream, const void *in, size_t block_count)
     assert(stream != nullptr);
     assert(stream->data != nullptr);
     assert(in != nullptr);
+    assert(stream->position < stream->size);
 
     return write(stream, in, stream->block_size, block_count);
 }
