@@ -1,5 +1,6 @@
 
 // dprint: exlusively include print.hpp if debugging and define debugging prints
+// v1.0
 #pragma once
 
 #ifndef NDEBUG

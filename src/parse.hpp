@@ -1,6 +1,8 @@
 
 /* parse.hpp
- *  depends on string.hpp and number_types.hpp
+ * v1.0
+ *
+ * depends on string.hpp and number_types.hpp
  * 
  * parsing functions
  * using an iterator (parse_iterator) to keep track of where one is

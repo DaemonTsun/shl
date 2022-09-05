@@ -1,6 +1,7 @@
 #pragma once
 
 /* enum_flag.hpp
+ * v1.0
  *
  * defines the macro ENUM_CLASS_FLAG_OPS which defines
  * operators and functions:

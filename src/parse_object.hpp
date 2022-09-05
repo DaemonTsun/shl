@@ -1,5 +1,7 @@
 
 /* parse_object.hpp
+ * v1.0
+ *
  * depends on parse.hpp
  *
  * parses strings into objects, similar to json.

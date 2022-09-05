@@ -1,5 +1,9 @@
 #pragma once
 
+// number_types.hpp
+// v1.0
+// defines common number types
+
 #include <stdint.h>
 
 typedef uint8_t  u8;

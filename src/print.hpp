@@ -1,6 +1,10 @@
-
-// print utility header
 #pragma once
+
+/* print utility header
+ * v1.0
+ *
+ * defines the common print(...) function
+ */
 
 #include <iostream>
 

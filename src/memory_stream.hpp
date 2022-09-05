@@ -1,5 +1,10 @@
-
 #pragma once
+
+/* memory_stream
+ * v1.0
+ *
+ * stream api for memory, similar to file_stream
+ */
 
 #include <stddef.h>
 

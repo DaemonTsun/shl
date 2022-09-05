@@ -1,5 +1,10 @@
-
 #pragma once
+
+/* file_stream
+ * v1.0
+ *
+ * more consistent file stream functions
+ */
 
 #include <stdio.h>
 

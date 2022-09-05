@@ -1,4 +1,6 @@
 
+// v1.0
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -181,8 +183,6 @@ void rewind(memory_stream *stream)
     assert(stream != nullptr);
     stream->position = 0;
 }
-
-#include <iostream>
 
 size_t read(memory_stream *stream, void *out, size_t size)
 {

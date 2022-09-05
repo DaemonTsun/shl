@@ -1,6 +1,7 @@
 #pragma once
 
 /* string.hpp
+ * v1.0
  *
  * string utility header
  * str(...)     converts parameters to one string
