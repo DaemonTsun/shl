@@ -184,6 +184,36 @@ define_test(memory_stream_seek_block_seeks_block)
     close(&mem);
 }
 
+define_test(memory_stream_seek_next_alignment_seeks_to_next_alignment)
+{
+    memory_stream mem;
+
+    init(&mem);
+    assert_equal(open(&mem, 16), true);
+    assert_equal(mem.position, 0);
+
+    assert_equal(seek_next_alignment(&mem, 2), 0);
+    assert_equal(mem.position, 0);
+
+    mem.position = 1;
+
+    assert_equal(seek_next_alignment(&mem, 2), 0);
+    assert_equal(mem.position, 2);
+
+    assert_equal(seek_next_alignment(&mem, 4), 0);
+    assert_equal(mem.position, 4);
+
+    assert_equal(seek_next_alignment(&mem, 4), 0);
+    assert_equal(mem.position, 4);
+    mem.position = 5;
+
+    assert_equal(seek_next_alignment(&mem, 4), 0);
+    assert_equal(mem.position, 8);
+
+    close(&mem);
+}
+
+
 define_test(memory_stream_read_reads)
 {
     const char *data = "hello world";

@@ -1,7 +1,8 @@
 #pragma once
 
 /* file_stream
- * v1.0
+ * v1.1
+ * add seek_next_alignment
  *
  * more consistent file stream functions
  */
@@ -39,6 +40,7 @@ size_t block_count(const file_stream *stream);
 
 int seek(file_stream *stream, long offset, int whence = SEEK_SET);
 int seek_block(file_stream *stream, long nth_block, int whence = SEEK_SET);
+int seek_next_alignment(file_stream *stream, size_t alignment);
 size_t tell(file_stream *stream);
 bool getpos(file_stream *stream, fpos_t *pos);
 bool rewind(file_stream *stream);
