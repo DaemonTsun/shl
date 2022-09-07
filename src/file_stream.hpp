@@ -1,7 +1,8 @@
 #pragma once
 
 /* file_stream
- * v1.1
+ * v1.2
+ * add template write and write_at
  * add seek_next_alignment
  *
  * more consistent file stream functions
@@ -82,9 +83,23 @@ size_t write(file_stream *stream, const void *in, size_t size);
 // returns number of items written
 size_t write(file_stream *stream, const void *in, size_t size, size_t nmemb);
 size_t write(file_stream *stream, const char *str);
+
+template<typename T>
+size_t write(file_stream *stream, const T *in)
+{
+    return write(stream, in, sizeof(T));
+}
+
 size_t write_at(file_stream *stream, const void *in, size_t offset, size_t size);
 size_t write_at(file_stream *stream, const void *in, size_t offset, size_t size, size_t nmemb);
 size_t write_at(file_stream *stream, const char *str, size_t offset);
+
+template<typename T>
+size_t write_at(file_stream *stream, const T *in, size_t offset)
+{
+    return write_at(stream, in, offset, sizeof(T));
+}
+
 size_t write_block(file_stream *stream, const void *in);
 size_t write_block(file_stream *stream, const void *in, size_t nth_block);
 size_t write_blocks(file_stream *stream, const void *in, size_t block_count);
