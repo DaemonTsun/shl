@@ -6,6 +6,7 @@
  *
  * parses strings into objects, similar to json.
  *
+ * parse_iterator parse_object(parse_iterator it, const CharT *input, size_t input_size, basic_parsed_object<CharT> *out)
  * parse_object(it, input, input_size, *obj)
  *      throws on error or invalid input.
  *
@@ -40,7 +41,7 @@
 
 #include <map>
 #include <variant>
-#include "parse.hpp"
+#include "shl/parse.hpp"
 
 #define PARSE_STRING_DELIM '"'
 #define PARSE_LIST_BRACKETS "[]"

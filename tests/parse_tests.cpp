@@ -4,7 +4,7 @@
 
 #include <t1/t1.hpp>
 
-#include "../src/parse.hpp"
+#include "shl/parse.hpp"
 
 using namespace std::literals;
 

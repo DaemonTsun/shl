@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include <t1/t1.hpp>
-#include "../src/parse_object.hpp"
+#include "shl/parse_object.hpp"
 
 using namespace std::literals;
 

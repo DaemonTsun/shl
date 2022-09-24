@@ -4,7 +4,7 @@
 
 #include <t1/t1.hpp>
 
-#include "../src/filesystem.hpp"
+#include "shl/filesystem.hpp"
 
 define_test(get_executable_path_gets_executable_path)
 {

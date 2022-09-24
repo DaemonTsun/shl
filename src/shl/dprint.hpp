@@ -4,7 +4,7 @@
 #pragma once
 
 #ifndef NDEBUG
-#include "./print.hpp"
+#include "shl/print.hpp"
 
 #define dprint(...) print(__VA_ARGS__)
 #define dprintln(...) println(__VA_ARGS__)

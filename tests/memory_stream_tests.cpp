@@ -5,8 +5,8 @@
 
 #include <t1/t1.hpp>
 
-#include "../src/number_types.hpp"
-#include "../src/memory_stream.hpp"
+#include "shl/number_types.hpp"
+#include "shl/memory_stream.hpp"
 
 define_test(memory_stream_initializes)
 {

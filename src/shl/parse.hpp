@@ -84,8 +84,8 @@
 #include <stdexcept>
 #include <iosfwd>
 
-#include "string.hpp"
-#include "number_types.hpp"
+#include "shl/string.hpp"
+#include "shl/number_types.hpp"
 
 // parse iterator
 struct parse_iterator

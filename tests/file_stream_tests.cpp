@@ -5,9 +5,9 @@
 
 #include <t1/t1.hpp>
 
-#include "../src/number_types.hpp"
-#include "../src/filesystem.hpp"
-#include "../src/file_stream.hpp"
+#include "shl/number_types.hpp"
+#include "shl/filesystem.hpp"
+#include "shl/file_stream.hpp"
 
 // cmake copies these next to test executable
 #define TXT_FILE "file_stream_text_data.txt" // 1024 bytes
