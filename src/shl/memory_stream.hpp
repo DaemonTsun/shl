@@ -7,6 +7,7 @@
  * stream api for memory, similar to file_stream
  */
 
+#include <stdio.h>
 #include "shl/number_types.hpp"
 
 struct memory_stream

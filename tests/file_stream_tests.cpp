@@ -8,6 +8,7 @@
 #include "shl/number_types.hpp"
 #include "shl/filesystem.hpp"
 #include "shl/file_stream.hpp"
+#include "shl/streams.hpp"
 
 // cmake copies these next to test executable
 #define TXT_FILE "file_stream_text_data.txt" // 1024 bytes
@@ -121,6 +122,18 @@ define_test(file_stream_read_entire_file_reads_entire_file)
     assert_equal(strncmp(contents + 4, "abc", 4), 0);
 
     assert_equal(close(&fs), true);
+}
+
+define_test(streams_read_entire_file_reads_entire_file)
+{
+    GET_FILEPATH(BIN_FILE, filepath);
+
+    memory_stream ms;
+    init(&ms);
+
+    assert_equal(read_entire_file(filepath, &ms), 12u);
+    assert_equal(strncmp(ms.data + 4, "abc", 4), 0);
+    assert_equal(close(&ms), true);
 }
 
 define_default_test_main();
