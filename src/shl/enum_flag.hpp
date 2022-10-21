@@ -43,4 +43,6 @@
     constexpr inline T& set(T& a, T b) { return a |= b; } \
     constexpr inline T& set(T& a, std::underlying_type_t<T> b) { return a |= b; } \
     constexpr inline T& unset(T& a, T b) { return a &= ~b; } \
-    constexpr inline T& unset(T& a, std::underlying_type_t<T> b) { return a &= ~b; } \
+    constexpr inline T& unset(T& a, std::underlying_type_t<T> b) { return a &= ~b; }
+
+
