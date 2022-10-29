@@ -45,6 +45,7 @@
  * ...
  */
 
+#include <string.h>
 #include <sstream>
 #include <algorithm>
 #include <type_traits>

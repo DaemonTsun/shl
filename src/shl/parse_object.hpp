@@ -130,6 +130,14 @@ struct basic_parsed_object
     template<typename T>
     bool has_value() const { return std::holds_alternative<T>(data); }
 
+    template<typename T> bool is_bool()       const { return has_value<bool_type>(data); }
+    template<typename T> bool is_integer()    const { return has_value<integer_type>(data); }
+    template<typename T> bool is_decimal()    const { return has_value<decimal_type>(data); }
+    template<typename T> bool is_string()     const { return has_value<string_type>(data); }
+    template<typename T> bool is_identifier() const { return has_value<identifier_type>(data); }
+    template<typename T> bool is_list()       const { return has_value<list_type>(data); }
+    template<typename T> bool is_table()      const { return has_value<table_type>(data); }
+
     parsed_object_data_type data;
 };
 
@@ -220,6 +228,13 @@ template<typename CharT>
 parse_iterator parse_object(parse_iterator it, const CharT *input, size_t input_size, basic_parsed_object<CharT> *out);
 
 template<typename CharT>
+void parse_object(const CharT *input, size_t input_size, basic_parsed_object<CharT> *out)
+{
+    parse_iterator it;
+    parse_object(it, input, input_size, out);
+}
+
+template<typename CharT>
 parse_iterator parse_number_object(parse_iterator it, const CharT *input, size_t input_size, parse_range *rn, parse_error<CharT> *err, basic_parsed_object<CharT> *obj)
 {
     assert(input != nullptr);
@@ -308,6 +323,13 @@ parse_iterator parse_number_object(parse_iterator it, const CharT *input, size_t
 }
 
 template<typename CharT>
+void parse_number_object(const CharT *input, size_t input_size, parse_range *rn, parse_error<CharT> *err, basic_parsed_object<CharT> *obj)
+{
+    parse_iterator it;
+    parse_number_object(it, input, input_size, rn, err, obj);
+}
+
+template<typename CharT>
 parse_iterator parse_object_list(parse_iterator it, const CharT *input, size_t input_size, typename basic_parsed_object<CharT>::list_type *out)
 {
     assert(input != nullptr);
@@ -371,6 +393,13 @@ parse_iterator parse_object_list(parse_iterator it, const CharT *input, size_t i
     advance(&it);
 
     return it;
+}
+
+template<typename CharT>
+void parse_object_list(const CharT *input, size_t input_size, typename basic_parsed_object<CharT>::list_type *out)
+{
+    parse_iterator it;
+    parse_object_list(it, input, input_size, out);
 }
 
 template<typename CharT>
@@ -475,6 +504,13 @@ parse_iterator parse_object_table(parse_iterator it, const CharT *input, size_t 
     advance(&it);
 
     return it;
+}
+
+template<typename CharT>
+void parse_object_table(const CharT *input, size_t input_size, typename basic_parsed_object<CharT>::table_type *out)
+{
+    parse_iterator it;
+    parse_object_table(it, input, input_size, out);
 }
 
 template<typename CharT>
