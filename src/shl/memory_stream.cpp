@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string_view>
 #include "shl/memory_stream.hpp"
 
 memory_stream::operator char*() const
@@ -440,4 +441,12 @@ u64 write_blocks(memory_stream *stream, const void *in, u64 nth_block, u64 block
 
     seek_block(stream, nth_block);
     return write(stream, in, stream->block_size, block_count);
+}
+
+u64 hash(const memory_stream *stream)
+{
+    assert(stream != nullptr);
+    assert(stream->data != nullptr);
+
+    return std::hash<std::string_view>()(std::string_view(stream->data, stream->size));
 }

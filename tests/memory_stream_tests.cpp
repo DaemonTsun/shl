@@ -277,4 +277,27 @@ define_test(memory_stream_read_with_type_ptr_reads)
     close(&mem);
 }
 
+define_test(memory_stream_hash_hashes_memory_stream)
+{
+    const char *data = "hello world";
+    memory_stream mem;
+
+    init(&mem); // inits block_count to 1
+    assert_equal(open(&mem, 16), true);
+    write(&mem, data, strlen(data));
+    mem.position = 0;
+
+    // arbitrary value
+    assert_equal(hash(&mem), 12806276673315956832LL);
+    assert_equal(hash(&mem), 12806276673315956832LL);
+    assert_equal(hash(&mem), 12806276673315956832LL);
+    assert_equal(hash(&mem), 12806276673315956832LL);
+
+    write_at(&mem, "abc", 0, 3);
+
+    assert_not_equal(hash(&mem), 12806276673315956832LL);
+
+    close(&mem);
+}
+
 define_default_test_main();

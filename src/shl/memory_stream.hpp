@@ -124,3 +124,7 @@ void get_at(const memory_stream *stream, T **out, u64 offset)
 {
     *out = reinterpret_cast<T*>(stream->data + offset);
 }
+
+// etc
+// TODO: implement better hash functions as well
+u64 hash(const memory_stream *stream);
