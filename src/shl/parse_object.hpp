@@ -130,13 +130,13 @@ struct basic_parsed_object
     template<typename T>
     bool has_value() const { return std::holds_alternative<T>(data); }
 
-    template<typename T> bool is_bool()       const { return has_value<bool_type>(data); }
-    template<typename T> bool is_integer()    const { return has_value<integer_type>(data); }
-    template<typename T> bool is_decimal()    const { return has_value<decimal_type>(data); }
-    template<typename T> bool is_string()     const { return has_value<string_type>(data); }
-    template<typename T> bool is_identifier() const { return has_value<identifier_type>(data); }
-    template<typename T> bool is_list()       const { return has_value<list_type>(data); }
-    template<typename T> bool is_table()      const { return has_value<table_type>(data); }
+    bool is_bool()       const { return has_value<bool_type>(); }
+    bool is_integer()    const { return has_value<integer_type>(); }
+    bool is_decimal()    const { return has_value<decimal_type>(); }
+    bool is_string()     const { return has_value<string_type>(); }
+    bool is_identifier() const { return has_value<identifier_type>(); }
+    bool is_list()       const { return has_value<list_type>(); }
+    bool is_table()      const { return has_value<table_type>(); }
 
     parsed_object_data_type data;
 };
