@@ -443,10 +443,10 @@ u64 write_blocks(memory_stream *stream, const void *in, u64 nth_block, u64 block
     return write(stream, in, stream->block_size, block_count);
 }
 
-u64 hash(const memory_stream *stream)
+hash_t hash(const memory_stream *stream)
 {
     assert(stream != nullptr);
     assert(stream->data != nullptr);
 
-    return std::hash<std::string_view>()(std::string_view(stream->data, stream->size));
+    return hash_data(stream->data, stream->size);
 }

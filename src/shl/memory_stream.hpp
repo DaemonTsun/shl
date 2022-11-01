@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include "shl/hash.hpp"
 #include "shl/number_types.hpp"
 
 struct memory_stream
@@ -126,5 +127,4 @@ void get_at(const memory_stream *stream, T **out, u64 offset)
 }
 
 // etc
-// TODO: implement better hash functions as well
-u64 hash(const memory_stream *stream);
+hash_t hash(const memory_stream *stream);
