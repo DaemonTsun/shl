@@ -35,5 +35,9 @@ else()
         configure_file(${TEST_SRC_DIR}/file_stream_text_data.txt
                        ${TEST_BIN_DIR}/file_stream_text_data.txt
                        COPYONLY)
+
+        link_tests(pthread)
     endif()
+
+    add_subdirectory("${CMAKE_SOURCE_DIR}/demos")
 endif()
