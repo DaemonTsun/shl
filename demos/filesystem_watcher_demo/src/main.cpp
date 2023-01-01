@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include "shl/error.hpp"
 #include "shl/filesystem_watcher.hpp"
 
 void callback(const char *path, watcher_event_type event)
@@ -8,6 +9,7 @@ void callback(const char *path, watcher_event_type event)
 }
 
 int main(int argc, char **argv)
+try
 {
     filesystem_watcher *watcher;
     create_filesystem_watcher(&watcher, callback);
@@ -26,6 +28,7 @@ int main(int argc, char **argv)
         if (c == 'q' || c < 0)
             break;
 
+        // (un)watching the same file(s) multiple times does nothing
         if (c == 'w')
             for (int i = 1; i < argc; ++i)
                 watch_file(watcher, argv[i]);
@@ -38,4 +41,8 @@ int main(int argc, char **argv)
     destroy_filesystem_watcher(watcher);
 
     return 0;
+}
+catch (error &e)
+{
+    fprintf(stderr, "%s\n", e.what);
 }
