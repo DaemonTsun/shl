@@ -1,5 +1,6 @@
 
 // v1.0
+#include "shl/platform.hpp"
 #include "shl/filesystem.hpp"
 
 /*
@@ -12,15 +13,17 @@
 
 long get_executable_path(char *out)
 {
+#if Linux
+    return readlink("/proc/self/exe", out, PATH_MAX);
 /*
-#ifdef _WIN32
+#elif Windows
     wchar_t path[MAX_PATH] = {0};
     GetModuleFileNameW(NULL, path, MAX_PATH);
     return path;
-#else
 */
-    return readlink("/proc/self/exe", out, PATH_MAX);
-// #endif
+#else
+    #error "unsupported"
+#endif
 }
 
 std::string get_executable_path()

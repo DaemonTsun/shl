@@ -13,8 +13,9 @@ enum class watcher_event_type : u8
 
     /*
     Opened,
-    Attributes_changed,
-    Renamed,
+    Closed,
+    AttributesChanged,
+    Renamed / moved,
     */
 };
 
