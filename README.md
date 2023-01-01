@@ -37,8 +37,21 @@ An object may look like this by default:
 ```
 
 ### [file_stream](https://github.com/DaemonTsun/shl/blob/master/src/file_stream.hpp)
-Comes with a cpp file for definitions. Defines the file_stream struct which is a very light wrapper around `FILE*`. Defines a bunch of functions for reading and writing data, calculating size, reading the entire file or reading and writing blocks of data.
+Comes with a cpp file for definitions. Defines the `file_stream` struct which is a very light wrapper around `FILE*`. Defines a bunch of functions for reading and writing data, calculating size, reading the entire file or reading and writing blocks of data.
 The point of this is to have a more consistent file reading and writing API.
+
+### [filesystem](https://github.com/DaemonTsun/shl/blob/master/src/filesystem.hpp)
+Right now it only defines the `get_executable_path` function to obtain the path to the current executable.
+
+### [filesystem_watcher](https://github.com/DaemonTsun/shl/blob/master/src/filesystem_watcher.hpp)
+Comes with a cpp file for definitions. Declares the `filesystem_watcher` struct, as well as multiple functions to watch files on the filesystem with.
+The watcher, once started, runs in its own thread and calls the callback function when it detects changes in the watched files.
+The callback function is called from the other thread.
+For an example usage, see the [demo](https://github.com/DaemonTsun/shl/blob/master/demos/filesystem_watcher_demo/src/main.cpp).
+
+### [error](https://github.com/DaemonTsun/shl/blob/master/src/error.hpp)
+Comes with a cpp file for definitions. A simple error struct to replace STL exceptions with.
+When using the formatting overload or the `format_error` function, the error message is written to a static buffer (by default of size 2048 chars).
 
 ## tests
 If [t1](https://github.com/DaemonTsun/t1) is installed, tests can be run as well using `make tests && make runtests`.
