@@ -18,26 +18,6 @@ const char *vformat_error(const char *format, va_list args)
     return _error;
 }
 
-error::error()
-{
-    this->what = "";
-}
-
-error::error(const char *what)
-{
-    this->what = what;
-}
-
-error::error(const char *format, ...)
-{
-    va_list argptr;
-    va_start(argptr, format);
-    const char *ret = vformat_error(format, argptr);
-    va_end(argptr);
-
-    this->what = ret;
-}
-
 const char *format_error(const char *format, ...)
 {
     va_list argptr;

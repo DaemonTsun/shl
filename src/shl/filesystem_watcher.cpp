@@ -74,9 +74,6 @@ struct filesystem_watcher
 #define print_watcher_error(MSG, ...)\
     fprintf(stderr, "filesystem_watcher %d: " MSG, __LINE__ __VA_OPT__(,) __VA_ARGS__);
 
-#define watcher_error(MSG, ...)\
-    error("filesystem_watcher %d: " MSG, __LINE__ __VA_OPT__(,) __VA_ARGS__);
-
 // linux specific watcher
 #if Linux
 #include <sys/types.h>
@@ -209,6 +206,7 @@ void *_watcher_process(void *threadarg)
 
         if (ret < 0)
         {
+            // dont throw in threads
             print_watcher_error("poll failed %s\n", strerror(errno));
             break;
         }
@@ -258,7 +256,7 @@ void create_filesystem_watcher(filesystem_watcher **out, watcher_callback_f call
     watcher->inotify_fd = inotify_init1(O_NONBLOCK);
 
     if(watcher->inotify_fd < 0)
-        throw watcher_error("could not initialize inotify: %s", strerror(errno));
+        throw_error("could not initialize inotify: %s", strerror(errno));
 
     watcher->timeout = 50; // ms
 #endif
@@ -276,7 +274,7 @@ void watch_file(filesystem_watcher *watcher, const char *path)
     fs::path fpath = path;
 
     if (!fs::is_regular_file(fpath))
-        throw watcher_error("could not watch file because path is not a file: '%s'", path);
+        throw_error("could not watch file because path is not a file: '%s'", path);
 
     fpath = absolute_canonical(fpath);
     fs::path parent_path = absolute_canonical(fpath.parent_path());
@@ -294,7 +292,7 @@ void watch_file(filesystem_watcher *watcher, const char *path)
         watched_parent->fd = inotify_add_watch(watcher->inotify_fd, parent_path.c_str(), IN_ALL_EVENTS);
 
         if (watched_parent->fd < 0)
-            throw watcher_error("could not watch parent directory '%s' of file '%s'", parent_path.c_str(), path);
+            throw_error("could not watch parent directory '%s' of file '%s'", parent_path.c_str(), path);
     }
 
     assert(watched_parent != nullptr);
@@ -309,7 +307,7 @@ void watch_file(filesystem_watcher *watcher, const char *path)
     watched->fd = inotify_add_watch(watcher->inotify_fd, path, IN_ALL_EVENTS);
 
     if (watched->fd < 0)
-        throw watcher_error("could not watch file '%s': %s", path, strerror(errno));
+        throw_error("could not watch file '%s': %s", path, strerror(errno));
 #else
     #error "Unsupported"
 #endif
@@ -366,7 +364,7 @@ void start_filesystem_watcher(filesystem_watcher *watcher)
         watcher);
 
     if(watcher->thread_id != 0)
-        throw watcher_error("could not start watcher thread: %s", strerror(watcher->thread_id));
+        throw_error("could not start watcher thread: %s", strerror(watcher->thread_id));
 
     watcher->running = true;
 }
