@@ -9,9 +9,8 @@
 using namespace std::literals;
 
 #define SETUP(STR) \
-    const char *input = STR;\
-    size_t input_size = input == nullptr ? 0 : strlen(input);\
-    parse_iterator it;
+    parser p;\
+    init(&p, STR, STR == nullptr ? 0 : string_length(STR));
 
 #define assert_error(EXPR, ERR) \
     assert_throws(EXPR, ERR);\
@@ -21,26 +20,26 @@ using namespace std::literals;
         EXPR;\
     }\
     catch (ERR &err)
-    
+
 define_test(skip_whitespace_does_nothing_on_nullptr)
 {
     SETUP(nullptr);
 
-    it = skip_whitespace(it, input, input_size);
+    skip_whitespace(&p);
 
-    assert_equal(it.i, 0);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 1);
+    assert_equal(p.it.pos, 0);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 1);
 }
-    
+
 define_test(skip_whitespace_skips_whitespace)
 {
     SETUP("   abc");
 
-    it = skip_whitespace(it, input, input_size);
+    skip_whitespace(&p);
 
-    assert_equal(it.i, 3);
+    assert_equal(it.pos, 3);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 4);
@@ -52,9 +51,9 @@ define_test(skip_whitespace_skips_whitespace2)
 
  abc)=");
 
-    it = skip_whitespace(it, input, input_size);
+    skip_whitespace(&p);
 
-    assert_equal(it.i, 3);
+    assert_equal(it.pos, 3);
     assert_equal(it.line_start, 2);
     assert_equal(it.line, 3);
     assert_equal(it.line_pos, 2);
@@ -64,9 +63,9 @@ define_test(skip_whitespace_doesnt_skip_nonwhitespace)
 {
     SETUP("abc    def");
 
-    it = skip_whitespace(it, input, input_size);
+    skip_whitespace(&p);
 
-    assert_equal(it.i, 0);
+    assert_equal(it.pos, 0);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 1);
@@ -76,58 +75,60 @@ define_test(parse_comment_parses_nullptr)
 {
     SETUP(nullptr);
 
-    it = parse_comment(it, input, input_size);
+    bool success = parse_comment(&p);
 
-    assert_equal(it.i, 0);
+    assert_equal(it.pos, 0);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 1);
+
+    assert_equal(success, false);
 }
 
 define_test(parse_comment_parses_empty_string)
 {
     SETUP("");
 
-    it = parse_comment(it, input, input_size);
+    bool success = parse_comment(&p);
 
-    assert_equal(it.i, 0);
+    assert_equal(it.pos, 0);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 1);
+
+    assert_equal(success, false);
 }
 
 define_test(parse_comment_parses_line_comment)
 {
     SETUP("// hello");
 
-    std::string out;
-    bool success;
-    it = parse_comment(it, input, input_size, &out, &success);
+    parse_range out;
+    bool success = parse_comment(&p, &out);
 
-    assert_equal(it.i, 8);
+    assert_equal(it.pos, 8);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 9);
 
     assert_equal(success, true);
-    assert_equal(out, " hello"s);
+    assert_equal(slice(input, &out), " hello"s);
 }
 
 define_test(parse_comment_parses_line_comment2)
 {
     SETUP("// hello\n world");
 
-    std::string out;
-    bool success;
-    it = parse_comment(it, input, input_size, &out, &success);
+    parse_range out;
+    bool success = parse_comment(&p, &out);
 
-    assert_equal(it.i, 9);
+    assert_equal(it.pos, 9);
     assert_equal(it.line_start, 9);
     assert_equal(it.line, 2);
     assert_equal(it.line_pos, 1);
 
     assert_equal(success, true);
-    assert_equal(out, " hello\n"s);
+    assert_equal(slice(input, &out), " hello\n"s);
 }
 
 define_test(parse_comment_parses_block_comment)
@@ -135,22 +136,21 @@ define_test(parse_comment_parses_block_comment)
     SETUP("/* abc def */");
 
     parse_range out;
-    bool success;
-    it = parse_comment(it, input, input_size, &out, &success);
+    bool success = parse_comment(&p, &out);
 
-    assert_equal(it.i, 13);
+    assert_equal(it.pos, 13);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 14);
 
     assert_equal(success, true);
 
-    assert_equal(out.start.i, 2);
+    assert_equal(out.start.pos, 2);
     assert_equal(out.start.line_start, 0);
     assert_equal(out.start.line, 1);
     assert_equal(out.start.line_pos, 3);
 
-    assert_equal(out.end.i, 11);
+    assert_equal(out.end.pos, 11);
     assert_equal(out.end.line_start, 0);
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 12);
@@ -161,31 +161,30 @@ define_test(parse_comment_parses_block_comment)
 
 define_test(parse_comment_parses_block_comment2)
 {
-    SETUP("/*\nhello world\n*/");
+    SETUP(L"/*\nhello world\n*/");
 
     parse_range out;
-    bool success;
-    it = parse_comment(it, input, input_size, &out, &success);
+    bool success = parse_comment(&p, &out);
 
-    assert_equal(it.i, 17);
+    assert_equal(it.pos, 17);
     assert_equal(it.line_start, 15);
     assert_equal(it.line, 3);
     assert_equal(it.line_pos, 3);
 
     assert_equal(success, true);
 
-    assert_equal(out.start.i, 2);
+    assert_equal(out.start.pos, 2);
     assert_equal(out.start.line_start, 0);
     assert_equal(out.start.line, 1);
     assert_equal(out.start.line_pos, 3);
 
-    assert_equal(out.end.i, 15);
+    assert_equal(out.end.pos, 15);
     assert_equal(out.end.line_start, 15);
     assert_equal(out.end.line, 3);
     assert_equal(out.end.line_pos, 1);
 
     auto str = slice(input, &out);
-    assert_equal(str, "\nhello world\n"s);
+    assert_equal(str, L"\nhello world\n"s);
 }
 
 define_test(skip_whitespace_and_comments_skips_whitespace)
@@ -193,9 +192,9 @@ define_test(skip_whitespace_and_comments_skips_whitespace)
     SETUP("   abc def");
     //        ^
 
-    it = skip_whitespace_and_comments(it, input, input_size);
+    skip_whitespace_and_comments(&p);
 
-    assert_equal(it.i, 3);
+    assert_equal(it.pos, 3);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 4);
@@ -206,9 +205,9 @@ define_test(skip_whitespace_and_comments_skips_comment)
     SETUP("/*\nhello world\n*/  abc");
     //                          ^
 
-    it = skip_whitespace_and_comments(it, input, input_size);
+    skip_whitespace_and_comments(&p);
 
-    assert_equal(it.i, 19);
+    assert_equal(it.pos, 19);
     assert_equal(it.line_start, 15);
     assert_equal(it.line, 3);
     assert_equal(it.line_pos, 5);
@@ -217,12 +216,12 @@ define_test(skip_whitespace_and_comments_skips_comment)
 define_test(skip_whitespace_and_comments_skips_comments)
 {
     SETUP(" /*\nhello world\n*/  // this is a line comment\n /*yep*/abc");
-    //                                                             ^
+    //                                                              ^
 
-    it = skip_whitespace_and_comments(it, input, input_size);
+    skip_whitespace_and_comments(&p);
 
-    assert_equal(it.i, 54);
-    assert_equal(input[it.i], 'a');
+    assert_equal(it.pos, 54);
+    assert_equal(input[it.pos], 'a');
     assert_equal(it.line_start, 46);
     assert_equal(it.line, 4);
     assert_equal(it.line_pos, 9);
@@ -235,12 +234,29 @@ define_test(parse_string_yields_error_on_invalid_input)
     parse_range out;
     parse_error err;
     
-    it = parse_string(it, input, input_size, &out, &err);
+    bool success = parse_string(&p, &out, &err);
+
+    assert_equal(success, false);
+    assert_error(throw err, parse_error<>)
+    {
+        assert_equal(err.it.pos, 0);
+        assert_equal(err.input, "abc");
+    }
+}
+
+define_test(parse_string_yields_error_on_invalid_input)
+{
+    SETUP("abc");
+
+    parse_range out;
+    parse_error err;
+    
+    parse_string(&p, &out, &err);
 
     assert_equal(err.success, false);
     assert_error(throw err, parse_error<>)
     {
-        assert_equal(err.it.i, 0);
+        assert_equal(err.it.pos, 0);
         assert_equal(err.input, "abc");
     }
 }
@@ -252,12 +268,12 @@ define_test(parse_string_yields_error_on_unterminated_string)
     parse_range out;
     parse_error err;
 
-    it = parse_string(it, input, input_size, &out, &err);
+    parse_string(&p, &out, &err);
 
     assert_equal(err.success, false);
     assert_error(throw err, parse_error<>)
     {
-        assert_equal(err.it.i, 4);
+        assert_equal(err.it.pos, 4);
         assert_equal(err.input, "\"abc");
     }
 }
@@ -269,12 +285,12 @@ define_test(parse_string_yields_error_on_unterminated_string2)
     parse_range out;
     parse_error err;
 
-    it = parse_string(it, input, input_size, &out, &err);
+    parse_string(&p, &out, &err);
 
     assert_equal(err.success, false);
     assert_error(throw err, parse_error<>)
     {
-        assert_equal(err.it.i, 6);
+        assert_equal(err.it.pos, 6);
         assert_equal(err.input, "\"abc\\\"");
     }
 }
@@ -286,21 +302,21 @@ define_test(parse_string_parses_string)
     parse_range out;
     parse_error err;
 
-    it = parse_string(it, input, input_size, &out, &err);
+    parse_string(&p, &out, &err);
 
     assert_equal(err.success, true);
 
-    assert_equal(it.i, 2);
+    assert_equal(it.pos, 2);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 3);
 
-    assert_equal(out.start.i, 1);
+    assert_equal(out.start.pos, 1);
     assert_equal(out.start.line_start, 0);
     assert_equal(out.start.line, 1);
     assert_equal(out.start.line_pos, 2);
 
-    assert_equal(out.end.i, 1);
+    assert_equal(out.end.pos, 1);
     assert_equal(out.end.line_start, 0);
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 2);
@@ -316,19 +332,19 @@ define_test(parse_string_parses_string2)
     parse_range out;
     parse_error err;
 
-    it = parse_string(it, input, input_size, &out, &err);
+    parse_string(&p, &out, &err);
 
-    assert_equal(it.i, 5);
+    assert_equal(it.pos, 5);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 6);
 
-    assert_equal(out.start.i, 1);
+    assert_equal(out.start.pos, 1);
     assert_equal(out.start.line_start, 0);
     assert_equal(out.start.line, 1);
     assert_equal(out.start.line_pos, 2);
 
-    assert_equal(out.end.i, 4);
+    assert_equal(out.end.pos, 4);
     assert_equal(out.end.line_start, 0);
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 5);
@@ -344,19 +360,19 @@ define_test(parse_string_parses_string3)
     parse_range out;
     parse_error err;
 
-    it = parse_string(it, input, input_size, &out, &err);
+    parse_string(&p, &out, &err);
 
-    assert_equal(it.i, 7);
+    assert_equal(it.pos, 7);
     assert_equal(it.line_start, 6);
     assert_equal(it.line, 3);
     assert_equal(it.line_pos, 2);
 
-    assert_equal(out.start.i, 1);
+    assert_equal(out.start.pos, 1);
     assert_equal(out.start.line_start, 0);
     assert_equal(out.start.line, 1);
     assert_equal(out.start.line_pos, 2);
 
-    assert_equal(out.end.i, 6);
+    assert_equal(out.end.pos, 6);
     assert_equal(out.end.line_start, 6);
     assert_equal(out.end.line, 3);
     assert_equal(out.end.line_pos, 1);
@@ -371,9 +387,9 @@ define_test(parse_string_parses_string4)
 
     std::string out;
 
-    it = parse_string(it, input, input_size, &out);
+    parse_string(&p, &out);
 
-    assert_equal(it.i, 5);
+    assert_equal(it.pos, 5);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 6);
@@ -387,19 +403,19 @@ define_test(parse_string_parses_string_with_delims)
     parse_range out;
     parse_error err;
 
-    it = parse_string(it, input, input_size, &out, &err, '"', true);
+    parse_string(&p, &out, &err, '"', true);
 
-    assert_equal(it.i, 7);
+    assert_equal(it.pos, 7);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 8);
 
-    assert_equal(out.start.i, 0);
+    assert_equal(out.start.pos, 0);
     assert_equal(out.start.line_start, 0);
     assert_equal(out.start.line, 1);
     assert_equal(out.start.line_pos, 1);
 
-    assert_equal(out.end.i, 7);
+    assert_equal(out.end.pos, 7);
     assert_equal(out.end.line_start, 0);
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 8);
@@ -415,19 +431,19 @@ define_test(parse_string_parses_string_with_delims2)
     parse_range out;
     parse_error err;
 
-    it = parse_string(it, input, input_size, &out, &err, '"', true);
+    parse_string(&p, &out, &err, '"', true);
 
-    assert_equal(it.i, 16);
+    assert_equal(it.pos, 16);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 17);
 
-    assert_equal(out.start.i, 0);
+    assert_equal(out.start.pos, 0);
     assert_equal(out.start.line_start, 0);
     assert_equal(out.start.line, 1);
     assert_equal(out.start.line_pos, 1);
 
-    assert_equal(out.end.i, 16);
+    assert_equal(out.end.pos, 16);
     assert_equal(out.end.line_start, 0);
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 17);
@@ -442,19 +458,19 @@ define_test(parse_string_parses_string_delims)
     parse_range out;
     parse_error err;
 
-    it = parse_string(it, input, input_size, &out, &err, 'x');
+    parse_string(&p, &out, &err, 'x');
 
-    assert_equal(it.i, 11);
+    assert_equal(it.pos, 11);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 12);
 
-    assert_equal(out.start.i, 1);
+    assert_equal(out.start.pos, 1);
     assert_equal(out.start.line_start, 0);
     assert_equal(out.start.line, 1);
     assert_equal(out.start.line_pos, 2);
 
-    assert_equal(out.end.i, 10);
+    assert_equal(out.end.pos, 10);
     assert_equal(out.end.line_start, 0);
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 11);
@@ -469,8 +485,8 @@ define_test(parse_integer_parses_integer)
 
     s64 out;
 
-    it = parse_integer(it, input, input_size, &out);
-    assert_equal(it.i, 4);
+    parse_integer(&p, &out);
+    assert_equal(it.pos, 4);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 5);
@@ -483,8 +499,8 @@ define_test(parse_integer_parses_integer2)
 
     s64 out;
 
-    it = parse_integer(it, input, input_size, &out);
-    assert_equal(it.i, 4);
+    parse_integer(&p, &out);
+    assert_equal(it.pos, 4);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 5);
@@ -497,8 +513,8 @@ define_test(parse_integer_parses_integer3)
 
     s64 out;
 
-    it = parse_integer(it, input, input_size, &out);
-    assert_equal(it.i, 5);
+    parse_integer(&p, &out);
+    assert_equal(it.pos, 5);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 6);
@@ -512,8 +528,8 @@ define_test(parse_integer_parses_integer4)
     parse_range out;
     parse_error err;
 
-    it = parse_integer(it, input, input_size, &out, &err);
-    assert_equal(it.i, 6);
+    parse_integer(&p, &out, &err);
+    assert_equal(it.pos, 6);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 7);
@@ -527,8 +543,8 @@ define_test(parse_integer_parses_unsigned_integer)
 
     u64 out;
 
-    it = parse_integer(it, input, input_size, &out);
-    assert_equal(it.i, 12);
+    parse_integer(&p, &out);
+    assert_equal(it.pos, 12);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 13);
@@ -541,8 +557,8 @@ define_test(parse_integer_parses_unsigned_integer2)
 
     u64 out;
 
-    it = parse_integer(it, input, input_size, &out);
-    assert_equal(it.i, 2);
+    parse_integer(&p, &out);
+    assert_equal(it.pos, 2);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 3);
@@ -555,8 +571,8 @@ define_test(parse_integer_parses_binary_integer)
 
     s64 out;
 
-    it = parse_integer(it, input, input_size, &out);
-    assert_equal(it.i, 6);
+    parse_integer(&p, &out);
+    assert_equal(it.pos, 6);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 7);
@@ -569,8 +585,8 @@ define_test(parse_integer_parses_binary_integer2)
 
     s64 out;
 
-    it = parse_integer(it, input, input_size, &out);
-    assert_equal(it.i, 7);
+    parse_integer(&p, &out);
+    assert_equal(it.pos, 7);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 8);
@@ -583,8 +599,8 @@ define_test(parse_integer_parses_octal_integer)
 
     s64 out;
 
-    it = parse_integer(it, input, input_size, &out);
-    assert_equal(it.i, 5);
+    parse_integer(&p, &out);
+    assert_equal(it.pos, 5);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 6);
@@ -597,8 +613,8 @@ define_test(parse_integer_parses_octal_integer2)
 
     s64 out;
 
-    it = parse_integer(it, input, input_size, &out);
-    assert_equal(it.i, 8);
+    parse_integer(&p, &out);
+    assert_equal(it.pos, 8);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 9);
@@ -611,8 +627,8 @@ define_test(parse_integer_parses_hex_integer)
 
     s64 out;
 
-    it = parse_integer(it, input, input_size, &out);
-    assert_equal(it.i, 4);
+    parse_integer(&p, &out);
+    assert_equal(it.pos, 4);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 5);
@@ -625,8 +641,8 @@ define_test(parse_integer_parses_hex_integer2)
 
     s64 out;
 
-    it = parse_integer(it, input, input_size, &out);
-    assert_equal(it.i, 4);
+    parse_integer(&p, &out);
+    assert_equal(it.pos, 4);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 5);
@@ -639,8 +655,8 @@ define_test(parse_integer_parses_hex_integer3)
 
     s64 out;
 
-    it = parse_integer(it, input, input_size, &out);
-    assert_equal(it.i, 10);
+    parse_integer(&p, &out);
+    assert_equal(it.pos, 10);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 11);
@@ -653,8 +669,8 @@ define_test(parse_integer_parses_hex_integer4)
 
     s64 out;
 
-    it = parse_integer(it, input, input_size, &out);
-    assert_equal(it.i, 11);
+    parse_integer(&p, &out);
+    assert_equal(it.pos, 11);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 12);
@@ -667,8 +683,8 @@ define_test(parse_integer_parses_hex_integer5)
 
     s64 out;
 
-    it = parse_integer(it, input, input_size, &out);
-    assert_equal(it.i, 4);
+    parse_integer(&p, &out);
+    assert_equal(it.pos, 4);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 5);
@@ -681,9 +697,9 @@ define_test(parse_integer_throws_on_invalid_input)
 
     s64 out;
 
-    assert_error(it = parse_integer(it, input, input_size, &out), parse_error<>)
+    assert_error(parse_integer(&p, &out), parse_error<>)
     {
-        assert_equal(err.it.i, 0);
+        assert_equal(err.it.pos, 0);
         assert_equal(err.input, "xyz");
     }
 }
@@ -694,9 +710,9 @@ define_test(parse_integer_throws_on_invalid_input2)
 
     s64 out;
 
-    assert_error(it = parse_integer(it, input, input_size, &out), parse_error<>)
+    assert_error(parse_integer(&p, &out), parse_error<>)
     {
-        assert_equal(err.it.i, 2);
+        assert_equal(err.it.pos, 2);
         assert_equal(err.input, "0x");
     }
 }
@@ -707,9 +723,9 @@ define_test(parse_integer_throws_on_invalid_input3)
 
     s64 out;
 
-    assert_error(it = parse_integer(it, input, input_size, &out), parse_error<>)
+    assert_error(parse_integer(&p, &out), parse_error<>)
     {
-        assert_equal(err.it.i, 2);
+        assert_equal(err.it.pos, 2);
         assert_equal(err.input, "0b");
     }
 }
@@ -720,9 +736,9 @@ define_test(parse_integer_throws_on_invalid_input4)
 
     s64 out;
 
-    assert_error(it = parse_integer(it, input, input_size, &out), parse_error<>)
+    assert_error(parse_integer(&p, &out), parse_error<>)
     {
-        assert_equal(err.it.i, 2);
+        assert_equal(err.it.pos, 2);
         assert_equal(err.input, "0xZ");
     }
 }
@@ -734,13 +750,13 @@ define_test(parse_integer_yields_error_on_invalid_input)
     parse_range out;
     parse_error err;
 
-    it = parse_integer(it, input, input_size, &out, &err);
+    parse_integer(&p, &out, &err);
 
     assert_equal(err.success, false);
 
     assert_error(throw err, parse_error<>)
     {
-        assert_equal(err.it.i, 1);
+        assert_equal(err.it.pos, 1);
         assert_equal(err.input, "+");
     }
 }
@@ -751,8 +767,8 @@ define_test(parse_decimal_parses_float)
 
     float out;
 
-    it = parse_decimal(it, input, input_size, &out);
-    assert_equal(it.i, 3);
+    parse_decimal(&p, &out);
+    assert_equal(it.pos, 3);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 4);
@@ -765,8 +781,8 @@ define_test(parse_decimal_parses_float2)
 
     float out;
 
-    it = parse_decimal(it, input, input_size, &out);
-    assert_equal(it.i, 4);
+    parse_decimal(&p, &out);
+    assert_equal(it.pos, 4);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 5);
@@ -779,8 +795,8 @@ define_test(parse_decimal_parses_float3)
 
     float out;
 
-    it = parse_decimal(it, input, input_size, &out);
-    assert_equal(it.i, 5);
+    parse_decimal(&p, &out);
+    assert_equal(it.pos, 5);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 6);
@@ -793,8 +809,8 @@ define_test(parse_decimal_parses_float4)
 
     float out;
 
-    it = parse_decimal(it, input, input_size, &out);
-    assert_equal(it.i, 8);
+    parse_decimal(&p, &out);
+    assert_equal(it.pos, 8);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 9);
@@ -807,8 +823,8 @@ define_test(parse_decimal_parses_float5)
 
     float out;
 
-    it = parse_decimal(it, input, input_size, &out);
-    assert_equal(it.i, 7);
+    parse_decimal(&p, &out);
+    assert_equal(it.pos, 7);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 8);
@@ -821,8 +837,8 @@ define_test(parse_decimal_parses_float6)
 
     float out;
 
-    it = parse_decimal(it, input, input_size, &out);
-    assert_equal(it.i, 8);
+    parse_decimal(&p, &out);
+    assert_equal(it.pos, 8);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 9);
@@ -835,8 +851,8 @@ define_test(parse_decimal_parses_float7)
 
     float out;
 
-    it = parse_decimal(it, input, input_size, &out);
-    assert_equal(it.i, 6);
+    parse_decimal(&p, &out);
+    assert_equal(it.pos, 6);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 7);
@@ -849,8 +865,8 @@ define_test(parse_decimal_parses_double)
 
     double out;
 
-    it = parse_decimal(it, input, input_size, &out);
-    assert_equal(it.i, 3);
+    parse_decimal(&p, &out);
+    assert_equal(it.pos, 3);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 4);
@@ -863,8 +879,8 @@ define_test(parse_decimal_parses_double2)
 
     double out;
 
-    it = parse_decimal(it, input, input_size, &out);
-    assert_equal(it.i, 4);
+    parse_decimal(&p, &out);
+    assert_equal(it.pos, 4);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 5);
@@ -877,8 +893,8 @@ define_test(parse_decimal_parses_double3)
 
     double out;
 
-    it = parse_decimal(it, input, input_size, &out);
-    assert_equal(it.i, 5);
+    parse_decimal(&p, &out);
+    assert_equal(it.pos, 5);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 6);
@@ -891,8 +907,8 @@ define_test(parse_decimal_parses_double4)
 
     double out;
 
-    it = parse_decimal(it, input, input_size, &out);
-    assert_equal(it.i, 8);
+    parse_decimal(&p, &out);
+    assert_equal(it.pos, 8);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 9);
@@ -905,8 +921,8 @@ define_test(parse_decimal_parses_double5)
 
     double out;
 
-    it = parse_decimal(it, input, input_size, &out);
-    assert_equal(it.i, 7);
+    parse_decimal(&p, &out);
+    assert_equal(it.pos, 7);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 8);
@@ -919,8 +935,8 @@ define_test(parse_decimal_parses_double6)
 
     double out;
 
-    it = parse_decimal(it, input, input_size, &out);
-    assert_equal(it.i, 9);
+    parse_decimal(&p, &out);
+    assert_equal(it.pos, 9);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 10);
@@ -933,8 +949,8 @@ define_test(parse_decimal_parses_double7)
 
     double out;
 
-    it = parse_decimal(it, input, input_size, &out);
-    assert_equal(it.i, 6);
+    parse_decimal(&p, &out);
+    assert_equal(it.pos, 6);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 7);
@@ -948,10 +964,10 @@ define_test(parse_decimal_parses_decimal)
     parse_range out;
     parse_error err;
 
-    it = parse_decimal(it, input, input_size, &out, &err);
+    parse_decimal(&p, &out, &err);
 
     assert_equal(err.success, true);
-    assert_equal(it.i, 22);
+    assert_equal(it.pos, 22);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 23);
@@ -963,9 +979,9 @@ define_test(parse_decimal_throw_on_invalid_input)
 
     float out;
 
-    assert_error(it = parse_decimal(it, input, input_size, &out), parse_error<>)
+    assert_error(parse_decimal(&p, &out), parse_error<>)
     {
-        assert_equal(err.it.i, 0);
+        assert_equal(err.it.pos, 0);
     }
 }
 
@@ -975,9 +991,9 @@ define_test(parse_decimal_throw_on_invalid_input2)
 
     float out;
 
-    assert_error(it = parse_decimal(it, input, input_size, &out), parse_error<>)
+    assert_error(parse_decimal(&p, &out), parse_error<>)
     {
-        assert_equal(err.it.i, 1);
+        assert_equal(err.it.pos, 1);
     }
 }
 
@@ -987,9 +1003,9 @@ define_test(parse_decimal_throw_on_invalid_input3)
 
     float out;
 
-    assert_error(it = parse_decimal(it, input, input_size, &out), parse_error<>)
+    assert_error(parse_decimal(&p, &out), parse_error<>)
     {
-        assert_equal(err.it.i, 0);
+        assert_equal(err.it.pos, 0);
     }
 }
 
@@ -1000,13 +1016,13 @@ define_test(parse_decimal_yields_error_on_invalid_input)
     parse_range out;
     parse_error err;
 
-    it = parse_decimal(it, input, input_size, &out, &err);
+    parse_decimal(&p, &out, &err);
 
     assert_equal(err.success, false);
 
     assert_error(throw err, parse_error<>)
     {
-        assert_equal(err.it.i, 3);
+        assert_equal(err.it.pos, 3);
     }
 }
 
@@ -1016,9 +1032,9 @@ define_test(parse_identifier_throws_on_invalid_first_character)
 
     std::string out;
 
-    assert_error(it = parse_identifier(it, input, input_size, &out), parse_error<>)
+    assert_error(parse_identifier(&p, &out), parse_error<>)
     {
-        assert_equal(err.it.i, 0);
+        assert_equal(err.it.pos, 0);
     }
 }
 
@@ -1028,8 +1044,8 @@ define_test(parse_identifier_parses_identifier)
 
     std::string out;
 
-    it = parse_identifier(it, input, input_size, &out);
-    assert_equal(it.i, 3);
+    parse_identifier(&p, &out);
+    assert_equal(it.pos, 3);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 4);
@@ -1042,8 +1058,8 @@ define_test(parse_identifier_parses_identifier2)
 
     std::string out;
 
-    it = parse_identifier(it, input, input_size, &out);
-    assert_equal(it.i, 3);
+    parse_identifier(&p, &out);
+    assert_equal(it.pos, 3);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 4);
@@ -1056,8 +1072,8 @@ define_test(parse_identifier_parses_identifier3)
 
     std::string out;
 
-    it = parse_identifier(it, input, input_size, &out);
-    assert_equal(it.i, 12);
+    parse_identifier(&p, &out);
+    assert_equal(it.pos, 12);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 13);
@@ -1070,8 +1086,8 @@ define_test(parse_bool_parses_true)
 
     bool out;
 
-    it = parse_bool(it, input, input_size, &out);
-    assert_equal(it.i, 4);
+    parse_bool(&p, &out);
+    assert_equal(it.pos, 4);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 5);
@@ -1084,28 +1100,12 @@ define_test(parse_bool_parses_true2)
 
     bool out;
 
-    it = parse_bool(it, input, input_size, &out);
-    assert_equal(it.i, 4);
+    parse_bool(&p, &out);
+    assert_equal(it.pos, 4);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 5);
     assert_equal(out, true);
-}
-
-define_test(parse_bool_parses_true3)
-{
-    SETUP("true");
-
-    parse_range out;
-    parse_error err;
-
-    it = parse_bool(it, input, input_size, &out, &err);
-    assert_equal(it.i, 4);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 5);
-
-    assert_equal(err.success, true);
 }
 
 define_test(parse_bool_parses_false)
@@ -1114,8 +1114,8 @@ define_test(parse_bool_parses_false)
 
     bool out;
 
-    it = parse_bool(it, input, input_size, &out);
-    assert_equal(it.i, 5);
+    parse_bool(&p, &out);
+    assert_equal(it.pos, 5);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 6);
@@ -1128,8 +1128,8 @@ define_test(parse_bool_parses_false2)
 
     bool out;
 
-    it = parse_bool(it, input, input_size, &out);
-    assert_equal(it.i, 5);
+    parse_bool(&p, &out);
+    assert_equal(it.pos, 5);
     assert_equal(it.line_start, 0);
     assert_equal(it.line, 1);
     assert_equal(it.line_pos, 6);
@@ -1142,9 +1142,9 @@ define_test(parse_bool_throws_on_invalid_input2)
 
     bool out;
 
-    assert_error(it = parse_bool(it, input, input_size, &out), parse_error<>)
+    assert_error(parse_bool(&p, &out), parse_error<>)
     {
-        assert_equal(err.it.i, 1);
+        assert_equal(err.it.pos, 1);
         assert_equal(err.it.line_start, 0);
         assert_equal(err.it.line, 1);
         assert_equal(err.it.line_pos, 2);
@@ -1158,9 +1158,9 @@ define_test(parse_bool_throws_on_invalid_input3)
 
     bool out;
 
-    assert_error(it = parse_bool(it, input, input_size, &out), parse_error<>)
+    assert_error(parse_bool(&p, &out), parse_error<>)
     {
-        assert_equal(err.it.i, 2);
+        assert_equal(err.it.pos, 2);
         assert_equal(err.it.line_start, 0);
         assert_equal(err.it.line, 1);
         assert_equal(err.it.line_pos, 3);
@@ -1174,9 +1174,9 @@ define_test(parse_bool_throws_on_invalid_input4)
 
     bool out;
 
-    assert_error(it = parse_bool(it, input, input_size, &out), parse_error<>)
+    assert_error(parse_bool(&p, &out), parse_error<>)
     {
-        assert_equal(err.it.i, 2);
+        assert_equal(err.it.pos, 2);
         assert_equal(err.it.line_start, 0);
         assert_equal(err.it.line, 1);
         assert_equal(err.it.line_pos, 3);

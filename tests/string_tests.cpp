@@ -180,7 +180,7 @@ define_test(to_double_converts_to_double)
 define_test(copy_string_copies_string)
 {
     const char *str1 = "abc";
-    char str2[5];
+    char str2[5] = {0};
 
     copy_string(str1, str2, 3);
 

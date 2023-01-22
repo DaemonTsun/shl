@@ -32,16 +32,21 @@ void to_lower(char *s);
 void to_lower(wchar_t *s);
 
 // trim from start (in place)
-void trim_left(std::basic_string<char>    &s);
-void trim_left(std::basic_string<wchar_t> &s);
+void trim_left(std::basic_string<char>    *s);
+void trim_left(std::basic_string<wchar_t> *s);
 
 // trim from end (in place)
-void trim_right(std::basic_string<char>    &s);
-void trim_right(std::basic_string<wchar_t> &s);
+void trim_right(std::basic_string<char>    *s);
+void trim_right(std::basic_string<wchar_t> *s);
 
 // trim from both ends (in place)
-void trim(std::basic_string<char> &s);
-void trim(std::basic_string<wchar_t> &s);
+void trim(std::basic_string<char>    *s);
+void trim(std::basic_string<wchar_t> *s);
+
+void substring(const char *s, size_t start, size_t length, char *out);
+void substring(const char *s, size_t start, size_t length, std::basic_string<char> *out);
+void substring(const wchar_t *s, size_t start, size_t length, wchar_t *out);
+void substring(const wchar_t *s, size_t start, size_t length, std::basic_string<wchar_t> *out);
 
 namespace internal
 {

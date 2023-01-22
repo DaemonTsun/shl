@@ -45,34 +45,34 @@ define_test(to_lower_converts_to_lower)
 define_test(trim_left_trims_leftmost_whitespaces_from_string)
 {
     std::string a = "  ab c  ";
-    trim_left(a);
+    trim_left(&a);
     assert_equal(a, "ab c  "s);
-    trim_left(a);
+    trim_left(&a);
     assert_equal(a, "ab c  "s);
 }
 
 define_test(trim_right_trims_rightmost_whitespaces_from_string)
 {
     std::string a = "  ab c  ";
-    trim_right(a);
+    trim_right(&a);
     assert_equal(a, "  ab c"s);
-    trim_right(a);
+    trim_right(&a);
     assert_equal(a, "  ab c"s);
 }
 
 define_test(trim_trims_leftmost_and_rightmost_whitespaces_from_string)
 {
     std::string a = "  ab c  ";
-    trim(a);
+    trim(&a);
     assert_equal(a, "ab c"s);
-    trim(a);
+    trim(&a);
     assert_equal(a, "ab c"s);
 }
 
 define_test(trim_trims_leftmost_and_rightmost_whitespaces_from_wstring)
 {
     std::wstring a = L"  ab c  ";
-    trim(a);
+    trim(&a);
     assert_equal(a, L"ab c"s);
 }
 
