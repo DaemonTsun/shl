@@ -1,5 +1,5 @@
 
-#include <assert.h>
+#include <stdio.h>
 
 #include "shl/string.hpp"
 #include "shl/string_manip.hpp"
@@ -287,8 +287,9 @@ parse_comment_end:
         out->start = comment_start;
         out->end = comment_end;
     }
-    else
+    else if (!has_comment)
         p->it = start;
+
 
     return has_comment;
 }
@@ -306,7 +307,7 @@ bool parse_comment(parser<wchar_t> *p, parse_range *out)
 template<typename CharT>
 bool _skip_whitespace_and_comments(parser<CharT> *p)
 {
-    bool ok;
+    bool ok = false;
 
     do
     {
@@ -698,6 +699,7 @@ bool _parse_integer_t(parser<CharT> *p, parse_iterator *digit_start, int *base, 
     }
 
     parse_iterator start = p->it;
+    *digit_start = start;
     auto c = current_char(p);
 
     if (c == '-' || c == '+')
@@ -872,18 +874,18 @@ bool NAME(parser<CharT> *p, OutT *out, parse_error<CharT> *err)\
 }
 
 
-DEFINE_PARSE_INTEGER(parse_int, char, int, to_int);
-DEFINE_PARSE_INTEGER(parse_int, wchar_t, int, to_int);
-DEFINE_PARSE_INTEGER(parse_long, char, long, to_long);
-DEFINE_PARSE_INTEGER(parse_long, wchar_t, long, to_long);
-DEFINE_PARSE_INTEGER(parse_long_long, char, long long, to_long_long);
-DEFINE_PARSE_INTEGER(parse_long_long, wchar_t, long long, to_long_long);
-DEFINE_PARSE_INTEGER(parse_unsigned_int, char, unsigned int, to_unsigned_int);
-DEFINE_PARSE_INTEGER(parse_unsigned_int, wchar_t, unsigned int, to_unsigned_int);
-DEFINE_PARSE_INTEGER(parse_unsigned_long, char, unsigned long, to_unsigned_long);
-DEFINE_PARSE_INTEGER(parse_unsigned_long, wchar_t, unsigned long, to_unsigned_long);
-DEFINE_PARSE_INTEGER(parse_unsigned_long_long, char, unsigned long long, to_unsigned_long_long);
-DEFINE_PARSE_INTEGER(parse_unsigned_long_long, wchar_t, unsigned long long, to_unsigned_long_long);
+DEFINE_PARSE_INTEGER(parse_integer, char, int, to_int);
+DEFINE_PARSE_INTEGER(parse_integer, wchar_t, int, to_int);
+DEFINE_PARSE_INTEGER(parse_integer, char, long, to_long);
+DEFINE_PARSE_INTEGER(parse_integer, wchar_t, long, to_long);
+DEFINE_PARSE_INTEGER(parse_integer, char, long long, to_long_long);
+DEFINE_PARSE_INTEGER(parse_integer, wchar_t, long long, to_long_long);
+DEFINE_PARSE_INTEGER(parse_integer, char, unsigned int, to_unsigned_int);
+DEFINE_PARSE_INTEGER(parse_integer, wchar_t, unsigned int, to_unsigned_int);
+DEFINE_PARSE_INTEGER(parse_integer, char, unsigned long, to_unsigned_long);
+DEFINE_PARSE_INTEGER(parse_integer, wchar_t, unsigned long, to_unsigned_long);
+DEFINE_PARSE_INTEGER(parse_integer, char, unsigned long long, to_unsigned_long_long);
+DEFINE_PARSE_INTEGER(parse_integer, wchar_t, unsigned long long, to_unsigned_long_long);
 
 template<typename CharT>
 bool _parse_decimal(parser<CharT> *p, parse_range *out, parse_error<CharT> *err)
@@ -1067,12 +1069,12 @@ bool NAME(parser<CharT> *p, OutT *out, parse_error<CharT> *err)\
     return true;\
 }
 
-DEFINE_PARSE_DECIMAL(parse_float, char, float, to_float);
-DEFINE_PARSE_DECIMAL(parse_float, wchar_t, float, to_float);
-DEFINE_PARSE_DECIMAL(parse_double, char, double, to_double);
-DEFINE_PARSE_DECIMAL(parse_double, wchar_t, double, to_double);
-DEFINE_PARSE_DECIMAL(parse_long_double, char, long double, to_long_double);
-DEFINE_PARSE_DECIMAL(parse_long_double, wchar_t, long double, to_long_double);
+DEFINE_PARSE_DECIMAL(parse_decimal, char, float, to_float);
+DEFINE_PARSE_DECIMAL(parse_decimal, wchar_t, float, to_float);
+DEFINE_PARSE_DECIMAL(parse_decimal, char, double, to_double);
+DEFINE_PARSE_DECIMAL(parse_decimal, wchar_t, double, to_double);
+DEFINE_PARSE_DECIMAL(parse_decimal, char, long double, to_long_double);
+DEFINE_PARSE_DECIMAL(parse_decimal, wchar_t, long double, to_long_double);
 
 bool is_first_identifier_character(char c)
 {

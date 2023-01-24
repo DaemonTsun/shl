@@ -1,17 +1,21 @@
 
-#include <iostream>
-#include <string.h>
 
 #include <t1/t1.hpp>
 
+#include "shl/string.hpp"
 #include "shl/parse.hpp"
 
 using namespace std::literals;
 
 #define SETUP(STR) \
-    parser p;\
-    init(&p, STR, STR == nullptr ? 0 : string_length(STR));
+    parser<char> p;\
+    init(&p, STR, STR == nullptr ? 0 : string_length(static_cast<const char*>(STR)));
 
+#define WSETUP(STR) \
+    parser<wchar_t> p;\
+    init(&p, STR, STR == nullptr ? 0 : string_length(static_cast<const wchar_t*>(STR)));
+
+/*
 #define assert_error(EXPR, ERR) \
     assert_throws(EXPR, ERR);\
     \
@@ -20,6 +24,13 @@ using namespace std::literals;
         EXPR;\
     }\
     catch (ERR &err)
+*/
+
+template<typename CharT>
+std::basic_string<CharT> slice(const CharT *input, const parse_range *range)
+{
+    return std::basic_string<CharT>(input + range->start.pos, range_length(range));
+}
 
 define_test(skip_whitespace_does_nothing_on_nullptr)
 {
@@ -39,10 +50,10 @@ define_test(skip_whitespace_skips_whitespace)
 
     skip_whitespace(&p);
 
-    assert_equal(it.pos, 3);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 4);
+    assert_equal(p.it.pos, 3);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 4);
 }
 
 define_test(skip_whitespace_skips_whitespace2)
@@ -53,10 +64,10 @@ define_test(skip_whitespace_skips_whitespace2)
 
     skip_whitespace(&p);
 
-    assert_equal(it.pos, 3);
-    assert_equal(it.line_start, 2);
-    assert_equal(it.line, 3);
-    assert_equal(it.line_pos, 2);
+    assert_equal(p.it.pos, 3);
+    assert_equal(p.it.line_start, 2);
+    assert_equal(p.it.line, 3);
+    assert_equal(p.it.line_pos, 2);
 }
 
 define_test(skip_whitespace_doesnt_skip_nonwhitespace)
@@ -65,22 +76,22 @@ define_test(skip_whitespace_doesnt_skip_nonwhitespace)
 
     skip_whitespace(&p);
 
-    assert_equal(it.pos, 0);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 1);
+    assert_equal(p.it.pos, 0);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 1);
 }
 
 define_test(parse_comment_parses_nullptr)
 {
     SETUP(nullptr);
 
-    bool success = parse_comment(&p);
+    bool success = parse_comment(&p, nullptr);
 
-    assert_equal(it.pos, 0);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 1);
+    assert_equal(p.it.pos, 0);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 1);
 
     assert_equal(success, false);
 }
@@ -89,12 +100,12 @@ define_test(parse_comment_parses_empty_string)
 {
     SETUP("");
 
-    bool success = parse_comment(&p);
+    bool success = parse_comment(&p, nullptr);
 
-    assert_equal(it.pos, 0);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 1);
+    assert_equal(p.it.pos, 0);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 1);
 
     assert_equal(success, false);
 }
@@ -106,13 +117,13 @@ define_test(parse_comment_parses_line_comment)
     parse_range out;
     bool success = parse_comment(&p, &out);
 
-    assert_equal(it.pos, 8);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 9);
+    assert_equal(p.it.pos, 8);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 9);
 
     assert_equal(success, true);
-    assert_equal(slice(input, &out), " hello"s);
+    assert_equal(slice(p.input, &out), " hello"s);
 }
 
 define_test(parse_comment_parses_line_comment2)
@@ -122,13 +133,13 @@ define_test(parse_comment_parses_line_comment2)
     parse_range out;
     bool success = parse_comment(&p, &out);
 
-    assert_equal(it.pos, 9);
-    assert_equal(it.line_start, 9);
-    assert_equal(it.line, 2);
-    assert_equal(it.line_pos, 1);
+    assert_equal(p.it.pos, 9);
+    assert_equal(p.it.line_start, 9);
+    assert_equal(p.it.line, 2);
+    assert_equal(p.it.line_pos, 1);
 
     assert_equal(success, true);
-    assert_equal(slice(input, &out), " hello\n"s);
+    assert_equal(slice(p.input, &out), " hello\n"s);
 }
 
 define_test(parse_comment_parses_block_comment)
@@ -138,10 +149,10 @@ define_test(parse_comment_parses_block_comment)
     parse_range out;
     bool success = parse_comment(&p, &out);
 
-    assert_equal(it.pos, 13);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 14);
+    assert_equal(p.it.pos, 13);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 14);
 
     assert_equal(success, true);
 
@@ -155,21 +166,20 @@ define_test(parse_comment_parses_block_comment)
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 12);
 
-    auto str = slice(input, &out);
-    assert_equal(str, " abc def "s);
+    assert_equal(slice(p.input, &out), " abc def "s);
 }
 
 define_test(parse_comment_parses_block_comment2)
 {
-    SETUP(L"/*\nhello world\n*/");
+    WSETUP(L"/*\nhello world\n*/");
 
     parse_range out;
     bool success = parse_comment(&p, &out);
 
-    assert_equal(it.pos, 17);
-    assert_equal(it.line_start, 15);
-    assert_equal(it.line, 3);
-    assert_equal(it.line_pos, 3);
+    assert_equal(p.it.pos, 17);
+    assert_equal(p.it.line_start, 15);
+    assert_equal(p.it.line, 3);
+    assert_equal(p.it.line_pos, 3);
 
     assert_equal(success, true);
 
@@ -183,8 +193,7 @@ define_test(parse_comment_parses_block_comment2)
     assert_equal(out.end.line, 3);
     assert_equal(out.end.line_pos, 1);
 
-    auto str = slice(input, &out);
-    assert_equal(str, L"\nhello world\n"s);
+    assert_equal(slice(p.input, &out), L"\nhello world\n"s);
 }
 
 define_test(skip_whitespace_and_comments_skips_whitespace)
@@ -194,10 +203,10 @@ define_test(skip_whitespace_and_comments_skips_whitespace)
 
     skip_whitespace_and_comments(&p);
 
-    assert_equal(it.pos, 3);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 4);
+    assert_equal(p.it.pos, 3);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 4);
 }
 
 define_test(skip_whitespace_and_comments_skips_comment)
@@ -207,10 +216,10 @@ define_test(skip_whitespace_and_comments_skips_comment)
 
     skip_whitespace_and_comments(&p);
 
-    assert_equal(it.pos, 19);
-    assert_equal(it.line_start, 15);
-    assert_equal(it.line, 3);
-    assert_equal(it.line_pos, 5);
+    assert_equal(p.it.pos, 19);
+    assert_equal(p.it.line_start, 15);
+    assert_equal(p.it.line, 3);
+    assert_equal(p.it.line_pos, 5);
 }
 
 define_test(skip_whitespace_and_comments_skips_comments)
@@ -220,11 +229,12 @@ define_test(skip_whitespace_and_comments_skips_comments)
 
     skip_whitespace_and_comments(&p);
 
-    assert_equal(it.pos, 54);
-    assert_equal(input[it.pos], 'a');
-    assert_equal(it.line_start, 46);
-    assert_equal(it.line, 4);
-    assert_equal(it.line_pos, 9);
+    assert_equal(p.it.pos, 54);
+    assert_equal(p.input[p.it.pos], 'a');
+    assert_equal(current_char(&p), 'a');
+    assert_equal(p.it.line_start, 46);
+    assert_equal(p.it.line, 4);
+    assert_equal(p.it.line_pos, 9);
 }
 
 define_test(parse_string_yields_error_on_invalid_input)
@@ -232,33 +242,19 @@ define_test(parse_string_yields_error_on_invalid_input)
     SETUP("abc");
 
     parse_range out;
-    parse_error err;
+    parse_error<char> err;
     
     bool success = parse_string(&p, &out, &err);
 
     assert_equal(success, false);
-    assert_error(throw err, parse_error<>)
-    {
-        assert_equal(err.it.pos, 0);
-        assert_equal(err.input, "abc");
-    }
-}
 
-define_test(parse_string_yields_error_on_invalid_input)
-{
-    SETUP("abc");
+    assert_equal(p.it.pos, 0);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 1);
 
-    parse_range out;
-    parse_error err;
-    
-    parse_string(&p, &out, &err);
-
-    assert_equal(err.success, false);
-    assert_error(throw err, parse_error<>)
-    {
-        assert_equal(err.it.pos, 0);
-        assert_equal(err.input, "abc");
-    }
+    assert_equal(err.it.pos, 0);
+    assert_equal(err.input, "abc");
 }
 
 define_test(parse_string_yields_error_on_unterminated_string)
@@ -266,16 +262,19 @@ define_test(parse_string_yields_error_on_unterminated_string)
     SETUP("\"abc");
 
     parse_range out;
-    parse_error err;
+    parse_error<char> err;
 
-    parse_string(&p, &out, &err);
+    bool success = parse_string(&p, &out, &err);
 
-    assert_equal(err.success, false);
-    assert_error(throw err, parse_error<>)
-    {
-        assert_equal(err.it.pos, 4);
-        assert_equal(err.input, "\"abc");
-    }
+    assert_equal(success, false);
+
+    assert_equal(p.it.pos, 0);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 1);
+
+    assert_equal(err.it.pos, 4);
+    assert_equal(err.input, "\"abc");
 }
 
 define_test(parse_string_yields_error_on_unterminated_string2)
@@ -283,16 +282,19 @@ define_test(parse_string_yields_error_on_unterminated_string2)
     SETUP("\"abc\\\"");
 
     parse_range out;
-    parse_error err;
+    parse_error<char> err;
 
-    parse_string(&p, &out, &err);
+    bool success = parse_string(&p, &out, &err);
 
-    assert_equal(err.success, false);
-    assert_error(throw err, parse_error<>)
-    {
-        assert_equal(err.it.pos, 6);
-        assert_equal(err.input, "\"abc\\\"");
-    }
+    assert_equal(success, false);
+
+    assert_equal(p.it.pos, 0);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 1);
+
+    assert_equal(err.it.pos, 6);
+    assert_equal(err.input, "\"abc\\\"");
 }
 
 define_test(parse_string_parses_string)
@@ -300,16 +302,16 @@ define_test(parse_string_parses_string)
     SETUP("\"\"");
 
     parse_range out;
-    parse_error err;
+    parse_error<char> err;
 
-    parse_string(&p, &out, &err);
+    bool success = parse_string(&p, &out, &err);
 
-    assert_equal(err.success, true);
+    assert_equal(success, true);
 
-    assert_equal(it.pos, 2);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 3);
+    assert_equal(p.it.pos, 2);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 3);
 
     assert_equal(out.start.pos, 1);
     assert_equal(out.start.line_start, 0);
@@ -321,8 +323,7 @@ define_test(parse_string_parses_string)
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 2);
 
-    std::string str = slice(input, &out);
-    assert_equal(str, ""s);
+    assert_equal(slice(p.input, &out), ""s);
 }
 
 define_test(parse_string_parses_string2)
@@ -330,14 +331,16 @@ define_test(parse_string_parses_string2)
     SETUP("\"abc\"");
 
     parse_range out;
-    parse_error err;
+    parse_error<char> err;
 
-    parse_string(&p, &out, &err);
+    bool success = parse_string(&p, &out, &err);
 
-    assert_equal(it.pos, 5);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 6);
+    assert_equal(success, true);
+
+    assert_equal(p.it.pos, 5);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 6);
 
     assert_equal(out.start.pos, 1);
     assert_equal(out.start.line_start, 0);
@@ -349,8 +352,7 @@ define_test(parse_string_parses_string2)
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 5);
 
-    std::string str = slice(input, &out);
-    assert_equal(str, "abc"s);
+    assert_equal(slice(p.input, &out), "abc"s);
 }
 
 define_test(parse_string_parses_string3)
@@ -358,14 +360,16 @@ define_test(parse_string_parses_string3)
     SETUP("\"\nabc\n\"");
 
     parse_range out;
-    parse_error err;
+    parse_error<char> err;
 
-    parse_string(&p, &out, &err);
+    bool success = parse_string(&p, &out, &err);
 
-    assert_equal(it.pos, 7);
-    assert_equal(it.line_start, 6);
-    assert_equal(it.line, 3);
-    assert_equal(it.line_pos, 2);
+    assert_equal(success, true);
+
+    assert_equal(p.it.pos, 7);
+    assert_equal(p.it.line_start, 6);
+    assert_equal(p.it.line, 3);
+    assert_equal(p.it.line_pos, 2);
 
     assert_equal(out.start.pos, 1);
     assert_equal(out.start.line_start, 0);
@@ -377,23 +381,7 @@ define_test(parse_string_parses_string3)
     assert_equal(out.end.line, 3);
     assert_equal(out.end.line_pos, 1);
 
-    std::string str = slice(input, &out);
-    assert_equal(str, "\nabc\n"s);
-}
-
-define_test(parse_string_parses_string4)
-{
-    SETUP("\"abc\"");
-
-    std::string out;
-
-    parse_string(&p, &out);
-
-    assert_equal(it.pos, 5);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 6);
-    assert_equal(out, "abc"s);
+    assert_equal(slice(p.input, &out), "\nabc\n"s);
 }
 
 define_test(parse_string_parses_string_with_delims)
@@ -401,14 +389,16 @@ define_test(parse_string_parses_string_with_delims)
     SETUP("\"hello\"   ");
 
     parse_range out;
-    parse_error err;
+    parse_error<char> err;
 
-    parse_string(&p, &out, &err, '"', true);
+    bool success = parse_string(&p, &out, &err, '"', true);
 
-    assert_equal(it.pos, 7);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 8);
+    assert_equal(success, true);
+
+    assert_equal(p.it.pos, 7);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 8);
 
     assert_equal(out.start.pos, 0);
     assert_equal(out.start.line_start, 0);
@@ -420,8 +410,7 @@ define_test(parse_string_parses_string_with_delims)
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 8);
 
-    std::string str = slice(input, &out);
-    assert_equal(str, "\"hello\""s);
+    assert_equal(slice(p.input, &out), "\"hello\""s);
 }
 
 define_test(parse_string_parses_string_with_delims2)
@@ -429,14 +418,16 @@ define_test(parse_string_parses_string_with_delims2)
     SETUP("\"hello world\\\" \"  ");
 
     parse_range out;
-    parse_error err;
+    parse_error<char> err;
 
-    parse_string(&p, &out, &err, '"', true);
+    bool success = parse_string(&p, &out, &err, '"', true);
 
-    assert_equal(it.pos, 16);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 17);
+    assert_equal(success, true);
+
+    assert_equal(p.it.pos, 16);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 17);
 
     assert_equal(out.start.pos, 0);
     assert_equal(out.start.line_start, 0);
@@ -448,22 +439,24 @@ define_test(parse_string_parses_string_with_delims2)
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 17);
 
-    std::string str = slice(input, &out);
-    assert_equal(str, "\"hello world\\\" \""s);
+    assert_equal(slice(p.input, &out), "\"hello world\\\" \""s);
 }
 
 define_test(parse_string_parses_string_delims)
 {
     SETUP("x abc XYZ x");
+
     parse_range out;
-    parse_error err;
+    parse_error<char> err;
 
-    parse_string(&p, &out, &err, 'x');
+    bool success = parse_string(&p, &out, &err, 'x');
 
-    assert_equal(it.pos, 11);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 12);
+    assert_equal(success, true);
+
+    assert_equal(p.it.pos, 11);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 12);
 
     assert_equal(out.start.pos, 1);
     assert_equal(out.start.line_start, 0);
@@ -475,79 +468,116 @@ define_test(parse_string_parses_string_delims)
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 11);
 
-    std::string str = slice(input, &out);
-    assert_equal(str, " abc XYZ "s);
+    assert_equal(slice(p.input, &out), " abc XYZ "s);
 }
 
 define_test(parse_integer_parses_integer)
 {
     SETUP("1234");
 
-    s64 out;
+    parse_range out;
+    parse_error<char> err;
 
-    parse_integer(&p, &out);
-    assert_equal(it.pos, 4);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 5);
-    assert_equal(out, 1234);
+    bool success = parse_integer(&p, &out, &err);
+
+    assert_equal(success, true);
+
+    assert_equal(p.it.pos, 4);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 5);
+
+    assert_equal(slice(p.input, &out), "1234"s);
 }
 
 define_test(parse_integer_parses_integer2)
 {
     SETUP("1234xyz");
 
-    s64 out;
+    parse_range out;
+    parse_error<char> err;
 
-    parse_integer(&p, &out);
-    assert_equal(it.pos, 4);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 5);
-    assert_equal(out, 1234);
+    bool success = parse_integer(&p, &out, &err);
+
+    assert_equal(success, true);
+
+    assert_equal(p.it.pos, 4);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 5);
+
+    assert_equal(slice(p.input, &out), "1234"s);
 }
 
 define_test(parse_integer_parses_integer3)
 {
-    SETUP("-5678");
-
-    s64 out;
-
-    parse_integer(&p, &out);
-    assert_equal(it.pos, 5);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 6);
-    assert_equal(out, -5678);
-}
-
-define_test(parse_integer_parses_integer4)
-{
     SETUP("-0xabc");
 
     parse_range out;
-    parse_error err;
+    parse_error<char> err;
 
-    parse_integer(&p, &out, &err);
-    assert_equal(it.pos, 6);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 7);
+    bool success = parse_integer(&p, &out, &err);
 
-    assert_equal(err.success, true);
+    assert_equal(success, true);
+
+    assert_equal(p.it.pos, 6);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 7);
 }
 
-define_test(parse_integer_parses_unsigned_integer)
+define_test(parse_int_parses_integer)
+{
+    SETUP("1234");
+
+    int out;
+    parse_error<char> err;
+
+    bool success = parse_integer(&p, &out, &err);
+
+    assert_equal(success, true);
+
+    assert_equal(p.it.pos, 4);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 5);
+
+    assert_equal(out, 1234);
+}
+
+define_test(parse_int_parses_integer2)
+{
+    SETUP("-5678");
+
+    s32 out;
+    parse_error<char> err;
+
+    bool success = parse_integer(&p, &out, &err);
+
+    assert_equal(success, true);
+
+    assert_equal(p.it.pos, 5);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 6);
+    assert_equal(out, -5678);
+}
+
+define_test(parse_integer_parses_unsigned_long_int)
 {
     SETUP("123123123123");
 
     u64 out;
+    parse_error<char> err;
 
-    parse_integer(&p, &out);
-    assert_equal(it.pos, 12);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 13);
+    bool success = parse_integer(&p, &out, &err);
+
+    assert_equal(success, true);
+
+    assert_equal(p.it.pos, 12);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 13);
     assert_equal(out, 123123123123ull);
 }
 
@@ -556,12 +586,16 @@ define_test(parse_integer_parses_unsigned_integer2)
     SETUP("-1");
 
     u64 out;
+    parse_error<char> err;
 
-    parse_integer(&p, &out);
-    assert_equal(it.pos, 2);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 3);
+    bool success = parse_integer(&p, &out, &err);
+
+    assert_equal(success, true);
+
+    assert_equal(p.it.pos, 2);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 3);
     assert_equal(out, std::numeric_limits<u64>::max());
 }
 
@@ -569,293 +603,461 @@ define_test(parse_integer_parses_binary_integer)
 {
     SETUP("0b1010");
 
-    s64 out;
+    parse_range out;
+    parse_error<char> err;
 
-    parse_integer(&p, &out);
-    assert_equal(it.pos, 6);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 7);
-    assert_equal(out, 10);
+    bool success = parse_integer(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 6);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 7);
+    assert_equal(slice(p.input, &out), "0b1010");
 }
 
-define_test(parse_integer_parses_binary_integer2)
+define_test(parse_int_parses_binary_integer)
 {
     SETUP("0b101014");
 
-    s64 out;
+    s32 out;
+    parse_error<char> err;
 
-    parse_integer(&p, &out);
-    assert_equal(it.pos, 7);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 8);
-    assert_equal(out, 0b10101);
+    bool success = parse_integer(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 7);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 8);
+    assert_equal(out, 21);
 }
 
-define_test(parse_integer_parses_octal_integer)
+define_test(parse_int_parses_octal_integer)
 {
     SETUP("01234");
 
-    s64 out;
+    s32 out;
+    parse_error<char> err;
 
-    parse_integer(&p, &out);
-    assert_equal(it.pos, 5);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 6);
+    bool success = parse_integer(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 5);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 6);
     assert_equal(out, 668);
 }
 
-define_test(parse_integer_parses_octal_integer2)
+define_test(parse_int_parses_octal_integer2)
 {
     SETUP("0123456789");
 
-    s64 out;
+    s32 out;
+    parse_error<char> err;
 
-    parse_integer(&p, &out);
-    assert_equal(it.pos, 8);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 9);
+    bool success = parse_integer(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 8);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 9);
     assert_equal(out, 01234567);
+}
+
+define_test(parse_int_parses_hex_integer)
+{
+    SETUP("0xff");
+
+    s32 out;
+    parse_error<char> err;
+
+    bool success = parse_integer(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 4);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 5);
+    assert_equal(out, 255);
+}
+
+define_test(parse_int_parses_hex_integer2)
+{
+    SETUP("0xffghi");
+
+    s32 out;
+    parse_error<char> err;
+
+    bool success = parse_integer(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 4);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 5);
+    assert_equal(out, 255);
+}
+
+define_test(parse_int_parses_hex_integer3)
+{
+    SETUP("feef");
+
+    s32 out;
+    parse_error<char> err;
+
+    bool success = parse_integer(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 4);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 5);
+    assert_equal(out, 65263);
 }
 
 define_test(parse_integer_parses_hex_integer)
 {
-    SETUP("0xff");
+    SETUP("0xdeAdBEeF");
 
     s64 out;
+    parse_error<char> err;
 
-    parse_integer(&p, &out);
-    assert_equal(it.pos, 4);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 5);
-    assert_equal(out, 255);
+    bool success = parse_integer(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 10);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 11);
+    assert_equal(out, 3735928559);
 }
 
 define_test(parse_integer_parses_hex_integer2)
 {
-    SETUP("0xffghi");
-
-    s64 out;
-
-    parse_integer(&p, &out);
-    assert_equal(it.pos, 4);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 5);
-    assert_equal(out, 255);
-}
-
-define_test(parse_integer_parses_hex_integer3)
-{
-    SETUP("0xdeAdBEeF");
-
-    s64 out;
-
-    parse_integer(&p, &out);
-    assert_equal(it.pos, 10);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 11);
-    assert_equal(out, 3735928559);
-}
-
-define_test(parse_integer_parses_hex_integer4)
-{
     SETUP("-0xdeAdBEeF");
 
     s64 out;
+    parse_error<char> err;
 
-    parse_integer(&p, &out);
-    assert_equal(it.pos, 11);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 12);
+    bool success = parse_integer(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 11);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 12);
     assert_equal(out, -3735928559);
-}
-
-define_test(parse_integer_parses_hex_integer5)
-{
-    SETUP("feef");
-
-    s64 out;
-
-    parse_integer(&p, &out);
-    assert_equal(it.pos, 4);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 5);
-    assert_equal(out, 65263);
-}
-
-define_test(parse_integer_throws_on_invalid_input)
-{
-    SETUP("xyz");
-
-    s64 out;
-
-    assert_error(parse_integer(&p, &out), parse_error<>)
-    {
-        assert_equal(err.it.pos, 0);
-        assert_equal(err.input, "xyz");
-    }
-}
-
-define_test(parse_integer_throws_on_invalid_input2)
-{
-    SETUP("0x");
-
-    s64 out;
-
-    assert_error(parse_integer(&p, &out), parse_error<>)
-    {
-        assert_equal(err.it.pos, 2);
-        assert_equal(err.input, "0x");
-    }
-}
-
-define_test(parse_integer_throws_on_invalid_input3)
-{
-    SETUP("0b");
-
-    s64 out;
-
-    assert_error(parse_integer(&p, &out), parse_error<>)
-    {
-        assert_equal(err.it.pos, 2);
-        assert_equal(err.input, "0b");
-    }
-}
-
-define_test(parse_integer_throws_on_invalid_input4)
-{
-    SETUP("0xZ");
-
-    s64 out;
-
-    assert_error(parse_integer(&p, &out), parse_error<>)
-    {
-        assert_equal(err.it.pos, 2);
-        assert_equal(err.input, "0xZ");
-    }
 }
 
 define_test(parse_integer_yields_error_on_invalid_input)
 {
+    SETUP("xyz");
+
+    parse_range out;
+    parse_error<char> err;
+
+    bool success = parse_integer(&p, &out, &err);
+
+    assert_equal(success, false);
+    assert_equal(err.it.pos, 0);
+    assert_equal(err.input, "xyz");
+}
+
+define_test(parse_integer_yields_error_on_invalid_input2)
+{
+    SETUP("0x");
+
+    parse_range out;
+    parse_error<char> err;
+
+    bool success = parse_integer(&p, &out, &err);
+
+    assert_equal(success, false);
+    assert_equal(err.it.pos, 2);
+    assert_equal(err.input, "0x");
+}
+
+define_test(parse_integer_yields_error_on_invalid_input3)
+{
+    SETUP("0b");
+
+    parse_range out;
+    parse_error<char> err;
+
+    bool success = parse_integer(&p, &out, &err);
+
+    assert_equal(success, false);
+    assert_equal(err.it.pos, 2);
+    assert_equal(err.input, "0b");
+}
+
+define_test(parse_integer_yields_error_on_invalid_input4)
+{
+    SETUP("0xZ");
+
+    parse_range out;
+    parse_error<char> err;
+
+    bool success = parse_integer(&p, &out, &err);
+
+    assert_equal(success, false);
+    assert_equal(err.it.pos, 2);
+    assert_equal(err.input, "0xZ");
+}
+
+define_test(parse_integer_yields_error_on_invalid_input5)
+{
     SETUP("+");
 
     parse_range out;
-    parse_error err;
+    parse_error<char> err;
 
-    parse_integer(&p, &out, &err);
+    bool success = parse_integer(&p, &out, &err);
 
-    assert_equal(err.success, false);
-
-    assert_error(throw err, parse_error<>)
-    {
-        assert_equal(err.it.pos, 1);
-        assert_equal(err.input, "+");
-    }
+    assert_equal(success, false);
+    assert_equal(err.it.pos, 1);
+    assert_equal(err.input, "+");
 }
 
 define_test(parse_decimal_parses_float)
 {
     SETUP("1.0");
 
-    float out;
+    parse_range out;
+    parse_error<char> err;
 
-    parse_decimal(&p, &out);
-    assert_equal(it.pos, 3);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 4);
-    assert_equal(out, 1.0f);
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 3);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 4);
+    assert_equal(slice(p.input, &out), "1.0"s);
 }
 
 define_test(parse_decimal_parses_float2)
 {
     SETUP("+.06");
 
-    float out;
+    parse_range out;
+    parse_error<char> err;
 
-    parse_decimal(&p, &out);
-    assert_equal(it.pos, 4);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 5);
-    assert_equal(out, .06f);
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 4);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 5);
+    assert_equal(slice(p.input, &out), "+.06"s);
 }
 
 define_test(parse_decimal_parses_float3)
 {
     SETUP("-0.06");
 
-    float out;
+    parse_range out;
+    parse_error<char> err;
 
-    parse_decimal(&p, &out);
-    assert_equal(it.pos, 5);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 6);
-    assert_equal(out, -0.06f);
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 5);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 6);
+    assert_equal(slice(p.input, &out), "-0.06"s);
 }
 
 define_test(parse_decimal_parses_float4)
 {
     SETUP("1.33e+10");
 
-    float out;
+    parse_range out;
+    parse_error<char> err;
 
-    parse_decimal(&p, &out);
-    assert_equal(it.pos, 8);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 9);
-    assert_equal(out, 1.33e+10f);
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 8);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 9);
+    assert_equal(slice(p.input, &out), "1.33e+10"s);
 }
 
 define_test(parse_decimal_parses_float5)
 {
     SETUP("2.5E-12");
 
-    float out;
+    parse_range out;
+    parse_error<char> err;
 
-    parse_decimal(&p, &out);
-    assert_equal(it.pos, 7);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 8);
-    assert_equal(out, 2.5E-12f);
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 7);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 8);
+    assert_equal(slice(p.input, &out), "2.5E-12"s);
 }
 
 define_test(parse_decimal_parses_float6)
 {
     SETUP("12341234");
 
-    float out;
+    parse_range out;
+    parse_error<char> err;
 
-    parse_decimal(&p, &out);
-    assert_equal(it.pos, 8);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 9);
-    assert_equal(out, 12341234.f);
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 8);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 9);
+    assert_equal(slice(p.input, &out), "12341234"s);
 }
 
 define_test(parse_decimal_parses_float7)
 {
     SETUP("1234e5");
 
+    parse_range out;
+    parse_error<char> err;
+
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 6);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 7);
+    assert_equal(slice(p.input, &out), "1234e5"s);
+}
+
+define_test(parse_decimal_parses_float8)
+{
+    SETUP("1.0");
+
+    float out;
+    parse_error<char> err;
+
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 3);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 4);
+    assert_equal(out, 1.0f);
+}
+
+define_test(parse_decimal_parses_float9)
+{
+    SETUP("+.06");
+
     float out;
 
-    parse_decimal(&p, &out);
-    assert_equal(it.pos, 6);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 7);
+    parse_error<char> err;
+
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 4);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 5);
+    assert_equal(out, .06f);
+}
+
+define_test(parse_decimal_parses_float10)
+{
+    SETUP("-0.06");
+
+    float out;
+    parse_error<char> err;
+
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 5);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 6);
+    assert_equal(out, -0.06f);
+}
+
+define_test(parse_decimal_parses_float11)
+{
+    SETUP("1.33e+10");
+
+    float out;
+    parse_error<char> err;
+
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 8);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 9);
+    assert_equal(out, 1.33e+10f);
+}
+
+define_test(parse_decimal_parses_float12)
+{
+    SETUP("2.5E-12");
+
+    float out;
+    parse_error<char> err;
+
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 7);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 8);
+    assert_equal(out, 2.5E-12f);
+}
+
+define_test(parse_decimal_parses_float13)
+{
+    SETUP("12341234");
+
+    float out;
+    parse_error<char> err;
+
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 8);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 9);
+    assert_equal(out, 12341234.f);
+}
+
+define_test(parse_decimal_parses_float14)
+{
+    SETUP("1234e5");
+
+    float out;
+    parse_error<char> err;
+
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 6);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 7);
     assert_equal(out, 1234e5);
 }
 
@@ -864,12 +1066,15 @@ define_test(parse_decimal_parses_double)
     SETUP("1.0");
 
     double out;
+    parse_error<char> err;
 
-    parse_decimal(&p, &out);
-    assert_equal(it.pos, 3);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 4);
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 3);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 4);
     assert_equal(out, 1.0);
 }
 
@@ -878,12 +1083,15 @@ define_test(parse_decimal_parses_double2)
     SETUP("+.06");
 
     double out;
+    parse_error<char> err;
 
-    parse_decimal(&p, &out);
-    assert_equal(it.pos, 4);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 5);
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 4);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 5);
     assert_equal(out, .06);
 }
 
@@ -892,12 +1100,15 @@ define_test(parse_decimal_parses_double3)
     SETUP("-0.06X");
 
     double out;
+    parse_error<char> err;
 
-    parse_decimal(&p, &out);
-    assert_equal(it.pos, 5);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 6);
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 5);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 6);
     assert_equal(out, -0.06);
 }
 
@@ -906,12 +1117,15 @@ define_test(parse_decimal_parses_double4)
     SETUP("1.33e+10");
 
     double out;
+    parse_error<char> err;
 
-    parse_decimal(&p, &out);
-    assert_equal(it.pos, 8);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 9);
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 8);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 9);
     assert_equal(out, 1.33e+10);
 }
 
@@ -920,12 +1134,15 @@ define_test(parse_decimal_parses_double5)
     SETUP("2.5E-12X");
 
     double out;
+    parse_error<char> err;
 
-    parse_decimal(&p, &out);
-    assert_equal(it.pos, 7);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 8);
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 7);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 8);
     assert_equal(out, 2.5E-12);
 }
 
@@ -934,12 +1151,15 @@ define_test(parse_decimal_parses_double6)
     SETUP("12341234.X");
 
     double out;
+    parse_error<char> err;
 
-    parse_decimal(&p, &out);
-    assert_equal(it.pos, 9);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 10);
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 9);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 10);
     assert_equal(out, 12341234.);
 }
 
@@ -948,12 +1168,15 @@ define_test(parse_decimal_parses_double7)
     SETUP("1234e5X");
 
     double out;
+    parse_error<char> err;
 
-    parse_decimal(&p, &out);
-    assert_equal(it.pos, 6);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 7);
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 6);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 7);
     assert_equal(out, 1234e5);
 }
 
@@ -962,122 +1185,131 @@ define_test(parse_decimal_parses_decimal)
     SETUP("123456789.987654321e10");
 
     parse_range out;
-    parse_error err;
+    parse_error<char> err;
 
-    parse_decimal(&p, &out, &err);
+    bool success = parse_decimal(&p, &out, &err);
 
-    assert_equal(err.success, true);
-    assert_equal(it.pos, 22);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 23);
-}
-
-define_test(parse_decimal_throw_on_invalid_input)
-{
-    SETUP("z");
-
-    float out;
-
-    assert_error(parse_decimal(&p, &out), parse_error<>)
-    {
-        assert_equal(err.it.pos, 0);
-    }
-}
-
-define_test(parse_decimal_throw_on_invalid_input2)
-{
-    SETUP(".");
-
-    float out;
-
-    assert_error(parse_decimal(&p, &out), parse_error<>)
-    {
-        assert_equal(err.it.pos, 1);
-    }
-}
-
-define_test(parse_decimal_throw_on_invalid_input3)
-{
-    SETUP("e");
-
-    float out;
-
-    assert_error(parse_decimal(&p, &out), parse_error<>)
-    {
-        assert_equal(err.it.pos, 0);
-    }
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 22);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 23);
 }
 
 define_test(parse_decimal_yields_error_on_invalid_input)
 {
+    SETUP("z");
+
+    float out;
+    parse_error<char> err;
+
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, false);
+    assert_equal(err.it.pos, 0);
+}
+
+define_test(parse_decimal_yields_error_on_invalid_input2)
+{
+    SETUP(".");
+
+    float out;
+    parse_error<char> err;
+
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, false);
+    assert_equal(err.it.pos, 1);
+}
+
+define_test(parse_decimal_yields_error_on_invalid_input3)
+{
+    SETUP("e");
+
+    float out;
+    parse_error<char> err;
+
+    bool success = parse_decimal(&p, &out, &err);
+
+    assert_equal(success, false);
+    assert_equal(err.it.pos, 0);
+}
+
+define_test(parse_decimal_yields_error_on_invalid_input4)
+{
     SETUP("10e");
 
     parse_range out;
-    parse_error err;
+    parse_error<char> err;
 
-    parse_decimal(&p, &out, &err);
+    bool success = parse_decimal(&p, &out, &err);
 
-    assert_equal(err.success, false);
-
-    assert_error(throw err, parse_error<>)
-    {
-        assert_equal(err.it.pos, 3);
-    }
+    assert_equal(success, false);
+    assert_equal(err.it.pos, 3);
 }
 
 define_test(parse_identifier_throws_on_invalid_first_character)
 {
     SETUP("9abc");
 
-    std::string out;
+    parse_range out;
+    parse_error<char> err;
 
-    assert_error(parse_identifier(&p, &out), parse_error<>)
-    {
-        assert_equal(err.it.pos, 0);
-    }
+    bool success = parse_identifier(&p, &out, &err);
+
+    assert_equal(success, false);
+    assert_equal(err.it.pos, 0);
 }
 
 define_test(parse_identifier_parses_identifier)
 {
     SETUP("abc");
 
-    std::string out;
+    parse_range out;
+    parse_error<char> err;
 
-    parse_identifier(&p, &out);
-    assert_equal(it.pos, 3);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 4);
-    assert_equal(out, "abc"s);
+    bool success = parse_identifier(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 3);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 4);
+    assert_equal(slice(p.input, &out), "abc"s);
 }
 
 define_test(parse_identifier_parses_identifier2)
 {
     SETUP("def ghi");
 
-    std::string out;
+    parse_range out;
+    parse_error<char> err;
 
-    parse_identifier(&p, &out);
-    assert_equal(it.pos, 3);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 4);
-    assert_equal(out, "def"s);
+    bool success = parse_identifier(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 3);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 4);
+    assert_equal(slice(p.input, &out), "def"s);
 }
 
 define_test(parse_identifier_parses_identifier3)
 {
     SETUP("_hello_WORLD");
 
-    std::string out;
+    parse_range out;
+    parse_error<char> err;
 
-    parse_identifier(&p, &out);
-    assert_equal(it.pos, 12);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 13);
-    assert_equal(out, "_hello_WORLD"s);
+    bool success = parse_identifier(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 12);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 13);
+    assert_equal(slice(p.input, &out), "_hello_WORLD"s);
 }
 
 define_test(parse_bool_parses_true)
@@ -1085,12 +1317,15 @@ define_test(parse_bool_parses_true)
     SETUP("true");
 
     bool out;
+    parse_error<char> err;
 
-    parse_bool(&p, &out);
-    assert_equal(it.pos, 4);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 5);
+    bool success = parse_bool(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 4);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 5);
     assert_equal(out, true);
 }
 
@@ -1099,12 +1334,15 @@ define_test(parse_bool_parses_true2)
     SETUP("tRuE  abc");
 
     bool out;
+    parse_error<char> err;
 
-    parse_bool(&p, &out);
-    assert_equal(it.pos, 4);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 5);
+    bool success = parse_bool(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 4);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 5);
     assert_equal(out, true);
 }
 
@@ -1113,12 +1351,15 @@ define_test(parse_bool_parses_false)
     SETUP("false");
 
     bool out;
+    parse_error<char> err;
 
-    parse_bool(&p, &out);
-    assert_equal(it.pos, 5);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 6);
+    bool success = parse_bool(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 5);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 6);
     assert_equal(out, false);
 }
 
@@ -1127,61 +1368,67 @@ define_test(parse_bool_parses_false2)
     SETUP("FALse 123");
 
     bool out;
+    parse_error<char> err;
 
-    parse_bool(&p, &out);
-    assert_equal(it.pos, 5);
-    assert_equal(it.line_start, 0);
-    assert_equal(it.line, 1);
-    assert_equal(it.line_pos, 6);
+    bool success = parse_bool(&p, &out, &err);
+
+    assert_equal(success, true);
+    assert_equal(p.it.pos, 5);
+    assert_equal(p.it.line_start, 0);
+    assert_equal(p.it.line, 1);
+    assert_equal(p.it.line_pos, 6);
     assert_equal(out, false);
 }
 
-define_test(parse_bool_throws_on_invalid_input2)
+define_test(parse_bool_yields_error_on_invalid_input)
 {
     SETUP("t");
 
     bool out;
+    parse_error<char> err;
 
-    assert_error(parse_bool(&p, &out), parse_error<>)
-    {
-        assert_equal(err.it.pos, 1);
-        assert_equal(err.it.line_start, 0);
-        assert_equal(err.it.line, 1);
-        assert_equal(err.it.line_pos, 2);
-        assert_equal(err.input, "t");
-    }
+    bool success = parse_bool(&p, &out, &err);
+
+    assert_equal(success, false);
+    assert_equal(err.it.pos, 1);
+    assert_equal(err.it.line_start, 0);
+    assert_equal(err.it.line, 1);
+    assert_equal(err.it.line_pos, 2);
+    assert_equal(err.input, "t");
 }
 
-define_test(parse_bool_throws_on_invalid_input3)
+define_test(parse_bool_throws_on_invalid_input2)
 {
     SETUP("tr");
 
     bool out;
+    parse_error<char> err;
 
-    assert_error(parse_bool(&p, &out), parse_error<>)
-    {
-        assert_equal(err.it.pos, 2);
-        assert_equal(err.it.line_start, 0);
-        assert_equal(err.it.line, 1);
-        assert_equal(err.it.line_pos, 3);
-        assert_equal(err.input, "tr");
-    }
+    bool success = parse_bool(&p, &out, &err);
+
+    assert_equal(success, false);
+    assert_equal(err.it.pos, 2);
+    assert_equal(err.it.line_start, 0);
+    assert_equal(err.it.line, 1);
+    assert_equal(err.it.line_pos, 3);
+    assert_equal(err.input, "tr");
 }
 
-define_test(parse_bool_throws_on_invalid_input4)
+define_test(parse_bool_throws_on_invalid_input3)
 {
     SETUP("tX");
 
     bool out;
+    parse_error<char> err;
 
-    assert_error(parse_bool(&p, &out), parse_error<>)
-    {
-        assert_equal(err.it.pos, 2);
-        assert_equal(err.it.line_start, 0);
-        assert_equal(err.it.line, 1);
-        assert_equal(err.it.line_pos, 3);
-        assert_equal(err.input, "tX");
-    }
+    bool success = parse_bool(&p, &out, &err);
+
+    assert_equal(success, false);
+    assert_equal(err.it.pos, 2);
+    assert_equal(err.it.line_start, 0);
+    assert_equal(err.it.line, 1);
+    assert_equal(err.it.line_pos, 3);
+    assert_equal(err.input, "tX");
 }
 
 define_default_test_main();
