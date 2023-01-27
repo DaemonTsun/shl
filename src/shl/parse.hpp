@@ -85,42 +85,42 @@ bool skip_whitespace_and_comments(parser<wchar_t> *p);
 bool parse_string(parser<char>    *p, parse_range *out, parse_error<char>    *err, char delim = '"', bool include_delims = false);
 bool parse_string(parser<wchar_t> *p, parse_range *out, parse_error<wchar_t> *err, wchar_t delim = L'"', bool include_delims = false);
 
-bool parse_bool(parser<char>    *p, parse_range *out, parse_error<char>    *err);
-bool parse_bool(parser<wchar_t> *p, parse_range *out, parse_error<wchar_t> *err);
+bool parse_bool(parser<char>    *p, parse_range *out, parse_error<char>    *err = nullptr);
+bool parse_bool(parser<wchar_t> *p, parse_range *out, parse_error<wchar_t> *err = nullptr);
 
-bool parse_bool(parser<char>    *p, bool *out, parse_error<char>    *err);
-bool parse_bool(parser<wchar_t> *p, bool *out, parse_error<wchar_t> *err);
+bool parse_bool(parser<char>    *p, bool *out, parse_error<char>    *err = nullptr);
+bool parse_bool(parser<wchar_t> *p, bool *out, parse_error<wchar_t> *err = nullptr);
 
-bool parse_integer(parser<char>    *p, parse_range *out, parse_error<char>    *err);
-bool parse_integer(parser<wchar_t> *p, parse_range *out, parse_error<wchar_t> *err);
+bool parse_integer(parser<char>    *p, parse_range *out, parse_error<char>    *err = nullptr);
+bool parse_integer(parser<wchar_t> *p, parse_range *out, parse_error<wchar_t> *err = nullptr);
 
-bool parse_integer(parser<char>    *p, int *out, parse_error<char>    *err);
-bool parse_integer(parser<wchar_t> *p, int *out, parse_error<wchar_t> *err);
-bool parse_integer(parser<char>    *p, long *out, parse_error<char>    *err);
-bool parse_integer(parser<wchar_t> *p, long *out, parse_error<wchar_t> *err);
-bool parse_integer(parser<char>    *p, long long *out, parse_error<char>    *err);
-bool parse_integer(parser<wchar_t> *p, long long *out, parse_error<wchar_t> *err);
-bool parse_integer(parser<char>    *p, unsigned int *out, parse_error<char>    *err);
-bool parse_integer(parser<wchar_t> *p, unsigned int *out, parse_error<wchar_t> *err);
-bool parse_integer(parser<char>    *p, unsigned long *out, parse_error<char>    *err);
-bool parse_integer(parser<wchar_t> *p, unsigned long *out, parse_error<wchar_t> *err);
-bool parse_integer(parser<char>    *p, unsigned long long *out, parse_error<char>    *err);
-bool parse_integer(parser<wchar_t> *p, unsigned long long *out, parse_error<wchar_t> *err);
+bool parse_integer(parser<char>    *p, int *out, parse_error<char>    *err = nullptr);
+bool parse_integer(parser<wchar_t> *p, int *out, parse_error<wchar_t> *err = nullptr);
+bool parse_integer(parser<char>    *p, long *out, parse_error<char>    *err = nullptr);
+bool parse_integer(parser<wchar_t> *p, long *out, parse_error<wchar_t> *err = nullptr);
+bool parse_integer(parser<char>    *p, long long *out, parse_error<char>    *err = nullptr);
+bool parse_integer(parser<wchar_t> *p, long long *out, parse_error<wchar_t> *err = nullptr);
+bool parse_integer(parser<char>    *p, unsigned int *out, parse_error<char>    *err = nullptr);
+bool parse_integer(parser<wchar_t> *p, unsigned int *out, parse_error<wchar_t> *err = nullptr);
+bool parse_integer(parser<char>    *p, unsigned long *out, parse_error<char>    *err = nullptr);
+bool parse_integer(parser<wchar_t> *p, unsigned long *out, parse_error<wchar_t> *err = nullptr);
+bool parse_integer(parser<char>    *p, unsigned long long *out, parse_error<char>    *err = nullptr);
+bool parse_integer(parser<wchar_t> *p, unsigned long long *out, parse_error<wchar_t> *err = nullptr);
 
-bool parse_decimal(parser<char>    *p, parse_range *out, parse_error<char>    *err);
-bool parse_decimal(parser<wchar_t> *p, parse_range *out, parse_error<wchar_t> *err);
+bool parse_decimal(parser<char>    *p, parse_range *out, parse_error<char>    *err = nullptr);
+bool parse_decimal(parser<wchar_t> *p, parse_range *out, parse_error<wchar_t> *err = nullptr);
 
-bool parse_decimal(parser<char>    *p, float *out, parse_error<char>    *err);
-bool parse_decimal(parser<wchar_t> *p, float *out, parse_error<wchar_t> *err);
-bool parse_decimal(parser<char>    *p, double *out, parse_error<char>    *err);
-bool parse_decimal(parser<wchar_t> *p, double *out, parse_error<wchar_t> *err);
-bool parse_decimal(parser<char>    *p, long double *out, parse_error<char>    *err);
-bool parse_decimal(parser<wchar_t> *p, long double *out, parse_error<wchar_t> *err);
+bool parse_decimal(parser<char>    *p, float *out, parse_error<char>    *err = nullptr);
+bool parse_decimal(parser<wchar_t> *p, float *out, parse_error<wchar_t> *err = nullptr);
+bool parse_decimal(parser<char>    *p, double *out, parse_error<char>    *err = nullptr);
+bool parse_decimal(parser<wchar_t> *p, double *out, parse_error<wchar_t> *err = nullptr);
+bool parse_decimal(parser<char>    *p, long double *out, parse_error<char>    *err = nullptr);
+bool parse_decimal(parser<wchar_t> *p, long double *out, parse_error<wchar_t> *err = nullptr);
 
 bool is_first_identifier_character(char c);
 bool is_first_identifier_character(wchar_t c);
 bool is_identifier_character(char c);
 bool is_identifier_character(wchar_t c);
 
-bool parse_identifier(parser<char>    *p, parse_range *out, parse_error<char>    *err);
-bool parse_identifier(parser<wchar_t> *p, parse_range *out, parse_error<wchar_t> *err);
+bool parse_identifier(parser<char>    *p, parse_range *out, parse_error<char>    *err = nullptr);
+bool parse_identifier(parser<wchar_t> *p, parse_range *out, parse_error<wchar_t> *err = nullptr);

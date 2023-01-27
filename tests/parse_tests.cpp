@@ -1,11 +1,8 @@
 
-
 #include <t1/t1.hpp>
 
 #include "shl/string.hpp"
 #include "shl/parse.hpp"
-
-using namespace std::literals;
 
 #define SETUP(STR) \
     parser<char> p;\
@@ -14,17 +11,6 @@ using namespace std::literals;
 #define WSETUP(STR) \
     parser<wchar_t> p;\
     init(&p, STR, STR == nullptr ? 0 : string_length(static_cast<const wchar_t*>(STR)));
-
-/*
-#define assert_error(EXPR, ERR) \
-    assert_throws(EXPR, ERR);\
-    \
-    try\
-    {\
-        EXPR;\
-    }\
-    catch (ERR &err)
-*/
 
 template<typename CharT>
 std::basic_string<CharT> slice(const CharT *input, const parse_range *range)
@@ -123,7 +109,7 @@ define_test(parse_comment_parses_line_comment)
     assert_equal(p.it.line_pos, 9);
 
     assert_equal(success, true);
-    assert_equal(slice(p.input, &out), " hello"s);
+    assert_equal(slice(p.input, &out), " hello");
 }
 
 define_test(parse_comment_parses_line_comment2)
@@ -139,7 +125,7 @@ define_test(parse_comment_parses_line_comment2)
     assert_equal(p.it.line_pos, 1);
 
     assert_equal(success, true);
-    assert_equal(slice(p.input, &out), " hello\n"s);
+    assert_equal(slice(p.input, &out), " hello\n");
 }
 
 define_test(parse_comment_parses_block_comment)
@@ -166,7 +152,7 @@ define_test(parse_comment_parses_block_comment)
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 12);
 
-    assert_equal(slice(p.input, &out), " abc def "s);
+    assert_equal(slice(p.input, &out), " abc def ");
 }
 
 define_test(parse_comment_parses_block_comment2)
@@ -193,7 +179,7 @@ define_test(parse_comment_parses_block_comment2)
     assert_equal(out.end.line, 3);
     assert_equal(out.end.line_pos, 1);
 
-    assert_equal(slice(p.input, &out), L"\nhello world\n"s);
+    assert_equal(slice(p.input, &out), L"\nhello world\n");
 }
 
 define_test(skip_whitespace_and_comments_skips_whitespace)
@@ -323,7 +309,7 @@ define_test(parse_string_parses_string)
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 2);
 
-    assert_equal(slice(p.input, &out), ""s);
+    assert_equal(slice(p.input, &out), "");
 }
 
 define_test(parse_string_parses_string2)
@@ -352,7 +338,7 @@ define_test(parse_string_parses_string2)
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 5);
 
-    assert_equal(slice(p.input, &out), "abc"s);
+    assert_equal(slice(p.input, &out), "abc");
 }
 
 define_test(parse_string_parses_string3)
@@ -381,7 +367,7 @@ define_test(parse_string_parses_string3)
     assert_equal(out.end.line, 3);
     assert_equal(out.end.line_pos, 1);
 
-    assert_equal(slice(p.input, &out), "\nabc\n"s);
+    assert_equal(slice(p.input, &out), "\nabc\n");
 }
 
 define_test(parse_string_parses_string_with_delims)
@@ -410,7 +396,7 @@ define_test(parse_string_parses_string_with_delims)
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 8);
 
-    assert_equal(slice(p.input, &out), "\"hello\""s);
+    assert_equal(slice(p.input, &out), "\"hello\"");
 }
 
 define_test(parse_string_parses_string_with_delims2)
@@ -439,7 +425,7 @@ define_test(parse_string_parses_string_with_delims2)
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 17);
 
-    assert_equal(slice(p.input, &out), "\"hello world\\\" \""s);
+    assert_equal(slice(p.input, &out), "\"hello world\\\" \"");
 }
 
 define_test(parse_string_parses_string_delims)
@@ -468,7 +454,7 @@ define_test(parse_string_parses_string_delims)
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 11);
 
-    assert_equal(slice(p.input, &out), " abc XYZ "s);
+    assert_equal(slice(p.input, &out), " abc XYZ ");
 }
 
 define_test(parse_integer_parses_integer)
@@ -487,7 +473,7 @@ define_test(parse_integer_parses_integer)
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 5);
 
-    assert_equal(slice(p.input, &out), "1234"s);
+    assert_equal(slice(p.input, &out), "1234");
 }
 
 define_test(parse_integer_parses_integer2)
@@ -506,7 +492,7 @@ define_test(parse_integer_parses_integer2)
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 5);
 
-    assert_equal(slice(p.input, &out), "1234"s);
+    assert_equal(slice(p.input, &out), "1234");
 }
 
 define_test(parse_integer_parses_integer3)
@@ -836,7 +822,7 @@ define_test(parse_decimal_parses_float)
     assert_equal(p.it.line_start, 0);
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 4);
-    assert_equal(slice(p.input, &out), "1.0"s);
+    assert_equal(slice(p.input, &out), "1.0");
 }
 
 define_test(parse_decimal_parses_float2)
@@ -853,7 +839,7 @@ define_test(parse_decimal_parses_float2)
     assert_equal(p.it.line_start, 0);
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 5);
-    assert_equal(slice(p.input, &out), "+.06"s);
+    assert_equal(slice(p.input, &out), "+.06");
 }
 
 define_test(parse_decimal_parses_float3)
@@ -870,7 +856,7 @@ define_test(parse_decimal_parses_float3)
     assert_equal(p.it.line_start, 0);
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 6);
-    assert_equal(slice(p.input, &out), "-0.06"s);
+    assert_equal(slice(p.input, &out), "-0.06");
 }
 
 define_test(parse_decimal_parses_float4)
@@ -887,7 +873,7 @@ define_test(parse_decimal_parses_float4)
     assert_equal(p.it.line_start, 0);
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 9);
-    assert_equal(slice(p.input, &out), "1.33e+10"s);
+    assert_equal(slice(p.input, &out), "1.33e+10");
 }
 
 define_test(parse_decimal_parses_float5)
@@ -904,7 +890,7 @@ define_test(parse_decimal_parses_float5)
     assert_equal(p.it.line_start, 0);
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 8);
-    assert_equal(slice(p.input, &out), "2.5E-12"s);
+    assert_equal(slice(p.input, &out), "2.5E-12");
 }
 
 define_test(parse_decimal_parses_float6)
@@ -921,7 +907,7 @@ define_test(parse_decimal_parses_float6)
     assert_equal(p.it.line_start, 0);
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 9);
-    assert_equal(slice(p.input, &out), "12341234"s);
+    assert_equal(slice(p.input, &out), "12341234");
 }
 
 define_test(parse_decimal_parses_float7)
@@ -938,7 +924,7 @@ define_test(parse_decimal_parses_float7)
     assert_equal(p.it.line_start, 0);
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 7);
-    assert_equal(slice(p.input, &out), "1234e5"s);
+    assert_equal(slice(p.input, &out), "1234e5");
 }
 
 define_test(parse_decimal_parses_float8)
@@ -1275,7 +1261,7 @@ define_test(parse_identifier_parses_identifier)
     assert_equal(p.it.line_start, 0);
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 4);
-    assert_equal(slice(p.input, &out), "abc"s);
+    assert_equal(slice(p.input, &out), "abc");
 }
 
 define_test(parse_identifier_parses_identifier2)
@@ -1292,7 +1278,7 @@ define_test(parse_identifier_parses_identifier2)
     assert_equal(p.it.line_start, 0);
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 4);
-    assert_equal(slice(p.input, &out), "def"s);
+    assert_equal(slice(p.input, &out), "def");
 }
 
 define_test(parse_identifier_parses_identifier3)
@@ -1309,7 +1295,7 @@ define_test(parse_identifier_parses_identifier3)
     assert_equal(p.it.line_start, 0);
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 13);
-    assert_equal(slice(p.input, &out), "_hello_WORLD"s);
+    assert_equal(slice(p.input, &out), "_hello_WORLD");
 }
 
 define_test(parse_bool_parses_true)

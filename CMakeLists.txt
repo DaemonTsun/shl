@@ -14,12 +14,22 @@ if (NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 else()
     project(shl)
 
-    set(CMAKE_CXX_STANDARD 17)
+    set(CMAKE_CXX_STANDARD 20)
 
     include_directories("${SHL_SRC_DIR}")
 
+    add_library(shl SHARED)
+    target_sources(shl PUBLIC ${SHL_HEADERS} ${SHL_SOURCES})
+    set_property(TARGET shl PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+
     # install
     install(FILES ${SHL_HEADERS} DESTINATION /usr/local/include/)
+    install(FILES ${SHL_HEADERS} DESTINATION "include/${PROJECT_NAME}")
+    install(TARGETS "${PROJECT_NAME}"
+            RUNTIME DESTINATION "bin"
+            LIBRARY DESTINATION "lib"
+            ARCHIVE DESTINATION "lib/${PROJECT_NAME}")
 
     # tests
     set(TEST_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
@@ -27,7 +37,7 @@ else()
 
     find_package(t1 QUIET)
     if(NOT DEFINED t1_DIR OR t1_DIR)
-        add_test_directory("${TEST_SRC_DIR}" "${SHL_SRC_DIR}")
+        add_test_directory("${TEST_SRC_DIR}" INCLUDE_DIRS "${SHL_SRC_DIR}" LIBRARIES shl pthread)
         register_tests()
         
         configure_file(${TEST_SRC_DIR}/file_stream_binary_data.bin
@@ -36,8 +46,6 @@ else()
         configure_file(${TEST_SRC_DIR}/file_stream_text_data.txt
                        ${TEST_BIN_DIR}/file_stream_text_data.txt
                        COPYONLY)
-
-        link_tests(pthread)
     endif()
 
     add_subdirectory("${CMAKE_SOURCE_DIR}/demos")
