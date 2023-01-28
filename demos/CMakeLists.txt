@@ -1,2 +1,0 @@
-
-add_subdirectory(filesystem_watcher_demo)
