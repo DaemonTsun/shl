@@ -6,23 +6,21 @@ set(SHL_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/")
 file(GLOB_RECURSE SHL_SOURCES "${SHL_SRC_DIR}/*.c" "${SHL_SRC_DIR}/*.cpp")
 file(GLOB_RECURSE SHL_HEADERS "${SHL_SRC_DIR}/*.h" "${SHL_SRC_DIR}/*.hpp")
 
+project(shl)
+
+set(CMAKE_CXX_STANDARD 20)
+
+add_library(shl SHARED)
+target_include_directories(shl PUBLIC "${SHL_SRC_DIR}")
+target_sources(shl PUBLIC ${SHL_HEADERS} ${SHL_SOURCES})
+set_property(TARGET shl PROPERTY POSITION_INDEPENDENT_CODE ON)
+
 if (NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     # included file
     set(SHL_SRC_DIR "${SHL_SRC_DIR}" PARENT_SCOPE)
     set(SHL_SOURCES ${SHL_SOURCES} PARENT_SCOPE)
     set(SHL_HEADERS ${SHL_HEADERS} PARENT_SCOPE)
 else()
-    project(shl)
-
-    set(CMAKE_CXX_STANDARD 20)
-
-    include_directories("${SHL_SRC_DIR}")
-
-    add_library(shl SHARED)
-    target_sources(shl PUBLIC ${SHL_HEADERS} ${SHL_SOURCES})
-    set_property(TARGET shl PROPERTY POSITION_INDEPENDENT_CODE ON)
-
-
     # install
     install(FILES ${SHL_HEADERS} DESTINATION /usr/local/include/)
     install(FILES ${SHL_HEADERS} DESTINATION "include/${PROJECT_NAME}")
