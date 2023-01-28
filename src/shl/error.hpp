@@ -9,6 +9,7 @@ struct error
 const char *format_error(const char *format, ...);
 
 
-#define MACRO_TO_STRING(x) #x
+#define MACRO_TO_STRING2(x) #x
+#define MACRO_TO_STRING(x) MACRO_TO_STRING2(x)
 #define throw_error(FMT, ...) \
-    throw error{format_error(__FILE__ " " MACRO_TO_STRING(__LINE__) ": " FMT __VA_OPT__(,) __VA_ARGS__)}
+    throw error{format_error(__FILE__ ":" MACRO_TO_STRING(__LINE__) ": " FMT __VA_OPT__(,) __VA_ARGS__)}
