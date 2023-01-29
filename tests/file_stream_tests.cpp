@@ -1,18 +1,29 @@
 
 #include <iostream>
 #include <string.h>
+#include <unistd.h>
+#include <linux/limits.h>
 #include <filesystem>
 
 #include <t1/t1.hpp>
 
 #include "shl/number_types.hpp"
-#include "shl/filesystem.hpp"
 #include "shl/file_stream.hpp"
 #include "shl/streams.hpp"
 
 // cmake copies these next to test executable
 #define TXT_FILE "file_stream_text_data.txt" // 1024 bytes
 #define BIN_FILE "file_stream_binary_data.bin" // 12 bytes
+
+std::filesystem::path get_executable_path()
+{
+    char pth[PATH_MAX] = {0};
+
+    if (readlink("/proc/self/exe", pth, PATH_MAX) < 0)
+        return std::filesystem::path();
+    
+    return std::filesystem::path(pth);
+}
 
 #define GET_FILEPATH(File, Name) \
     std::filesystem::path p = get_executable_path();\

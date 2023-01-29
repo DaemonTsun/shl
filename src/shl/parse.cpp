@@ -6,7 +6,7 @@
 #include "shl/parse.hpp"
 
 #define get_parse_error_(CharT, p, FMT, ...) \
-    parse_error<CharT>{format_error(__FILE__ " " MACRO_TO_STRING(__LINE__) ": " FMT __VA_OPT__(,) __VA_ARGS__), p->it, p->input, p->input_size}
+    parse_error<CharT>{format_error(FMT __VA_OPT__(,) __VA_ARGS__), __FILE__, __LINE__, p->it, p->input, p->input_size}
 
 #define get_parse_error(CharT, ERR, p, FMT, ...) \
     if (ERR != nullptr) { *ERR = get_parse_error_(CharT, p, FMT, __VA_ARGS__); }

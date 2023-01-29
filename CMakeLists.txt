@@ -45,6 +45,4 @@ else()
                        ${TEST_BIN_DIR}/file_stream_text_data.txt
                        COPYONLY)
     endif()
-
-    add_subdirectory("${CMAKE_SOURCE_DIR}/demos")
 endif()
