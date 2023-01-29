@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
+include_guard(GLOBAL)
+
 add_compile_options (-fdiagnostics-color=always)
 
 #settings
