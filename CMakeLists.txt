@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
-include_guard(GLOBAL)
+if(TARGET shl)
+    return()
+endif()
 
 add_compile_options (-fdiagnostics-color=always)
 
