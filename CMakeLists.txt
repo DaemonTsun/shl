@@ -1,52 +1,53 @@
 cmake_minimum_required(VERSION 3.10)
-if(TARGET shl)
+find_package(better REQUIRED)
+
+project(shl VERSION 0.5)
+get_version_target(shl_TARGET ${PROJECT_NAME})
+
+if(TARGET ${shl_TARGET})
     return()
 endif()
 
-add_compile_options (-fdiagnostics-color=always)
-
 #settings
-set(SHL_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/")
-file(GLOB_RECURSE SHL_SOURCES "${SHL_SRC_DIR}/*.c" "${SHL_SRC_DIR}/*.cpp")
-file(GLOB_RECURSE SHL_HEADERS "${SHL_SRC_DIR}/*.h" "${SHL_SRC_DIR}/*.hpp")
-
-project(shl)
-
 set(CMAKE_CXX_STANDARD 20)
 
-add_library(shl SHARED)
-target_include_directories(shl PUBLIC "${SHL_SRC_DIR}")
-target_sources(shl PUBLIC ${SHL_HEADERS} ${SHL_SOURCES})
-set_property(TARGET shl PROPERTY POSITION_INDEPENDENT_CODE ON)
+set(shl_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/")
+find_sources(shl_SOURCES "${shl_SOURCE_DIR}")
+find_headers(shl_HEADERS "${shl_SOURCE_DIR}")
+
+# library
+add_library(${shl_TARGET} SHARED)
+target_include_directories(${shl_TARGET} PUBLIC "${shl_SOURCE_DIR}")
+target_sources(${shl_TARGET} PUBLIC ${shl_HEADERS} ${shl_SOURCES})
+set_property(TARGET ${shl_TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 if (NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     # included file
-    set(SHL_SRC_DIR "${SHL_SRC_DIR}" PARENT_SCOPE)
-    set(SHL_SOURCES ${SHL_SOURCES} PARENT_SCOPE)
-    set(SHL_HEADERS ${SHL_HEADERS} PARENT_SCOPE)
+    set(shl_VERSION ${shl_VERSION} PARENT_SCOPE)
+    set(shl_TARGET ${shl_TARGET} PARENT_SCOPE)
+    set(shl_SOURCE_DIR "${shl_SOURCE_DIR}" PARENT_SCOPE)
+    set(shl_SOURCES ${shl_SOURCES} PARENT_SCOPE)
+    set(shl_HEADERS ${shl_HEADERS} PARENT_SCOPE)
 else()
+    # not included file
+
     # install
-    install(FILES ${SHL_HEADERS} DESTINATION /usr/local/include/)
-    install(FILES ${SHL_HEADERS} DESTINATION "include/${PROJECT_NAME}")
-    install(TARGETS "${PROJECT_NAME}"
-            RUNTIME DESTINATION "bin"
-            LIBRARY DESTINATION "lib"
-            ARCHIVE DESTINATION "lib/${PROJECT_NAME}")
+    install_library(TARGET ${shl_TARGET} HEADERS ${shl_HEADERS})
 
     # tests
-    set(TEST_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
-    set(TEST_BIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/tests)
+    set(TEST_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+    set(TEST_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/tests)
 
     find_package(t1 QUIET)
     if(NOT DEFINED t1_DIR OR t1_DIR)
-        add_test_directory("${TEST_SRC_DIR}" INCLUDE_DIRS "${SHL_SRC_DIR}" LIBRARIES shl pthread)
+        add_test_directory("${TEST_SOURCE_DIR}" INCLUDE_DIRS "${shl_SOURCE_DIR}" LIBRARIES ${shl_TARGET} pthread)
         register_tests()
         
-        configure_file(${TEST_SRC_DIR}/file_stream_binary_data.bin
-                       ${TEST_BIN_DIR}/file_stream_binary_data.bin
+        configure_file(${TEST_SOURCE_DIR}/file_stream_binary_data.bin
+                       ${TEST_BINARY_DIR}/file_stream_binary_data.bin
                        COPYONLY)
-        configure_file(${TEST_SRC_DIR}/file_stream_text_data.txt
-                       ${TEST_BIN_DIR}/file_stream_text_data.txt
+        configure_file(${TEST_SOURCE_DIR}/file_stream_text_data.txt
+                       ${TEST_BINARY_DIR}/file_stream_text_data.txt
                        COPYONLY)
     endif()
 endif()
