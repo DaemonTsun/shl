@@ -1,0 +1,3 @@
+[submodule "ext/better-cmake"]
+	path = ext/better-cmake
+	url = https://github.com/daemontsun/better-cmake.git
