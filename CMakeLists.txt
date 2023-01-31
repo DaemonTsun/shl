@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 find_package(better REQUIRED NO_DEFAULT_PATH PATHS ext/better-cmake/cmake)
 
 project(shl VERSION 0.5.1)
+project_author("DaemonTsun")
 get_version_target(shl_TARGET ${PROJECT_NAME})
 
 if(TARGET ${shl_TARGET})
@@ -12,6 +13,7 @@ endif()
 set(CMAKE_CXX_STANDARD 20)
 
 set(shl_SOURCES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/")
+generate_project_header("${shl_SOURCES_DIR}/${PROJECT_NAME}/${PROJECT_NAME}_info.hpp")
 find_sources(shl_SOURCES "${shl_SOURCES_DIR}")
 find_headers(shl_HEADERS "${shl_SOURCES_DIR}")
 
