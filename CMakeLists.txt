@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 find_package(better REQUIRED NO_DEFAULT_PATH PATHS ext/better-cmake/cmake)
 
-project(shl VERSION 0.5)
+project(shl VERSION 0.5.1)
 get_version_target(shl_TARGET ${PROJECT_NAME})
 
 if(TARGET ${shl_TARGET})
