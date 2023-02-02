@@ -3,7 +3,7 @@
 /* enum_flag.hpp
  * v1.0
  *
- * defines the macro ENUM_CLASS_FLAG_OPS which defines
+ * defines the macro enum_flags which defines
  * operators and functions:
  *      value  - returns the underlying value of the enum
  *      is_set - checks if a given flag is set
@@ -45,4 +45,6 @@
     constexpr inline T& unset(T& a, T b) { return a &= ~b; } \
     constexpr inline T& unset(T& a, underlying_type<T>::type b) { return a &= ~b; }
 
+#define enum_flag(T)\
+    ENUM_CLASS_FLAG_OPS(T)
 

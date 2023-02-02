@@ -5,7 +5,17 @@
  * add template write and write_at
  * add seek_next_alignment
  *
- * more consistent file stream functions
+ * defines the file_stream struct, a lightweight wrapper for FILE*.
+ *
+ * init(stream) an instance of the struct before using it.
+ *
+ * use open(stream, path, mode, check if open, calcualte size) to open a file.
+ * close(stream) to close the stream and release the handle.
+ *
+ * by default, the file size will get calculated with open(...) unless calculate_size is false.
+ * the file size can also be calculated retroactively by calling calculate_file_size(stream).
+ *
+ * a block size may be specified for the block functions.
  */
 
 #include <stdio.h>

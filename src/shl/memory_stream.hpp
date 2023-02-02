@@ -4,10 +4,21 @@
  * v1.2
  * add seek_next_alignment
  *
- * stream api for memory, similar to file_stream
+ * defines the memory_stream struct and its functions.
+ *
+ * use init(stream) before using a new memory_stream instance.
+ *
+ * use open(stream, size, ...) create a memory_stream with newly allocated memory of
+ * the given size.
+ * use open(stream, data, size, ...) to create a memory_stream of existing data.
+ *
+ * both open functions have check_open and free_on_close parameters to check if
+ * the memory_stream should free the current data before using the new one.
+ * free_on_close does not automatically free the data when calling close(), as
+ * close() has its own free parameter.
  */
 
-#include <stdio.h>
+#include <stdio.h> // required for SET_SEEK, fpos_t
 #include "shl/hash.hpp"
 #include "shl/number_types.hpp"
 

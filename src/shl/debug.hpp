@@ -1,6 +1,12 @@
 
 // debug: debugging functions
 // v1.1
+//
+// sets preprocessor constant Debug to 1 if NDEBUG is not set
+//
+// provides debug(fmt, ...), same as printf but does nothing if Debug is set
+//
+// provides trace(fmt, ...), same as printf but does nothing if Debug is not and TRACE is not set
 #pragma once
 
 #ifndef NDEBUG

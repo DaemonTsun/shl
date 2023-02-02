@@ -1,6 +1,11 @@
 
 #pragma once
 
+/* type_functions.hpp
+ *
+ * defines some type template functions because stl is bad.
+ */
+
 template<typename T>
 struct underlying_type { typedef __underlying_type(T) type; };
 

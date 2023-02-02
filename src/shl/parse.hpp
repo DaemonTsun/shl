@@ -1,7 +1,32 @@
 
 /* parse.hpp
- * v1.0
+ * v1.1
  *
+ * defines the parse_iterator, the parser<C> and parse_error structs and their functions.
+ *
+ * to parse anything, first create a parser<C> and init(p, data, size) it.
+ *
+ * each parse_X function has the following signatures:
+ * parse_X(parser, range, err), where range is the start and end of the parsed object
+                                within the input.
+ * parse_X(parser, X, err), where X is a pointer to the parsed object.
+ *
+ * for example: parse_integer(parser*, int*, err*) parses an integer.
+ *
+ * each parse_X function returns whether or not the parsing was successful, and if not,
+ * writes the location of the error as well as an error message to *err.
+
+ * there's also skip_whitespace(p) which just takes a parser and skips to the next
+ * non-whitespace character or end of input.
+
+ * parse_comment(p, range) parses a comment and writes the range of the comment within
+                           the input to range and returns true on success, or returns
+                           false on failure.
+                           the style of the comments are C-style line comments and block
+                           comments (like this one).
+
+ * skip_whitespace_and_comments(p) skips whitespaces and comments. returns true if
+                                   anything was skipped.
  */
 
 #pragma once
