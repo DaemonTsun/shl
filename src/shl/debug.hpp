@@ -20,7 +20,7 @@
 #define MACRO_TO_STRING2(x) #x
 #define MACRO_TO_STRING(x) MACRO_TO_STRING2(x)
 
-#define debug(fmt, ...) printf(fmt, __VA_OPT__(,) __VA_ARGS__)
+#define debug(fmt, ...) printf(fmt __VA_OPT__(,) __VA_ARGS__)
 
 #ifdef TRACE
 #define trace(fmt, ...) printf("[" __FILE__ ":" MACRO_TO_STRING(__LINE__) "] " fmt __VA_OPT__(,) __VA_ARGS__)
