@@ -14,5 +14,20 @@ at this point this is just a wrapper/replacement library for the standard librar
 
 See individual header files for documentation.
 
+## building
+
+make sure git submodules are properly initialized with `git submodule update --init --recursive`, then run the following:
+
+```sh
+$ mkdir bin
+$ cd bin
+$ cmake ..
+$ make
+```
+
+## installation
+
+`sudo make install` inside the build directory.
+
 ## tests
 If [t1](https://github.com/DaemonTsun/t1) is installed, tests can be run as well using `make tests && make runtests`.
