@@ -3,7 +3,7 @@
 /* enum_flag.hpp
  * v1.0
  *
- * defines the macro enum_flags which defines
+ * defines the macro enum_flag which defines
  * operators and functions:
  *      value  - returns the underlying value of the enum
  *      is_set - checks if a given flag is set
