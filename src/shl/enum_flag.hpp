@@ -15,9 +15,12 @@
 
 #define JOIN(X, Y) X##Y
 
+#define DEFINE_ENUM_VALUE(T)\
+    constexpr inline underlying_type<T>::type value(T a) { return static_cast<underlying_type<T>::type>(a); }
+
 #define DEFINE_ENUM_UNDERLYING_TYPE(T)\
     typedef underlying_type<T>::type JOIN(T, _ut);\
-    constexpr inline underlying_type<T>::type value(T a) { return static_cast<underlying_type<T>::type>(a); }
+    DEFINE_ENUM_VALUE(T)
 
 #define ENUM_CLASS_FLAG_OPS(T)\
     DEFINE_ENUM_UNDERLYING_TYPE(T)\
