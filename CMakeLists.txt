@@ -19,7 +19,7 @@ find_headers(shl_HEADERS "${shl_SOURCES_DIR}")
 
 # library
 add_library(${shl_TARGET} SHARED)
-target_include_directories(${shl_TARGET} PUBLIC "${shl_SOURCES_DIR}")
+target_include_directories(${shl_TARGET} PRIVATE "${shl_SOURCES_DIR}")
 target_sources(${shl_TARGET} PUBLIC ${shl_HEADERS} ${shl_SOURCES})
 set_property(TARGET ${shl_TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
