@@ -140,10 +140,10 @@ define_test(memory_stream_seek_seeks)
     assert_equal(open(&mem, 16), true);
     assert_equal(mem.position, 0);
 
-    assert_equal(seek(&mem, 2), 0);
+    seek(&mem, 2);
     assert_equal(mem.position, 2);
 
-    assert_equal(seek(&mem, 2), 0);
+    seek(&mem, 2);
     assert_equal(mem.position, 2);
 
     assert_equal(seek(&mem, 2, SEEK_CUR), 0);
@@ -152,7 +152,7 @@ define_test(memory_stream_seek_seeks)
     assert_equal(seek(&mem, -2, SEEK_END), 0);
     assert_equal(mem.position, 14);
 
-    assert_equal(seek(&mem, 20), 0);
+    seek(&mem, 20);
     assert_equal(mem.position, 16);
 
     close(&mem);
@@ -166,19 +166,19 @@ define_test(memory_stream_seek_block_seeks_block)
     assert_equal(open(&mem, 16), true);
 
     mem.block_size = 4;
-    assert_equal(seek_block(&mem, 0), 0);
+    seek_block(&mem, 0);
     assert_equal(mem.position, 0);
 
-    assert_equal(seek_block(&mem, 1), 0);
+    seek_block(&mem, 1);
     assert_equal(mem.position, 4);
 
-    assert_equal(seek_block(&mem, 1), 0);
+    seek_block(&mem, 1);
     assert_equal(mem.position, 4);
 
     assert_equal(seek_block(&mem, 1, SEEK_CUR), 0);
     assert_equal(mem.position, 8);
 
-    assert_equal(seek_block(&mem, 20), 0);
+    seek_block(&mem, 20);
     assert_equal(mem.position, 16);
 
     close(&mem);
@@ -192,22 +192,22 @@ define_test(memory_stream_seek_next_alignment_seeks_to_next_alignment)
     assert_equal(open(&mem, 16), true);
     assert_equal(mem.position, 0);
 
-    assert_equal(seek_next_alignment(&mem, 2), 0);
+    seek_next_alignment(&mem, 2);
     assert_equal(mem.position, 0);
 
     mem.position = 1;
 
-    assert_equal(seek_next_alignment(&mem, 2), 0);
+    seek_next_alignment(&mem, 2);
     assert_equal(mem.position, 2);
 
-    assert_equal(seek_next_alignment(&mem, 4), 0);
+    seek_next_alignment(&mem, 4);
     assert_equal(mem.position, 4);
 
-    assert_equal(seek_next_alignment(&mem, 4), 0);
+    seek_next_alignment(&mem, 4);
     assert_equal(mem.position, 4);
     mem.position = 5;
 
-    assert_equal(seek_next_alignment(&mem, 4), 0);
+    seek_next_alignment(&mem, 4);
     assert_equal(mem.position, 8);
 
     close(&mem);

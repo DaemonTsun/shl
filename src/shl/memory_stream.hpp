@@ -18,7 +18,6 @@
  * close() has its own free parameter.
  */
 
-#include <stdio.h> // required for SET_SEEK, fpos_t
 #include "shl/hash.hpp"
 #include "shl/number_types.hpp"
 
@@ -50,12 +49,17 @@ char *current_block_start(const memory_stream *stream);
 u64 current_block_number(const memory_stream *stream);
 u64 current_block_offset(const memory_stream *stream);
 
-int seek(memory_stream *stream, long offset, int whence = SEEK_SET);
-int seek_block(memory_stream *stream, long nth_block, int whence = SEEK_SET);
+void seek(memory_stream *stream, u64 position);
+int seek(memory_stream *stream, s64 offset, int whence);
+void seek_offset(memory_stream *stream, s64 offset);
+void seek_from_end(memory_stream *stream, s64 offset);
+void seek_block(memory_stream *stream, u64 nth_block);
+int seek_block(memory_stream *stream, s64 nth_block, int whence);
+void seek_block_offset(memory_stream *stream, s64 nth_block);
+void seek_block_from_end(memory_stream *stream, s64 nth_block);
 // seeks to next alignment if unaligned or does nothing if aligned
-int seek_next_alignment(memory_stream *stream, u64 alignment);
+void seek_next_alignment(memory_stream *stream, u64 alignment);
 u64 tell(memory_stream *stream);
-bool getpos(memory_stream *stream, fpos_t *pos);
 void rewind(memory_stream *stream);
 
 // read & write perform memcpy

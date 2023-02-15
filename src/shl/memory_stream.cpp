@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <string_view>
+
 #include "shl/memory_stream.hpp"
 
 memory_stream::operator char*() const
@@ -138,7 +138,17 @@ u64 current_block_offset(const memory_stream *stream)
     return (stream->position / stream->block_size) * stream->block_size;
 }
 
-int seek(memory_stream *stream, long offset, int whence)
+void seek(memory_stream *stream, u64 pos)
+{
+    assert(stream != nullptr);
+
+    stream->position = pos;
+
+    if (stream->position > stream->size)
+        stream->position = stream->size;
+}
+
+int seek(memory_stream *stream, s64 offset, int whence)
 {
     assert(stream != nullptr);
 
@@ -149,7 +159,7 @@ int seek(memory_stream *stream, long offset, int whence)
     else if (whence == SEEK_END)
         stream->position = stream->size + offset;
     else
-        return 1;
+        return -1;
 
     if (stream->position > stream->size)
         stream->position = stream->size;
@@ -157,7 +167,34 @@ int seek(memory_stream *stream, long offset, int whence)
     return 0;
 }
 
-int seek_block(memory_stream *stream, long nth_block, int whence)
+void seek_offset(memory_stream *stream, s64 offset)
+{
+    assert(stream != nullptr);
+
+    stream->position = stream->position + offset;
+
+    if (stream->position > stream->size)
+        stream->position = stream->size;
+}
+
+void seek_from_end(memory_stream *stream, s64 offset)
+{
+    assert(stream != nullptr);
+
+    stream->position = stream->size + offset;
+
+    if (stream->position > stream->size)
+        stream->position = stream->size;
+}
+
+void seek_block(memory_stream *stream, u64 nth_block)
+{
+    assert(stream != nullptr);
+    
+    seek(stream, nth_block * stream->block_size);
+}
+
+int seek_block(memory_stream *stream, s64 nth_block, int whence)
 {
     assert(stream != nullptr);
 
@@ -169,7 +206,22 @@ int seek_block(memory_stream *stream, long nth_block, int whence)
     return seek(stream, cur + nth_block * stream->block_size, SEEK_SET);
 }
 
-int seek_next_alignment(memory_stream *stream, u64 alignment)
+void seek_block_offset(memory_stream *stream, s64 nth_block)
+{
+    assert(stream != nullptr);
+    
+    u64 cur = (stream->position / stream->block_size) * stream->block_size;
+    seek(stream, cur + nth_block * stream->block_size);
+}
+
+void seek_block_from_end(memory_stream *stream, s64 nth_block)
+{
+    assert(stream != nullptr);
+    
+    seek_from_end(stream, nth_block * stream->block_size);
+}
+
+void seek_next_alignment(memory_stream *stream, u64 alignment)
 {
     assert(stream != nullptr);
     assert(alignment > 0);
@@ -177,16 +229,10 @@ int seek_next_alignment(memory_stream *stream, u64 alignment)
     u64 npos = stream->position;
     npos = (npos + alignment - 1) / alignment * alignment;
 
-    return seek(stream, npos);
+    seek(stream, npos);
 }
 
 u64 tell(memory_stream *stream)
-{
-    assert(stream != nullptr);
-    return stream->position;
-}
-
-u64 getpos(memory_stream *stream)
 {
     assert(stream != nullptr);
     return stream->position;
