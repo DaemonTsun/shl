@@ -18,6 +18,8 @@ struct array
     T* data;
     u64 size;
     u64 reserved_size;
+
+    T &operator[](u64 index) { return data[index]; }
 };
 
 template<typename T>
@@ -111,6 +113,15 @@ T *end(array<T> *arr)
     assert(arr != nullptr);
 
     return arr->data + arr->size;
+}
+
+template<typename T>
+T *at(array<T> *arr, u64 index)
+{
+    assert(arr != nullptr);
+    assert(index < arr->size);
+
+    return arr->data + index;
 }
 
 template<typename T>
