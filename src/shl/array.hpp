@@ -15,7 +15,7 @@ struct array
 {
     typedef T value_type;
 
-    T* data;
+    T *data;
     u64 size;
     u64 reserved_size;
 
@@ -47,6 +47,9 @@ T *add_elements(array<T> *arr, u64 n_elements)
 {
     assert(arr != nullptr);
 
+    if (n_elements == 0)
+        return nullptr;
+
     u64 nsize = arr->size + n_elements; 
 
     if (nsize < arr->reserved_size)
@@ -69,6 +72,62 @@ T *add_elements(array<T> *arr, u64 n_elements)
     arr->reserved_size = new_reserved_size;
 
     return ret;
+}
+
+template<typename T>
+T *insert_elements(array<T> *arr, u64 index, u64 n_elements)
+{
+    assert(arr != nullptr);
+
+    if (index == arr->size)
+        return add_elements(arr, n_elements);
+    else if (index > arr->size)
+    {
+        /* refusing to allocate beyond end.
+         * we could add_elements(arr, n_elements + index - arr->size) but like
+         * that seems unintuitive and can lead to accidental allocations.
+         */
+        return nullptr; 
+    }
+
+    if (n_elements == 0)
+        return arr->data + index;
+
+    u64 prev_size = arr->size;
+    add_elements(arr, n_elements);
+
+    void *start = reinterpret_cast<void*>(arr->data + index);
+    void *new_start = reinterpret_cast<void*>(arr->data + index + n_elements);
+
+    ::move_memory(start, new_start, n_elements * sizeof(T));
+
+    return arr->data + index;
+}
+
+template<typename T>
+void remove_elements(array<T> *arr, u64 index, u64 n_elements)
+{
+    assert(arr != nullptr);
+
+    if (arr->size == 0)
+        return;
+
+    if (index >= arr->size)
+        return;
+
+    if (index + n_elements >= arr->size)
+    {
+        arr->size = index;
+        return;
+    }
+
+    void *before = reinterpret_cast<void*>(arr->data + index);
+    void *after = reinterpret_cast<void*>(arr->data + index + n_elements);
+
+    u64 num_items_after = arr->size - (index + n_elements);
+    ::move_memory(after, before, num_items_after * sizeof(T));
+
+    arr->size = arr->size - n_elements;
 }
 
 template<typename T>
