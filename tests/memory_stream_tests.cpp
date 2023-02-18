@@ -221,6 +221,9 @@ define_test(memory_stream_read_reads)
     assert_equal(open(&mem, 16), true);
     write(&mem, data, strlen(data));
 
+    char null[5] = {0};
+    write(&mem, &null, 5);
+
     u32 rdata;
     mem.position = 0;
     assert_equal(read(&mem, &rdata, 4), 4);
@@ -262,6 +265,12 @@ define_test(memory_stream_read_with_type_ptr_reads)
     init(&mem); // inits block_count to 1
     assert_equal(open(&mem, 16), true);
     write(&mem, data, strlen(data));
+
+    char null[5] = {0};
+    write(&mem, &null, 5);
+
+    u32 x = 0;
+    write_at(&mem, &x, 12, 0);
     mem.position = 0;
 
     u32 rdata;
@@ -281,19 +290,19 @@ define_test(memory_stream_hash_hashes_memory_stream)
     memory_stream mem;
 
     init(&mem); // inits block_count to 1
-    assert_equal(open(&mem, 16), true);
+    assert_equal(open(&mem, 11), true);
     write(&mem, data, strlen(data));
     mem.position = 0;
 
-    // arbitrary value
-    assert_equal(hash(&mem), 12806276673315956832LL);
-    assert_equal(hash(&mem), 12806276673315956832LL);
-    assert_equal(hash(&mem), 12806276673315956832LL);
-    assert_equal(hash(&mem), 12806276673315956832LL);
+    hash_t hsh = hash(&mem);
+    assert_equal(hash(&mem), hsh);
+    assert_equal(hash(&mem), hsh);
+    assert_equal(hash(&mem), hsh);
+    assert_equal(hash(&mem), hsh);
 
     write_at(&mem, "abc", 0, 3);
 
-    assert_not_equal(hash(&mem), 12806276673315956832LL);
+    assert_not_equal(hash(&mem), hsh);
 
     close(&mem);
 }

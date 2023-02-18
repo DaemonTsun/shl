@@ -16,7 +16,7 @@ define_test(init_initializes_linked_list)
     free(&list);
 }
 
-define_test(init_initializes_array2)
+define_test(init_initializes_list2)
 {
     linked_list<int> list;
 
@@ -34,7 +34,7 @@ define_test(init_initializes_array2)
     free(&list);
 }
 
-define_test(init_initializes_array3)
+define_test(init_initializes_list3)
 {
     linked_list<int> list;
 
@@ -187,6 +187,314 @@ define_test(add_elements_adds_elements_to_empty_list)
 
     assert_not_equal(node, nullptr);
     assert_equal(node, list.first);
+
+    free(&list);
+}
+
+define_test(remove_elements_does_nothing_when_removing_no_elements)
+{
+    linked_list<int> list;
+
+    init(&list, 5);
+
+    assert_not_equal(list.first, nullptr);
+    assert_not_equal(list.last, nullptr);
+    assert_not_equal(list.first->next, nullptr);
+    assert_not_equal(list.last->previous, nullptr);
+    assert_equal(list.first->previous, nullptr);
+    assert_equal(list.last->next, nullptr);
+    assert_equal(list.size, 5);
+
+    remove_elements(&list, 0, 0);
+
+    assert_not_equal(list.first, nullptr);
+    assert_not_equal(list.last, nullptr);
+    assert_not_equal(list.first->next, nullptr);
+    assert_not_equal(list.last->previous, nullptr);
+    assert_equal(list.first->previous, nullptr);
+    assert_equal(list.last->next, nullptr);
+    assert_equal(list.size, 5);
+
+    free(&list);
+}
+
+define_test(remove_elements_does_nothing_when_removing_elements_outside_of_list_size)
+{
+    linked_list<int> list;
+
+    init(&list, 5);
+
+    assert_not_equal(list.first, nullptr);
+    assert_not_equal(list.last, nullptr);
+    assert_not_equal(list.first->next, nullptr);
+    assert_not_equal(list.last->previous, nullptr);
+    assert_equal(list.first->previous, nullptr);
+    assert_equal(list.last->next, nullptr);
+    assert_equal(list.size, 5);
+
+    remove_elements(&list, 8, 0);
+
+    assert_not_equal(list.first, nullptr);
+    assert_not_equal(list.last, nullptr);
+    assert_not_equal(list.first->next, nullptr);
+    assert_not_equal(list.last->previous, nullptr);
+    assert_equal(list.first->previous, nullptr);
+    assert_equal(list.last->next, nullptr);
+    assert_equal(list.size, 5);
+
+    free(&list);
+}
+
+define_test(remove_elements_does_nothing_when_removing_from_empty_list)
+{
+    linked_list<int> list;
+
+    init(&list);
+
+    assert_equal(list.first, nullptr);
+    assert_equal(list.last, nullptr);
+    assert_equal(list.size, 0);
+
+    remove_elements(&list, 0, 0);
+
+    assert_equal(list.first, nullptr);
+    assert_equal(list.last, nullptr);
+    assert_equal(list.size, 0);
+
+    free(&list);
+}
+
+define_test(remove_elements_removes_elements)
+{
+    linked_list<int> list;
+
+    init(&list, 5);
+
+    assert_equal(list.size, 5);
+
+    list[0] = 1;
+    list[1] = 2;
+    list[2] = 3;
+    list[3] = 4;
+    list[4] = 5;
+
+    remove_elements(&list, 1, 1);
+
+    assert_not_equal(list.first, nullptr);
+    assert_not_equal(list.last, nullptr);
+    assert_not_equal(list.first->next, nullptr);
+    assert_not_equal(list.last->previous, nullptr);
+    assert_equal(list.first->previous, nullptr);
+    assert_equal(list.last->next, nullptr);
+    assert_equal(list.size, 4);
+
+    assert_equal(list[0], 1);
+    assert_equal(list[1], 3);
+    assert_equal(list[2], 4);
+    assert_equal(list[3], 5);
+
+    free(&list);
+}
+
+define_test(remove_elements_removes_elements2)
+{
+    linked_list<int> list;
+
+    init(&list, 5);
+
+    assert_equal(list.size, 5);
+
+    list[0] = 1;
+    list[1] = 2;
+    list[2] = 3;
+    list[3] = 4;
+    list[4] = 5;
+
+    remove_elements(&list, 0, 1);
+
+    assert_not_equal(list.first, nullptr);
+    assert_not_equal(list.last, nullptr);
+    assert_not_equal(list.first->next, nullptr);
+    assert_not_equal(list.last->previous, nullptr);
+    assert_equal(list.first->previous, nullptr);
+    assert_equal(list.last->next, nullptr);
+    assert_equal(list.size, 4);
+
+    assert_equal(list[0], 2);
+    assert_equal(list[1], 3);
+    assert_equal(list[2], 4);
+    assert_equal(list[3], 5);
+
+    free(&list);
+}
+
+define_test(remove_elements_removes_elements3)
+{
+    linked_list<int> list;
+
+    init(&list, 5);
+
+    assert_equal(list.size, 5);
+
+    list[0] = 1;
+    list[1] = 2;
+    list[2] = 3;
+    list[3] = 4;
+    list[4] = 5;
+
+    remove_elements(&list, 4, 1);
+
+    assert_not_equal(list.first, nullptr);
+    assert_not_equal(list.last, nullptr);
+    assert_not_equal(list.first->next, nullptr);
+    assert_not_equal(list.last->previous, nullptr);
+    assert_equal(list.first->previous, nullptr);
+    assert_equal(list.last->next, nullptr);
+    assert_equal(list.size, 4);
+
+    assert_equal(list[0], 1);
+    assert_equal(list[1], 2);
+    assert_equal(list[2], 3);
+    assert_equal(list[3], 4);
+
+    free(&list);
+}
+
+define_test(remove_elements_removes_elements4)
+{
+    linked_list<int> list;
+
+    init(&list, 5);
+
+    assert_equal(list.size, 5);
+
+    list[0] = 1;
+    list[1] = 2;
+    list[2] = 3;
+    list[3] = 4;
+    list[4] = 5;
+
+    remove_elements(&list, 4, 10);
+
+    assert_not_equal(list.first, nullptr);
+    assert_not_equal(list.last, nullptr);
+    assert_not_equal(list.first->next, nullptr);
+    assert_not_equal(list.last->previous, nullptr);
+    assert_equal(list.first->previous, nullptr);
+    assert_equal(list.last->next, nullptr);
+    assert_equal(list.size, 4);
+
+    assert_equal(list[0], 1);
+    assert_equal(list[1], 2);
+    assert_equal(list[2], 3);
+    assert_equal(list[3], 4);
+
+    free(&list);
+}
+
+define_test(remove_elements_removes_elements5)
+{
+    linked_list<int> list;
+
+    init(&list, 5);
+
+    assert_equal(list.size, 5);
+
+    list[0] = 1;
+    list[1] = 2;
+    list[2] = 3;
+    list[3] = 4;
+    list[4] = 5;
+
+    remove_elements(&list, 3, 10);
+
+    assert_not_equal(list.first, nullptr);
+    assert_not_equal(list.last, nullptr);
+    assert_not_equal(list.first->next, nullptr);
+    assert_not_equal(list.last->previous, nullptr);
+    assert_equal(list.first->previous, nullptr);
+    assert_equal(list.last->next, nullptr);
+    assert_equal(list.size, 3);
+
+    assert_equal(list[0], 1);
+    assert_equal(list[1], 2);
+    assert_equal(list[2], 3);
+
+    free(&list);
+}
+
+define_test(remove_elements_removes_elements6)
+{
+    linked_list<int> list;
+
+    init(&list, 5);
+
+    assert_equal(list.size, 5);
+
+    list[0] = 1;
+    list[1] = 2;
+    list[2] = 3;
+    list[3] = 4;
+    list[4] = 5;
+
+    remove_elements(&list, 0, 5);
+
+    assert_equal(list.first, nullptr);
+    assert_equal(list.last, nullptr);
+    assert_equal(list.size, 0);
+
+    free(&list);
+}
+
+define_test(remove_elements_removes_elements7)
+{
+    linked_list<int> list;
+
+    init(&list, 5);
+
+    assert_equal(list.size, 5);
+
+    list[0] = 1;
+    list[1] = 2;
+    list[2] = 3;
+    list[3] = 4;
+    list[4] = 5;
+
+    remove_elements(&list, 3, 1);
+
+    assert_equal(list[0], 1);
+    assert_equal(list[1], 2);
+    assert_equal(list[2], 3);
+    assert_equal(list[3], 5);
+    assert_equal(list.first->value, 1);
+    assert_equal(list.last->value, 5);
+
+    remove_elements(&list, 1, 1);
+
+    assert_equal(list[0], 1);
+    assert_equal(list[1], 3);
+    assert_equal(list[2], 5);
+    assert_equal(list.first->value, 1);
+    assert_equal(list.last->value, 5);
+
+    remove_elements(&list, 2, 1);
+
+    assert_equal(list[0], 1);
+    assert_equal(list[1], 3);
+    assert_equal(list.first->value, 1);
+    assert_equal(list.last->value, 3);
+
+    remove_elements(&list, 0, 1);
+
+    assert_equal(list[0], 3);
+    assert_equal(list.first->value, 3);
+    assert_equal(list.last->value, 3);
+
+    remove_elements(&list, 0, 1);
+
+    assert_equal(list.first, nullptr);
+    assert_equal(list.last, nullptr);
+    assert_equal(list.size, 0);
 
     free(&list);
 }

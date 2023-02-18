@@ -59,7 +59,8 @@ struct array
     u64 size;
     u64 reserved_size;
 
-    T &operator[](u64 index) { return data[index]; }
+          T &operator[](u64 index)       { return data[index]; }
+    const T &operator[](u64 index) const { return data[index]; }
 };
 
 template<typename T>
@@ -149,7 +150,7 @@ void remove_elements(array<T> *arr, u64 index, u64 n_elements)
 {
     assert(arr != nullptr);
 
-    if (arr->size == 0)
+    if (n_elements == 0)
         return;
 
     if (index >= arr->size)
@@ -216,6 +217,15 @@ T *end(array<T> *arr)
 
 template<typename T>
 T *at(array<T> *arr, u64 index)
+{
+    assert(arr != nullptr);
+    assert(index < arr->size);
+
+    return arr->data + index;
+}
+
+template<typename T>
+const T *at(const array<T> *arr, u64 index)
 {
     assert(arr != nullptr);
     assert(index < arr->size);
