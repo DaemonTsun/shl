@@ -1,6 +1,40 @@
 
 #pragma once
 
+/* array.hpp
+ * 
+ * contiguous memory structure.
+ * initialize with init(*arr, size), free with free(*arr).
+ *
+ * resize(*arr, size) sets the size of the array to the exact size size.
+ *
+ * add_elements(*arr, N) adds N elements to the array at the end and returns a pointer
+ *                       to the start of the new elements.
+ *                       may allocate more memory than needed to store N elements,
+ *                       or allocate nothing if the array has enough reserved memory.
+ *
+ * insert_elements(*arr, pos, N) inserts N elements at position pos in the array.
+ *                               if pos == arr.size, behaves like add_elements(arr, N).
+ *                               if pos > arr.size, does nothing and returns nullptr.
+ *                               otherwise, adds N elements using add_elements,
+ *                               moves elements from [pos, arr.size[ to pos + N,
+ *                               then returns a pointer to where the elements
+ *                               were inserted.
+ *
+ * remove_elements(*arr, pos, N) removes N elements starting at position pos from the array.
+ *                               does nothing if pos >= arr.pos.
+ *                               if pos + n >= arr.pos, simply changes the size of
+ *                               the array and keeps the reserved memory.
+ *                               use shrink_to_fit to remove the excess memory.
+ *
+ * shink_to_fit(*arr) reallocates to only use as much memory as required
+ *                    to store all the elements in the array if
+ *                    more memory is being used.
+ *                    does nothing if arr.size == arr.reserved_size.
+ *
+ * supports index operator: arr[0] == arr.data[0].
+ */
+
 #include "shl/number_types.hpp"
 #include "shl/memory.hpp"
 
@@ -191,7 +225,7 @@ void free(array<T> *arr)
     if (arr->data == nullptr)
         return;
 
-    free_memory(static_cast<void*>(arr->data));
+    free_memory(reinterpret_cast<void*>(arr->data));
 
     arr->data = nullptr;
 }
