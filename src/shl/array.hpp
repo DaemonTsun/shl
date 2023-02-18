@@ -32,6 +32,12 @@
  *                    more memory is being used.
  *                    does nothing if arr.size == arr.reserved_size.
  *
+ * clear(*arr) simply sets arr.size to 0, no memory is deallocated and
+ *             reserved memory is kept. use free(*arr) to deallocate memory.
+ *
+ * free(*arr) frees memory and sets arr.size and arr.reserved_size to 0.
+ *            you may call init(*arr, size) after calling free(*arr).
+ *
  * supports index operator: arr[0] == arr.data[0].
  */
 
@@ -67,13 +73,13 @@ void init(array<T> *arr)
 }
 
 template<typename T>
-void init(array<T> *arr, u64 size)
+void init(array<T> *arr, u64 n_elements)
 {
     assert(arr != nullptr);
 
-    arr->data = reinterpret_cast<T*>(allocate_memory(sizeof(T) * size));
-    arr->size = size;
-    arr->reserved_size = size;
+    arr->data = allocate_memory<T>(n_elements);
+    arr->size = n_elements;
+    arr->reserved_size = n_elements;
 }
 
 template<typename T>
@@ -95,7 +101,7 @@ T *add_elements(array<T> *arr, u64 n_elements)
 
     u64 new_reserved_size = (arr->reserved_size + n_elements) * 2;
 
-    arr->data = reinterpret_cast<T*>(reallocate_memory(arr->data, sizeof(T) * new_reserved_size));
+    arr->data = reallocate_memory<T>(arr->data, new_reserved_size);
 
     T *ret = arr->data;
 
@@ -175,7 +181,7 @@ void resize(array<T> *arr, u64 size)
         return;
     }
 
-    arr->data = reinterpret_cast<T*>(reallocate_memory(arr->data, sizeof(T) * size));
+    arr->data = reallocate_memory<T>(arr->data, size);
     arr->size = size;
     arr->reserved_size = size;
 }
@@ -188,7 +194,7 @@ void shrink_to_fit(array<T> *arr)
     if (arr->size == arr->reserved_size)
         return;
 
-    arr->data = reinterpret_cast<T*>(reallocate_memory(arr->data, sizeof(T) * arr->size));
+    arr->data = reallocate_memory<T>(arr->data, arr->size);
     arr->reserved_size = arr->size;
 }
 
@@ -218,14 +224,22 @@ T *at(array<T> *arr, u64 index)
 }
 
 template<typename T>
+void clear(array<T> *arr)
+{
+    assert(arr != nullptr);
+
+    arr->size = 0;
+}
+
+template<typename T>
 void free(array<T> *arr)
 {
     assert(arr != nullptr);
 
-    if (arr->data == nullptr)
-        return;
-
-    free_memory(reinterpret_cast<void*>(arr->data));
+    if (arr->data != nullptr)
+        free_memory<T>(arr->data);
 
     arr->data = nullptr;
+    arr->size = 0;
+    arr->reserved_size = 0;
 }
