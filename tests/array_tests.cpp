@@ -428,4 +428,98 @@ define_test(index_access_operator_gets_reference_to_element_at)
     free(&arr);
 }
 
+define_test(for_array_iterates_values)
+{
+    array<int> arr1;
+    array<int> arr2;
+
+    init(&arr1, 3);
+    init(&arr2);
+
+    arr1[0] = 1;
+    arr1[1] = 2;
+    arr1[2] = 3;
+
+    for_array(v, &arr1)
+    {
+        int *n = add_elements(&arr2, 1);
+        *n = *v;
+    }
+
+    assert_equal(arr1[0], arr2[0]);
+    assert_equal(arr1[1], arr2[1]);
+    assert_equal(arr1[2], arr2[2]);
+
+    free(&arr1);
+    free(&arr2);
+}
+
+define_test(for_array_iterates_indices_and_values)
+{
+    array<int> arr1;
+    array<int> arr2;
+
+    init(&arr1, 3);
+    init(&arr2, 3);
+
+    arr1[0] = 1;
+    arr1[1] = 2;
+    arr1[2] = 3;
+
+    for_array(i, v, &arr1)
+        arr2[i] = *v;
+
+    assert_equal(arr1[0], arr2[0]);
+    assert_equal(arr1[1], arr2[1]);
+    assert_equal(arr1[2], arr2[2]);
+
+    free(&arr1);
+    free(&arr2);
+}
+
+define_test(hash_hashes_array)
+{
+    array<int> arr1;
+    array<int> arr2;
+    array<int> arr3;
+    array<int> arr4;
+
+    init(&arr1, 3);
+    init(&arr2, 3);
+    init(&arr3, 3);
+    init(&arr4, 4);
+
+    arr1[0] = 1;
+    arr1[1] = 2;
+    arr1[2] = 3;
+
+    arr2[0] = 1;
+    arr2[1] = 2;
+    arr2[2] = 3;
+
+    arr3[0] = 3;
+    arr3[1] = 2;
+    arr3[2] = 1;
+
+    arr4[0] = 1;
+    arr4[1] = 2;
+    arr4[2] = 3;
+    arr4[3] = 4;
+
+    hash_t hsh1 = hash(&arr1);
+    hash_t hsh2 = hash(&arr2);
+    hash_t hsh3 = hash(&arr3);
+    hash_t hsh4 = hash(&arr4);
+
+    assert_equal(hsh1, hsh2);
+    assert_not_equal(hsh1, hsh3);
+    assert_not_equal(hsh1, hsh4);
+    assert_not_equal(hsh3, hsh4);
+
+    free(&arr1);
+    free(&arr2);
+    free(&arr3);
+    free(&arr4);
+}
+
 define_default_test_main();

@@ -772,4 +772,49 @@ define_test(for_list_iterates_indices_and_values_and_nodes)
     free(&list2);
 }
 
+define_test(hash_hashes_list)
+{
+    linked_list<int> list1;
+    linked_list<int> list2;
+    linked_list<int> list3;
+    linked_list<int> list4;
+
+    init(&list1, 3);
+    init(&list2, 3);
+    init(&list3, 3);
+    init(&list4, 4);
+
+    list1[0] = 1;
+    list1[1] = 2;
+    list1[2] = 3;
+
+    list2[0] = 1;
+    list2[1] = 2;
+    list2[2] = 3;
+
+    list3[0] = 3;
+    list3[1] = 2;
+    list3[2] = 1;
+
+    list4[0] = 1;
+    list4[1] = 2;
+    list4[2] = 3;
+    list4[3] = 4;
+
+    hash_t hsh1 = hash(&list1);
+    hash_t hsh2 = hash(&list2);
+    hash_t hsh3 = hash(&list3);
+    hash_t hsh4 = hash(&list4);
+
+    assert_equal(hsh1, hsh2);
+    assert_not_equal(hsh1, hsh3);
+    assert_not_equal(hsh1, hsh4);
+    assert_not_equal(hsh3, hsh4);
+
+    free(&list1);
+    free(&list2);
+    free(&list3);
+    free(&list4);
+}
+
 define_default_test_main();

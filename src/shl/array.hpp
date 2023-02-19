@@ -43,8 +43,11 @@
  * supports index operator: arr[0] == arr.data[0].
  */
 
+#include "shl/macros.hpp"
+#include "shl/type_functions.hpp"
 #include "shl/number_types.hpp"
 #include "shl/memory.hpp"
+#include "shl/hash.hpp"
 
 #ifndef NDEBUG
 #include <assert.h>
@@ -255,3 +258,23 @@ void free(array<T> *arr)
     arr->size = 0;
     arr->reserved_size = 0;
 }
+
+template<typename T>
+hash_t hash(const array<T> *arr)
+{
+    return hash_data(reinterpret_cast<void*>(arr->data), arr->size * sizeof(T));
+}
+
+#define _for_array_vars(I_Var, V_Var, LIST)\
+    u64 I_Var = 0;\
+    typename remove_pointer_t<decltype(LIST)>::value_type *V_Var = (LIST)->data;
+
+#define for_array_V(V_Var, LIST)\
+    _for_array_vars(V_Var##_index, V_Var, LIST)\
+    for (; V_Var##_index < (LIST)->size; ++V_Var##_index, ++V_Var)
+
+#define for_array_IV(I_Var, V_Var, LIST)\
+    _for_array_vars(I_Var, V_Var, LIST)\
+    for (; I_Var < (LIST)->size; ++I_Var, ++V_Var)
+
+#define for_array(...) GET_MACRO2(__VA_ARGS__, for_array_IV, for_array_V)(__VA_ARGS__)

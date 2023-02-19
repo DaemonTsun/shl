@@ -5,6 +5,7 @@
 #include "shl/type_functions.hpp"
 #include "shl/number_types.hpp"
 #include "shl/memory.hpp"
+#include "shl/hash.hpp"
 
 #ifndef NDEBUG
 #include <assert.h>
@@ -272,6 +273,22 @@ void free(linked_list<T> *list)
     clear(list);
 }
 
+template<typename T>
+hash_t hash(const linked_list<T> *list)
+{
+    hash_t ret = DEFAULT_MURMUR2_SEED;
+    list_node<T> *n = list->first;
+
+    while (n != nullptr)
+    {
+        // this might not be ideal if sizeof(T) is less than 64 bits
+        ret = hash_data(reinterpret_cast<void*>(&(n->value)), sizeof(T), ret);
+        n = n->next;
+    }
+
+    return ret;
+}
+
 #define _for_list_vars(V_Var, N_Var, LIST)\
     typename remove_pointer_t<decltype(LIST)>::node_type  *N_Var = (LIST)->first;\
     typename remove_pointer_t<decltype(LIST)>::value_type *V_Var = N_Var ? &(N_Var->value) : nullptr;
@@ -283,11 +300,11 @@ void free(linked_list<T> *list)
 #define for_list_IV(I_Var, V_Var, LIST)\
     u64 I_Var = 0;\
     _for_list_vars(V_Var, I_Var##V_Var##_node, LIST)\
-    for (; I_Var##V_Var##_node != nullptr; I_Var##V_Var##_node = I_Var##V_Var##_node->next, ++i, V_Var = &I_Var##V_Var##_node->value)
+    for (; I_Var##V_Var##_node != nullptr; I_Var##V_Var##_node = I_Var##V_Var##_node->next, ++I_Var, V_Var = &I_Var##V_Var##_node->value)
 
 #define for_list_IVN(I_Var, V_Var, N_Var, LIST)\
     u64 I_Var = 0;\
     _for_list_vars(V_Var, N_Var, LIST)\
-    for (; N_Var != nullptr; N_Var = N_Var->next, ++i, V_Var = &N_Var->value)
+    for (; N_Var != nullptr; N_Var = N_Var->next, ++I_Var, V_Var = &N_Var->value)
 
 #define for_list(...) GET_MACRO3(__VA_ARGS__, for_list_IVN, for_list_IV, for_list_V)(__VA_ARGS__)
