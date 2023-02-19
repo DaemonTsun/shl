@@ -6,17 +6,17 @@
  * defines some type template functions because stl is bad.
  */
 
-template<typename T>
-struct underlying_type { typedef __underlying_type(T) type; };
+template<typename T> struct underlying_type { typedef __underlying_type(T) type; };
 
-template<typename T>
-struct remove_reference { typedef T type; };
+template<typename T> struct remove_reference         { typedef T type; };
+template<typename T> struct remove_reference<T&>     { typedef T type; };
+template<typename T> struct remove_reference<T&&>    { typedef T type; };
+template<typename T> using remove_reference_t = typename remove_reference<T>::type;
 
-template<typename T>
-struct remove_reference<T&> { typedef T type; };
-
-template<typename T>
-struct remove_reference<T&&> { typedef T type; };
+template<typename T> struct remove_pointer           { typedef T type; };
+template<typename T> struct remove_pointer<T*>       { typedef T type; };
+template<typename T> struct remove_pointer<T* const> { typedef T type; };
+template<typename T> using remove_pointer_t = typename remove_pointer<T>::type;
 
 template<typename T>
 inline T&& forward(typename remove_reference<T>::type& t)

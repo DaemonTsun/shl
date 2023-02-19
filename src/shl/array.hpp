@@ -32,6 +32,8 @@
  *                    more memory is being used.
  *                    does nothing if arr.size == arr.reserved_size.
  *
+ * at(*arr, n) returns a pointer to the nth element in the array.
+ *
  * clear(*arr) simply sets arr.size to 0, no memory is deallocated and
  *             reserved memory is kept. use free(*arr) to deallocate memory.
  *

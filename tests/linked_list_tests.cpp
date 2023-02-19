@@ -3,6 +3,27 @@
 
 #include "shl/linked_list.hpp"
 
+template<typename T>
+void assert_list_integrity(const linked_list<T> *list)
+{
+    for_list(i, v, node, list)
+    {
+        if (node->previous != nullptr)
+        {
+            assert_equal(node->previous->next, node);
+        }
+        else
+            assert_equal(node, list->first);
+
+        if (node->next != nullptr)
+        {
+            assert_equal(node->next->previous, node);
+        }
+        else
+            assert_equal(node, list->last);
+    }
+}
+
 define_test(init_initializes_linked_list)
 {
     linked_list<int> list;
@@ -47,6 +68,7 @@ define_test(init_initializes_list3)
     assert_equal(list.first->previous, nullptr);
     assert_equal(list.last->next, nullptr);
     assert_equal(list.size, 5);
+    assert_list_integrity(&list);
 
     free(&list);
 }
@@ -103,12 +125,14 @@ define_test(add_elements_does_nothing_when_adding_no_elements)
     assert_equal(list.first->previous, nullptr);
     assert_equal(list.last->next, nullptr);
     assert_equal(list.size, 5);
+    assert_list_integrity(&list);
 
     list_node<int> *node = add_elements(&list, 0);
 
     assert_equal(node, nullptr);
     assert_equal(list.last->next, nullptr);
     assert_equal(list.size, 5);
+    assert_list_integrity(&list);
 
     free(&list);
 }
@@ -135,6 +159,7 @@ define_test(add_elements_adds_elements)
     assert_equal(node, previous_last->next);
     assert_equal(node, list.last);
     assert_equal(list.size, 6);
+    assert_list_integrity(&list);
 
     free(&list);
 }
@@ -161,6 +186,7 @@ define_test(add_elements_adds_elements2)
     assert_equal(node, previous_last->next);
     assert_equal(node, list.last->previous->previous);
     assert_equal(list.size, 8);
+    assert_list_integrity(&list);
 
     free(&list);
 }
@@ -187,6 +213,7 @@ define_test(add_elements_adds_elements_to_empty_list)
 
     assert_not_equal(node, nullptr);
     assert_equal(node, list.first);
+    assert_list_integrity(&list);
 
     free(&list);
 }
@@ -214,6 +241,7 @@ define_test(remove_elements_does_nothing_when_removing_no_elements)
     assert_equal(list.first->previous, nullptr);
     assert_equal(list.last->next, nullptr);
     assert_equal(list.size, 5);
+    assert_list_integrity(&list);
 
     free(&list);
 }
@@ -241,6 +269,7 @@ define_test(remove_elements_does_nothing_when_removing_elements_outside_of_list_
     assert_equal(list.first->previous, nullptr);
     assert_equal(list.last->next, nullptr);
     assert_equal(list.size, 5);
+    assert_list_integrity(&list);
 
     free(&list);
 }
@@ -287,6 +316,7 @@ define_test(remove_elements_removes_elements)
     assert_equal(list.first->previous, nullptr);
     assert_equal(list.last->next, nullptr);
     assert_equal(list.size, 4);
+    assert_list_integrity(&list);
 
     assert_equal(list[0], 1);
     assert_equal(list[1], 3);
@@ -319,6 +349,7 @@ define_test(remove_elements_removes_elements2)
     assert_equal(list.first->previous, nullptr);
     assert_equal(list.last->next, nullptr);
     assert_equal(list.size, 4);
+    assert_list_integrity(&list);
 
     assert_equal(list[0], 2);
     assert_equal(list[1], 3);
@@ -351,6 +382,7 @@ define_test(remove_elements_removes_elements3)
     assert_equal(list.first->previous, nullptr);
     assert_equal(list.last->next, nullptr);
     assert_equal(list.size, 4);
+    assert_list_integrity(&list);
 
     assert_equal(list[0], 1);
     assert_equal(list[1], 2);
@@ -383,6 +415,7 @@ define_test(remove_elements_removes_elements4)
     assert_equal(list.first->previous, nullptr);
     assert_equal(list.last->next, nullptr);
     assert_equal(list.size, 4);
+    assert_list_integrity(&list);
 
     assert_equal(list[0], 1);
     assert_equal(list[1], 2);
@@ -415,6 +448,7 @@ define_test(remove_elements_removes_elements5)
     assert_equal(list.first->previous, nullptr);
     assert_equal(list.last->next, nullptr);
     assert_equal(list.size, 3);
+    assert_list_integrity(&list);
 
     assert_equal(list[0], 1);
     assert_equal(list[1], 2);
@@ -442,6 +476,7 @@ define_test(remove_elements_removes_elements6)
     assert_equal(list.first, nullptr);
     assert_equal(list.last, nullptr);
     assert_equal(list.size, 0);
+    assert_list_integrity(&list);
 
     free(&list);
 }
@@ -495,8 +530,246 @@ define_test(remove_elements_removes_elements7)
     assert_equal(list.first, nullptr);
     assert_equal(list.last, nullptr);
     assert_equal(list.size, 0);
+    assert_list_integrity(&list);
 
     free(&list);
+}
+
+define_test(insert_elements_inserts_into_empty_list)
+{
+    linked_list<int> list;
+
+    init(&list);
+
+    assert_equal(list.first, nullptr);
+    assert_equal(list.last, nullptr);
+    assert_equal(list.size, 0);
+
+    list_node<int> *node = insert_elements(&list, 0, 3);
+
+    assert_not_equal(list.first, nullptr);
+    assert_not_equal(list.last, nullptr);
+    assert_not_equal(list.first->next, nullptr);
+    assert_not_equal(list.last->previous, nullptr);
+    assert_equal(list.first->previous, nullptr);
+    assert_equal(list.last->next, nullptr);
+    assert_equal(list.size, 3);
+    assert_list_integrity(&list);
+
+    assert_equal(node, list.first);
+
+    free(&list);
+}
+
+define_test(insert_elements_does_nothing_when_inserting_no_elements)
+{
+    linked_list<int> list;
+
+    init(&list, 3);
+
+    assert_equal(list.size, 3);
+
+    list_node<int> *node = insert_elements(&list, 0, 0);
+
+    assert_not_equal(list.first, nullptr);
+    assert_not_equal(list.last, nullptr);
+    assert_not_equal(list.first->next, nullptr);
+    assert_not_equal(list.last->previous, nullptr);
+    assert_equal(list.first->previous, nullptr);
+    assert_equal(list.last->next, nullptr);
+    assert_equal(list.size, 3);
+
+    assert_equal(node, nullptr);
+
+    free(&list);
+}
+
+define_test(insert_elements_does_nothing_when_inserting_outside_list_bounds)
+{
+    linked_list<int> list;
+
+    init(&list, 3);
+
+    assert_equal(list.size, 3);
+
+    list_node<int> *node = insert_elements(&list, 8, 2);
+
+    assert_not_equal(list.first, nullptr);
+    assert_not_equal(list.last, nullptr);
+    assert_not_equal(list.first->next, nullptr);
+    assert_not_equal(list.last->previous, nullptr);
+    assert_equal(list.first->previous, nullptr);
+    assert_equal(list.last->next, nullptr);
+    assert_equal(list.size, 3);
+
+    assert_equal(node, nullptr);
+
+    free(&list);
+}
+
+define_test(insert_elements_inserts_elements_at_the_start)
+{
+    linked_list<int> list;
+
+    init(&list, 3);
+
+    list[0] = 1;
+    list[1] = 2;
+    list[2] = 3;
+
+    assert_equal(list.size, 3);
+
+    list_node<int> *node = insert_elements(&list, 0, 2);
+
+    assert_not_equal(list.first, nullptr);
+    assert_not_equal(list.last, nullptr);
+    assert_not_equal(list.first->next, nullptr);
+    assert_not_equal(list.last->previous, nullptr);
+    assert_equal(list.first->previous, nullptr);
+    assert_equal(list.last->next, nullptr);
+    assert_equal(list.size, 5);
+    assert_list_integrity(&list);
+
+    assert_equal(node, list.first);
+    assert_equal(list[2], 1);
+    assert_equal(list[3], 2);
+    assert_equal(list[4], 3);
+
+    free(&list);
+}
+
+define_test(insert_elements_inserts_elements_at_the_end)
+{
+    linked_list<int> list;
+
+    init(&list, 3);
+
+    list[0] = 1;
+    list[1] = 2;
+    list[2] = 3;
+
+    assert_equal(list.size, 3);
+
+    list_node<int> *node = insert_elements(&list, 3, 2);
+
+    assert_not_equal(list.first, nullptr);
+    assert_not_equal(list.last, nullptr);
+    assert_not_equal(list.first->next, nullptr);
+    assert_not_equal(list.last->previous, nullptr);
+    assert_equal(list.first->previous, nullptr);
+    assert_equal(list.last->next, nullptr);
+    assert_equal(list.size, 5);
+    assert_list_integrity(&list);
+
+    assert_equal(node, list.last->previous);
+    assert_equal(list[0], 1);
+    assert_equal(list[1], 2);
+    assert_equal(list[2], 3);
+
+    free(&list);
+}
+
+define_test(insert_elements_inserts_elements_in_between)
+{
+    linked_list<int> list;
+
+    init(&list, 3);
+
+    list[0] = 1;
+    list[1] = 2;
+    list[2] = 3;
+
+    assert_equal(list.size, 3);
+
+    list_node<int> *node = insert_elements(&list, 1, 2);
+
+    assert_not_equal(list.first, nullptr);
+    assert_not_equal(list.last, nullptr);
+    assert_not_equal(list.first->next, nullptr);
+    assert_not_equal(list.last->previous, nullptr);
+    assert_equal(list.first->previous, nullptr);
+    assert_equal(list.last->next, nullptr);
+    assert_equal(list.size, 5);
+    assert_list_integrity(&list);
+
+    assert_equal(node, list.first->next);
+    assert_equal(list[0], 1);
+    assert_equal(list[3], 2);
+    assert_equal(list[4], 3);
+
+    free(&list);
+}
+
+define_test(for_list_iterates_values)
+{
+    linked_list<int> list1;
+    linked_list<int> list2;
+
+    init(&list1, 3);
+    init(&list2);
+
+    list1[0] = 1;
+    list1[1] = 2;
+    list1[2] = 3;
+
+    for_list(v, &list1)
+    {
+        list_node<int> *n = add_elements(&list2, 1);
+        n->value = *v;
+    }
+
+    assert_equal(list1[0], list2[0]);
+    assert_equal(list1[1], list2[1]);
+    assert_equal(list1[2], list2[2]);
+
+    free(&list1);
+    free(&list2);
+}
+
+define_test(for_list_iterates_indices_and_values)
+{
+    linked_list<int> list1;
+    linked_list<int> list2;
+
+    init(&list1, 3);
+    init(&list2, 3);
+
+    list1[0] = 1;
+    list1[1] = 2;
+    list1[2] = 3;
+
+    for_list(i, v, &list1)
+        list2[i] = *v;
+
+    assert_equal(list1[0], list2[0]);
+    assert_equal(list1[1], list2[1]);
+    assert_equal(list1[2], list2[2]);
+
+    free(&list1);
+    free(&list2);
+}
+
+define_test(for_list_iterates_indices_and_values_and_nodes)
+{
+    linked_list<int> list1;
+    linked_list<int> list2;
+
+    init(&list1, 3);
+    init(&list2, 3);
+
+    list1[0] = 1;
+    list1[1] = 2;
+    list1[2] = 3;
+
+    for_list(i, v, node, &list1)
+        list2[i] = *v;
+
+    assert_equal(list1[0], list2[0]);
+    assert_equal(list1[1], list2[1]);
+    assert_equal(list1[2], list2[2]);
+
+    free(&list1);
+    free(&list2);
 }
 
 define_default_test_main();

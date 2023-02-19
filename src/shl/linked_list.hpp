@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "shl/macros.hpp"
+#include "shl/type_functions.hpp"
 #include "shl/number_types.hpp"
 #include "shl/memory.hpp"
 
@@ -25,6 +27,7 @@ template<typename T>
 struct linked_list
 {
     typedef T value_type;
+    typedef list_node<T> node_type;
 
     list_node<T> *first;
     list_node<T> *last;
@@ -134,7 +137,46 @@ list_node<T> *add_elements(linked_list<T> *list, u64 n_elements)
     return ret;
 }
 
-// TODO: insert
+template<typename T>
+list_node<T> *insert_elements(linked_list<T> *list, u64 index, u64 n_elements)
+{
+    assert(list != nullptr);
+
+    if (n_elements == 0)
+        return nullptr;
+
+    if (index > list->size)
+        return nullptr;
+
+    if (index == list->size)
+        return add_elements(list, n_elements);
+
+    list_node<T> *after = nth_node(list, index);
+    list_node<T> *n = after->previous;
+    list_node<T> *ret = nullptr;
+
+    for (u64 i = 0; i < n_elements; ++i)
+    {
+        list_node<T> *tmp = allocate_memory<list_node<T>>();
+        tmp->previous = n;
+        tmp->next = after;
+
+        if (n != nullptr)
+            n->next = tmp;
+        else
+            list->first = tmp;
+
+        if (ret == nullptr)
+            ret = tmp;
+
+        n = tmp;
+    }
+
+    after->previous = n;
+    list->size = list->size + n_elements;
+
+    return ret;
+}
 
 template<typename T>
 void remove_elements(linked_list<T> *list, u64 index, u64 n_elements)
@@ -184,6 +226,28 @@ void remove_elements(linked_list<T> *list, u64 index, u64 n_elements)
 }
 
 template<typename T>
+T *at(linked_list<T> *list, u64 n)
+{
+    assert(list != nullptr);
+
+    if (n >= list->size)
+        return nullptr;
+
+    return &nth_node(list, n)->value;
+}
+
+template<typename T>
+const T *at(const linked_list<T> *list, u64 n)
+{
+    assert(list != nullptr);
+
+    if (n >= list->size)
+        return nullptr;
+
+    return &nth_node(list, n)->value;
+}
+
+template<typename T>
 void clear(linked_list<T> *list)
 {
     assert(list != nullptr);
@@ -207,3 +271,23 @@ void free(linked_list<T> *list)
 {
     clear(list);
 }
+
+#define _for_list_vars(V_Var, N_Var, LIST)\
+    typename remove_pointer_t<decltype(LIST)>::node_type  *N_Var = (LIST)->first;\
+    typename remove_pointer_t<decltype(LIST)>::value_type *V_Var = N_Var ? &(N_Var->value) : nullptr;
+
+#define for_list_V(V_Var, LIST)\
+    _for_list_vars(V_Var, V_Var##_node, LIST)\
+    for (; V_Var##_node != nullptr; V_Var##_node = V_Var##_node->next, V_Var = &V_Var##_node->value)
+
+#define for_list_IV(I_Var, V_Var, LIST)\
+    u64 I_Var = 0;\
+    _for_list_vars(V_Var, I_Var##V_Var##_node, LIST)\
+    for (; I_Var##V_Var##_node != nullptr; I_Var##V_Var##_node = I_Var##V_Var##_node->next, ++i, V_Var = &I_Var##V_Var##_node->value)
+
+#define for_list_IVN(I_Var, V_Var, N_Var, LIST)\
+    u64 I_Var = 0;\
+    _for_list_vars(V_Var, N_Var, LIST)\
+    for (; N_Var != nullptr; N_Var = N_Var->next, ++i, V_Var = &N_Var->value)
+
+#define for_list(...) GET_MACRO3(__VA_ARGS__, for_list_IVN, for_list_IV, for_list_V)(__VA_ARGS__)

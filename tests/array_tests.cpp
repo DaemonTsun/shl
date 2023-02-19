@@ -218,7 +218,7 @@ define_test(insert_returns_nullptr_on_insert_beyond_array_size)
     free(&arr);
 }
 
-define_test(insert_elements_doesnt_add_elements_when_inserting_zero_elements)
+define_test(insert_elements_does_nothing_when_inserting_no_elements)
 {
     array<int> arr;
 
