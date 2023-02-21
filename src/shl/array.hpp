@@ -4,9 +4,11 @@
 /* array.hpp
  * 
  * contiguous memory structure.
- * initialize with init(*arr, size), free with free(*arr).
+ * 
+ * functions:
  *
- * resize(*arr, size) sets the size of the array to the exact size size.
+ * init(*arr) initializes an empty array with no elements. arr.data will be nullptr.
+ * init(*arr, N) initializes an array with N elements. the elements will be uninitialized.
  *
  * add_elements(*arr, N) adds N elements to the array at the end and returns a pointer
  *                       to the start of the new elements.
@@ -22,17 +24,19 @@
  *                               were inserted.
  *
  * remove_elements(*arr, pos, N) removes N elements starting at position pos from the array.
- *                               does nothing if pos >= arr.pos.
- *                               if pos + n >= arr.pos, simply changes the size of
+ *                               does nothing if pos >= arr.size.
+ *                               if pos + n >= arr.size, simply changes the size of
  *                               the array and keeps the reserved memory.
  *                               use shrink_to_fit to remove the excess memory.
+ *
+ * resize(*arr, N) sets the size of the array to contain exactly N elements.
  *
  * shink_to_fit(*arr) reallocates to only use as much memory as required
  *                    to store all the elements in the array if
  *                    more memory is being used.
  *                    does nothing if arr.size == arr.reserved_size.
  *
- * at(*arr, n) returns a pointer to the nth element in the array.
+ * at(*arr, N) returns a pointer to the Nth element in the array.
  *
  * clear(*arr) simply sets arr.size to 0, no memory is deallocated and
  *             reserved memory is kept. use free(*arr) to deallocate memory.
@@ -41,6 +45,20 @@
  *            you may call init(*arr, size) after calling free(*arr).
  *
  * supports index operator: arr[0] == arr.data[0].
+ *
+ * for_array(v, *arr) iterate an array. v will be a pointer to an element in the array.
+ *                    example, setting all values to 5:
+ *
+ *                    array<int> arr;
+ *                    init(&arr, 3)
+ *                    
+ *                    for_array(v, &arr)
+ *                    {
+ *                        *v = 5;
+ *                    }
+ *
+ * for_array(i, v, *arr) iterate an array. i will be the index of an element and
+ *                       v will be a pointer to an element in the array.
  */
 
 #include "shl/macros.hpp"

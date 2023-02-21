@@ -1,6 +1,68 @@
 
 #pragma once
 
+/* linked_list.hpp
+ * 
+ * non-contiguous linked memory structure.
+ * contains nodes, each node contains one element, access via node.value.
+ * each node has a previous and next pointer to the previous and next node respectively.
+ *
+ * initialize a list with init(*list, size), free with free(*list).
+ *
+ * add_elements(*list, N) adds N elements to the list at the end and returns a pointer
+ *                        to the first node inserted.
+ *
+ * insert_elements(*list, pos, N) inserts N elements at position pos in the list.
+ *                                if pos == list.size, behaves like add_elements(list, N).
+ *                                if pos > list.size, does nothing and returns nullptr.
+ *                                otherwise, inserts nodes at position pos and chains
+ *                                them correctly to the neighboring nodes.
+ *                                if pos == 0, sets list.first accordingly.
+ *                                if pos == list.size, sets list.last accordingly.
+ *                                returns a pointer to the first node inserted.
+ *
+ * remove_elements(*list, pos, N) removes N nodes starting at position pos from the list.
+ *                                does nothing if pos >= list.size.
+ *                                if pos + n >= list.size, only removes nodes up to list.last.
+ *                                if pos == 0, sets list.first accordingly.
+ *                                if pos + n >= list.size, sets list.last accordingly.
+ *
+ * resize(*list, N) sets the size of the list to contain exactly N elements.
+ *                  allocates new nodes if size is greater than list.size.
+ *                  removes and deallocates nodes starting from the back
+ *                  if size is smaller than list.size.
+ *                  does nothing if size == list.size.
+ *
+ * nth_node(*list, N) returns a pointer to the Nth node (not not element) in the list.
+ *
+ * at(*list, N) returns a pointer to the Nth element (not node) in the list.
+ *
+ * clear(*list) frees all nodes and sets list.first, list.last to nullptr,
+ *              and sets list.size to 0.
+ *
+ * free(*list) identical to clear(*list).
+ *
+ * supports index operator: list[0] == nth_node(&list, 0)->value.
+ *
+ * for_list(v, *list) iterate a list. v will be a pointer to an element in the list.
+ *                    example, setting all values to 5:
+ *
+ *                    linked_list<int> list;
+ *                    init(&list, 3)
+ *                    
+ *                    for_list(v, &list)
+ *                    {
+ *                        *v = 5;
+ *                    }
+ *
+ * for_list(i, v, *list) iterate a list. i will be the index of an element and
+ *                       v will be a pointer to an element in the list.
+ *
+ * for_list(i, v, n, *list) iterate a list. i will be the index of an element and
+ *                          v will be a pointer to an element and
+ *                          n will be a pointer to a node in the list.
+ */
+
 #include "shl/macros.hpp"
 #include "shl/type_functions.hpp"
 #include "shl/number_types.hpp"
@@ -224,6 +286,29 @@ void remove_elements(linked_list<T> *list, u64 index, u64 n_elements)
         node->previous = before_start;
 
     list->size -= i;
+}
+
+template<typename T>
+void resize(linked_list<T> *list, u64 n_elements)
+{
+    assert(list != nullptr);
+
+    if (n_elements == list->size)
+        return;
+
+    if (n_elements > list->size)
+    {
+        add_elements(list, n_elements - list->size);
+        return;
+    }
+
+    if (n_elements == 0)
+    {
+        free(list);
+        return;
+    }
+
+    remove_elements(list, n_elements, list->size - n_elements);
 }
 
 template<typename T>

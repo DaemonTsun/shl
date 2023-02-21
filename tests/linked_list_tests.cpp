@@ -700,6 +700,141 @@ define_test(insert_elements_inserts_elements_in_between)
     free(&list);
 }
 
+define_test(resize_creates_list_on_empty_list)
+{
+    linked_list<int> list;
+
+    init(&list);
+
+    assert_equal(list.first, nullptr);
+    assert_equal(list.last, nullptr);
+    assert_equal(list.size, 0);
+
+    resize(&list, 3);
+
+    assert_not_equal(list.first, nullptr);
+    assert_not_equal(list.last, nullptr);
+    assert_not_equal(list.first->next, nullptr);
+    assert_not_equal(list.last->previous, nullptr);
+    assert_equal(list.first->previous, nullptr);
+    assert_equal(list.last->next, nullptr);
+    assert_equal(list.size, 3);
+    assert_list_integrity(&list);
+
+    free(&list);
+}
+
+define_test(resize_deallocates_entire_list_when_resizing_to_zero_elements)
+{
+    linked_list<int> list;
+
+    init(&list, 3);
+
+    assert_not_equal(list.first, nullptr);
+    assert_not_equal(list.last, nullptr);
+    assert_not_equal(list.first->next, nullptr);
+    assert_not_equal(list.last->previous, nullptr);
+    assert_equal(list.first->previous, nullptr);
+    assert_equal(list.last->next, nullptr);
+    assert_equal(list.size, 3);
+    assert_list_integrity(&list);
+
+    resize(&list, 0);
+
+    assert_equal(list.first, nullptr);
+    assert_equal(list.last, nullptr);
+    assert_equal(list.size, 0);
+
+    free(&list);
+}
+
+define_test(resize_does_nothing_when_resizing_to_same_size_as_list)
+{
+    linked_list<int> list;
+
+    init(&list, 3);
+
+    list_node<int> *previous_first = list.first;
+    list_node<int> *previous_last = list.last;
+
+    assert_not_equal(list.first, nullptr);
+    assert_not_equal(list.last, nullptr);
+    assert_not_equal(list.first->next, nullptr);
+    assert_not_equal(list.last->previous, nullptr);
+    assert_equal(list.first->previous, nullptr);
+    assert_equal(list.last->next, nullptr);
+    assert_equal(list.size, 3);
+    assert_list_integrity(&list);
+
+    resize(&list, 3);
+
+    assert_not_equal(list.first, nullptr);
+    assert_not_equal(list.last, nullptr);
+    assert_not_equal(list.first->next, nullptr);
+    assert_not_equal(list.last->previous, nullptr);
+    assert_equal(list.first->previous, nullptr);
+    assert_equal(list.last->next, nullptr);
+    assert_equal(list.size, 3);
+    assert_list_integrity(&list);
+
+    assert_equal(list.first, previous_first);
+    assert_equal(list.last, previous_last);
+
+    free(&list);
+}
+
+define_test(resize_allocates_nodes_when_resizing_to_larger_size)
+{
+    linked_list<int> list;
+
+    init(&list, 3);
+
+    list_node<int> *previous_last = list.last;
+
+    assert_equal(list.size, 3);
+
+    resize(&list, 5);
+
+    assert_not_equal(list.first, nullptr);
+    assert_not_equal(list.last, nullptr);
+    assert_not_equal(list.first->next, nullptr);
+    assert_not_equal(list.last->previous, nullptr);
+    assert_equal(list.first->previous, nullptr);
+    assert_equal(list.last->next, nullptr);
+    assert_equal(list.size, 5);
+    assert_list_integrity(&list);
+
+    assert_equal(previous_last, list.last->previous->previous);
+
+    free(&list);
+}
+
+define_test(resize_deallocates_nodes_when_resizing_to_smaller_size)
+{
+    linked_list<int> list;
+
+    init(&list, 5);
+
+    assert_equal(list.size, 5);
+
+    list_node<int> *third_node = nth_node(&list, 2);
+
+    resize(&list, 3);
+
+    assert_not_equal(list.first, nullptr);
+    assert_not_equal(list.last, nullptr);
+    assert_not_equal(list.first->next, nullptr);
+    assert_not_equal(list.last->previous, nullptr);
+    assert_equal(list.first->previous, nullptr);
+    assert_equal(list.last->next, nullptr);
+    assert_equal(list.size, 3);
+    assert_list_integrity(&list);
+
+    assert_equal(list.last, third_node);
+
+    free(&list);
+}
+
 define_test(for_list_iterates_values)
 {
     linked_list<int> list1;
