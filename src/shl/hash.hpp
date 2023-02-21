@@ -10,11 +10,16 @@
  * a pointer and size.
  *
  * default hashing algorithm used in hash_data is murmur2.
+ *
+ * NULL_HASH is a constant value that will never get generated.
  */
 
 #include "shl/number_types.hpp"
 
 typedef u64 hash_t;
+
+// a hash that will never be generated
+#define NULL_HASH -1
 
 #define DEFAULT_MURMUR2_SEED 0xc70f6907ul
 
@@ -26,3 +31,22 @@ hash_t hash_raw(const T *t)
 {
     return hash_data(t, sizeof(T));
 }
+
+template<typename T>
+using hash_function = hash_t (*)(const T*);
+
+hash_t hash(const char *string); // string, NOT char
+hash_t hash(const wchar_t *string); // string, NOT wchar_t
+hash_t hash(const bool *v);
+hash_t hash(const u8  *v);
+hash_t hash(const u16 *v);
+hash_t hash(const u32 *v);
+hash_t hash(const u64 *v);
+hash_t hash(const s8  *v);
+hash_t hash(const s16 *v);
+hash_t hash(const s32 *v);
+hash_t hash(const s64 *v);
+hash_t hash(const float *v);
+hash_t hash(const double *v);
+hash_t hash(const long double *v);
+hash_t hash(const void **v);

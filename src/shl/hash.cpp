@@ -48,3 +48,97 @@ hash_t hash_data(const void *_data, u64 size, u64 seed)
 
     return h;
 } 
+
+hash_t hash(const char *string)
+{
+    u64 size = 0;
+
+    const char *c = string;
+    while(*c != '\0')
+    {
+        size++;
+        c++;
+    }
+
+    return hash_data(reinterpret_cast<const void*>(string), size);
+}
+
+hash_t hash(const wchar_t *string)
+{
+    u64 size = 0;
+
+    const wchar_t *c = string;
+    while(*c != '\0')
+    {
+        size++;
+        c++;
+    }
+
+    return hash_data(reinterpret_cast<const void*>(string), size * sizeof(wchar_t));
+}
+
+hash_t hash(const bool *v)
+{
+    return hash_data(reinterpret_cast<const void*>(v), sizeof(bool));
+}
+
+hash_t hash(const u8  *v)
+{
+    return hash_data(reinterpret_cast<const void*>(v), sizeof(u8));
+}
+
+hash_t hash(const u16 *v)
+{
+    return hash_data(reinterpret_cast<const void*>(v), sizeof(u16));
+}
+
+hash_t hash(const u32 *v)
+{
+    return hash_data(reinterpret_cast<const void*>(v), sizeof(u32));
+}
+
+hash_t hash(const u64 *v)
+{
+    return hash_data(reinterpret_cast<const void*>(v), sizeof(u64));
+}
+
+hash_t hash(const s8  *v)
+{
+    return hash_data(reinterpret_cast<const void*>(v), sizeof(s8));
+}
+
+hash_t hash(const s16 *v)
+{
+    return hash_data(reinterpret_cast<const void*>(v), sizeof(s16));
+}
+
+hash_t hash(const s32 *v)
+{
+    return hash_data(reinterpret_cast<const void*>(v), sizeof(s32));
+}
+
+hash_t hash(const s64 *v)
+{
+    return hash_data(reinterpret_cast<const void*>(v), sizeof(s64));
+}
+
+hash_t hash(const float *v)
+{
+    return hash_data(reinterpret_cast<const void*>(v), sizeof(float));
+}
+
+hash_t hash(const double *v)
+{
+    return hash_data(reinterpret_cast<const void*>(v), sizeof(double));
+}
+
+hash_t hash(const long double *v)
+{
+    return hash_data(reinterpret_cast<const void*>(v), sizeof(long double));
+}
+
+hash_t hash(const void **v)
+{
+    return hash_data(reinterpret_cast<const void*>(v), sizeof(const void*));
+}
+

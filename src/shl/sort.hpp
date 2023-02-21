@@ -6,7 +6,7 @@
  * provides sort(ptr, count, element_size, comparer), same interface as C qsort,
  * as well as sort<T>(ptr, count, comparer<T>) for typed sorting.
  *
- * default comparer is ascending_comparer<T>(a, b) which just compares a and b using
+ * default comparer is compare_ascending<T>(a, b) which just compares a and b using
  * < and > operators.
  *
  * also provides search(key, ptr, count, element_size, comparer), same interface as bsearch,
@@ -19,6 +19,7 @@
  *
  */
 
+#include "shl/compare.hpp"
 #include "shl/number_types.hpp"
 
 #ifndef NDEBUG
@@ -27,42 +28,22 @@
 #define assert(...) do {} while (0);
 #endif
 
-template<typename T>
-using comparator_function = int (*)(const T*, const T*);
+void sort(void *ptr, u64 count, u64 size, compare_function<void> comp);
 
 template<typename T>
-int ascending_comparer(const T *a, const T *b)
-{
-    T a_val = *a;
-    T b_val = *b;
-
-    if (a_val < b_val) return -1;
-    if (a_val > b_val) return 1;
-    return 0;
-}
-
-template<typename T>
-int descending_comparer(const T *a, const T *b)
-{
-    return -ascending_comparer(a, b);
-}
-
-void sort(void *ptr, u64 count, u64 size, comparator_function<void> comp);
-
-template<typename T>
-void sort(T *ptr, u64 size, comparator_function<T> comp = ascending_comparer<T>)
+void sort(T *ptr, u64 size, compare_function<T> comp = compare_ascending<T>)
 {
     assert(ptr != nullptr);
 
-    sort(reinterpret_cast<void*>(ptr), size, sizeof(T), (comparator_function<void>)(comp));
+    sort(reinterpret_cast<void*>(ptr), size, sizeof(T), (compare_function<void>)(comp));
 }
 
 // TODO: quicksort
 
-void *search(const void *value, void *ptr, u64 count, u64 size, comparator_function<void> comp);
+void *search(const void *value, void *ptr, u64 count, u64 size, compare_function<void> comp);
 
 template<typename T>
-T *search(const T *value, T *ptr, u64 size, comparator_function<T> comp = descending_comparer<T>)
+T *search(const T *value, T *ptr, u64 size, compare_function<T> comp = compare_descending<T>)
 {
     assert(value != nullptr);
     assert(ptr != nullptr);
@@ -71,13 +52,13 @@ T *search(const T *value, T *ptr, u64 size, comparator_function<T> comp = descen
                                        reinterpret_cast<void*>(ptr),
                                        size,
                                        sizeof(T),
-                                       (comparator_function<void>)(comp)));
+                                       (compare_function<void>)(comp)));
 }
 
 // TODO: binary_search
 
 template<typename T>
-u64 index_of(const T *value, T *ptr, u64 size, comparator_function<T> comp = descending_comparer<T>)
+u64 index_of(const T *value, T *ptr, u64 size, compare_function<T> comp = compare_descending<T>)
 {
     assert(value != nullptr);
     assert(ptr != nullptr);
