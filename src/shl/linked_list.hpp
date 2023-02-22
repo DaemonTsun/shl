@@ -44,6 +44,30 @@
  *
  * supports index operator: list[0] == nth_node(&list, 0)->value.
  *
+ * other functions:
+ *
+ * search_node(*list, *key, eq) returns a pointer to the node that eq(node.value, key)
+ *                              returns true to, otherwise returns nullptr if key
+ *                              was not found. does not assume anything about the
+ *                              list and will do a full scan in the worst case.
+ *
+ * search(*list, *key, eq) returns a pointer to an element that eq(elem, key)
+ *                         returns true to, otherwise returns nullptr if key
+ *                         was not found. does not assume anything about the
+ *                         list and will do a full scan in the worst case.
+ *
+ * index_of(*list, *key, eq) returns the index of an element that eq(elem, key)
+ *                           returns true to, otherwise returns -1 if key
+ *                           was not found. does not assume anything about the
+ *                           list and will do a full scan in the worst case.
+ *
+ * contains(*list, *key, eq) returns true if key is in the list, false
+ *                           otherwise. does not assume anything about the
+ *                           list and will do a full scan in the worst case.
+ *
+ * hash(*list) returns the default hash of the _memory_ of the _elements_
+ *             stored in the list.
+ *
  * for_list(v, *list) iterate a list. v will be a pointer to an element in the list.
  *                    example, setting all values to 5:
  *
@@ -63,6 +87,7 @@
  *                          n will be a pointer to a node in the list.
  */
 
+#include "shl/compare.hpp"
 #include "shl/macros.hpp"
 #include "shl/type_functions.hpp"
 #include "shl/number_types.hpp"
@@ -358,22 +383,6 @@ void free(linked_list<T> *list)
     clear(list);
 }
 
-template<typename T>
-hash_t hash(const linked_list<T> *list)
-{
-    hash_t ret = DEFAULT_MURMUR2_SEED;
-    list_node<T> *n = list->first;
-
-    while (n != nullptr)
-    {
-        // this might not be ideal if sizeof(T) is less than 64 bits
-        ret = hash_data(reinterpret_cast<void*>(&(n->value)), sizeof(T), ret);
-        n = n->next;
-    }
-
-    return ret;
-}
-
 #define _for_list_vars(V_Var, N_Var, LIST)\
     typename remove_pointer_t<decltype(LIST)>::node_type  *N_Var = (LIST)->first;\
     typename remove_pointer_t<decltype(LIST)>::value_type *V_Var = N_Var ? &(N_Var->value) : nullptr;
@@ -393,3 +402,55 @@ hash_t hash(const linked_list<T> *list)
     for (; N_Var != nullptr; N_Var = N_Var->next, ++I_Var, V_Var = &N_Var->value)
 
 #define for_list(...) GET_MACRO3(__VA_ARGS__, for_list_IVN, for_list_IV, for_list_V)(__VA_ARGS__)
+
+template<typename T>
+list_node<T> *search_node(linked_list<T> *list, const T *key, equality_function<T> eq = equals<T>)
+{
+    assert(list != nullptr);
+    
+    for_list(v, list)
+        if (eq(v, key))
+            return v_node;
+
+    return v_node;
+}
+
+template<typename T>
+T *search(linked_list<T> *list, const T *key, equality_function<T> eq = equals<T>)
+{
+    list_node<T> *n = search_node(list, key, eq);
+
+    if (n == nullptr)
+        return nullptr;
+
+    return &n->value;
+}
+
+template<typename T>
+u64 index_of(const linked_list<T> *list, const T *key, equality_function<T> eq = equals<T>)
+{
+    assert(list != nullptr);
+    
+    for_list(i, v, list)
+        if (eq(v, key))
+            return i;
+
+    return -1ull;
+}
+
+template<typename T>
+bool contains(linked_list<T> *list, const T *key, equality_function<T> eq = equals<T>)
+{
+    return search(list, key, eq) != nullptr;
+}
+
+template<typename T>
+hash_t hash(const linked_list<T> *list)
+{
+    hash_t ret = 0;
+
+    for_list(v, list)
+        ret = hash_data(reinterpret_cast<void*>(v), sizeof(T), ret);
+
+    return ret;
+}

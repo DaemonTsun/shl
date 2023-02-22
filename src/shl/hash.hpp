@@ -9,22 +9,22 @@
  * hash_raw(T) is the same as hash_data, but using a type T and its size instead of
  * a pointer and size.
  *
- * default hashing algorithm used in hash_data is murmur2.
+ * default hashing algorithm used in hash_data is murmur3.
  *
  * NULL_HASH is a constant value that will never get generated.
  */
 
 #include "shl/number_types.hpp"
 
-typedef u64 hash_t;
+typedef u32 hash_t;
 
 // a hash that will never be generated
 #define NULL_HASH -1
 
-#define DEFAULT_MURMUR2_SEED 0xc70f6907ul
+#define DEFAULT_MURMUR3_SEED 0xc70f6907
 
 hash_t hash_data(const void *data, u64 size);
-hash_t hash_data(const void *data, u64 size, u64 seed);
+hash_t hash_data(const void *data, u64 size, u32 seed);
 
 template<typename T>
 hash_t hash_raw(const T *t)
@@ -35,8 +35,8 @@ hash_t hash_raw(const T *t)
 template<typename T>
 using hash_function = hash_t (*)(const T*);
 
-hash_t hash(const char *string); // string, NOT char
-hash_t hash(const wchar_t *string); // string, NOT wchar_t
+hash_t hash(const char *string); // string, NOT char. please do not use.
+hash_t hash(const wchar_t *string); // string, NOT wchar_t. please do not use.
 hash_t hash(const bool *v);
 hash_t hash(const u8  *v);
 hash_t hash(const u16 *v);

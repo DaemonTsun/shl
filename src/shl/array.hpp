@@ -44,6 +44,25 @@
  * free(*arr) frees memory and sets arr.size and arr.reserved_size to 0.
  *            you may call init(*arr, size) after calling free(*arr).
  *
+ * other functions:
+ *
+ * search(*arr, *key, eq) returns a pointer to an element that eq(elem, key)
+ *                        returns true to, otherwise returns nullptr if key
+ *                        was not found. does not assume anything about the
+ *                        array and will do a full scan in the worst case.
+ *
+ * index_of(*arr, *key, eq) returns the index of an element that eq(elem, key)
+ *                          returns true to, otherwise returns -1 if key
+ *                          was not found. does not assume anything about the
+ *                          array and will do a full scan in the worst case.
+ *
+ * contains(*arr, *key, eq) returns true if key is in the array, false
+ *                          otherwise. does not assume anything about the
+ *                          array and will do a full scan in the worst case.
+ *
+ * hash(*arr) returns the default hash of the _memory_ of the elements
+ *            of the array.
+ *
  * supports index operator: arr[0] == arr.data[0].
  *
  * for_array(v, *arr) iterate an array. v will be a pointer to an element in the array.
@@ -62,6 +81,7 @@
  */
 
 #include "shl/macros.hpp"
+#include "shl/compare.hpp"
 #include "shl/type_functions.hpp"
 #include "shl/number_types.hpp"
 #include "shl/memory.hpp"
@@ -277,12 +297,6 @@ void free(array<T> *arr)
     arr->reserved_size = 0;
 }
 
-template<typename T>
-hash_t hash(const array<T> *arr)
-{
-    return hash_data(reinterpret_cast<void*>(arr->data), arr->size * sizeof(T));
-}
-
 #define _for_array_vars(I_Var, V_Var, LIST)\
     u64 I_Var = 0;\
     typename remove_pointer_t<decltype(LIST)>::value_type *V_Var = (LIST)->data;
@@ -296,3 +310,42 @@ hash_t hash(const array<T> *arr)
     for (; I_Var < (LIST)->size; ++I_Var, ++V_Var)
 
 #define for_array(...) GET_MACRO2(__VA_ARGS__, for_array_IV, for_array_V)(__VA_ARGS__)
+
+template<typename T>
+T *search(array<T> *arr, const T *key, equality_function<T> eq = equals<T>)
+{
+    assert(arr != nullptr);
+    
+    for_array(v, arr)
+        if (eq(v, key))
+            return v;
+
+    return nullptr;
+}
+
+template<typename T>
+u64 index_of(const array<T> *arr, const T *key, equality_function<T> eq = equals<T>)
+{
+    assert(arr != nullptr);
+    
+    const T *ptr = search(arr, key, eq);
+
+    if (ptr == nullptr)
+        return -1ull;
+
+    return ptr - arr->data;
+}
+
+template<typename T>
+bool contains(const array<T> *arr, const T *key, equality_function<T> eq = equals<T>)
+{
+    return search(arr, key, eq) != nullptr;
+}
+
+// TODO: sort
+
+template<typename T>
+hash_t hash(const array<T> *arr)
+{
+    return hash_data(reinterpret_cast<void*>(arr->data), arr->size * sizeof(T));
+}

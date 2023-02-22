@@ -58,6 +58,12 @@ T *search(const T *value, T *ptr, u64 size, compare_function<T> comp = compare_d
 // TODO: binary_search
 
 template<typename T>
+bool contains(const T *value, T *ptr, u64 size, compare_function<T> comp = compare_descending<T>)
+{
+    return search(value, ptr, size, comp) != nullptr;
+}
+
+template<typename T>
 u64 index_of(const T *value, T *ptr, u64 size, compare_function<T> comp = compare_descending<T>)
 {
     assert(value != nullptr);
