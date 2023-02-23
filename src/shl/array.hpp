@@ -328,18 +328,17 @@ u64 index_of(const array<T> *arr, const T *key, equality_function<T> eq = equals
 {
     assert(arr != nullptr);
     
-    const T *ptr = search(arr, key, eq);
+    for_array(i, v, arr)
+        if (eq(v, key))
+            return i;
 
-    if (ptr == nullptr)
-        return -1ull;
-
-    return ptr - arr->data;
+    return -1ull;
 }
 
 template<typename T>
 bool contains(const array<T> *arr, const T *key, equality_function<T> eq = equals<T>)
 {
-    return search(arr, key, eq) != nullptr;
+    return index_of(arr, key, eq) != -1ull;
 }
 
 // TODO: sort

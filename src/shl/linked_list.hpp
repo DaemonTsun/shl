@@ -412,7 +412,7 @@ list_node<T> *search_node(linked_list<T> *list, const T *key, equality_function<
         if (eq(v, key))
             return v_node;
 
-    return v_node;
+    return nullptr;
 }
 
 template<typename T>
@@ -439,9 +439,9 @@ u64 index_of(const linked_list<T> *list, const T *key, equality_function<T> eq =
 }
 
 template<typename T>
-bool contains(linked_list<T> *list, const T *key, equality_function<T> eq = equals<T>)
+bool contains(const linked_list<T> *list, const T *key, equality_function<T> eq = equals<T>)
 {
-    return search(list, key, eq) != nullptr;
+    return index_of(list, key, eq) != -1ull;
 }
 
 template<typename T>

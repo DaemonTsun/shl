@@ -952,4 +952,137 @@ define_test(hash_hashes_list)
     free(&list4);
 }
 
+define_test(search_node_returns_nullptr_if_key_is_not_found)
+{
+    linked_list<int> list;
+
+    init(&list, 5);
+
+    for_list(i, v, &list)
+        *v = i;
+    
+    int val = 6;
+
+    assert_equal(search_node(&list, &val), nullptr);
+
+    free(&list);
+}
+
+define_test(search_node_returns_pointer_to_node_if_key_is_found)
+{
+    linked_list<int> list;
+
+    init(&list, 5);
+
+    for_list(i, v, &list)
+        *v = i;
+    
+    int val = 1;
+    list_node<int> *ptr = search_node(&list, &val);
+
+    assert_not_equal(ptr, nullptr);
+    assert_equal(list.first->next, ptr);
+
+    free(&list);
+}
+
+define_test(search_returns_nullptr_if_key_is_not_found)
+{
+    linked_list<int> list;
+
+    init(&list, 5);
+
+    for_list(i, v, &list)
+        *v = i;
+    
+    int val = 6;
+
+    assert_equal(search(&list, &val), nullptr);
+
+    free(&list);
+}
+
+define_test(search_returns_pointer_to_element_if_key_is_found)
+{
+    linked_list<int> list;
+
+    init(&list, 5);
+
+    for_list(i, v, &list)
+        *v = i;
+    
+    int val = 1;
+    int *ptr = search(&list, &val);
+
+    assert_not_equal(ptr, nullptr);
+
+    *ptr = 8;
+
+    assert_equal(list[1], *ptr);
+
+    free(&list);
+}
+
+define_test(index_of_returns_negative_one_if_key_is_not_found)
+{
+    linked_list<int> list;
+
+    init(&list, 5);
+
+    for_list(i, v, &list)
+        *v = i;
+    
+    int val = 6;
+
+    assert_equal(index_of(&list, &val), -1ull);
+
+    free(&list);
+}
+
+define_test(index_of_returns_index_of_key_if_key_is_found)
+{
+    linked_list<int> list;
+
+    init(&list, 5);
+
+    for_list(i, v, &list)
+        *v = i;
+    
+    int val = 1;
+    assert_equal(index_of(&list, &val), 1);
+
+    free(&list);
+}
+
+define_test(contains_returns_false_if_key_is_not_found)
+{
+    linked_list<int> list;
+
+    init(&list, 5);
+
+    for_list(i, v, &list)
+        *v = i;
+    
+    int val = 6;
+
+    assert_equal(contains(&list, &val), false);
+
+    free(&list);
+}
+
+define_test(contains_returns_true_if_key_is_found)
+{
+    linked_list<int> list;
+
+    init(&list, 5);
+
+    for_list(i, v, &list)
+        *v = i;
+    
+    int val = 1;
+    assert_equal(contains(&list, &val), true);
+
+    free(&list);
+}
+
 define_default_test_main();
