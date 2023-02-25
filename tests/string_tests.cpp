@@ -2,6 +2,14 @@
 #include <t1/t1.hpp>
 #include "shl/string.hpp"
 
+define_test(cs_constructs_const_string_from_literal)
+{
+    const_string str = "abc"_cs;
+
+    assert_equal(str.size, 3);
+    assert_equal(compare_strings(str.c_str, "abc"), 0);
+}
+
 define_test(is_space_returns_true_if_character_is_whitespace)
 {
     assert_equal(is_space(' '), true);

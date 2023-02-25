@@ -1,12 +1,22 @@
 
 #include <string.h>
-#include <algorithm>
+#include <stdlib.h>
 #include <type_traits>
 #include <cctype>
 #include <cwctype>
 #include <wchar.h>
 
 #include "shl/string.hpp"
+
+const_string  operator ""_cs(const char *str, u64 n)
+{
+    return const_string{str, n};
+}
+
+const_wstring operator ""_cs(const wchar_t *str, u64 n)
+{
+    return const_wstring{str, n};
+}
 
 bool is_space(char c)
 {
@@ -135,14 +145,24 @@ bool is_blank(const wchar_t *s)
     return _is_blank(s);
 }
 
-size_t string_length(const char *s)
+u64 string_length(const char *s)
 {
     return strlen(s);
 }
 
-size_t string_length(const wchar_t *s)
+u64 string_length(const wchar_t *s)
 {
     return wcslen(s);
+}
+
+u64 string_length(const_string s)
+{
+    return s.size;
+}
+
+u64 string_length(const_wstring s)
+{
+    return s.size;
 }
 
 int compare_strings(const char *s1, const char *s2)
@@ -150,7 +170,7 @@ int compare_strings(const char *s1, const char *s2)
     return strcmp(s1, s2);
 }
 
-int compare_strings(const char *s1, const char *s2, size_t n)
+int compare_strings(const char *s1, const char *s2, u64 n)
 {
     return strncmp(s1, s2, n);
 }
@@ -160,7 +180,7 @@ int compare_strings(const wchar_t *s1, const wchar_t *s2)
     return wcscmp(s1, s2);
 }
 
-int compare_strings(const wchar_t *s1, const wchar_t *s2, size_t n)
+int compare_strings(const wchar_t *s1, const wchar_t *s2, u64 n)
 {
     return wcsncmp(s1, s2, n);
 }
@@ -184,8 +204,8 @@ bool begins_with(const wchar_t *string, const wchar_t *prefix)
 template<typename CharT>
 bool _ends_with(const CharT *string, const CharT *suffix)
 {
-    size_t str_length = string_length(string);
-    size_t suffix_length = string_length(suffix);
+    u64 str_length = string_length(string);
+    u64 suffix_length = string_length(suffix);
 
     return (str_length >= suffix_length) &&
            (compare_strings(string + str_length - suffix_length, suffix, suffix_length) == 0);
@@ -229,12 +249,12 @@ wchar_t *copy_string(const wchar_t *src, wchar_t *dst)
     return wcscpy(dst, src);
 }
 
-char *copy_string(const char *src, char *dst, size_t n)
+char *copy_string(const char *src, char *dst, u64 n)
 {
     return strncpy(dst, src, n);
 }
 
-wchar_t *copy_string(const wchar_t *src, wchar_t *dst, size_t n)
+wchar_t *copy_string(const wchar_t *src, wchar_t *dst, u64 n)
 {
     return wcsncpy(dst, src, n);
 }

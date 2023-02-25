@@ -38,6 +38,29 @@
 
 #include "shl/number_types.hpp"
 
+template<typename C>
+struct const_string_base
+{
+    const C *c_str;
+    u64 size;
+
+    explicit operator const C *() const;
+};
+
+typedef const_string_base<char>    const_string;
+typedef const_string_base<wchar_t> const_wstring;
+
+const_string  operator ""_cs(const char    *, u64);
+const_wstring operator ""_cs(const wchar_t *, u64);
+
+/*
+template<typename C>
+struct string
+{
+    array<C> data;
+};
+*/
+
 bool is_space(char    c);
 bool is_space(wchar_t c);
 bool is_newline(char    c);
@@ -65,6 +88,8 @@ bool is_blank(const wchar_t *s);
 
 u64 string_length(const char    *s);
 u64 string_length(const wchar_t *s);
+u64 string_length(const_string s);
+u64 string_length(const_wstring s);
 
 int compare_strings(const char *s1, const char *s2);
 int compare_strings(const char *s1, const char *s2, u64 n);
