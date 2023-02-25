@@ -57,4 +57,18 @@ define_test(bitrange_gets_bitrange)
     assert_equal(bitrange(0xff00, 8, 15), 0xff);
 }
 
+define_test(next_exp2_gets_next_power_of_2)
+{
+    assert_equal(ceil_exp2(0), 1);
+    assert_equal(ceil_exp2(1), 1);
+    assert_equal(ceil_exp2(2), 2);
+    assert_equal(ceil_exp2(3), 4);
+    assert_equal(ceil_exp2(4), 4);
+    assert_equal(ceil_exp2(5), 8);
+    assert_equal(ceil_exp2(7), 8);
+    assert_equal(ceil_exp2(8), 8);
+    assert_equal(ceil_exp2(9), 16);
+    assert_equal(ceil_exp2<u32>(1u << 31), 1u << 31);
+}
+
 define_default_test_main();

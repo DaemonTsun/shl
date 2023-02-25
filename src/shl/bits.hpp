@@ -34,3 +34,13 @@ constexpr inline T bitrange(const T &val, TBit from, TBit to)
     return static_cast<T>((val & bitmask(from, to)) >> from);
 }
 
+template<typename T>
+constexpr inline T ceil_exp2(T val)
+{
+    T x = 1;
+
+    while (x < val)
+        x = x << 1;
+
+    return x;
+}

@@ -86,6 +86,7 @@
 #include "shl/number_types.hpp"
 #include "shl/memory.hpp"
 #include "shl/hash.hpp"
+#include "shl/bits.hpp"
 
 #ifndef NDEBUG
 #include <assert.h>
@@ -143,9 +144,14 @@ T *add_elements(array<T> *arr, u64 n_elements)
         return ret;
     }
 
-    u64 new_reserved_size = (arr->reserved_size + n_elements) * 2;
+    u64 new_reserved_size = ceil_exp2(arr->reserved_size + n_elements);
 
-    arr->data = reallocate_memory<T>(arr->data, new_reserved_size);
+    T *n = reallocate_memory<T>(arr->data, new_reserved_size);
+
+    if (n == nullptr)
+        return nullptr;
+
+    arr->data = n;
 
     T *ret = arr->data;
 
@@ -178,7 +184,10 @@ T *insert_elements(array<T> *arr, u64 index, u64 n_elements)
         return arr->data + index;
 
     u64 prev_size = arr->size;
-    add_elements(arr, n_elements);
+    T *n = add_elements(arr, n_elements);
+
+    if (n == nullptr)
+        return nullptr;
 
     void *start = reinterpret_cast<void*>(arr->data + index);
     void *new_start = reinterpret_cast<void*>(arr->data + index + n_elements);
@@ -215,31 +224,45 @@ void remove_elements(array<T> *arr, u64 index, u64 n_elements)
 }
 
 template<typename T>
-void resize(array<T> *arr, u64 size)
+bool resize(array<T> *arr, u64 size)
 {
     assert(arr != nullptr);
 
     if (arr->reserved_size == size)
     {
         arr->size = size;
-        return;
+        return true;
     }
 
-    arr->data = reallocate_memory<T>(arr->data, size);
+    T *n = reallocate_memory<T>(arr->data, size);
+
+    if (n == nullptr)
+        return false;
+
+    arr->data = n;
     arr->size = size;
     arr->reserved_size = size;
+
+    return true;
 }
 
 template<typename T>
-void shrink_to_fit(array<T> *arr)
+bool shrink_to_fit(array<T> *arr)
 {
     assert(arr != nullptr);
 
     if (arr->size == arr->reserved_size)
-        return;
+        return true;
 
-    arr->data = reallocate_memory<T>(arr->data, arr->size);
+    T *n = reallocate_memory<T>(arr->data, arr->size);
+
+    if (n == nullptr)
+        return false;
+
+    arr->data = n;
     arr->reserved_size = arr->size;
+
+    return true;
 }
 
 template<typename T>
