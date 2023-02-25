@@ -16,37 +16,58 @@
  *              false otherwise
  */
 
-template<typename T>
-using compare_function = int (*)(const T*, const T*);
+template<typename T1, typename T2 = T1>
+using compare_function = int (*)(T1, T2);
 
-template<typename T>
-int compare_ascending(const T *a, const T *b)
+template<typename T1, typename T2 = T1>
+using compare_function_p = int (*)(const T1*, const T2*);
+
+template<typename T1, typename T2 = T1>
+int compare_ascending(T1 a, T2 b)
 {
-    T a_val = *a;
-    T b_val = *b;
-
-    if (a_val < b_val) return -1;
-    if (a_val > b_val) return 1;
+    if (a < b) return -1;
+    if (a > b) return 1;
     return 0;
 }
 
-template<typename T>
-int compare_descending(const T *a, const T *b)
+template<typename T1, typename T2 = T1>
+int compare_descending(T1 a, T2 b)
 {
     return -compare_ascending(a, b);
 }
 
-template<typename T>
-using equality_function = bool (*)(const T*, const T*);
-
-template<typename T>
-bool equals(const T *a, const T *b)
+template<typename T1, typename T2 = T1>
+int compare_ascending_p(const T1 *a, const T2 *b)
 {
-    return (a == b) || (*a == *b);
+    return compare_ascending(*a, *b);
 }
 
-template<typename T>
-bool safe_equals(const T *a, const T *b)
+template<typename T1, typename T2 = T1>
+int compare_descending_p(const T1 *a, const T2 *b)
 {
-    return (a == b) || ((a != nullptr && b != nullptr) && (*a == *b));
+    return compare_descending(*a, *b);
+}
+
+template<typename T1, typename T2 = T1>
+using equality_function = bool (*)(T1, T2);
+
+template<typename T1, typename T2 = T1>
+using equality_function_p = bool (*)(const T1*, const T2*);
+
+template<typename T1, typename T2 = T1>
+bool equals(T1 a, T2 b)
+{
+    return a == b;
+}
+
+template<typename T1, typename T2 = T1>
+bool equals_p(const T1 *a, const T2 *b)
+{
+    return (a == b) || equals(*a, *b);
+}
+
+template<typename T1, typename T2 = T1>
+bool safe_equals_p(const T1 *a, const T2 *b)
+{
+    return (a == b) || ((a != nullptr && b != nullptr) && equals(*a, *b));
 }

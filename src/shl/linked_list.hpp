@@ -404,7 +404,19 @@ void free(linked_list<T> *list)
 #define for_list(...) GET_MACRO3(__VA_ARGS__, for_list_IVN, for_list_IV, for_list_V)(__VA_ARGS__)
 
 template<typename T>
-list_node<T> *search_node(linked_list<T> *list, const T *key, equality_function<T> eq = equals<T>)
+list_node<T> *search_node(linked_list<T> *list, T key, equality_function<T> eq = equals<T>)
+{
+    assert(list != nullptr);
+    
+    for_list(v, list)
+        if (eq(*v, key))
+            return v_node;
+
+    return nullptr;
+}
+
+template<typename T>
+list_node<T> *search_node(linked_list<T> *list, const T *key, equality_function_p<T> eq = equals_p<T>)
 {
     assert(list != nullptr);
     
@@ -416,18 +428,43 @@ list_node<T> *search_node(linked_list<T> *list, const T *key, equality_function<
 }
 
 template<typename T>
-T *search(linked_list<T> *list, const T *key, equality_function<T> eq = equals<T>)
+T *search(linked_list<T> *list, T key, equality_function<T> eq = equals<T>)
 {
-    list_node<T> *n = search_node(list, key, eq);
+    assert(list != nullptr);
+    
+    for_list(v, list)
+        if (eq(*v, key))
+            return v;
 
-    if (n == nullptr)
-        return nullptr;
-
-    return &n->value;
+    return nullptr;
 }
 
 template<typename T>
-u64 index_of(const linked_list<T> *list, const T *key, equality_function<T> eq = equals<T>)
+T *search(linked_list<T> *list, const T *key, equality_function_p<T> eq = equals_p<T>)
+{
+    assert(list != nullptr);
+    
+    for_list(v, list)
+        if (eq(v, key))
+            return v;
+
+    return nullptr;
+}
+
+template<typename T>
+u64 index_of(const linked_list<T> *list, T key, equality_function<T> eq = equals<T>)
+{
+    assert(list != nullptr);
+    
+    for_list(i, v, list)
+        if (eq(*v, key))
+            return i;
+
+    return -1ull;
+}
+
+template<typename T>
+u64 index_of(const linked_list<T> *list, const T *key, equality_function_p<T> eq = equals_p<T>)
 {
     assert(list != nullptr);
     
@@ -439,7 +476,13 @@ u64 index_of(const linked_list<T> *list, const T *key, equality_function<T> eq =
 }
 
 template<typename T>
-bool contains(const linked_list<T> *list, const T *key, equality_function<T> eq = equals<T>)
+bool contains(const linked_list<T> *list, T key, equality_function<T> eq = equals<T>)
+{
+    return index_of(list, key, eq) != -1ull;
+}
+
+template<typename T>
+bool contains(const linked_list<T> *list, const T *key, equality_function_p<T> eq = equals_p<T>)
 {
     return index_of(list, key, eq) != -1ull;
 }

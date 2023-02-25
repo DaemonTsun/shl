@@ -320,22 +320,34 @@ void free(array<T> *arr)
     arr->reserved_size = 0;
 }
 
-#define _for_array_vars(I_Var, V_Var, LIST)\
+#define _for_array_vars(I_Var, V_Var, ARRAY)\
     u64 I_Var = 0;\
-    typename remove_pointer_t<decltype(LIST)>::value_type *V_Var = (LIST)->data;
+    typename remove_pointer_t<decltype(ARRAY)>::value_type *V_Var = (ARRAY)->data;
 
-#define for_array_V(V_Var, LIST)\
-    _for_array_vars(V_Var##_index, V_Var, LIST)\
-    for (; V_Var##_index < (LIST)->size; ++V_Var##_index, ++V_Var)
+#define for_array_V(V_Var, ARRAY)\
+    _for_array_vars(V_Var##_index, V_Var, ARRAY)\
+    for (; V_Var##_index < (ARRAY)->size; ++V_Var##_index, ++V_Var)
 
-#define for_array_IV(I_Var, V_Var, LIST)\
-    _for_array_vars(I_Var, V_Var, LIST)\
-    for (; I_Var < (LIST)->size; ++I_Var, ++V_Var)
+#define for_array_IV(I_Var, V_Var, ARRAY)\
+    _for_array_vars(I_Var, V_Var, ARRAY)\
+    for (; I_Var < (ARRAY)->size; ++I_Var, ++V_Var)
 
 #define for_array(...) GET_MACRO2(__VA_ARGS__, for_array_IV, for_array_V)(__VA_ARGS__)
 
 template<typename T>
-T *search(array<T> *arr, const T *key, equality_function<T> eq = equals<T>)
+T *search(array<T> *arr, T key, equality_function<T> eq = equals<T>)
+{
+    assert(arr != nullptr);
+    
+    for_array(v, arr)
+        if (eq(*v, key))
+            return v;
+
+    return nullptr;
+}
+
+template<typename T>
+T *search(array<T> *arr, const T *key, equality_function_p<T> eq = equals_p<T>)
 {
     assert(arr != nullptr);
     
@@ -347,7 +359,19 @@ T *search(array<T> *arr, const T *key, equality_function<T> eq = equals<T>)
 }
 
 template<typename T>
-u64 index_of(const array<T> *arr, const T *key, equality_function<T> eq = equals<T>)
+u64 index_of(const array<T> *arr, T key, equality_function<T> eq = equals<T>)
+{
+    assert(arr != nullptr);
+    
+    for_array(i, v, arr)
+        if (eq(*v, key))
+            return i;
+
+    return -1ull;
+}
+
+template<typename T>
+u64 index_of(const array<T> *arr, const T *key, equality_function_p<T> eq = equals_p<T>)
 {
     assert(arr != nullptr);
     
@@ -359,7 +383,13 @@ u64 index_of(const array<T> *arr, const T *key, equality_function<T> eq = equals
 }
 
 template<typename T>
-bool contains(const array<T> *arr, const T *key, equality_function<T> eq = equals<T>)
+bool contains(const array<T> *arr, T key, equality_function<T> eq = equals<T>)
+{
+    return index_of(arr, key, eq) != -1ull;
+}
+
+template<typename T>
+bool contains(const array<T> *arr, const T *key, equality_function_p<T> eq = equals_p<T>)
 {
     return index_of(arr, key, eq) != -1ull;
 }

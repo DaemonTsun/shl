@@ -28,22 +28,22 @@
 #define assert(...) do {} while (0);
 #endif
 
-void sort(void *ptr, u64 count, u64 size, compare_function<void> comp);
+void sort(void *ptr, u64 count, u64 size, compare_function_p<void> comp);
 
 template<typename T>
-void sort(T *ptr, u64 size, compare_function<T> comp = compare_ascending<T>)
+void sort(T *ptr, u64 size, compare_function_p<T> comp = compare_ascending_p<T>)
 {
     assert(ptr != nullptr);
 
-    sort(reinterpret_cast<void*>(ptr), size, sizeof(T), (compare_function<void>)(comp));
+    sort(reinterpret_cast<void*>(ptr), size, sizeof(T), (compare_function_p<void>)(comp));
 }
 
 // TODO: quicksort
 
-void *search(const void *value, void *ptr, u64 count, u64 size, compare_function<void> comp);
+void *search(const void *value, void *ptr, u64 count, u64 size, compare_function_p<void> comp);
 
 template<typename T>
-T *search(const T *value, T *ptr, u64 size, compare_function<T> comp = compare_descending<T>)
+T *search(const T *value, T *ptr, u64 size, compare_function_p<T> comp = compare_descending_p<T>)
 {
     assert(value != nullptr);
     assert(ptr != nullptr);
@@ -52,19 +52,19 @@ T *search(const T *value, T *ptr, u64 size, compare_function<T> comp = compare_d
                                        reinterpret_cast<void*>(ptr),
                                        size,
                                        sizeof(T),
-                                       (compare_function<void>)(comp)));
+                                       (compare_function_p<void>)(comp)));
 }
 
 // TODO: binary_search
 
 template<typename T>
-bool contains(const T *value, T *ptr, u64 size, compare_function<T> comp = compare_descending<T>)
+bool contains(const T *value, T *ptr, u64 size, compare_function_p<T> comp = compare_descending_p<T>)
 {
     return search(value, ptr, size, comp) != nullptr;
 }
 
 template<typename T>
-u64 index_of(const T *value, T *ptr, u64 size, compare_function<T> comp = compare_descending<T>)
+u64 index_of(const T *value, T *ptr, u64 size, compare_function_p<T> comp = compare_descending_p<T>)
 {
     assert(value != nullptr);
     assert(ptr != nullptr);

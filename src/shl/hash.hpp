@@ -10,16 +10,11 @@
  * a pointer and size.
  *
  * default hashing algorithm used in hash_data is murmur3.
- *
- * NULL_HASH is a constant value that will never get generated.
  */
 
 #include "shl/number_types.hpp"
 
 typedef u32 hash_t;
-
-// a hash that will never be generated
-#define NULL_HASH -1
 
 #define DEFAULT_MURMUR3_SEED 0xc70f6907
 
