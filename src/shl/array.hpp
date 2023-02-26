@@ -29,6 +29,12 @@
  *                               the array and keeps the reserved memory.
  *                               use shrink_to_fit to remove the excess memory.
  *
+ * reserve(*arr, N) if number of allocated elements in arr is smaller than N,
+ *                  allocates enough elements for arr to store N total elements
+ *                  and sets arr.reserved_size accordingly.
+ *                  arr.size is untouched.
+ *                  cannot make arr smaller.
+ *
  * resize(*arr, N) sets the size of the array to contain exactly N elements.
  *
  * shink_to_fit(*arr) reallocates to only use as much memory as required
@@ -221,6 +227,25 @@ void remove_elements(array<T> *arr, u64 index, u64 n_elements)
     ::move_memory(after, before, num_items_after * sizeof(T));
 
     arr->size = arr->size - n_elements;
+}
+
+template<typename T>
+bool reserve(array<T> *arr, u64 size)
+{
+    assert(arr != nullptr);
+
+    if (arr->reserved_size >= size)
+        return true;
+
+    T *n = reallocate_memory<T>(arr->data, size);
+
+    if (n == nullptr)
+        return false;
+
+    arr->data = n;
+    arr->reserved_size = size;
+
+    return true;
 }
 
 template<typename T>

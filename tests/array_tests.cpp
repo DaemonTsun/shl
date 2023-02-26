@@ -98,6 +98,64 @@ define_test(resize_resizes_array2)
     free(&arr);
 }
 
+define_test(reserve_initializes_on_empty_array)
+{
+    array<int> arr;
+
+    init(&arr);
+    reserve(&arr, 10);
+
+    assert_not_equal(arr.data, nullptr);
+    assert_equal(arr.size, 0);
+    assert_equal(arr.reserved_size, 10);
+
+    free(&arr);
+}
+
+define_test(reserve_does_nothing_on_same_or_smaller_size)
+{
+    array<int> arr;
+
+    init(&arr, 10);
+
+    assert_not_equal(arr.data, nullptr);
+    assert_equal(arr.size, 10);
+    assert_equal(arr.reserved_size, 10);
+
+    reserve(&arr, 10);
+
+    assert_not_equal(arr.data, nullptr);
+    assert_equal(arr.size, 10);
+    assert_equal(arr.reserved_size, 10);
+
+    reserve(&arr, 5);
+
+    assert_not_equal(arr.data, nullptr);
+    assert_equal(arr.size, 10);
+    assert_equal(arr.reserved_size, 10);
+
+    free(&arr);
+}
+
+define_test(reserve_allocates_when_reserving_more_size)
+{
+    array<int> arr;
+
+    init(&arr, 5);
+
+    assert_not_equal(arr.data, nullptr);
+    assert_equal(arr.size, 5);
+    assert_equal(arr.reserved_size, 5);
+
+    reserve(&arr, 10);
+
+    assert_not_equal(arr.data, nullptr);
+    assert_equal(arr.size, 5);
+    assert_equal(arr.reserved_size, 10);
+
+    free(&arr);
+}
+
 define_test(add_elements_adds_at_least_n_elements)
 {
     array<int> arr;

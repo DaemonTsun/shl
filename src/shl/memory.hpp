@@ -25,7 +25,6 @@ T *reallocate_memory(T *ptr, u64 n_elements)
     return reinterpret_cast<T*>(reallocate_memory(reinterpret_cast<void*>(ptr), sizeof(T) * n_elements));
 }
 
-
 void *move_memory(const void *from, void *to, u64 size);
 void *copy_memory(const void *from, void *to, u64 size);
 void free_memory(void *ptr);
