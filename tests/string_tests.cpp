@@ -2,12 +2,92 @@
 #include <t1/t1.hpp>
 #include "shl/string.hpp"
 
-define_test(cs_constructs_const_string_from_literal)
+define_test(cs_suffix_constructs_const_string_from_literal)
 {
     const_string str = "abc"_cs;
 
     assert_equal(str.size, 3);
     assert_equal(compare_strings(str.c_str, "abc"), 0);
+}
+
+define_test(s_suffix_constructs_string_from_literal)
+{
+    string str = "abc"_s;
+
+    assert_equal(string_length(&str), 3);
+    assert_equal(compare_strings(str, "abc"_cs), 0);
+
+    free(&str);
+}
+
+define_test(init_initializes_empty_string)
+{
+    string str;
+    init(&str);
+
+    assert_equal(string_length(&str), 0);
+
+    free(&str);
+}
+
+define_test(init_initializes_string_with_uninitialized_data)
+{
+    string str;
+    init(&str, 5);
+
+    assert_equal(string_length(&str), 5);
+    assert_equal(str[5], '\0');
+
+    free(&str);
+}
+
+define_test(init_initializes_string_from_c_string)
+{
+    string str;
+    init(&str, "hello");
+
+    assert_equal(string_length(&str), 5);
+    assert_equal(compare_strings(str, "hello"_cs), 0);
+    assert_equal(str[5], '\0');
+
+    free(&str);
+}
+
+define_test(init_initializes_string_from_c_string_with_length)
+{
+    string str;
+    init(&str, "hello", 4);
+
+    assert_equal(string_length(&str), 4);
+    assert_equal(compare_strings(str, "hell"_cs), 0);
+    assert_equal(str[4], '\0');
+
+    free(&str);
+}
+
+define_test(init_initializes_string_from_const_string)
+{
+    string str;
+    init(&str, "hello"_cs);
+
+    assert_equal(string_length(&str), 5);
+    assert_equal(compare_strings(str, "hello"_cs), 0);
+    assert_equal(str[5], '\0');
+
+    free(&str);
+}
+
+define_test(init_initializes_string_with_nulls)
+{
+    string str;
+    init(&str, "w\0rld"_cs);
+
+    // length is 5 !!
+    assert_equal(string_length(&str), 5);
+    assert_equal(compare_strings(str, "w\0rld"_cs), 0);
+    assert_equal(str[5], '\0');
+
+    free(&str);
 }
 
 define_test(is_space_returns_true_if_character_is_whitespace)
@@ -103,6 +183,11 @@ define_test(string_length_returns_length_of_string)
     assert_equal(string_length("a"), 1);
     assert_equal(string_length("abc"), 3);
     assert_equal(string_length(L"hello world"), 11);
+    assert_equal(string_length("hell\0 w\0rld!!!"_cs), 14);
+    
+    string str = "hades"_s;
+    assert_equal(string_length(&str), 5);
+    free(&str);
 }
 
 define_test(compare_strings_compares_strings)
@@ -110,12 +195,24 @@ define_test(compare_strings_compares_strings)
     assert_equal(compare_strings("", ""), 0);
     assert_equal(compare_strings("a", "a"), 0);
     assert_equal(compare_strings("hello", "hello"), 0);
-    assert_less(compare_strings("a", "b"), 0);
+
+    assert_less   (compare_strings("a", "b"), 0);
     assert_greater(compare_strings("b", "a"), 0);
-    assert_less(compare_strings("a", "aa"), 0);
+    assert_less   (compare_strings("a", "aa"), 0);
     assert_greater(compare_strings("aa", "a"), 0);
-    assert_less(compare_strings(L"a", L"aa"), 0);
+    assert_less   (compare_strings(L"a", L"aa"), 0);
     assert_greater(compare_strings(L"aa", L"a"), 0);
+
+    assert_equal(compare_strings("abc"_cs, "abc"_cs), 0);
+
+    string a = "w\0rld"_s;
+    string b = "w\0rld"_s;
+
+    assert_equal(compare_strings(&a, &b), 0);
+    assert_equal(compare_strings(a, "w\0rld"_cs), 0);
+
+    free(&a);
+    free(&b);
 }
 
 define_test(begins_with_returns_true_if_string_starts_with_prefix)

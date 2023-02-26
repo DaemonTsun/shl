@@ -67,7 +67,7 @@ struct string_base
 
     explicit operator const C *() const { return data.data; }
 
-    explicit operator const_string_base<C>() const
+    operator const_string_base<C>() const
     {
         return const_string_base<C>{data.data, data.size};
     }
