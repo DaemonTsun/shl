@@ -3,8 +3,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <type_traits>
-#include <cctype>
-#include <cwctype>
+#include <ctype.h>
+#include <wctype.h>
 #include <wchar.h>
 
 #include "shl/memory.hpp"
@@ -145,12 +145,12 @@ void free(wstring *str)
 // string / char functions
 bool is_space(char c)
 {
-    return std::isspace(c);
+    return isspace(c);
 }
 
 bool is_space(wchar_t c)
 {
-    return std::iswspace(static_cast<wint_t>(c));
+    return iswspace(static_cast<wint_t>(c));
 }
 
 bool is_newline(char c)
@@ -165,22 +165,22 @@ bool is_newline(wchar_t c)
 
 bool is_alpha(char c)
 {
-    return std::isalpha(c);
+    return isalpha(c);
 }
 
 bool is_alpha(wchar_t c)
 {
-    return std::iswalpha(static_cast<wint_t>(c));
+    return iswalpha(static_cast<wint_t>(c));
 }
 
 bool is_digit(char c)
 {
-    return std::isdigit(c);
+    return isdigit(c);
 }
 
 bool is_digit(wchar_t c)
 {
-    return std::iswdigit(static_cast<wint_t>(c));
+    return iswdigit(static_cast<wint_t>(c));
 }
 
 bool is_bin_digit(char c)
@@ -205,42 +205,42 @@ bool is_oct_digit(wchar_t c)
 
 bool is_hex_digit(char c)
 {
-    return std::isxdigit(c);
+    return isxdigit(c);
 }
 
 bool is_hex_digit(wchar_t c)
 {
-    return std::iswxdigit(static_cast<wint_t>(c));
+    return iswxdigit(static_cast<wint_t>(c));
 }
 
 bool is_alphanum(char c)
 {
-    return std::isalnum(c);
+    return isalnum(c);
 }
 
 bool is_alphanum(wchar_t c)
 {
-    return std::iswalnum(static_cast<wint_t>(c));
+    return iswalnum(static_cast<wint_t>(c));
 }
 
 bool is_upper(char c)
 {
-    return std::isupper(static_cast<int>(c));
+    return isupper(static_cast<int>(c));
 }
 
 bool is_upper(wchar_t c)
 {
-    return std::iswupper(static_cast<wint_t>(c));
+    return iswupper(static_cast<wint_t>(c));
 }
 
 bool is_lower(char c)
 {
-    return std::islower(static_cast<int>(c));
+    return islower(static_cast<int>(c));
 }
 
 bool is_lower(wchar_t c)
 {
-    return std::iswlower(static_cast<wint_t>(c));
+    return iswlower(static_cast<wint_t>(c));
 }
 
 template<typename C>
@@ -275,10 +275,13 @@ bool _is_blank_cs(const_string_base<C> s)
 {
     u64 i = 0;
     u64 size = s.size;
+    C c;
 
     while (i < size)
     {
-        if (!is_space(s.c_str[i]))
+        c = s.c_str[i];
+
+        if (!(is_space(c) || c == '\0'))
             return false;
 
         ++i;
@@ -366,14 +369,17 @@ int compare_strings(const wchar_t *s1, const wchar_t *s2, u64 n)
 template<typename C>
 int _compare_strings_cs(const_string_base<C> s1, const_string_base<C> s2, u64 n)
 {
-    if (s1.size != s2.size)
-        return compare_ascending(s1.size, s2.size);
-
     int res = 0;
     u64 i = 0;
 
+    if ((s1.size < n || s2.size < n) && s1.size != s2.size)
+        return compare_ascending(s1.size, s2.size);
+
     if (n > s1.size)
         n = s1.size;
+
+    if (n > s2.size)
+        n = s2.size;
 
     while (res == 0 && i < n)
     {
@@ -518,7 +524,7 @@ bool _ends_with_cs(const_string_base<C> s, const_string_base<C> suffix)
 
     const_string_base<C> s2{s.c_str + str_length - suffix_length, suffix_length};
 
-    return compare_strings(s2, suffix, suffix_length);
+    return compare_strings(s2, suffix, suffix_length) == 0;
 }
 
 bool ends_with(const_string s, const_string prefix)
@@ -597,6 +603,9 @@ void _copy_string_cs_s(const_string_base<C> src, string_base<C> *dst, u64 n)
     if (n > src.size)
         n = src.size;
 
+    if (n == 0)
+        return;
+
     if (dst->data.reserved_size < n + 1)
     {
         reserve(&dst->data, n + 1);
@@ -607,7 +616,27 @@ void _copy_string_cs_s(const_string_base<C> src, string_base<C> *dst, u64 n)
     copy_memory(src.c_str, dst->data.data, sizeof(C) * n);
 
     if (append_null)
-        dst->data.data[src.size] = '\0';
+        dst->data.data[n] = '\0';
+}
+
+void copy_string(const char *src, string *dst)
+{
+    _copy_string_cs_s(to_const_string(src), dst, -1);
+}
+
+void copy_string(const wchar_t *src, wstring *dst)
+{
+    _copy_string_cs_s(to_const_string(src), dst, -1);
+}
+
+void copy_string(const char *src, string *dst, u64 n)
+{
+    _copy_string_cs_s(to_const_string(src), dst, n);
+}
+
+void copy_string(const wchar_t *src, wstring *dst, u64 n)
+{
+    _copy_string_cs_s(to_const_string(src), dst, n);
 }
 
 void copy_string(const_string src, string *dst)
@@ -648,4 +677,135 @@ void copy_string(const string *src, string *dst, u64 n)
 void copy_string(const wstring *src, wstring *dst, u64 n)
 {
     _copy_string_cs_s(to_const_string(src), dst, n);
+}
+
+template<typename C>
+void _append_string(string_base<C> *dst, const_string_base<C> other)
+{
+    assert(dst != nullptr);
+
+    if (other.size == 0)
+        return;
+
+    u64 size_left = dst->data.reserved_size - dst->data.size;
+
+    if (size_left < other.size + 1)
+    {
+        u64 required_space = dst->data.reserved_size + ((other.size + 1) - size_left);
+        reserve(&dst->data, required_space);
+    }
+
+    copy_memory(other.c_str, dst->data.data + dst->data.size, sizeof(C) * other.size);
+
+    dst->data.size += other.size;
+    dst->data.data[dst->data.size] = '\0';
+}
+
+void append_string(string *dst, const char *other)
+{
+    _append_string(dst, to_const_string(other));
+}
+
+void append_string(wstring *dst, const wchar_t *other)
+{
+    _append_string(dst, to_const_string(other));
+}
+
+void append_string(string  *dst, const_string  other)
+{
+    _append_string(dst, other);
+}
+
+void append_string(wstring *dst, const_wstring other)
+{
+    _append_string(dst, other);
+}
+
+void append_string(string  *dst, const string  *other)
+{
+    _append_string(dst, to_const_string(other));
+}
+
+void append_string(wstring *dst, const wstring *other)
+{
+    _append_string(dst, to_const_string(other));
+}
+
+template<typename C>
+void _prepend_string(string_base<C> *dst, const_string_base<C> other)
+{
+    assert(dst != nullptr);
+
+    if (other.size == 0)
+        return;
+
+    u64 size_left = dst->data.reserved_size - dst->data.size;
+
+    if (size_left < other.size + 1)
+    {
+        u64 required_space = dst->data.reserved_size + ((other.size + 1) - size_left);
+        reserve(&dst->data, required_space);
+    }
+
+    move_memory(dst->data.data, dst->data.data + other.size, sizeof(C) * dst->data.size);
+    copy_memory(other.c_str, dst->data.data, sizeof(C) * other.size);
+
+    dst->data.size += other.size;
+    dst->data.data[dst->data.size] = '\0';
+}
+
+void prepend_string(string *dst, const char *other)
+{
+    _prepend_string(dst, to_const_string(other));
+}
+
+void prepend_string(wstring *dst, const wchar_t *other)
+{
+    _prepend_string(dst, to_const_string(other));
+}
+
+void prepend_string(string  *dst, const_string  other)
+{
+    _prepend_string(dst, other);
+}
+
+void prepend_string(wstring *dst, const_wstring other)
+{
+    _prepend_string(dst, other);
+}
+
+void prepend_string(string  *dst, const string  *other)
+{
+    _prepend_string(dst, to_const_string(other));
+}
+
+void prepend_string(wstring *dst, const wstring *other)
+{
+    _prepend_string(dst, to_const_string(other));
+}
+
+template<typename C>
+hash_t _hash(const_string_base<C> str)
+{
+    return hash_data(str.c_str, str.size);
+}
+
+hash_t hash(const_string str)
+{
+    return _hash(str);
+}
+
+hash_t hash(const_wstring str)
+{
+    return _hash(str);
+}
+
+hash_t hash(const string *str)
+{
+    return _hash(to_const_string(str));
+}
+
+hash_t hash(const wstring *str)
+{
+    return _hash(to_const_string(str));
 }

@@ -155,6 +155,7 @@ define_test(is_blank_returns_true_if_string_is_empty)
 {
     assert_equal(is_blank(""), true);
     assert_equal(is_blank(L""), true);
+    assert_equal(is_blank(""_cs), true);
 }
 
 define_test(is_blank_returns_true_if_string_is_whitespaces)
@@ -167,6 +168,7 @@ define_test(is_blank_returns_true_if_string_is_whitespaces)
     assert_equal(is_blank(L"     "), true);
     assert_equal(is_blank(L"  \t  "), true);
     assert_equal(is_blank(L"  \r\n  "), true);
+    assert_equal(is_blank("  \r\n\0  "_cs), true);
 }
 
 define_test(is_blank_returns_false_if_string_contains_non_whitespaces)
@@ -175,6 +177,7 @@ define_test(is_blank_returns_false_if_string_contains_non_whitespaces)
     assert_equal(is_blank("   def  "), false);
     assert_equal(is_blank(L"a"), false);
     assert_equal(is_blank(L"   def  "), false);
+    assert_equal(is_blank("   \0def  "_cs), false);
 }
 
 define_test(string_length_returns_length_of_string)
@@ -210,6 +213,10 @@ define_test(compare_strings_compares_strings)
 
     assert_equal(compare_strings(&a, &b), 0);
     assert_equal(compare_strings(a, "w\0rld"_cs), 0);
+    assert_equal(compare_strings(a, "abc"_cs),     1);
+    assert_equal(compare_strings(a, "alfred"_cs), -1);
+    assert_equal(compare_strings(a, "zeta"_cs),   1);
+    assert_equal(compare_strings(a, "zebra"_cs), -1);
 
     free(&a);
     free(&b);
@@ -219,6 +226,11 @@ define_test(begins_with_returns_true_if_string_starts_with_prefix)
 {
     assert_equal(begins_with("hello", "hell"), true);
     assert_equal(begins_with(L"hello", L"hell"), true);
+
+    string s = "hell\0 w\0rld"_s;
+    assert_equal(begins_with(s, "hell\0 w"_cs), true);
+
+    free(&s);
 }
 
 define_test(begins_with_returns_false_if_prefix_is_longer_than_string)
@@ -230,6 +242,13 @@ define_test(ends_with_returns_true_if_string_ends_with_suffix)
 {
     assert_equal(ends_with("hello", "ello"), true);
     assert_equal(ends_with(L"hello", L"ello"), true);
+    assert_equal(ends_with("world"_cs, "orld"_cs), true);
+
+    string s = "hello w\0rld"_s;
+
+    assert_equal(ends_with(s, "\0rld"_cs), true);
+
+    free(&s);
 }
 
 define_test(ends_with_returns_false_if_suffix_is_longer_than_string)
@@ -243,6 +262,7 @@ define_test(to_int_converts_to_int)
     assert_equal(to_int("1234"), 1234);
     assert_equal(to_int("2147483647"), std::numeric_limits<int>::max()); // may be different on some platforms
     assert_equal(to_int("-2147483648"), std::numeric_limits<int>::min()); // may be different on some platforms
+    assert_equal(to_int("1234"_cs), 1234);
 }
 
 define_test(to_long_converts_to_long)
@@ -251,6 +271,7 @@ define_test(to_long_converts_to_long)
     assert_equal(to_long("1234"), 1234);
     assert_equal(to_long("9223372036854775807"), std::numeric_limits<long>::max()); // may be different on some platforms
     assert_equal(to_long("-9223372036854775808"), std::numeric_limits<long>::min()); // may be different on some platforms
+    assert_equal(to_long("1234"_cs), 1234);
 }
 
 define_test(to_long_long_converts_to_long_long)
@@ -259,6 +280,7 @@ define_test(to_long_long_converts_to_long_long)
     assert_equal(to_long_long("1234"), 1234);
     assert_equal(to_long_long("9223372036854775807"), std::numeric_limits<long long>::max()); // may be different on some platforms
     assert_equal(to_long_long("-9223372036854775808"), std::numeric_limits<long long>::min()); // may be different on some platforms
+    assert_equal(to_long_long("1234"_cs), 1234);
 }
 
 define_test(to_unsigned_int_converts_to_unsigned_int)
@@ -266,6 +288,7 @@ define_test(to_unsigned_int_converts_to_unsigned_int)
     assert_equal(to_unsigned_int("0"), 0);
     assert_equal(to_unsigned_int("1234"), 1234);
     assert_equal(to_unsigned_int("4294967295"), std::numeric_limits<unsigned int>::max()); // may be different on some platforms
+    assert_equal(to_unsigned_int("1234"_cs), 1234);
 }
 
 define_test(to_float_converts_to_float)
@@ -290,6 +313,173 @@ define_test(copy_string_copies_string)
     copy_string(str1, str2, 3);
 
     assert_equal(compare_strings(str1, str2), 0);
+}
+
+define_test(copy_string_copies_to_empty_string_object)
+{
+    string str;
+    init(&str);
+
+    assert_equal(string_length(str), 0);
+
+    copy_string("abc", &str);
+
+    assert_equal(string_length(str), 3);
+    assert_equal(str[3], '\0');
+
+    assert_equal(compare_strings(str, "abc"_cs), 0);
+
+    free(&str);
+}
+
+define_test(copy_string_copies_up_to_n_characters)
+{
+    string str = "hello world"_s;
+
+    assert_equal(string_length(str), 11);
+
+    // does not truncate past copying
+    copy_string("lorem ipsum", &str, 5);
+
+    assert_equal(string_length(str), 11);
+    assert_equal(str[string_length(str)], '\0');
+
+    assert_equal(compare_strings(str, "lorem world"_cs), 0);
+
+    str.data.size = 5;
+
+    assert_equal(compare_strings(str, "lorem"_cs), 0);
+
+    free(&str);
+}
+
+define_test(append_string_appends_to_empty_string_object)
+{
+    string str;
+    init(&str);
+
+    assert_equal(string_length(str), 0);
+
+    append_string(&str, "abc");
+
+    assert_equal(string_length(str), 3);
+    assert_equal(str[3], '\0');
+
+    assert_equal(compare_strings(str, "abc"_cs), 0);
+
+    free(&str);
+}
+
+define_test(append_string_appends_to_string_object)
+{
+    string str = "hello"_s;
+
+    assert_equal(string_length(str), 5);
+
+    append_string(&str, " world");
+
+    assert_equal(string_length(str), 11);
+    assert_equal(str[11], '\0');
+
+    assert_equal(compare_strings(str, "hello world"_cs), 0);
+
+    free(&str);
+}
+
+define_test(append_string_appends_to_string_object2)
+{
+    string str = "hello"_s;
+    string ipsum = " ipsum"_s;
+
+    assert_equal(string_length(str), 5);
+
+    append_string(&str, " world");
+    append_string(&str, " lorem"_cs);
+    append_string(&str, ipsum);
+
+    assert_equal(string_length(str), 23);
+    assert_equal(str[23], '\0');
+
+    assert_equal(compare_strings(str, "hello world lorem ipsum"_cs), 0);
+
+    free(&ipsum);
+    free(&str);
+}
+
+define_test(prepend_string_prepends_to_empty_string_object)
+{
+    string str;
+    init(&str);
+
+    assert_equal(string_length(str), 0);
+
+    prepend_string(&str, "abc");
+
+    assert_equal(string_length(str), 3);
+    assert_equal(str[3], '\0');
+
+    assert_equal(compare_strings(str, "abc"_cs), 0);
+
+    free(&str);
+}
+
+define_test(prepend_string_prepends_to_string_object)
+{
+    string str = "world"_s;
+
+    assert_equal(string_length(str), 5);
+
+    prepend_string(&str, "hello ");
+
+    assert_equal(string_length(str), 11);
+    assert_equal(str[11], '\0');
+
+    assert_equal(compare_strings(str, "hello world"_cs), 0);
+
+    free(&str);
+}
+
+define_test(prepend_string_prepends_to_string_object2)
+{
+    string str = "ipsum"_s;
+    string hello = "hello "_s;
+
+    assert_equal(string_length(str), 5);
+
+    prepend_string(&str, "lorem ");
+    prepend_string(&str, "world "_cs);
+    prepend_string(&str, hello);
+
+    assert_equal(string_length(str), 23);
+    assert_equal(str[23], '\0');
+
+    assert_equal(compare_strings(str, "hello world lorem ipsum"_cs), 0);
+
+    free(&hello);
+    free(&str);
+}
+
+define_test(hash_hashes_string)
+{
+    string str = "hello world"_s;
+
+    assert_equal(hash(str), hash("hello world"_cs));
+    assert_equal(hash(str), hash("hello world"));
+
+    free(&str);
+}
+
+define_test(hash_hashes_string_with_null_characters)
+{
+    string str = "hell\0 w\0rld"_s;
+
+    assert_equal(hash(str), hash("hell\0 w\0rld"_cs));
+
+    // these are not equal because plain const char* string hashes
+    // stop before the first null character.
+    assert_not_equal(hash(str), hash("hell\0 w\0rld"));
+
+    free(&str);
 }
 
 define_default_test_main();

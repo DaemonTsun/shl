@@ -4,18 +4,57 @@
  * v1.1
  *
  * string utility header
- * is_space(c)              returns true if c is a whitespace character
- * is_newline(c)            returns true if c is a newline character
- * is_alpha(c)              returns true if c is an alphabet character
- * is_digit(c)              returns true if c is a digit
- * is_bin_digit(c)          returns true if c is a binary digit (0 or 1)
- * is_oct_digit(c)          returns true if c is an octal digit (0-7)
- * is_hex_digit(c)          returns true if c is a hexadecimal digit
- * is_alphanum(c)           returns true if is_digit(c) || is_alpha(c)
- * is_upper(c)              returns true if c is an uppercase letter
- * is_lower(c)              returns true if c is an lowercase letter
  *
- * is_blank(s)              returns true if s is an empty string or only contains
+ * defines const_string and const_wstring, basically const char pointers with
+ * size attached to them. const_strings are not guaranteed to be null terminated,
+ * but in most cases will be (e.g. string literals). can be explicitly converted
+ * to const C *, where C is char in the case of const_string, or wchar_t in the
+ * case of const_wstring.
+ *
+ * to construct a const_string, either initialize with const_string{ptr, size} or
+ * use the string literal suffix _cs, such as:
+ *
+ *      const_string mystr = "hello world!"_cs;
+ *      const char *cstr = mystr.c_str;
+ *      u64 size = mystr.size; // or string_length(mystr);
+ *
+ * since const_strings are relatively lightweight, they can be copied and don't
+ * need to be referenced (they're essentially just a pointer with a size).
+ * const_strings also don't own the string they point to, and as such don't
+ * need to be freed.
+ *
+ *
+ * string and wstring are also defined here. basically dynamic character arrays
+ * with common string functions. always guaranteed to be null terminated (unless
+ * you explicitly change that). can be implicitly converted to const_string.
+ * can be explicitly converted to const C *, where C is char in the case of
+ * string, and wchar_t in the case of wstring.
+ * 
+ * to construct a string, either use init(&str, ...) or use the _s suffix for
+ * string literals, such as:
+ *
+ *      string mystr = "hello world!"_s;                    // copy of string literal
+ *      const char *cstr = static_cast<const char*>(mystr); // or mystr.data.data;
+ *      u64 size = string_length(&mystr);
+ *      free(&mystr);                                       // every string must be freed.
+ *
+ *
+ * string/character functions
+ *
+ * c = character, s = string, n = number
+ *
+ * is_space(c)              true if c is a whitespace character
+ * is_newline(c)            true if c is a newline character
+ * is_alpha(c)              true if c is an alphabet character
+ * is_digit(c)              true if c is a digit
+ * is_bin_digit(c)          true if c is a binary digit (0 or 1)
+ * is_oct_digit(c)          true if c is an octal digit (0-7)
+ * is_hex_digit(c)          true if c is a hexadecimal digit
+ * is_alphanum(c)           true if is_digit(c) || is_alpha(c)
+ * is_upper(c)              true if c is an uppercase letter
+ * is_lower(c)              true if c is an lowercase letter
+ *
+ * is_blank(s)              true if s is an empty string or only contains
  *                          whitespaces
  *
  * string_length(s)            returns the length of the string
@@ -32,10 +71,13 @@
  * to_float(s)         converts the string to a float
  * ...
  *
+ * string manipulation functions
+ *
  * copy_string(src, dest)          copies one string to another
  * copy_string(src, dest, n)       copies one string to another, up to n characters
  */
 
+#include "shl/hash.hpp"
 #include "shl/array.hpp"
 #include "shl/number_types.hpp"
 
@@ -47,6 +89,7 @@ struct const_string_base
     const C *c_str;
     u64 size;
 
+    operator bool() const { return c_str != nullptr; }
     explicit operator const C *() const { return c_str; }
 
     C operator[](u64 i) const { return c_str[i]; }
@@ -65,6 +108,7 @@ struct string_base
 
     array<C> data;
 
+    operator bool() const { return data.data != nullptr; }
     explicit operator const C *() const { return data.data; }
 
     operator const_string_base<C>() const
@@ -75,12 +119,6 @@ struct string_base
     C &operator[](u64 i)       { return data.data[i]; }
     C  operator[](u64 i) const { return data.data[i]; }
 };
-
-template<typename C>
-inline const_string_base<C> to_const_string(const string_base<C> *s)
-{
-    return const_string_base<C>{s->data.data, s->data.size};
-}
 
 typedef string_base<char>    string;
 typedef string_base<wchar_t> wstring;
@@ -127,8 +165,8 @@ bool is_lower(char    c);
 bool is_lower(wchar_t c);
 bool is_blank(const char    *s);
 bool is_blank(const wchar_t *s);
-bool is_blank(const_string  *s);
-bool is_blank(const_wstring *s);
+bool is_blank(const_string  s);
+bool is_blank(const_wstring s);
 bool is_blank(const string  *s);
 bool is_blank(const wstring *s);
 
@@ -139,16 +177,16 @@ u64 string_length(const_wstring s);
 u64 string_length(const string  *s);
 u64 string_length(const wstring *s);
 
-int compare_strings(const char *s1, const char *s2);
-int compare_strings(const char *s1, const char *s2, u64 n);
+int compare_strings(const char    *s1, const char    *s2);
+int compare_strings(const char    *s1, const char    *s2, u64 n);
 int compare_strings(const wchar_t *s1, const wchar_t *s2);
 int compare_strings(const wchar_t *s1, const wchar_t *s2, u64 n);
-int compare_strings(const_string s1, const_string s2);
-int compare_strings(const_string s1, const_string s2, u64 n);
+int compare_strings(const_string  s1, const_string  s2);
+int compare_strings(const_string  s1, const_string  s2, u64 n);
 int compare_strings(const_wstring s1, const_wstring s2);
 int compare_strings(const_wstring s1, const_wstring s2, u64 n);
-int compare_strings(const string *s1, const string *s2);
-int compare_strings(const string *s1, const string *s2, u64 n);
+int compare_strings(const string  *s1, const string  *s2);
+int compare_strings(const string  *s1, const string  *s2, u64 n);
 int compare_strings(const wstring *s1, const wstring *s2);
 int compare_strings(const wstring *s1, const wstring *s2, u64 n);
 
@@ -194,16 +232,62 @@ DEFINE_DECIMAL_SIGNATURE(long double, to_long_double);
 #undef DEFINE_INTEGER_SIGNATURE
 #undef DEFINE_DECIMAL_SIGNATURE
 
+// string manipulation
 char    *copy_string(const char    *src, char    *dst);
 wchar_t *copy_string(const wchar_t *src, wchar_t *dst);
 char    *copy_string(const char    *src, char    *dst, u64 n);
 wchar_t *copy_string(const wchar_t *src, wchar_t *dst, u64 n);
 
+// allocates more memory in dst if dst is not large enough to store src
+void copy_string(const char    *src, string  *dst);
+void copy_string(const wchar_t *src, string  *dst);
+void copy_string(const char    *src, string  *dst, u64 n);
+void copy_string(const wchar_t *src, string  *dst, u64 n);
 void copy_string(const_string   src, string  *dst);
-void copy_string(const_wstring  src, string  *dst);
+void copy_string(const_wstring  src, wstring *dst);
 void copy_string(const_string   src, string  *dst, u64 n);
-void copy_string(const_wstring  src, string  *dst, u64 n);
+void copy_string(const_wstring  src, wstring *dst, u64 n);
 void copy_string(const string  *src, string  *dst);
 void copy_string(const wstring *src, wstring *dst);
 void copy_string(const string  *src, string  *dst, u64 n);
 void copy_string(const wstring *src, wstring *dst, u64 n);
+
+void append_string(string  *dst, const char    *other);
+void append_string(string  *dst, const wchar_t *other);
+void append_string(string  *dst, const_string  other);
+void append_string(wstring *dst, const_wstring other);
+void append_string(string  *dst, const string  *other);
+void append_string(wstring *dst, const wstring *other);
+void prepend_string(string  *dst, const char    *other);
+void prepend_string(string  *dst, const wchar_t *other);
+void prepend_string(string  *dst, const_string  other);
+void prepend_string(wstring *dst, const_wstring other);
+void prepend_string(string  *dst, const string  *other);
+void prepend_string(wstring *dst, const wstring *other);
+
+// TODO: search, index_of, substring, trim
+
+/*
+these are not the same as hash(const char *c) because hash(const char *c)
+calculates the size. every time.
+Also hash(const char *c) stops at the first null character because
+strlen is used to determine the size, whereas these hash functions
+hash the entire size of the string, including all null characters
+(except the null character past-the-end).
+*/
+hash_t hash(const_string  str);
+hash_t hash(const_wstring str);
+hash_t hash(const string  *str);
+hash_t hash(const wstring *str);
+
+template<typename C>
+inline const_string_base<C> to_const_string(const C *s)
+{
+    return const_string_base<C>{s, string_length(s)};
+}
+
+template<typename C>
+inline const_string_base<C> to_const_string(const string_base<C> *s)
+{
+    return const_string_base<C>{s->data.data, s->data.size};
+}
