@@ -1,4 +1,5 @@
 
+#include "shl/string.hpp"
 #include "shl/string_manip.hpp"
 #include "shl/parse_object.hpp"
 

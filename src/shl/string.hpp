@@ -141,6 +141,7 @@ void free(string  *str);
 void free(wstring *str);
 
 // string / character functions
+
 bool is_space(char    c);
 bool is_space(wchar_t c);
 bool is_newline(char    c);
@@ -265,7 +266,53 @@ void prepend_string(wstring *dst, const_wstring other);
 void prepend_string(string  *dst, const string  *other);
 void prepend_string(wstring *dst, const wstring *other);
 
-// TODO: search, index_of, substring, trim
+s64 index_of(const_string   haystack, const char    *needle);
+s64 index_of(const_string   haystack, const char    *needle, s64 offset);
+s64 index_of(const_wstring  haystack, const wchar_t *needle);
+s64 index_of(const_wstring  haystack, const wchar_t *needle, s64 offset);
+s64 index_of(const_string   haystack, const_string   needle);
+s64 index_of(const_string   haystack, const_string   needle, s64 offset);
+s64 index_of(const_wstring  haystack, const_wstring  needle);
+s64 index_of(const_wstring  haystack, const_wstring  needle, s64 offset);
+s64 index_of(const_string   haystack, const string  *needle);
+s64 index_of(const_string   haystack, const string  *needle, s64 offset);
+s64 index_of(const_wstring  haystack, const wstring *needle);
+s64 index_of(const_wstring  haystack, const wstring *needle, s64 offset);
+s64 index_of(const string  *haystack, const char    *needle);
+s64 index_of(const string  *haystack, const char    *needle, s64 offset);
+s64 index_of(const wstring *haystack, const wchar_t *needle);
+s64 index_of(const wstring *haystack, const wchar_t *needle, s64 offset);
+s64 index_of(const string  *haystack, const_string   needle);
+s64 index_of(const string  *haystack, const_string   needle, s64 offset);
+s64 index_of(const wstring *haystack, const_wstring  needle);
+s64 index_of(const wstring *haystack, const_wstring  needle, s64 offset);
+s64 index_of(const string  *haystack, const string  *needle);
+s64 index_of(const string  *haystack, const string  *needle, s64 offset);
+s64 index_of(const wstring *haystack, const wstring *needle);
+s64 index_of(const wstring *haystack, const wstring *needle, s64 offset);
+
+void trim_left(string  *s);
+void trim_left(wstring *s);
+void trim_right(string  *s);
+void trim_right(wstring *s);
+void trim(string  *s);
+void trim(wstring *s);
+
+// TODO: substring
+
+char    to_upper(char    c);
+wchar_t to_upper(wchar_t c);
+void    to_upper(char    *s);
+void    to_upper(wchar_t *s);
+void    to_upper(string  *s);
+void    to_upper(wstring *s);
+
+char    to_lower(char    c);
+wchar_t to_lower(wchar_t c);
+void    to_lower(char    *s);
+void    to_lower(wchar_t *s);
+void    to_lower(string  *s);
+void    to_lower(wstring *s);
 
 /*
 these are not the same as hash(const char *c) because hash(const char *c)

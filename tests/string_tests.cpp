@@ -459,6 +459,48 @@ define_test(prepend_string_prepends_to_string_object2)
     free(&str);
 }
 
+define_test(index_of_returns_negative_one_on_negative_offset)
+{
+    assert_equal(index_of("hello"_cs, "hell"_cs, -1), -1);
+    assert_equal(index_of("hello"_cs, "hell"_cs, -500), -1);
+}
+
+define_test(index_of_returns_offset_on_empty_needle)
+{
+    assert_equal(index_of("hello"_cs, ""_cs, 0), 0);
+    assert_equal(index_of("hello"_cs, ""_cs, 1), 1);
+    assert_equal(index_of("hello"_cs, ""_cs, 2), 2);
+    assert_equal(index_of("hello"_cs, ""_cs, 3), 3);
+    assert_equal(index_of("hello"_cs, ""_cs, 4), 4);
+}
+
+define_test(index_of_returns_negative_one_if_offset_is_outside_haystack)
+{
+    assert_equal(index_of("hello"_cs, "hell"_cs, 5), -1);
+    assert_equal(index_of("hello"_cs, "hell"_cs, 100), -1);
+}
+
+define_test(index_of_returns_index_of_first_needle_occurence_in_haystack_starting_at_offset)
+{
+    assert_equal(index_of("hello"_cs, "hell"_cs, 0), 0);
+    assert_equal(index_of("hello"_cs, "hell"_cs, 1), -1);
+
+    assert_equal(index_of("hello hello hello hello"_cs, "hell"_cs, 1), 6);
+    assert_equal(index_of("hello hello hello hello"_cs, "hell"_cs, 6), 6);
+    assert_equal(index_of("hello hello hello hello"_cs, "hell"_cs, 7), 12);
+    assert_equal(index_of("hello hello hello hello"_cs, "hell"_cs, 13), 18);
+
+    assert_equal(index_of("w\0rld w\0rld w\0rld"_cs, "w\0rld"_cs, 1), 6);
+
+    assert_equal(index_of(L"hello hello hello hello"_cs, L"hell"_cs, 1), 6);
+    assert_equal(index_of(L"hello hello hello hello"_cs, L"hell"_cs, 6), 6);
+    assert_equal(index_of(L"hello hello hello hello"_cs, L"hell"_cs, 7), 12);
+    assert_equal(index_of(L"hello hello hello hello"_cs, L"hell"_cs, 13), 18);
+}
+
+// TODO: trim tests
+// TODO: to_upper / to_lower tests
+
 define_test(hash_hashes_string)
 {
     string str = "hello world"_s;

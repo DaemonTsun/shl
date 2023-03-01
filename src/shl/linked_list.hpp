@@ -452,7 +452,7 @@ T *search(linked_list<T> *list, const T *key, equality_function_p<T> eq = equals
 }
 
 template<typename T>
-u64 index_of(const linked_list<T> *list, T key, equality_function<T> eq = equals<T>)
+s64 index_of(const linked_list<T> *list, T key, equality_function<T> eq = equals<T>)
 {
     assert(list != nullptr);
     
@@ -460,11 +460,11 @@ u64 index_of(const linked_list<T> *list, T key, equality_function<T> eq = equals
         if (eq(*v, key))
             return i;
 
-    return -1ull;
+    return -1;
 }
 
 template<typename T>
-u64 index_of(const linked_list<T> *list, const T *key, equality_function_p<T> eq = equals_p<T>)
+s64 index_of(const linked_list<T> *list, const T *key, equality_function_p<T> eq = equals_p<T>)
 {
     assert(list != nullptr);
     
@@ -472,19 +472,19 @@ u64 index_of(const linked_list<T> *list, const T *key, equality_function_p<T> eq
         if (eq(v, key))
             return i;
 
-    return -1ull;
+    return -1;
 }
 
 template<typename T>
 bool contains(const linked_list<T> *list, T key, equality_function<T> eq = equals<T>)
 {
-    return index_of(list, key, eq) != -1ull;
+    return index_of(list, key, eq) != -1;
 }
 
 template<typename T>
 bool contains(const linked_list<T> *list, const T *key, equality_function_p<T> eq = equals_p<T>)
 {
-    return index_of(list, key, eq) != -1ull;
+    return index_of(list, key, eq) != -1;
 }
 
 template<typename T>

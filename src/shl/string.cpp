@@ -2,7 +2,6 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include <type_traits>
 #include <ctype.h>
 #include <wctype.h>
 #include <wchar.h>
@@ -782,6 +781,352 @@ void prepend_string(string  *dst, const string  *other)
 void prepend_string(wstring *dst, const wstring *other)
 {
     _prepend_string(dst, to_const_string(other));
+}
+
+s64 index_of(const_string  str, const char    *other)
+{
+    return index_of(str, to_const_string(other), 0);
+}
+
+s64 index_of(const_string  str, const char    *other, s64 offset)
+{
+    return index_of(str, to_const_string(other), offset);
+}
+
+s64 index_of(const_wstring str, const wchar_t *other)
+{
+    return index_of(str, to_const_string(other), 0);
+}
+
+s64 index_of(const_wstring str, const wchar_t *other, s64 offset)
+{
+    return index_of(str, to_const_string(other), offset);
+}
+
+s64 index_of(const_string  str, const_string  other)
+{
+    return index_of(str, other, 0);
+}
+
+template<typename C>
+s64 _index_of(const_string_base<C> str, const_string_base<C> other, s64 offset)
+{
+    if (offset < 0)
+        return -1;
+
+    if (other.size == 0)
+        return offset;
+
+    if (offset >= str.size)
+        return -1;
+
+    if constexpr (sizeof(C) == 1)
+    {
+        // char
+        void *begin = (void*)(str.c_str + offset);
+        u64 size = str.size - offset;
+
+        void *f = memmem(begin, size, other.c_str, other.size);
+
+        if (f == nullptr)
+            return -1;
+
+        // casting to char ONLY for math
+        u64 diff = (char*)f - (char*)str.c_str;
+        return static_cast<s64>(diff);
+    }
+    else
+    {
+        void *begin = (void*)(str.c_str + offset);
+        u64 size = (str.size - offset) * sizeof(C);
+
+        void *f = memmem(begin, size, other.c_str, other.size * sizeof(C));
+
+        if (f == nullptr)
+            return -1;
+
+        u64 diff = (char*)f - (char*)str.c_str;
+        return static_cast<s64>(diff / sizeof(C));
+    }
+}
+
+s64 index_of(const_string  str, const_string  other, s64 offset)
+{
+    return _index_of(str, other, offset);
+}
+
+s64 index_of(const_wstring str, const_wstring other)
+{
+    return index_of(str, other, 0);
+}
+
+s64 index_of(const_wstring str, const_wstring other, s64 offset)
+{
+    return _index_of(str, other, offset);
+}
+
+s64 index_of(const_string  str, const string  *other)
+{
+    return index_of(str, to_const_string(other), 0);
+}
+
+s64 index_of(const_string  str, const string  *other, s64 offset)
+{
+    return index_of(str, to_const_string(other), offset);
+}
+
+s64 index_of(const_wstring str, const wstring *other)
+{
+    return index_of(str, to_const_string(other), 0);
+}
+
+s64 index_of(const_wstring str, const wstring *other, s64 offset)
+{
+    return index_of(str, to_const_string(other), offset);
+}
+
+s64 index_of(const string  *str, const char    *other)
+{
+    return index_of(to_const_string(str), to_const_string(other), 0);
+}
+
+s64 index_of(const string  *str, const char    *other, s64 offset)
+{
+    return index_of(to_const_string(str), to_const_string(other), offset);
+}
+
+s64 index_of(const wstring *str, const wchar_t *other)
+{
+    return index_of(to_const_string(str), to_const_string(other), 0);
+}
+
+s64 index_of(const wstring *str, const wchar_t *other, s64 offset)
+{
+    return index_of(to_const_string(str), to_const_string(other), offset);
+}
+
+s64 index_of(const string  *str, const_string  other)
+{
+    return index_of(to_const_string(str), other, 0);
+}
+
+s64 index_of(const string  *str, const_string  other, s64 offset)
+{
+    return index_of(to_const_string(str), other, offset);
+}
+
+s64 index_of(const wstring *str, const_wstring other)
+{
+    return index_of(to_const_string(str), other, 0);
+}
+
+s64 index_of(const wstring *str, const_wstring other, s64 offset)
+{
+    return index_of(to_const_string(str), other, offset);
+}
+
+s64 index_of(const string  *str, const string  *other)
+{
+    return index_of(to_const_string(str), to_const_string(other), 0);
+}
+
+s64 index_of(const string  *str, const string  *other, s64 offset)
+{
+    return index_of(to_const_string(str), to_const_string(other), offset);
+}
+
+s64 index_of(const wstring *str, const wstring *other)
+{
+    return index_of(to_const_string(str), to_const_string(other), 0);
+}
+
+s64 index_of(const wstring *str, const wstring *other, s64 offset)
+{
+    return index_of(to_const_string(str), to_const_string(other), offset);
+}
+
+template<typename C>
+void _trim_left(string_base<C> *s)
+{
+    assert(s != nullptr);
+
+    u64 i = 0;
+    u64 len = string_length(s);
+
+    C c;
+    while (i < len)
+    {
+        c = s->data.data[i];
+
+        if (is_space(c) || c == '\0')
+            break;
+
+        i++;
+    }
+
+    if (i > 0)
+        remove_elements(&s->data, 0, i);
+}
+
+void trim_left(string *s)
+{
+    _trim_left(s);
+}
+
+void trim_left(wstring *s)
+{
+    _trim_left(s);
+}
+
+template<typename C>
+void _trim_right(string_base<C> *s)
+{
+    assert(s != nullptr);
+
+    u64 len = string_length(s);
+    s64 i = len;
+    i -= 1;
+
+    C c;
+    while (i >= 0)
+    {
+        c = s->data.data[i];
+
+        if (is_space(c) || c == '\0')
+            break;
+
+        i--;
+    }
+
+    if (i >= 0)
+        remove_elements(&s->data, i, len - i);
+}
+
+void trim_right(string *s)
+{
+    _trim_right(s);
+}
+
+void trim_right(wstring *s)
+{
+    _trim_right(s);
+}
+
+template<typename C>
+inline void _trim(string_base<C> *s)
+{
+    _trim_left(s);
+    _trim_right(s);
+}
+
+void trim(string *s)
+{
+    _trim(s);
+}
+
+void trim(wstring *s)
+{
+    _trim(s);
+}
+
+char to_upper(char c)
+{
+    return toupper(static_cast<int>(c));
+}
+
+wchar_t to_upper(wchar_t c)
+{
+    return towupper(static_cast<wint_t>(c));
+}
+
+template<typename C>
+inline void _to_upper(C *s)
+{
+    while (*s)
+    {
+        *s = to_upper(*s);
+        s++;
+    }
+}
+
+void to_upper(char *s)
+{
+    _to_upper(s);
+}
+
+void to_upper(wchar_t *s)
+{
+    _to_upper(s);
+}
+
+template<typename C>
+inline void _to_upper_s(string_base<C> *s)
+{
+    assert(s != nullptr);
+
+    for (u64 i = 0; i < s->data.size; ++i)
+        s->data.data[i] = to_upper(s->data.data[i]);
+}
+
+void to_upper(string *s)
+{
+    _to_upper_s(s);
+}
+
+void to_upper(wstring *s)
+{
+    _to_upper_s(s);
+}
+
+char to_lower(char c)
+{
+    return tolower(static_cast<int>(c));
+}
+
+wchar_t to_lower(wchar_t c)
+{
+    return towlower(static_cast<wint_t>(c));
+}
+
+template<typename C>
+inline void _to_lower(C *s)
+{
+    while (*s)
+    {
+        *s = to_lower(*s);
+        s++;
+    }
+}
+
+void to_lower(char *s)
+{
+    _to_lower(s);
+}
+
+void to_lower(wchar_t *s)
+{
+    _to_lower(s);
+}
+
+template<typename C>
+inline void _to_lower_s(string_base<C> *s)
+{
+    assert(s != nullptr);
+
+    u64 len = string_length(s);
+
+    for (u64 i = 0; i < len; ++i)
+        s->data.data[i] = to_lower(s->data.data[i]);
+}
+
+void to_lower(string *s)
+{
+    _to_lower_s(s);
+}
+
+void to_lower(wstring *s)
+{
+    _to_lower_s(s);
 }
 
 template<typename C>

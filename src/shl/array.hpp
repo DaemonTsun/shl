@@ -384,7 +384,7 @@ T *search(array<T> *arr, const T *key, equality_function_p<T> eq = equals_p<T>)
 }
 
 template<typename T>
-u64 index_of(const array<T> *arr, T key, equality_function<T> eq = equals<T>)
+s64 index_of(const array<T> *arr, T key, equality_function<T> eq = equals<T>)
 {
     assert(arr != nullptr);
     
@@ -392,11 +392,11 @@ u64 index_of(const array<T> *arr, T key, equality_function<T> eq = equals<T>)
         if (eq(*v, key))
             return i;
 
-    return -1ull;
+    return -1;
 }
 
 template<typename T>
-u64 index_of(const array<T> *arr, const T *key, equality_function_p<T> eq = equals_p<T>)
+s64 index_of(const array<T> *arr, const T *key, equality_function_p<T> eq = equals_p<T>)
 {
     assert(arr != nullptr);
     
@@ -404,19 +404,19 @@ u64 index_of(const array<T> *arr, const T *key, equality_function_p<T> eq = equa
         if (eq(v, key))
             return i;
 
-    return -1ull;
+    return -1;
 }
 
 template<typename T>
 bool contains(const array<T> *arr, T key, equality_function<T> eq = equals<T>)
 {
-    return index_of(arr, key, eq) != -1ull;
+    return index_of(arr, key, eq) != -1;
 }
 
 template<typename T>
 bool contains(const array<T> *arr, const T *key, equality_function_p<T> eq = equals_p<T>)
 {
-    return index_of(arr, key, eq) != -1ull;
+    return index_of(arr, key, eq) != -1;
 }
 
 // TODO: sort
