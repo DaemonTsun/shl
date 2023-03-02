@@ -127,6 +127,22 @@ void init(wstring *str, const_wstring s)
     _init(str, s);
 }
 
+void clear(string  *str)
+{
+    assert(str != nullptr);
+
+    clear(&str->data);
+    str->data.data[0] = '\0';
+}
+
+void clear(wstring *str)
+{
+    assert(str != nullptr);
+
+    clear(&str->data);
+    str->data.data[0] = '\0';
+}
+
 void free(string  *str)
 {
     assert(str != nullptr);
@@ -243,6 +259,94 @@ bool is_lower(wchar_t c)
 }
 
 template<typename C>
+bool _is_empty(const C *s)
+{
+    return (s != nullptr) && (*s == '\0');
+}
+
+bool is_empty(const char *s)
+{
+    return _is_empty(s);
+}
+
+bool is_empty(const wchar_t *s)
+{
+    return _is_empty(s);
+}
+
+template<typename C>
+bool _is_empty_cs(const_string_base<C> s)
+{
+    return (s.c_str != nullptr) && (s.size == 0);
+}
+
+bool is_empty(const_string s)
+{
+    return _is_empty_cs(s);
+}
+
+bool is_empty(const_wstring s)
+{
+    return _is_empty_cs(s);
+}
+
+bool is_empty(const string *s)
+{
+    assert(s != nullptr);
+    return _is_empty_cs(to_const_string(s));
+}
+
+bool is_empty(const wstring *s)
+{
+    assert(s != nullptr);
+    return _is_empty_cs(to_const_string(s));
+}
+
+template<typename C>
+bool _is_null_or_empty(const C *s)
+{
+    return (s == nullptr) || (*s == '\0');
+}
+
+bool is_null_or_empty(const char *s)
+{
+    return _is_null_or_empty(s);
+}
+
+bool is_null_or_empty(const wchar_t *s)
+{
+    return _is_null_or_empty(s);
+}
+
+template<typename C>
+bool _is_null_or_empty_cs(const_string_base<C> s)
+{
+    return (s.c_str == nullptr) || (s.size == 0);
+}
+
+bool is_null_or_empty(const_string s)
+{
+    return _is_null_or_empty_cs(s);
+}
+
+bool is_null_or_empty(const_wstring s)
+{
+    return _is_null_or_empty_cs(s);
+}
+
+bool is_null_or_empty(const string *s)
+{
+    assert(s != nullptr);
+    return _is_null_or_empty_cs(to_const_string(s));
+}
+
+bool is_null_or_empty(const wstring *s)
+{
+    assert(s != nullptr);
+    return _is_null_or_empty_cs(to_const_string(s));
+}
+
+template<typename C>
 bool _is_blank(const C *s)
 {
     if (s == nullptr)
@@ -301,11 +405,13 @@ bool is_blank(const_wstring s)
 
 bool is_blank(const string *s)
 {
+    assert(s != nullptr);
     return _is_blank_cs(to_const_string(s));
 }
 
 bool is_blank(const wstring *s)
 {
+    assert(s != nullptr);
     return _is_blank_cs(to_const_string(s));
 }
 
@@ -788,24 +894,59 @@ s64 index_of(const_string  str, const char    *other)
     return index_of(str, to_const_string(other), 0);
 }
 
-s64 index_of(const_string  str, const char    *other, s64 offset)
-{
-    return index_of(str, to_const_string(other), offset);
-}
-
 s64 index_of(const_wstring str, const wchar_t *other)
 {
     return index_of(str, to_const_string(other), 0);
 }
 
-s64 index_of(const_wstring str, const wchar_t *other, s64 offset)
-{
-    return index_of(str, to_const_string(other), offset);
-}
-
 s64 index_of(const_string  str, const_string  other)
 {
     return index_of(str, other, 0);
+}
+
+s64 index_of(const_wstring str, const_wstring other)
+{
+    return index_of(str, other, 0);
+}
+
+s64 index_of(const_string  str, const string  *other)
+{
+    return index_of(str, to_const_string(other), 0);
+}
+
+s64 index_of(const_wstring str, const wstring *other)
+{
+    return index_of(str, to_const_string(other), 0);
+}
+
+s64 index_of(const string  *str, const char    *other)
+{
+    return index_of(to_const_string(str), to_const_string(other), 0);
+}
+
+s64 index_of(const wstring *str, const wchar_t *other)
+{
+    return index_of(to_const_string(str), to_const_string(other), 0);
+}
+
+s64 index_of(const string  *str, const_string  other)
+{
+    return index_of(to_const_string(str), other, 0);
+}
+
+s64 index_of(const wstring *str, const_wstring other)
+{
+    return index_of(to_const_string(str), other, 0);
+}
+
+s64 index_of(const string  *str, const string  *other)
+{
+    return index_of(to_const_string(str), to_const_string(other), 0);
+}
+
+s64 index_of(const wstring *str, const wstring *other)
+{
+    return index_of(to_const_string(str), to_const_string(other), 0);
 }
 
 template<typename C>
@@ -850,14 +991,19 @@ s64 _index_of(const_string_base<C> str, const_string_base<C> other, s64 offset)
     }
 }
 
+s64 index_of(const_string  str, const char    *other, s64 offset)
+{
+    return index_of(str, to_const_string(other), offset);
+}
+
+s64 index_of(const_wstring str, const wchar_t *other, s64 offset)
+{
+    return index_of(str, to_const_string(other), offset);
+}
+
 s64 index_of(const_string  str, const_string  other, s64 offset)
 {
     return _index_of(str, other, offset);
-}
-
-s64 index_of(const_wstring str, const_wstring other)
-{
-    return index_of(str, other, 0);
 }
 
 s64 index_of(const_wstring str, const_wstring other, s64 offset)
@@ -865,19 +1011,9 @@ s64 index_of(const_wstring str, const_wstring other, s64 offset)
     return _index_of(str, other, offset);
 }
 
-s64 index_of(const_string  str, const string  *other)
-{
-    return index_of(str, to_const_string(other), 0);
-}
-
 s64 index_of(const_string  str, const string  *other, s64 offset)
 {
     return index_of(str, to_const_string(other), offset);
-}
-
-s64 index_of(const_wstring str, const wstring *other)
-{
-    return index_of(str, to_const_string(other), 0);
 }
 
 s64 index_of(const_wstring str, const wstring *other, s64 offset)
@@ -885,19 +1021,9 @@ s64 index_of(const_wstring str, const wstring *other, s64 offset)
     return index_of(str, to_const_string(other), offset);
 }
 
-s64 index_of(const string  *str, const char    *other)
-{
-    return index_of(to_const_string(str), to_const_string(other), 0);
-}
-
 s64 index_of(const string  *str, const char    *other, s64 offset)
 {
     return index_of(to_const_string(str), to_const_string(other), offset);
-}
-
-s64 index_of(const wstring *str, const wchar_t *other)
-{
-    return index_of(to_const_string(str), to_const_string(other), 0);
 }
 
 s64 index_of(const wstring *str, const wchar_t *other, s64 offset)
@@ -905,19 +1031,9 @@ s64 index_of(const wstring *str, const wchar_t *other, s64 offset)
     return index_of(to_const_string(str), to_const_string(other), offset);
 }
 
-s64 index_of(const string  *str, const_string  other)
-{
-    return index_of(to_const_string(str), other, 0);
-}
-
 s64 index_of(const string  *str, const_string  other, s64 offset)
 {
     return index_of(to_const_string(str), other, offset);
-}
-
-s64 index_of(const wstring *str, const_wstring other)
-{
-    return index_of(to_const_string(str), other, 0);
 }
 
 s64 index_of(const wstring *str, const_wstring other, s64 offset)
@@ -925,19 +1041,9 @@ s64 index_of(const wstring *str, const_wstring other, s64 offset)
     return index_of(to_const_string(str), other, offset);
 }
 
-s64 index_of(const string  *str, const string  *other)
-{
-    return index_of(to_const_string(str), to_const_string(other), 0);
-}
-
 s64 index_of(const string  *str, const string  *other, s64 offset)
 {
     return index_of(to_const_string(str), to_const_string(other), offset);
-}
-
-s64 index_of(const wstring *str, const wstring *other)
-{
-    return index_of(to_const_string(str), to_const_string(other), 0);
 }
 
 s64 index_of(const wstring *str, const wstring *other, s64 offset)
@@ -958,14 +1064,17 @@ void _trim_left(string_base<C> *s)
     {
         c = s->data.data[i];
 
-        if (is_space(c) || c == '\0')
+        if (!(is_space(c) || c == '\0'))
             break;
 
         i++;
     }
 
     if (i > 0)
+    {
         remove_elements(&s->data, 0, i);
+        s->data.data[s->data.size] = '\0';
+    }
 }
 
 void trim_left(string *s)
@@ -992,14 +1101,18 @@ void _trim_right(string_base<C> *s)
     {
         c = s->data.data[i];
 
-        if (is_space(c) || c == '\0')
+        if (!(is_space(c) || c == '\0'))
             break;
 
         i--;
     }
 
+    i++;
     if (i >= 0)
+    {
         remove_elements(&s->data, i, len - i);
+        s->data.data[s->data.size] = '\0';
+    }
 }
 
 void trim_right(string *s)
@@ -1027,6 +1140,128 @@ void trim(string *s)
 void trim(wstring *s)
 {
     _trim(s);
+}
+
+template<typename C>
+void _substring(const C *s, u64 start, u64 length, C *out, u64 out_offset)
+{
+    copy_string(s + start, out + out_offset, length);
+}
+
+void substring(const char    *s, u64 start, u64 length, char    *out)
+{
+    _substring(s, start, length, out, 0);
+}
+
+void substring(const wchar_t *s, u64 start, u64 length, wchar_t *out)
+{
+    _substring(s, start, length, out, 0);
+}
+
+void substring(const char    *s, u64 start, u64 length, char    *out, u64 out_offset)
+{
+    _substring(s, start, length, out, out_offset);
+}
+
+void substring(const wchar_t *s, u64 start, u64 length, wchar_t *out, u64 out_offset)
+{
+    _substring(s, start, length, out, out_offset);
+}
+
+template<typename C>
+void _substring_cs_s(const_string_base<C> s, u64 start, u64 length, string_base<C> *out, u64 out_start)
+{
+    assert(out != nullptr);
+
+    if (length > s.size)
+        length = s.size;
+
+    if (length == 0)
+        return;
+
+    if (start >= s.size)
+        return;
+
+    u64 outlen = string_length(out);
+    bool append_null = false;
+
+    if (out_start + length >= outlen)
+    {
+        reserve(&out->data, out_start + length + 1);
+        append_null = true;
+    }
+
+    copy_memory(s.c_str + start, out->data.data + out_start, sizeof(C) * length);
+
+    if (out->data.size < out_start + length)
+        out->data.size = out_start + length;
+
+    if (append_null)
+        out->data.data[out->data.size] = '\0';
+}
+
+void substring(const char    *s, u64 start, u64 length, string  *out)
+{
+    substring(s, start, length, out, 0);
+}
+
+void substring(const wchar_t *s, u64 start, u64 length, wstring *out)
+{
+    substring(s, start, length, out, 0);
+}
+
+void substring(const_string   s, u64 start, u64 length, string  *out)
+{
+    substring(s, start, length, out, 0);
+}
+
+void substring(const_wstring  s, u64 start, u64 length, wstring *out)
+{
+    substring(s, start, length, out, 0);
+}
+
+void substring(const string  *s, u64 start, u64 length, string  *out)
+{
+    substring(s, start, length, out, 0);
+}
+
+void substring(const wstring *s, u64 start, u64 length, wstring *out)
+{
+    substring(s, start, length, out, 0);
+}
+
+void substring(const char    *s, u64 start, u64 length, string  *out, u64 out_offset)
+{
+    substring(to_const_string(s), start, length, out, out_offset);
+}
+
+void substring(const wchar_t *s, u64 start, u64 length, wstring *out, u64 out_offset)
+{
+    substring(to_const_string(s), start, length, out, out_offset);
+}
+
+void substring(const_string   s, u64 start, u64 length, string  *out, u64 out_offset)
+{
+    _substring_cs_s(s, start, length, out, out_offset);
+}
+
+void substring(const_wstring  s, u64 start, u64 length, wstring *out, u64 out_offset)
+{
+    _substring_cs_s(s, start, length, out, out_offset);
+}
+
+void substring(const string  *s, u64 start, u64 length, string  *out, u64 out_offset)
+{
+    assert(s != nullptr);
+
+    substring(to_const_string(s), start, length, out, out_offset);
+}
+
+void substring(const wstring *s, u64 start, u64 length, wstring *out, u64 out_offset)
+{
+    assert(s != nullptr);
+
+    substring(to_const_string(s), start, length, out, out_offset);
 }
 
 char to_upper(char c)

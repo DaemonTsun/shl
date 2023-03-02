@@ -90,6 +90,19 @@ define_test(init_initializes_string_with_nulls)
     free(&str);
 }
 
+define_test(clear_clears_string)
+{
+    string str = "hello world"_s;
+
+    assert_equal(string_length(&str), 11);
+    
+    clear(&str);
+    assert_equal(string_length(&str), 0);
+    assert_equal(str[0], '\0');
+
+    free(&str);
+}
+
 define_test(is_space_returns_true_if_character_is_whitespace)
 {
     assert_equal(is_space(' '), true);
@@ -149,6 +162,46 @@ define_test(is_newline_returns_false_if_wide_character_is_not_newline)
     assert_equal(is_newline(L' '),  false);
     assert_equal(is_newline(L'\t'), false);
     assert_equal(is_newline(L'a'),  false);
+}
+
+define_test(is_empty_returns_true_if_string_is_empty)
+{
+    assert_equal(is_empty(""), true);
+    assert_equal(is_empty(L""), true);
+    assert_equal(is_empty(""_cs), true);
+}
+
+define_test(is_empty_returns_false_if_string_is_nullptr)
+{
+    string s;
+    init(&s);
+
+    const char *s2 = nullptr;
+
+    assert_equal(is_empty(&s), false);
+    assert_equal(is_empty(s2), false);
+
+    free(&s);
+}
+
+define_test(is_null_or_empty_returns_true_if_string_is_empty)
+{
+    assert_equal(is_null_or_empty(""), true);
+    assert_equal(is_null_or_empty(L""), true);
+    assert_equal(is_null_or_empty(""_cs), true);
+}
+
+define_test(is_null_or_empty_returns_true_if_string_is_nullptr)
+{
+    string s;
+    init(&s);
+
+    const char *s2 = nullptr;
+
+    assert_equal(is_null_or_empty(&s), true);
+    assert_equal(is_null_or_empty(s2), true);
+
+    free(&s);
 }
 
 define_test(is_blank_returns_true_if_string_is_empty)
@@ -498,8 +551,227 @@ define_test(index_of_returns_index_of_first_needle_occurence_in_haystack_startin
     assert_equal(index_of(L"hello hello hello hello"_cs, L"hell"_cs, 13), 18);
 }
 
-// TODO: trim tests
-// TODO: to_upper / to_lower tests
+define_test(to_upper_converts_to_upper)
+{
+    assert_equal(to_upper('a'), 'A');
+    assert_equal(to_upper('z'), 'Z');
+    assert_equal(to_upper(' '), ' ');
+    assert_equal(to_upper(L'a'), L'A');
+    assert_equal(to_upper(L'z'), L'Z');
+    assert_equal(to_upper(L'!'), L'!');
+
+    string s = "hello world"_s;
+    to_upper(&s);
+    assert_equal(compare_strings(s, "HELLO WORLD"_cs), 0);
+
+    free(&s);
+}
+
+define_test(to_lower_converts_to_lower)
+{
+    assert_equal(to_lower('A'), 'a');
+    assert_equal(to_lower('Z'), 'z');
+    assert_equal(to_lower(' '), ' ');
+    assert_equal(to_lower(L'A'), L'a');
+    assert_equal(to_lower(L'Z'), L'z');
+    assert_equal(to_lower(L'!'), L'!');
+
+    string s = "HELLO WORLD"_s;
+    to_lower(&s);
+    assert_equal(compare_strings(s, "hello world"_cs), 0);
+
+    free(&s);
+}
+
+define_test(trim_left_trims_leftmost_whitespaces_from_string)
+{
+    string s = "  ab c  "_s;
+    assert_equal(string_length(&s), 8);
+
+    trim_left(&s);
+    assert_equal(compare_strings(s, "ab c  "_cs), 0);
+    assert_equal(string_length(&s), 6);
+    assert_equal(s[string_length(&s)], '\0');
+    trim_left(&s);
+    assert_equal(compare_strings(s, "ab c  "_cs), 0);
+    assert_equal(string_length(&s), 6);
+    assert_equal(s[string_length(&s)], '\0');
+
+    free(&s);
+}
+
+define_test(trim_left_trims_whitespace_string)
+{
+    string s = "  \0\t\v\n  "_s;
+    assert_equal(string_length(&s), 8);
+
+    trim_left(&s);
+    assert_equal(compare_strings(s, ""_cs), 0);
+    assert_equal(string_length(&s), 0);
+    assert_equal(s[0], '\0');
+    trim_left(&s);
+    assert_equal(compare_strings(s, ""_cs), 0);
+    assert_equal(string_length(&s), 0);
+    assert_equal(s[0], '\0');
+
+    free(&s);
+}
+
+define_test(trim_right_trims_rightmost_whitespaces_from_string)
+{
+    string s = "  ab c  "_s;
+    assert_equal(string_length(&s), 8);
+
+    trim_right(&s);
+    assert_equal(compare_strings(s, "  ab c"_cs), 0);
+    assert_equal(string_length(&s), 6);
+    assert_equal(s[string_length(&s)], '\0');
+    trim_right(&s);
+    assert_equal(compare_strings(s, "  ab c"_cs), 0);
+    assert_equal(string_length(&s), 6);
+    assert_equal(s[string_length(&s)], '\0');
+
+    free(&s);
+}
+
+define_test(trim_right_trims_whitespace_string)
+{
+    string s = "  \0\t\v\n  "_s;
+    assert_equal(string_length(&s), 8);
+
+    trim_right(&s);
+    assert_equal(compare_strings(s, ""_cs), 0);
+    assert_equal(string_length(&s), 0);
+    assert_equal(s[0], '\0');
+    trim_right(&s);
+    assert_equal(compare_strings(s, ""_cs), 0);
+    assert_equal(string_length(&s), 0);
+    assert_equal(s[0], '\0');
+
+    free(&s);
+}
+
+define_test(trim_trims_leftmost_and_rightmost_whitespaces_from_string)
+{
+    string s = "  ab c  "_s;
+
+    assert_equal(string_length(&s), 8);
+
+    trim(&s);
+    assert_equal(compare_strings(s, "ab c"_cs), 0);
+    assert_equal(string_length(&s), 4);
+    assert_equal(s[string_length(&s)], '\0');
+    trim(&s);
+    assert_equal(compare_strings(s, "ab c"_cs), 0);
+    assert_equal(string_length(&s), 4);
+    assert_equal(s[string_length(&s)], '\0');
+
+    free(&s);
+}
+
+define_test(trim_trims_whitespace_string)
+{
+    string s = "  \0\t\v\n  "_s;
+    assert_equal(string_length(&s), 8);
+
+    trim(&s);
+    assert_equal(compare_strings(s, ""_cs), 0);
+    assert_equal(string_length(&s), 0);
+    assert_equal(s[0], '\0');
+    trim(&s);
+    assert_equal(compare_strings(s, ""_cs), 0);
+    assert_equal(string_length(&s), 0);
+    assert_equal(s[0], '\0');
+
+    free(&s);
+}
+
+define_test(substring_of_zero_length_does_nothing)
+{
+    string out;
+    init(&out);
+
+    substring("hello"_cs, 0, 0, &out);
+
+    assert_equal(string_length(&out), 0);
+
+    free(&out);
+}
+
+define_test(substring_starting_outside_source_string_does_nothing)
+{
+    string out;
+    init(&out);
+
+    substring("hello"_cs, 5, 0, &out);
+
+    assert_equal(string_length(&out), 0);
+
+    substring("hello"_cs, 500, 0, &out);
+
+    assert_equal(string_length(&out), 0);
+
+    free(&out);
+}
+
+define_test(substring_copies_substring_to_empty_string)
+{
+    string out;
+    init(&out);
+
+    substring("hello"_cs, 0, 5, &out);
+
+    assert_equal(string_length(&out), 5);
+    assert_equal(compare_strings(out, "hello"_cs), 0);
+    assert_equal(out[5], '\0');
+
+    free(&out);
+}
+
+define_test(substring_overwrites_string_with_substring)
+{
+    string out = "yoink world"_s;
+
+    assert_equal(string_length(&out), 11);
+
+    substring("hello"_cs, 0, 5, &out);
+
+    assert_equal(string_length(&out), 11);
+    assert_equal(compare_strings(out, "hello world"_cs), 0);
+    assert_equal(out[11], '\0');
+
+    free(&out);
+}
+
+define_test(substring_overwrites_string_with_substring_at_given_offset)
+{
+    string out = "hello yoink"_s;
+
+    assert_equal(string_length(&out), 11);
+
+    substring("world"_cs, 0, 5, &out, 6);
+
+    assert_equal(string_length(&out), 11);
+    assert_equal(compare_strings(out, "hello world"_cs), 0);
+    assert_equal(out[11], '\0');
+
+    free(&out);
+}
+
+define_test(substring_allocates_memory_in_target_when_target_is_not_large_enough)
+{
+    string out = "hello wo"_s;
+
+    assert_equal(string_length(&out), 8);
+
+    substring("world"_cs, 0, 5, &out, 6);
+
+    assert_equal(string_length(&out), 11);
+    assert_equal(compare_strings(out, "hello world"_cs), 0);
+    assert_equal(out[11], '\0');
+
+    free(&out);
+}
 
 define_test(hash_hashes_string)
 {

@@ -5,11 +5,6 @@
  * string manipulation functions
  * v1.0
  *
- * trim_left(s)             trims whitespaces from the left of string s, in-place
- * trim_right(s)            trims whitespaces from the right of string s, in-place
- * trim(s)                  trims whitespaces from the left and right of string s, in-place
- * to_upper(c/s)            converts the given character or string to upper case
- * to_lower(c/s)            converts the given character or string to upper case
  *
  * to_string(...)           converts the arguments to string
  * to_wstring(...)          converts the arguments to wstring
@@ -21,10 +16,6 @@
 
 #include "shl/type_functions.hpp"
 
-void substring(const char *s, size_t start, size_t length, char *out);
-void substring(const char *s, size_t start, size_t length, std::basic_string<char> *out);
-void substring(const wchar_t *s, size_t start, size_t length, wchar_t *out);
-void substring(const wchar_t *s, size_t start, size_t length, std::basic_string<wchar_t> *out);
 
 namespace internal
 {

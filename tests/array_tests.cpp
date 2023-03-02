@@ -408,6 +408,28 @@ define_test(remove_elements_removes_elements2)
     free(&arr);
 }
 
+define_test(remove_elements_removes_elements3)
+{
+    array<int> arr;
+
+    init(&arr, 4);
+
+    arr[0] = 1;
+    arr[1] = 2;
+    arr[2] = 3;
+    arr[3] = 4;
+
+    remove_elements(&arr, 0, 3);
+
+    assert_not_equal(arr.data, nullptr);
+    assert_equal(arr.size, 1);
+    assert_greater_or_equal(arr.reserved_size, 1);
+
+    assert_equal(arr[0], 4);
+
+    free(&arr);
+}
+
 define_test(remove_elements_doesnt_remove_elements_beyond_array_size)
 {
     array<int> arr;

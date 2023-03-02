@@ -1,7 +1,6 @@
 #pragma once
 
 /* string.hpp
- * v1.1
  *
  * string utility header
  *
@@ -43,6 +42,10 @@
  *
  * c = character, s = string, n = number
  *
+ * init(s, ...) initializes a string
+ * clear(s)     sets string size to 0, but does not deallocate anything
+ * free(s)      frees the string object, deallocating memory
+ *
  * is_space(c)              true if c is a whitespace character
  * is_newline(c)            true if c is a newline character
  * is_alpha(c)              true if c is an alphabet character
@@ -54,7 +57,9 @@
  * is_upper(c)              true if c is an uppercase letter
  * is_lower(c)              true if c is an lowercase letter
  *
- * is_blank(s)              true if s is an empty string or only contains
+ * is_empty(s)              true if s an empty string, but not nullptr
+ * is_null_or_empty(s)      true if s is nullptr or an empty string
+ * is_blank(s)              true if s is nullptr, an empty string or only contains
  *                          whitespaces
  *
  * string_length(s)            returns the length of the string
@@ -73,8 +78,20 @@
  *
  * string manipulation functions
  *
- * copy_string(src, dest)          copies one string to another
- * copy_string(src, dest, n)       copies one string to another, up to n characters
+ * copy_string(src, dest)       copies one string to another
+ * copy_string(src, dest, n)    copies one string to another, up to n characters
+ *
+ * trim_left(s)                 trims whitespaces from the left of string s, in-place
+ * trim_right(s)                trims whitespaces from the right of string s, in-place
+ * trim(s)                      trims whitespaces from the left and right of string s, in-place
+ * to_upper(c/s)                converts the given character or string to upper case
+ * to_lower(c/s)                converts the given character or string to upper case
+ *
+ * substring(const_string src, u64 start, u64 length, string out, u64 out_start)
+ *          copies src, starting at start, for up to length characters, into out,
+ *          starting at out_start.
+ *          allocates more memory in out if out does not have enough to fit
+ *          out_start + length characters.
  */
 
 #include "shl/hash.hpp"
@@ -100,6 +117,8 @@ typedef const_string_base<wchar_t> const_wstring;
 
 const_string  operator ""_cs(const char    *, u64);
 const_wstring operator ""_cs(const wchar_t *, u64);
+
+// TODO: comparisons
 
 template<typename C>
 struct string_base
@@ -137,6 +156,8 @@ void init(wstring *str, const wchar_t *c);
 void init(wstring *str, const wchar_t *c, u64 size);
 void init(wstring *str, const_wstring s);
 
+void clear(string  *str);
+void clear(wstring *str);
 void free(string  *str);
 void free(wstring *str);
 
@@ -164,6 +185,18 @@ bool is_upper(char    c);
 bool is_upper(wchar_t c);
 bool is_lower(char    c);
 bool is_lower(wchar_t c);
+bool is_empty(const char    *s);
+bool is_empty(const wchar_t *s);
+bool is_empty(const_string  s);
+bool is_empty(const_wstring s);
+bool is_empty(const string  *s);
+bool is_empty(const wstring *s);
+bool is_null_or_empty(const char    *s);
+bool is_null_or_empty(const wchar_t *s);
+bool is_null_or_empty(const_string  s);
+bool is_null_or_empty(const_wstring s);
+bool is_null_or_empty(const string  *s);
+bool is_null_or_empty(const wstring *s);
 bool is_blank(const char    *s);
 bool is_blank(const wchar_t *s);
 bool is_blank(const_string  s);
@@ -267,28 +300,28 @@ void prepend_string(string  *dst, const string  *other);
 void prepend_string(wstring *dst, const wstring *other);
 
 s64 index_of(const_string   haystack, const char    *needle);
-s64 index_of(const_string   haystack, const char    *needle, s64 offset);
 s64 index_of(const_wstring  haystack, const wchar_t *needle);
-s64 index_of(const_wstring  haystack, const wchar_t *needle, s64 offset);
 s64 index_of(const_string   haystack, const_string   needle);
-s64 index_of(const_string   haystack, const_string   needle, s64 offset);
 s64 index_of(const_wstring  haystack, const_wstring  needle);
-s64 index_of(const_wstring  haystack, const_wstring  needle, s64 offset);
 s64 index_of(const_string   haystack, const string  *needle);
-s64 index_of(const_string   haystack, const string  *needle, s64 offset);
 s64 index_of(const_wstring  haystack, const wstring *needle);
-s64 index_of(const_wstring  haystack, const wstring *needle, s64 offset);
 s64 index_of(const string  *haystack, const char    *needle);
-s64 index_of(const string  *haystack, const char    *needle, s64 offset);
 s64 index_of(const wstring *haystack, const wchar_t *needle);
-s64 index_of(const wstring *haystack, const wchar_t *needle, s64 offset);
 s64 index_of(const string  *haystack, const_string   needle);
-s64 index_of(const string  *haystack, const_string   needle, s64 offset);
 s64 index_of(const wstring *haystack, const_wstring  needle);
-s64 index_of(const wstring *haystack, const_wstring  needle, s64 offset);
 s64 index_of(const string  *haystack, const string  *needle);
-s64 index_of(const string  *haystack, const string  *needle, s64 offset);
 s64 index_of(const wstring *haystack, const wstring *needle);
+s64 index_of(const_string   haystack, const char    *needle, s64 offset);
+s64 index_of(const_wstring  haystack, const wchar_t *needle, s64 offset);
+s64 index_of(const_string   haystack, const_string   needle, s64 offset);
+s64 index_of(const_wstring  haystack, const_wstring  needle, s64 offset);
+s64 index_of(const_string   haystack, const string  *needle, s64 offset);
+s64 index_of(const_wstring  haystack, const wstring *needle, s64 offset);
+s64 index_of(const string  *haystack, const char    *needle, s64 offset);
+s64 index_of(const wstring *haystack, const wchar_t *needle, s64 offset);
+s64 index_of(const string  *haystack, const_string   needle, s64 offset);
+s64 index_of(const wstring *haystack, const_wstring  needle, s64 offset);
+s64 index_of(const string  *haystack, const string  *needle, s64 offset);
 s64 index_of(const wstring *haystack, const wstring *needle, s64 offset);
 
 void trim_left(string  *s);
@@ -298,7 +331,22 @@ void trim_right(wstring *s);
 void trim(string  *s);
 void trim(wstring *s);
 
-// TODO: substring
+void substring(const char    *s, u64 start, u64 length, char    *out);
+void substring(const wchar_t *s, u64 start, u64 length, wchar_t *out);
+void substring(const char    *s, u64 start, u64 length, string  *out);
+void substring(const wchar_t *s, u64 start, u64 length, wstring *out);
+void substring(const_string   s, u64 start, u64 length, string  *out);
+void substring(const_wstring  s, u64 start, u64 length, wstring *out);
+void substring(const string  *s, u64 start, u64 length, string  *out);
+void substring(const wstring *s, u64 start, u64 length, wstring *out);
+void substring(const char    *s, u64 start, u64 length, char    *out, u64 out_offset);
+void substring(const wchar_t *s, u64 start, u64 length, wchar_t *out, u64 out_offset);
+void substring(const char    *s, u64 start, u64 length, string  *out, u64 out_offset);
+void substring(const wchar_t *s, u64 start, u64 length, wstring *out, u64 out_offset);
+void substring(const_string   s, u64 start, u64 length, string  *out, u64 out_offset);
+void substring(const_wstring  s, u64 start, u64 length, wstring *out, u64 out_offset);
+void substring(const string  *s, u64 start, u64 length, string  *out, u64 out_offset);
+void substring(const wstring *s, u64 start, u64 length, wstring *out, u64 out_offset);
 
 char    to_upper(char    c);
 wchar_t to_upper(wchar_t c);
