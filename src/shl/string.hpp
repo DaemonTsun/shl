@@ -118,7 +118,8 @@ typedef const_string_base<wchar_t> const_wstring;
 const_string  operator ""_cs(const char    *, u64);
 const_wstring operator ""_cs(const wchar_t *, u64);
 
-// TODO: comparisons
+bool operator==(const_string a, const_string b);
+bool operator==(const_wstring a, const_wstring b);
 
 template<typename C>
 struct string_base
@@ -142,6 +143,7 @@ struct string_base
 typedef string_base<char>    string;
 typedef string_base<wchar_t> wstring;
 
+// these allocate memory
 string  operator ""_s(const char    *, u64);
 wstring operator ""_s(const wchar_t *, u64);
 

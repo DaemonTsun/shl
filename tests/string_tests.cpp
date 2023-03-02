@@ -2,6 +2,16 @@
 #include <t1/t1.hpp>
 #include "shl/string.hpp"
 
+std::ostream& operator<<(std::ostream &lhs, const string &rhs)
+{
+    return lhs << rhs.data.data;
+}
+
+std::ostream& operator<<(std::ostream &lhs, const_string rhs)
+{
+    return lhs << rhs.c_str;
+}
+
 define_test(cs_suffix_constructs_const_string_from_literal)
 {
     const_string str = "abc"_cs;
@@ -99,6 +109,21 @@ define_test(clear_clears_string)
     clear(&str);
     assert_equal(string_length(&str), 0);
     assert_equal(str[0], '\0');
+
+    free(&str);
+}
+
+define_test(equals_operator_returns_if_strings_are_equal)
+{
+    string str = "hello world"_s;
+    const_string cstr = "hello world"_cs;
+
+    assert_equal(str == "hello world"_cs, true);
+    assert_equal(cstr == "hello world"_cs, true);
+    assert_equal(cstr == "world hello"_cs, false);
+
+    // when == operator is defined, assert_equal works
+    assert_equal(str, "hello world"_cs);
 
     free(&str);
 }

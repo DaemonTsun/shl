@@ -20,6 +20,16 @@ const_wstring operator ""_cs(const wchar_t *str, u64 n)
     return const_wstring{str, n};
 }
 
+bool operator==(const_string a, const_string b)
+{
+    return compare_strings(a, b) == 0;
+}
+
+bool operator==(const_wstring a, const_wstring b)
+{
+    return compare_strings(a, b) == 0;
+}
+
 string  operator ""_s(const char *str, u64 n)
 {
     string ret;
