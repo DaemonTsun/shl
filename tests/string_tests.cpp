@@ -2,6 +2,7 @@
 #include <t1/t1.hpp>
 #include "shl/string.hpp"
 
+// operators necessary for test formatting... unfortunately
 std::ostream& operator<<(std::ostream &lhs, const string &rhs)
 {
     return lhs << rhs.data.data;
@@ -427,6 +428,38 @@ define_test(copy_string_copies_up_to_n_characters)
     str.data.size = 5;
 
     assert_equal(compare_strings(str, "lorem"_cs), 0);
+
+    free(&str);
+}
+
+define_test(copy_string_copies_at_destination_offset)
+{
+    string str = "hello world"_s;
+
+    assert_equal(string_length(str), 11);
+
+    copy_string("lorem ipsum", &str, 5, 6);
+
+    assert_equal(string_length(str), 11);
+    assert_equal(str[string_length(str)], '\0');
+
+    assert_equal(compare_strings(str, "hello lorem"_cs), 0);
+
+    free(&str);
+}
+
+define_test(copy_string_copies_at_destination_offset_and_allocates_if_offset_is_outside_destination_size)
+{
+    string str = "hello world"_s;
+
+    assert_equal(string_length(str), 11);
+
+    copy_string("lorem ipsum", &str, 5, 11);
+
+    assert_equal(string_length(str), 16);
+    assert_equal(str[string_length(str)], '\0');
+
+    assert_equal(compare_strings(str, "hello worldlorem"_cs), 0);
 
     free(&str);
 }

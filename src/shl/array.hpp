@@ -347,7 +347,7 @@ void free(array<T> *arr)
 
 #define _for_array_vars(I_Var, V_Var, ARRAY)\
     u64 I_Var = 0;\
-    typename remove_pointer_t<decltype(ARRAY)>::value_type *V_Var = (ARRAY)->data;
+    typename remove_pointer(decltype(ARRAY))::value_type *V_Var = (ARRAY)->data;
 
 #define for_array_V(V_Var, ARRAY)\
     _for_array_vars(V_Var##_index, V_Var, ARRAY)\

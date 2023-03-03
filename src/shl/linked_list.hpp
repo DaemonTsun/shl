@@ -384,8 +384,8 @@ void free(linked_list<T> *list)
 }
 
 #define _for_list_vars(V_Var, N_Var, LIST)\
-    typename remove_pointer_t<decltype(LIST)>::node_type  *N_Var = (LIST)->first;\
-    typename remove_pointer_t<decltype(LIST)>::value_type *V_Var = N_Var ? &(N_Var->value) : nullptr;
+    typename remove_pointer(decltype(LIST))::node_type  *N_Var = (LIST)->first;\
+    typename remove_pointer(decltype(LIST))::value_type *V_Var = N_Var ? &(N_Var->value) : nullptr;
 
 #define for_list_V(V_Var, LIST)\
     _for_list_vars(V_Var, V_Var##_node, LIST)\

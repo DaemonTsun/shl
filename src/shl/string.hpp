@@ -78,8 +78,10 @@
  *
  * string manipulation functions
  *
- * copy_string(src, dest)       copies one string to another
- * copy_string(src, dest, n)    copies one string to another, up to n characters
+ * copy_string(src, dest)           copies one string to another
+ * copy_string(src, dest, n)        copies one string to another, up to n characters
+ * copy_string(src, dest, n, off)   copies one string to another, up to n characters, starting in
+ *                                  dest at offset off
  *
  * trim_left(s)                 trims whitespaces from the left of string s, in-place
  * trim_right(s)                trims whitespaces from the right of string s, in-place
@@ -279,14 +281,20 @@ void copy_string(const char    *src, string  *dst);
 void copy_string(const wchar_t *src, string  *dst);
 void copy_string(const char    *src, string  *dst, u64 n);
 void copy_string(const wchar_t *src, string  *dst, u64 n);
+void copy_string(const char    *src, string  *dst, u64 n, u64 dst_offset);
+void copy_string(const wchar_t *src, string  *dst, u64 n, u64 dst_offset);
 void copy_string(const_string   src, string  *dst);
 void copy_string(const_wstring  src, wstring *dst);
 void copy_string(const_string   src, string  *dst, u64 n);
 void copy_string(const_wstring  src, wstring *dst, u64 n);
+void copy_string(const_string   src, string  *dst, u64 n, u64 dst_offset);
+void copy_string(const_wstring  src, wstring *dst, u64 n, u64 dst_offset);
 void copy_string(const string  *src, string  *dst);
 void copy_string(const wstring *src, wstring *dst);
 void copy_string(const string  *src, string  *dst, u64 n);
 void copy_string(const wstring *src, wstring *dst, u64 n);
+void copy_string(const string  *src, string  *dst, u64 n, u64 dst_offset);
+void copy_string(const wstring *src, wstring *dst, u64 n, u64 dst_offset);
 
 void append_string(string  *dst, const char    *other);
 void append_string(string  *dst, const wchar_t *other);

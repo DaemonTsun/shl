@@ -709,7 +709,7 @@ wchar_t *copy_string(const wchar_t *src, wchar_t *dst, u64 n)
 }
 
 template<typename C>
-void _copy_string_cs_s(const_string_base<C> src, string_base<C> *dst, u64 n)
+void _copy_string_cs_s(const_string_base<C> src, string_base<C> *dst, u64 n, u64 dst_offset)
 {
     assert(dst != nullptr);
 
@@ -721,77 +721,108 @@ void _copy_string_cs_s(const_string_base<C> src, string_base<C> *dst, u64 n)
     if (n == 0)
         return;
 
-    if (dst->data.reserved_size < n + 1)
+    u64 size_needed = n + dst_offset;
+    if (dst->data.reserved_size < size_needed + 1)
     {
-        reserve(&dst->data, n + 1);
-        dst->data.size = n;
+        reserve(&dst->data, size_needed + 1);
+        dst->data.size = size_needed;
         append_null = true;
     }
 
-    copy_memory(src.c_str, dst->data.data, sizeof(C) * n);
+    copy_memory(src.c_str, dst->data.data + dst_offset, sizeof(C) * n);
 
     if (append_null)
-        dst->data.data[n] = '\0';
+        dst->data.data[dst->data.size] = '\0';
 }
 
 void copy_string(const char *src, string *dst)
 {
-    _copy_string_cs_s(to_const_string(src), dst, -1);
+    _copy_string_cs_s(to_const_string(src), dst, -1, 0);
 }
 
 void copy_string(const wchar_t *src, wstring *dst)
 {
-    _copy_string_cs_s(to_const_string(src), dst, -1);
+    _copy_string_cs_s(to_const_string(src), dst, -1, 0);
 }
 
 void copy_string(const char *src, string *dst, u64 n)
 {
-    _copy_string_cs_s(to_const_string(src), dst, n);
+    _copy_string_cs_s(to_const_string(src), dst, n, 0);
 }
 
 void copy_string(const wchar_t *src, wstring *dst, u64 n)
 {
-    _copy_string_cs_s(to_const_string(src), dst, n);
+    _copy_string_cs_s(to_const_string(src), dst, n, 0);
+}
+
+void copy_string(const char *src, string *dst, u64 n, u64 dst_offset)
+{
+    _copy_string_cs_s(to_const_string(src), dst, n, dst_offset);
+}
+
+void copy_string(const wchar_t *src, wstring *dst, u64 n, u64 dst_offset)
+{
+    _copy_string_cs_s(to_const_string(src), dst, n, dst_offset);
 }
 
 void copy_string(const_string src, string *dst)
 {
-    _copy_string_cs_s(src, dst, -1);
+    _copy_string_cs_s(src, dst, -1, 0);
 }
 
 void copy_string(const_wstring src, wstring *dst)
 {
-    _copy_string_cs_s(src, dst, -1);
+    _copy_string_cs_s(src, dst, -1, 0);
 }
 
 void copy_string(const_string src, string *dst, u64 n)
 {
-    _copy_string_cs_s(src, dst, n);
+    _copy_string_cs_s(src, dst, n, 0);
 }
 
 void copy_string(const_wstring src, wstring *dst, u64 n)
 {
-    _copy_string_cs_s(src, dst, n);
+    _copy_string_cs_s(src, dst, n, 0);
+}
+
+void copy_string(const_string src, string *dst, u64 n, u64 dst_offset)
+{
+    _copy_string_cs_s(src, dst, n, dst_offset);
+}
+
+void copy_string(const_wstring src, wstring *dst, u64 n, u64 dst_offset)
+{
+    _copy_string_cs_s(src, dst, n, dst_offset);
 }
 
 void copy_string(const string *src, string *dst)
 {
-    _copy_string_cs_s(to_const_string(src), dst, -1);
+    _copy_string_cs_s(to_const_string(src), dst, -1, 0);
 }
 
 void copy_string(const wstring *src, wstring *dst)
 {
-    _copy_string_cs_s(to_const_string(src), dst, -1);
+    _copy_string_cs_s(to_const_string(src), dst, -1, 0);
 }
 
 void copy_string(const string *src, string *dst, u64 n)
 {
-    _copy_string_cs_s(to_const_string(src), dst, n);
+    _copy_string_cs_s(to_const_string(src), dst, n, 0);
 }
 
 void copy_string(const wstring *src, wstring *dst, u64 n)
 {
-    _copy_string_cs_s(to_const_string(src), dst, n);
+    _copy_string_cs_s(to_const_string(src), dst, n, 0);
+}
+
+void copy_string(const string *src, string *dst, u64 n, u64 dst_offset)
+{
+    _copy_string_cs_s(to_const_string(src), dst, n, dst_offset);
+}
+
+void copy_string(const wstring *src, wstring *dst, u64 n, u64 dst_offset)
+{
+    _copy_string_cs_s(to_const_string(src), dst, n, dst_offset);
 }
 
 template<typename C>
@@ -1192,7 +1223,7 @@ void _substring_cs_s(const_string_base<C> s, u64 start, u64 length, string_base<
     if (start >= s.size)
         return;
 
-    u64 outlen = string_length(out);
+    u64 outlen = out->data.reserved_size;
     bool append_null = false;
 
     if (out_start + length >= outlen)
