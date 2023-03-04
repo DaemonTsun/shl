@@ -46,12 +46,26 @@ define_test(to_string_converts_char_to_string)
     free(&str);
 }
 
+define_test(to_string_converts_string_to_string)
+{
+    string str;
+    init(&str);
+
+    assert_equal(to_string(&str, "hello"_cs), 5);
+    assert_equal(str, "hello"_cs);
+    assert_equal(to_string(&str, "world"_cs), 5);
+    assert_equal(str, "world"_cs);
+    assert_equal(to_string(&str, "hello"_cs, 5 /*offset*/), 5);
+    assert_equal(str, "worldhello"_cs);
+
+    free(&str);
+}
+
 #define assert_to_string(Str, Result, Length, ...)\
     assert_equal(to_string(&str, __VA_ARGS__), Length);\
     assert_equal(string_length(&Str), Length);\
     assert_equal(Str, Result);\
     clear(&Str);
-
 
 define_test(to_string_converts_integer_to_string)
 {
@@ -135,6 +149,41 @@ define_test(to_string_converts_float_to_string)
     assert_to_string(str, "0.10"_cs,   4, 0.1, 0, float_format_options{.precision = 2, .ignore_trailing_zeroes = false});
     assert_to_string(str, "0.1337"_cs, 6, 0.1337, 0);
     assert_to_string(str, "0.133791"_cs, 8, 0.13379123, 0); // default precision is 6
+
+    free(&str);
+}
+
+define_test(to_string_converts_pointer_to_string)
+{
+    string str;
+    init(&str);
+
+    void *voidptr = nullptr;
+    int *intptr = reinterpret_cast<int*>(0x13379001);
+    const char *charptr = "hello";
+
+    assert_to_string(str, "0x00000000"_cs,  10, voidptr);
+    assert_to_string(str, "0x13379001"_cs,  10, intptr);
+    assert_to_string(str, "hello"_cs,        5, charptr);
+
+    free(&str);
+}
+
+#define assert_format(Str, Result, Length, Fmt, ...)\
+    assert_equal(format(&str, Fmt, __VA_ARGS__), Length);\
+    assert_equal(string_length(&Str), Length);\
+    assert_equal(Str, Result);\
+    clear(&Str);
+
+define_test(format_formats_string)
+{
+    string str;
+    init(&str, 20);
+    str.data.size = 0;
+
+    assert_format(str, "hello! bye"_cs, 10, "% %"_cs, "hello!"_cs, "bye");
+
+
 
     free(&str);
 }

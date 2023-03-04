@@ -11,10 +11,24 @@ s64 to_string(wstring *s, bool x);
 s64 to_string(wstring *s, bool x, u64 offset);
 s64 to_string(wstring *s, bool x, u64 offset, bool as_text);
 
-s64 to_string(string  *s, char x);
-s64 to_string(string  *s, char x, u64 offset);
+s64 to_string(string  *s, char    x);
+s64 to_string(string  *s, char    x, u64 offset);
 s64 to_string(wstring *s, wchar_t x);
 s64 to_string(wstring *s, wchar_t x, u64 offset);
+
+// kind of redundant
+s64 to_string(string  *s, const char    *x);
+s64 to_string(string  *s, const char    *x, u64 offset);
+s64 to_string(string  *s, const_string   x);
+s64 to_string(string  *s, const_string   x, u64 offset);
+s64 to_string(string  *s, const string  *x);
+s64 to_string(string  *s, const string  *x, u64 offset);
+s64 to_string(string  *s, const wchar_t *x);
+s64 to_string(string  *s, const wchar_t *x, u64 offset);
+s64 to_string(wstring *s, const_wstring  x);
+s64 to_string(wstring *s, const_wstring  x, u64 offset);
+s64 to_string(wstring *s, const wstring *x);
+s64 to_string(wstring *s, const wstring *x, u64 offset);
 
 template<typename C = char>
 struct integer_format_options
@@ -67,6 +81,8 @@ s64 to_string(string  *s, s64 x);
 s64 to_string(string  *s, s64 x, u64 offset);
 s64 to_string(string  *s, s64 x, u64 offset, integer_format_options<char> options);
 
+s64 to_string(string  *s, const void *x);
+s64 to_string(string  *s, const void *x, u64 offset);
 
 template<typename C = char>
 struct float_format_options
@@ -90,10 +106,89 @@ inline constexpr float_format_options default_float_options =
     .ignore_trailing_zeroes = true
 };
 
-
 s64 to_string(string  *s, float x);
 s64 to_string(string  *s, float x, u64 offset);
 s64 to_string(string  *s, float x, u64 offset, float_format_options<char> options);
+
 s64 to_string(string  *s, double x);
 s64 to_string(string  *s, double x, u64 offset);
 s64 to_string(string  *s, double x, u64 offset, float_format_options<char> options);
+
+namespace internal
+{
+template<typename C>
+s64 _format(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base<C> fmt)
+{
+    while (i < fmt.size)
+    {
+        C c = fmt[i];
+
+        if (c == '%')
+        {
+            // ERROR
+            return -1;
+        }
+        else
+        {
+            // TODO: reserve
+            s->data.data[offset] = c;
+        }
+
+        offset++;
+        written++;
+        i++;
+    }
+
+    return written;
+}
+
+template<typename C, typename T, typename... Ts>
+s64 _format(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base<C> fmt, T &&arg, Ts &&...args)
+{
+    while (i < fmt.size)
+    {
+        C c = fmt[i];
+
+        if (c == '%')
+        {
+            written += to_string(s, forward<T>(arg), offset);
+            return _format(i+1, written, s, offset + written, fmt, forward<Ts>(args)...);
+        }
+        else
+        {
+            // TODO: reserve
+            s->data.data[offset] = c;
+        }
+
+        offset++;
+        written++;
+        i++;
+    }
+
+    return written;
+}
+}
+
+template<typename C, typename... Ts>
+s64 format(string_base<C> *s, const C *fmt, Ts &&...args)
+{
+    return format(s, 0, to_const_string(fmt), forward<Ts>(args)...);
+}
+
+template<typename C, typename... Ts>
+s64 format(string_base<C> *s, u64 offset, const C *fmt, Ts &&...args)
+{
+    return format(s, offset, to_const_string(fmt), forward<Ts>(args)...);
+}
+
+template<typename C, typename... Ts>
+s64 format(string_base<C> *s, const_string_base<C> fmt, Ts &&...args)
+{
+    return format(s, 0, fmt, forward<Ts>(args)...);
+}
+
+template<typename C, typename... Ts>
+s64 format(string_base<C> *s, u64 offset, const_string_base<C> fmt, Ts &&...args)
+{
+    return internal::_format(0, 0, s, offset, fmt, forward<Ts>(args)...);
+}
