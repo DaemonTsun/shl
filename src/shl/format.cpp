@@ -68,7 +68,7 @@ s64 _bool_to_string(string_base<C> *s, bool x, u64 offset, format_options<C> opt
     }
     else
     {
-        written += pad_string(s, opt.pad_char, opt.pad_length - 5, offset);
+        written += pad_string(s, opt.pad_char, opt.pad_length - 1, offset);
         s->data.data[written + offset] = x ? '1' : '0';
         written += 1;
     }
@@ -114,7 +114,7 @@ s64 _char_to_string(string_base<C> *s, C x, u64 offset, format_options<C> opt)
     string_reserve(s, sz);
 
     written += pad_string(s, opt.pad_char, opt.pad_length - 1, offset);
-    s->data.data[written + offset] = x;
+    s->data.data[offset + written] = x;
     written += 1;
 
     return written;
@@ -141,7 +141,7 @@ s64 _string_to_string(string_base<C> *s, const_string_base<C> x, u64 offset, for
     string_reserve(s, sz);
 
     written += pad_string(s, opt.pad_char, opt.pad_length - x.size, offset);
-    copy_string(x, s, x.size, offset);
+    copy_string(x, s, x.size, offset + written);
     written += x.size;
 
     return written;

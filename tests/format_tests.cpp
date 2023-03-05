@@ -29,6 +29,17 @@ define_test(to_string_converts_bool_to_string)
     assert_equal(str, "true"_cs);
     assert_equal(to_string(&str, false, 0 /*offset*/, opt, true /* as text */), 5);
     assert_equal(str, "false"_cs);
+    clear(&str);
+
+    assert_equal(to_string(&str, true, 0, format_options<char>{.pad_length = 8, .pad_char = ' '}, false), 8);
+    assert_equal(str, "       1"_cs);
+    assert_equal(to_string(&str, true, 0, format_options<char>{.pad_length = 8, .pad_char = ' '}, true), 8);
+    assert_equal(str, "    true"_cs);
+
+    assert_equal(to_string(&str, false, 0, format_options<char>{.pad_length = -8, .pad_char = ' '}, false), 8);
+    assert_equal(str, "0       "_cs);
+    assert_equal(to_string(&str, false, 0, format_options<char>{.pad_length = -8, .pad_char = ' '}, true), 8);
+    assert_equal(str, "false   "_cs);
 
     free(&str);
 }
@@ -44,6 +55,12 @@ define_test(to_string_converts_char_to_string)
     assert_equal(str, "b"_cs);
     assert_equal(to_string(&str, 'c', 1 /*offset*/), 1);
     assert_equal(str, "bc"_cs);
+    clear(&str);
+
+    assert_equal(to_string(&str, 'd', 0, format_options<char>{.pad_length = 6, .pad_char = ' '}), 6);
+    assert_equal(str, "     d"_cs);
+    assert_equal(to_string(&str, 'e', 0, format_options<char>{.pad_length = -6, .pad_char = ' '}), 6);
+    assert_equal(str, "e     "_cs);
 
     free(&str);
 }
@@ -59,6 +76,16 @@ define_test(to_string_converts_string_to_string)
     assert_equal(str, "world"_cs);
     assert_equal(to_string(&str, "hello"_cs, 5 /*offset*/), 5);
     assert_equal(str, "worldhello"_cs);
+
+    clear(&str);
+    assert_equal(to_string(&str, "hello"_cs, 0), 5);
+    assert_equal(str, "hello"_cs);
+    clear(&str);
+
+    assert_equal(to_string(&str, "hello"_cs, 0, format_options<char>{.pad_length = 10, .pad_char = ' '}), 10);
+    assert_equal(str, "     hello"_cs);
+    assert_equal(to_string(&str, "hello"_cs, 0, format_options<char>{.pad_length = -10, .pad_char = ' '}), 10);
+    assert_equal(str, "hello     "_cs);
 
     free(&str);
 }
@@ -108,6 +135,10 @@ define_test(to_string_converts_integer_to_string)
     assert_to_string(str, "00001337"_cs,    8, (u16)0x1337, 0, opt, integer_format_options{.base = 16, .include_prefix = false, .number_pad_length = 8});
     assert_to_string(str, "0x00001337"_cs, 10, (u16)0x1337, 0, opt, integer_format_options{.base = 16, .include_prefix = true, .number_pad_length = 8});
     assert_to_string(str, "0x1337"_cs,      6, (u16)0x1337, 0, opt, integer_format_options{.base = 16, .include_prefix = true, .number_pad_length = 2});
+
+    assert_to_string(str, "  0x00001337"_cs, 12, (s16)0x1337, 0, format_options<char>{.pad_length = 12, .pad_char = ' '}, integer_format_options{.base = 16, .include_prefix = true, .number_pad_length = 8});
+    assert_to_string(str, "0x00001337  "_cs, 12, (s16)0x1337, 0, format_options<char>{.pad_length = -12, .pad_char = ' '}, integer_format_options{.base = 16, .include_prefix = true, .number_pad_length = 8});
+    assert_to_string(str, "-0x00001337 "_cs, 12, (s16)-0x1337, 0, format_options<char>{.pad_length = -12, .pad_char = ' '}, integer_format_options{.base = 16, .include_prefix = true, .number_pad_length = 8});
 
     // signed
     assert_to_string(str, "-5"_cs, 2, (s8)-5);
