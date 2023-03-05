@@ -160,6 +160,9 @@ void init(wstring *str, const wchar_t *c);
 void init(wstring *str, const wchar_t *c, u64 size);
 void init(wstring *str, const_wstring s);
 
+bool string_reserve(string  *s, u64 total_size);
+bool string_reserve(wstring *s, u64 total_size);
+
 void clear(string  *str);
 void clear(wstring *str);
 void free(string  *str);

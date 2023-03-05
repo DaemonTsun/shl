@@ -137,6 +137,29 @@ void init(wstring *str, const_wstring s)
     _init(str, s);
 }
 
+template<typename C>
+bool _string_reserve(string_base<C> *s, u64 total_size)
+{
+    // +1 for \0
+    if (s->data.reserved_size < total_size + 1)
+    {
+        reserve(&s->data, total_size + 1);
+        return true;
+    }
+
+    return false;
+}
+
+bool string_reserve(string *s, u64 total_size)
+{
+    return _string_reserve(s, total_size);
+}
+
+bool string_reserve(wstring *s, u64 total_size)
+{
+    return _string_reserve(s, total_size);
+}
+
 void clear(string  *str)
 {
     assert(str != nullptr);
