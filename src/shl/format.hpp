@@ -207,71 +207,56 @@ s64 _format(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base
             break;
 
         // %
-        bool default_fmt = false;
-        format_options<C> options = default_format_options<C>;
-
-        default_fmt = true;
-
-        /*
-        goto fmt_end;
-
-        if (i + 1 >= fmt.size)
-        {
-            default_fmt = true;
-            goto fmt_end;
-        }
+        format_options<C> opt = default_format_options<C>;
 
         C sign = 0;
-        int pad_length = 0;
-        C pad_char = 0;
         int precision = 0;
 
         s64 j = i + 1;
-        C c2 = fmt[j];
+        C c2;
 
-        switch (fmt[j])
+#define if_at_end_goto(Var, Label)\
+        if (Var >= fmt.size)\
+        {\
+            i = Var - 1;\
+            goto Label;\
+        }
+
+        if_at_end_goto(j, fmt_end);
+
+        c2 = fmt[j];
+
+        switch (c2)
         {
         case '-': sign = '-'; j++; break;
         case '+': sign = '+'; j++; break;
         }
 
-        if (j >= fmt.size)
-        {
-            i = j - 1;
-            default_fmt = true;
-            goto fmt_end;
-        }
+        if_at_end_goto(j, fmt_end);
 
         c2 = fmt[j];
         
         while (c2 >= '0' && c2 <= '9')
         {
-            pad_length += (pad_length * 10) + (c2 - '0');
+            opt.pad_length += (opt.pad_length * 10) + (c2 - '0');
             j++;
 
             if (j >= fmt.size)
-            {
-                i = j - 1;
-                default_fmt = true;
-                goto fmt_end;
-            }
+                break;
 
             c2 = fmt[j];
         }
 
         if (sign == '-')
-            pad_length = -pad_length;
+            opt.pad_length = -opt.pad_length;
+
+        if_at_end_goto(j, fmt_end);
 
         if (c2 == '.')
         {
             j++;
 
-            if (j >= fmt.size)
-            {
-                i = j - 1;
-                default_fmt = true;
-                goto fmt_end;
-            }
+            if_at_end_goto(j, fmt_end);
 
             c2 = fmt[j];
             
@@ -280,25 +265,18 @@ s64 _format(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base
                 precision += (precision * 10) + (c2 - '0');
                 j++;
 
-                if (j >= fmt.size)
-                {
-                    i = j - 1;
-                    default_fmt = true;
-                    goto fmt_end;
-                }
+                if_at_end_goto(j, fmt_end);
 
                 c2 = fmt[j];
             }
         }
+
+#undef if_at_end_goto
         
 fmt_end:
-        */
 
-        if (default_fmt)
-        {
-            written += to_string(s, forward<T>(arg), offset, options);
-            return _format(++i, written, s, offset + written, fmt, forward<Ts>(args)...);
-        }
+        written += to_string(s, forward<T>(arg), offset, opt);
+        return _format(++i, written, s, offset + written, fmt, forward<Ts>(args)...);
     }
 
     return written;

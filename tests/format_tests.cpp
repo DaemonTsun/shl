@@ -4,12 +4,12 @@
 
 std::ostream& operator<<(std::ostream &lhs, const string &rhs)
 {
-    return lhs << rhs.data.data;
+    return lhs << '"' << rhs.data.data << '"';
 }
 
 std::ostream& operator<<(std::ostream &lhs, const_string rhs)
 {
-    return lhs << rhs.c_str;
+    return lhs << '"' << rhs.c_str << '"';
 }
 
 define_test(to_string_converts_bool_to_string)
@@ -224,7 +224,12 @@ define_test(format_formats_string)
     init(&str);
 
     assert_format(str, "hello! bye"_cs, 10, "% %"_cs, "hello!"_cs, "bye");
+    // escape with backslash
     assert_format(str, "a%b"_cs, 3, "%\\%b"_cs, 'a');
+
+    // space padding
+    assert_format(str, "  abc"_cs, 5, "%5"_cs, "abc");
+    assert_format(str, "abc  "_cs, 5, "%-5"_cs, "abc");
 
     free(&str);
 }
