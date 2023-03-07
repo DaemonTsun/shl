@@ -4,11 +4,17 @@
 #include "shl/type_functions.hpp"
 #include "shl/string.hpp"
 
+#define DEFAULT_INT_PRECISION 0
+#define DEFAULT_FLOAT_PRECISION 6
+
 template<typename C = char>
 struct format_options
 {
     int pad_length;
     C pad_char;
+    C sign;         // only used by numbers, either +, - or 0x00
+    int precision;  // only used by numbers, for float its remainder places
+                    // for integers, its zero pad count, excluding sign or prefix.
 };
 
 template<typename C = char>
@@ -16,6 +22,8 @@ inline constexpr format_options<C> default_format_options
 {
     .pad_length = 0,
     .pad_char = ' ',
+    .sign = '\0',
+    .precision = -1
 };
 
 s64 to_string(string  *s, bool x);
@@ -56,8 +64,6 @@ struct integer_format_options
 {
     int base;               // 2, 8, 10 or 16
     bool include_prefix;    // 0b for base 2, 0 for base 8, 0x for base 16
-    int number_pad_length;  // zero left padding length EXCLUDING PREFIX OR SIGN
-    bool force_sign;        // always include + or -
     bool caps_letters;      // only for hex, whether to use ABCDEF
     bool caps_prefix;       // if include_prefix is on and base is 2 or 16, make the
                             // prefix letter caps
@@ -67,8 +73,6 @@ inline constexpr integer_format_options default_integer_options =
 {
     .base = 10,
     .include_prefix = false,
-    .number_pad_length = 0,
-    .force_sign = false,
     .caps_letters = false,
     .caps_prefix = false
 };
@@ -105,9 +109,6 @@ s64 to_string(string  *s, const void *x, u64 offset, format_options<char> opt);
 
 struct float_format_options
 {
-    int precision;                  // how many remainder digits
-    int number_pad_length;          // how many places to pad the whole part with zeroes
-    bool force_sign;                // always include + or -
     bool ignore_trailing_zeroes;    // if true, e.g. 0.1000 becomes 0.1
 };
 
@@ -115,9 +116,6 @@ struct float_format_options
 
 inline constexpr float_format_options default_float_options = 
 {
-    .precision = 6,
-    .number_pad_length = 0,
-    .force_sign = false,
     .ignore_trailing_zeroes = true
 };
 
@@ -208,9 +206,9 @@ s64 _format(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base
 
         // %
         format_options<C> opt = default_format_options<C>;
-
-        C sign = 0;
-        int precision = 0;
+        bool alternative = false; // #
+        C sign = 0;               // + or -
+        int precision = 6;        // .123...
 
         s64 j = i + 1;
         C c2;
@@ -225,6 +223,15 @@ s64 _format(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base
         if_at_end_goto(j, fmt_end);
 
         c2 = fmt[j];
+
+        if (c2 == '#')
+        {
+            alternative = true;
+            j++;
+
+            if_at_end_goto(j, fmt_end);
+            c2 = fmt[j];
+        }
 
         switch (c2)
         {
@@ -259,6 +266,9 @@ s64 _format(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base
             if_at_end_goto(j, fmt_end);
 
             c2 = fmt[j];
+
+            if (c2 >= '0' && c2 <= '9')
+                precision = 0;
             
             while (c2 >= '0' && c2 <= '9')
             {
@@ -271,11 +281,39 @@ s64 _format(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base
             }
         }
 
+        if_at_end_goto(j, fmt_end);
+
+        c2 = fmt[j];
+
+        switch (c2)
+        {
+        case 'f':
+        {
+            /*
+            float_format_options fopt{.precision = precision, .number_pad_length = 0, .force_sign = (sign == '+'), .ignore_trailing_zeroes = true};
+
+            double val = *(double*)(void*)(&arg);
+
+            written += to_string(s, val, offset, opt, fopt);
+            return _format(++i, written, s, offset + written, fmt, forward<Ts>(args)...);
+            */
+            break;
+        }
+
+        }
+
 #undef if_at_end_goto
         
 fmt_end:
 
-        written += to_string(s, forward<T>(arg), offset, opt);
+        if constexpr (is_same(T, float) || is_same(T, double))
+        {
+            float_format_options fopt{.precision = precision, .number_pad_length = 0, .force_sign = (sign == '+'), .ignore_trailing_zeroes = true};
+            written += to_string(s, forward<T>(arg), offset, opt, fopt);
+        }
+        else
+            written += to_string(s, forward<T>(arg), offset, opt);
+
         return _format(++i, written, s, offset + written, fmt, forward<Ts>(args)...);
     }
 

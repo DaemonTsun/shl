@@ -132,18 +132,18 @@ define_test(to_string_converts_integer_to_string)
     assert_to_string(str, "0XDE"_cs, 4, (u8)0xde, 0, opt, integer_format_options{.base = 16, .include_prefix = true, .caps_letters = true,  .caps_prefix = true});
 
     // padding
-    assert_to_string(str, "00001337"_cs,    8, (u16)0x1337, 0, opt, integer_format_options{.base = 16, .include_prefix = false, .number_pad_length = 8});
-    assert_to_string(str, "0x00001337"_cs, 10, (u16)0x1337, 0, opt, integer_format_options{.base = 16, .include_prefix = true, .number_pad_length = 8});
-    assert_to_string(str, "0x1337"_cs,      6, (u16)0x1337, 0, opt, integer_format_options{.base = 16, .include_prefix = true, .number_pad_length = 2});
+    assert_to_string(str, "00001337"_cs,    8, (u16)0x1337, 0, format_options<char>{.precision = 8}, integer_format_options{.base = 16, .include_prefix = false});
+    assert_to_string(str, "0x00001337"_cs, 10, (u16)0x1337, 0, format_options<char>{.precision = 8}, integer_format_options{.base = 16, .include_prefix = true});
+    assert_to_string(str, "0x1337"_cs,      6, (u16)0x1337, 0, format_options<char>{.precision = 2}, integer_format_options{.base = 16, .include_prefix = true});
 
-    assert_to_string(str, "  0x00001337"_cs, 12, (s16)0x1337, 0, format_options<char>{.pad_length = 12, .pad_char = ' '}, integer_format_options{.base = 16, .include_prefix = true, .number_pad_length = 8});
-    assert_to_string(str, "0x00001337  "_cs, 12, (s16)0x1337, 0, format_options<char>{.pad_length = -12, .pad_char = ' '}, integer_format_options{.base = 16, .include_prefix = true, .number_pad_length = 8});
-    assert_to_string(str, "-0x00001337 "_cs, 12, (s16)-0x1337, 0, format_options<char>{.pad_length = -12, .pad_char = ' '}, integer_format_options{.base = 16, .include_prefix = true, .number_pad_length = 8});
+    assert_to_string(str, "  0x00001337"_cs, 12, (s16)0x1337, 0, format_options<char>{.pad_length = 12, .pad_char = ' ', .precision = 8}, integer_format_options{.base = 16,   .include_prefix = true});
+    assert_to_string(str, "0x00001337  "_cs, 12, (s16)0x1337, 0, format_options<char>{.pad_length = -12, .pad_char = ' ', .precision = 8}, integer_format_options{.base = 16,  .include_prefix = true});
+    assert_to_string(str, "-0x00001337 "_cs, 12, (s16)-0x1337, 0, format_options<char>{.pad_length = -12, .pad_char = ' ', .precision = 8}, integer_format_options{.base = 16, .include_prefix = true});
 
     // signed
     assert_to_string(str, "-5"_cs, 2, (s8)-5);
-    assert_to_string(str, "5"_cs,  1, (s8)5, 0, opt, integer_format_options{.base = 10, .include_prefix = true, .force_sign = false});
-    assert_to_string(str, "+5"_cs, 2, (s8)5, 0, opt, integer_format_options{.base = 10, .include_prefix = true, .force_sign = true});
+    assert_to_string(str, "5"_cs,  1, (s8)5, 0, format_options<char>{.sign = '\0'}, integer_format_options{.base = 10, .include_prefix = true});
+    assert_to_string(str, "+5"_cs, 2, (s8)5, 0, format_options<char>{.sign = '+'}, integer_format_options{.base = 10, .include_prefix = true});
 
     free(&str);
 }
@@ -157,40 +157,35 @@ define_test(to_string_converts_float_to_string)
 
     // float
     assert_to_string(str, "0"_cs,          1, 0.f);
-    assert_to_string(str, "0"_cs,          1, 0.f, 0, opt, float_format_options{.precision = 0});
-    assert_to_string(str, "0.0"_cs,        3, 0.f, 0, opt, float_format_options{.precision = 1, .ignore_trailing_zeroes = false});
+    assert_to_string(str, "0"_cs,          1, 0.f, 0, format_options<char>{.precision = 0}, float_format_options{});
+    assert_to_string(str, "0.0"_cs,        3, 0.f, 0, format_options<char>{.precision = 1}, float_format_options{.ignore_trailing_zeroes = false});
     assert_to_string(str, "10"_cs,         2, 10.f, 0);
     assert_to_string(str, "1337"_cs,       4, 1337.f, 0);
     // thanks precision
     assert_to_string(str, "1231231232"_cs, 10, 1231231231.f, 0);
 
-    assert_to_string(str, "0"_cs,      1, 0.1f, 0, opt, float_format_options{.precision = 0});
-    assert_to_string(str, "0.1"_cs,    3, 0.1f, 0, opt, float_format_options{.precision = 1});
+    assert_to_string(str, "0"_cs,      1, 0.1f, 0, format_options<char>{.precision = 0}, float_format_options{});
+    assert_to_string(str, "0.1"_cs,    3, 0.1f, 0, format_options<char>{.precision = 1}, float_format_options{});
     assert_to_string(str, "0.1"_cs,    3, 0.1f, 0);
-    assert_to_string(str, "0.10"_cs,   4, 0.1f, 0, opt, float_format_options{.precision = 2, .ignore_trailing_zeroes = false});
+    assert_to_string(str, "0.10"_cs,   4, 0.1f, 0, format_options<char>{.precision = 2}, float_format_options{.ignore_trailing_zeroes = false});
     assert_to_string(str, "0.1337"_cs, 6, 0.1337f, 0);
     assert_to_string(str, "0.133791"_cs, 8, 0.13379123f, 0); // default precision is 6
 
     // double
     assert_to_string(str, "0"_cs,          1, 0.0);
-    assert_to_string(str, "0"_cs,          1, 0.0, 0, opt, float_format_options{.precision = 0});
-    assert_to_string(str, "0.0"_cs,        3, 0.0, 0, opt, float_format_options{.precision = 1, .ignore_trailing_zeroes = false});
+    assert_to_string(str, "0"_cs,          1, 0.0, 0, format_options<char>{.precision = 0}, float_format_options{});
+    assert_to_string(str, "0.0"_cs,        3, 0.0, 0, format_options<char>{.precision = 1}, float_format_options{.ignore_trailing_zeroes = false});
     assert_to_string(str, "10"_cs,         2, 10.0, 0);
     assert_to_string(str, "1337"_cs,       4, 1337.0, 0);
     // thanks precision!
     assert_to_string(str, "1231231231"_cs, 10, 1231231231.0, 0);
 
-    assert_to_string(str, "0"_cs,      1, 0.1, 0, opt, float_format_options{.precision = 0});
-    assert_to_string(str, "0.1"_cs,    3, 0.1, 0, opt, float_format_options{.precision = 1});
+    assert_to_string(str, "0"_cs,      1, 0.1, 0, format_options<char>{.precision = 0}, float_format_options{});
+    assert_to_string(str, "0.1"_cs,    3, 0.1, 0, format_options<char>{.precision = 1}, float_format_options{});
     assert_to_string(str, "0.1"_cs,    3, 0.1, 0);
-    assert_to_string(str, "0.10"_cs,   4, 0.1, 0, opt, float_format_options{.precision = 2, .ignore_trailing_zeroes = false});
+    assert_to_string(str, "0.10"_cs,   4, 0.1, 0, format_options<char>{.precision = 2}, float_format_options{.ignore_trailing_zeroes = false});
     assert_to_string(str, "0.1337"_cs, 6, 0.1337, 0);
     assert_to_string(str, "0.133791"_cs, 8, 0.13379123, 0); // default precision is 6
-
-    assert_to_string(str, "000.1337"_cs, 8, 0.1337, 0, opt, float_format_options{.precision = 6, .number_pad_length = 3, .ignore_trailing_zeroes = true});
-    assert_to_string(str, "  000.1337"_cs, 10, 0.1337, 0, format_options<char>{.pad_length = 10, .pad_char = ' '}, float_format_options{.precision = 6, .number_pad_length = 3, .ignore_trailing_zeroes = true});
-    assert_to_string(str, "000.1337  "_cs, 10, 0.1337, 0, format_options<char>{.pad_length = -10, .pad_char = ' '}, float_format_options{.precision = 6, .number_pad_length = 3, .ignore_trailing_zeroes = true});
-    assert_to_string(str, "-000.1337 "_cs, 10, -0.1337, 0, format_options<char>{.pad_length = -10, .pad_char = ' '}, float_format_options{.precision = 6, .number_pad_length = 3, .ignore_trailing_zeroes = true});
 
     free(&str);
 }
@@ -229,6 +224,9 @@ define_test(format_formats_string)
 
     // space padding
     assert_format(str, "  abc"_cs, 5, "%5"_cs, "abc");
+    assert_format(str, "abc  "_cs, 5, "%-5"_cs, "abc");
+
+    // float
     assert_format(str, "abc  "_cs, 5, "%-5"_cs, "abc");
 
     free(&str);

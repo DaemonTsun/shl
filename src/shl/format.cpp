@@ -207,6 +207,9 @@ s64 _c_unsigned_decimal_to_string_reverse(C *s, N x)
 template<typename C, typename N>
 s64 _integer_to_string(string_base<C> *s, N x, u64 offset, format_options<C> opt, integer_format_options iopt)
 {
+    if (opt.precision < 0)
+        opt.precision = DEFAULT_INT_PRECISION;
+
     C buf[64];
     s64 buf_size = -1;
 
@@ -236,13 +239,13 @@ s64 _integer_to_string(string_base<C> *s, N x, u64 offset, format_options<C> opt
     case 16: bytes_to_reserve += 2; break;
     }
 
-    if (x < 0 || iopt.force_sign)
+    if (x < 0 || opt.sign == '+')
         bytes_to_reserve += 1;
 
-    if (iopt.number_pad_length <= buf_size)
+    if (opt.precision <= buf_size)
         bytes_to_reserve += buf_size;
     else
-        bytes_to_reserve += iopt.number_pad_length;
+        bytes_to_reserve += opt.precision;
 
     u64 buf_write_size = bytes_to_reserve;
 
@@ -254,7 +257,7 @@ s64 _integer_to_string(string_base<C> *s, N x, u64 offset, format_options<C> opt
     u64 i = offset + pad_string(s, opt.pad_char, opt.pad_length - buf_write_size, offset);
 
     // sign, can be forced (+ or -), or negative numbers
-    if (iopt.force_sign)
+    if (opt.sign == '+')
     {
         s->data[i++] = (x < 0) ? '-' : '+';
     }
@@ -275,7 +278,7 @@ s64 _integer_to_string(string_base<C> *s, N x, u64 offset, format_options<C> opt
         }
     }
 
-    i += pad_string(s, '0', iopt.number_pad_length - buf_size, i);
+    i += pad_string(s, '0', opt.precision - buf_size, i);
 
     copy_string_reverse(buf, s->data.data + i, buf_size);
 
@@ -313,11 +316,12 @@ s64 to_string(string  *s, s64 x, u64 offset, format_options<char> opt, integer_f
 template<typename C>
 s64 _pointer_to_string(string_base<C> *s, const void *x, u64 offset, format_options<C> opt)
 {
+    if (opt.precision < 0)
+        opt.precision = 8;
+
     return _integer_to_string(s, reinterpret_cast<u64>(x), offset, opt, integer_format_options{
                 .base = 16,
                 .include_prefix = true,
-                .number_pad_length = 8,
-                .force_sign = false,
                 .caps_letters = false,
                 .caps_prefix = false
             });
@@ -368,6 +372,9 @@ s64 _c_remainder_to_string_reverse(C *s, N x, int precision, bool ignore_trailin
 template<typename C, typename N>
 s64 _float_to_string(string_base<C> *s, N x, u64 offset, format_options<C> opt, float_format_options fopt)
 {
+    if (opt.precision < 0)
+        opt.precision = DEFAULT_FLOAT_PRECISION;
+
     C buf[FLOAT_BUFFER_SIZE];
     s64 buf_size = -1;
 
@@ -376,7 +383,7 @@ s64 _float_to_string(string_base<C> *s, N x, u64 offset, format_options<C> opt, 
     u64 whole = static_cast<u64>(no_sign_x);
     double remainder = no_sign_x - static_cast<double>(whole);
 
-    s64 remainder_size = _c_remainder_to_string_reverse(buf, remainder, fopt.precision, fopt.ignore_trailing_zeroes);
+    s64 remainder_size = _c_remainder_to_string_reverse(buf, remainder, opt.precision, fopt.ignore_trailing_zeroes);
     s64 whole_size = _c_unsigned_decimal_to_string_reverse(buf + remainder_size, whole);
 
     buf_size = remainder_size + whole_size;
@@ -389,15 +396,11 @@ s64 _float_to_string(string_base<C> *s, N x, u64 offset, format_options<C> opt, 
 
     u64 bytes_to_reserve = 0;
 
-    if (fopt.force_sign || x < 0)
+    if (opt.sign == '+' || x < 0)
         bytes_to_reserve += 1;
 
+    bytes_to_reserve += whole_size;
     bytes_to_reserve += remainder_size;
-
-    if (fopt.number_pad_length <= whole_size)
-        bytes_to_reserve += whole_size;
-    else
-        bytes_to_reserve += fopt.number_pad_length;
 
     u64 buf_write_size = bytes_to_reserve;
 
@@ -432,12 +435,11 @@ s64 _float_to_string(string_base<C> *s, N x, u64 offset, format_options<C> opt, 
 
     u64 i = offset + pad_string(s, opt.pad_char, opt.pad_length - buf_write_size, offset);
 
-    if (fopt.force_sign)
+    if (opt.sign == '+')
         s->data[i++] = (x < 0.0) ? '-' : '+';
     else if (x < 0.0)
         s->data[i++] = '-';
 
-    i += pad_string(s, '0', fopt.number_pad_length - whole_size, i);
     copy_string_reverse(buf + copy_start, s->data.data + i, buf_size - copy_start);
     i += (buf_size - copy_start);
 
