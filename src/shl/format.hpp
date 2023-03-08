@@ -133,159 +133,41 @@ s64 to_string(string  *s, double x, u64 offset, format_options<char> opt, float_
 
 namespace internal
 {
+s64 _format(u64 i, s64 written, string  *s, u64 offset, const_string  fmt);
+s64 _format(u64 i, s64 written, wstring *s, u64 offset, const_wstring fmt);
+
 template<typename C>
-s64 _format(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base<C> fmt)
+struct _placeholder_info
 {
-    C c;
+    format_options<C> options;
+    bool has_placeholder;
+    bool alternative; // #
+};
 
-    while (i < fmt.size)
-    {
-        c = fmt[i];
-
-        if (c != '%')
-        {
-            string_reserve(s, offset + (offset % FORMAT_BUFFER_INCREMENT));
-
-            if (c == '\\')
-            {
-                i++;
-
-                if (i >= fmt.size)
-                    break;
-
-            }
-
-            s->data.data[offset++] = fmt[i];
-        }
-        else
-        {
-            // %
-            // ERROR
-            return -1;
-        }
-
-        written++;
-        i++;
-    }
-
-    return written;
-}
+s64 _format_skip_until_placeholder(u64 *i, _placeholder_info<char>    *pl, string  *s, u64 offset, const_string  fmt);
+s64 _format_skip_until_placeholder(u64 *i, _placeholder_info<wchar_t> *pl, wstring *s, u64 offset, const_wstring fmt);
 
 template<typename C, typename T, typename... Ts>
 s64 _format(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base<C> fmt, T &&arg, Ts &&...args)
 {
-    C c;
+    if (i >= fmt.size)
+        return written;
 
-    while (i < fmt.size)
+    _placeholder_info<C> pl;
+    pl.options = default_format_options<C>;
+    pl.has_placeholder = false;
+    pl.alternative = false;
+
+    u64 pl_written = _format_skip_until_placeholder(&i, &pl, s, offset, fmt);
+    written += pl_written;
+    offset += pl_written;
+
+    if (i < fmt.size)
     {
-        // skip all non-% characters until the end
-        while (i < fmt.size)
-        {
-            string_reserve(s, offset + (offset % FORMAT_BUFFER_INCREMENT));
-            c = fmt[i];
+        // skiped all non-placeholder characters and we're not at the end
+        C c = fmt[i];
 
-            if (c == '\\')
-            {
-                i++;
-
-                if (i >= fmt.size)
-                    break;
-
-                c = fmt[i];
-            }
-            else if (c == '%')
-                break;
-
-            s->data.data[offset++] = c;
-            i++;
-            written++;
-        }
-
-        if (i >= fmt.size)
-            break;
-
-        // %
-        format_options<C> opt = default_format_options<C>;
-        bool alternative = false; // #
-        C sign = 0;               // + or -
-        int precision = 6;        // .123...
-
-        s64 j = i + 1;
-        C c2;
-
-#define if_at_end_goto(Var, Label)\
-        if (Var >= fmt.size)\
-        {\
-            i = Var - 1;\
-            goto Label;\
-        }
-
-        if_at_end_goto(j, fmt_end);
-
-        c2 = fmt[j];
-
-        if (c2 == '#')
-        {
-            alternative = true;
-            j++;
-
-            if_at_end_goto(j, fmt_end);
-            c2 = fmt[j];
-        }
-
-        switch (c2)
-        {
-        case '-': sign = '-'; j++; break;
-        case '+': sign = '+'; j++; break;
-        }
-
-        if_at_end_goto(j, fmt_end);
-
-        c2 = fmt[j];
-        
-        while (c2 >= '0' && c2 <= '9')
-        {
-            opt.pad_length += (opt.pad_length * 10) + (c2 - '0');
-            j++;
-
-            if (j >= fmt.size)
-                break;
-
-            c2 = fmt[j];
-        }
-
-        if (sign == '-')
-            opt.pad_length = -opt.pad_length;
-
-        if_at_end_goto(j, fmt_end);
-
-        if (c2 == '.')
-        {
-            j++;
-
-            if_at_end_goto(j, fmt_end);
-
-            c2 = fmt[j];
-
-            if (c2 >= '0' && c2 <= '9')
-                precision = 0;
-            
-            while (c2 >= '0' && c2 <= '9')
-            {
-                precision += (precision * 10) + (c2 - '0');
-                j++;
-
-                if_at_end_goto(j, fmt_end);
-
-                c2 = fmt[j];
-            }
-        }
-
-        if_at_end_goto(j, fmt_end);
-
-        c2 = fmt[j];
-
-        switch (c2)
+        switch (c)
         {
         case 'f':
         {
@@ -297,27 +179,18 @@ s64 _format(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base
             written += to_string(s, val, offset, opt, fopt);
             return _format(++i, written, s, offset + written, fmt, forward<Ts>(args)...);
             */
+            i++;
             break;
         }
-
+        default:
+            break;
         }
-
-#undef if_at_end_goto
-        
-fmt_end:
-
-        if constexpr (is_same(T, float) || is_same(T, double))
-        {
-            float_format_options fopt{.precision = precision, .number_pad_length = 0, .force_sign = (sign == '+'), .ignore_trailing_zeroes = true};
-            written += to_string(s, forward<T>(arg), offset, opt, fopt);
-        }
-        else
-            written += to_string(s, forward<T>(arg), offset, opt);
-
-        return _format(++i, written, s, offset + written, fmt, forward<Ts>(args)...);
     }
+    else if (!pl.has_placeholder)
+        return written;
 
-    return written;
+    u64 tostring_written = to_string(s, forward<T>(arg), offset, pl.options);
+    return _format(i, written + tostring_written, s, offset + tostring_written, fmt, forward<Ts>(args)...);
 }
 }
 

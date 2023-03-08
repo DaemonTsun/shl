@@ -453,3 +453,180 @@ s64 to_string(string  *s, float x, u64 offset, format_options<char> opt, float_f
 s64 to_string(string  *s, double x)             to_string_body(_float_to_string, s, x, 0, default_format_options<char>, default_float_options)
 s64 to_string(string  *s, double x, u64 offset) to_string_body(_float_to_string, s, x, offset, default_format_options<char>, default_float_options)
 s64 to_string(string  *s, double x, u64 offset, format_options<char> opt, float_format_options fopt) to_string_body(_float_to_string, s, x, offset, opt, fopt)
+
+// format
+
+template<typename C>
+s64 _format(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base<C> fmt)
+{
+    C c;
+
+    while (i < fmt.size)
+    {
+        c = fmt[i];
+
+        if (c != '%')
+        {
+            string_reserve(s, offset + (offset % FORMAT_BUFFER_INCREMENT));
+
+            if (c == '\\')
+            {
+                i++;
+
+                if (i >= fmt.size)
+                    break;
+
+            }
+
+            s->data.data[offset++] = fmt[i];
+        }
+        else
+        {
+            // %
+            // ERROR
+            return -1;
+        }
+
+        written++;
+        i++;
+    }
+
+    return written;
+}
+
+s64 internal::_format(u64 i, s64 written, string *s, u64 offset, const_string fmt)
+{
+    return ::_format(i, written, s, offset, fmt);
+}
+
+s64 internal::_format(u64 i, s64 written, wstring *s, u64 offset, const_wstring fmt)
+{
+    return ::_format(i, written, s, offset, fmt);
+}
+
+template<typename C>
+s64 _format_skip_until_placeholder(u64 *_i, internal::_placeholder_info<C> *pl, string_base<C> *s, u64 offset, const_string_base<C> fmt)
+{
+    C c;
+    u64 i = *_i;
+    s64 written = 0;
+
+    while (i < fmt.size)
+    {
+        string_reserve(s, offset + (offset % FORMAT_BUFFER_INCREMENT));
+        c = fmt[i];
+
+        if (c == '\\')
+        {
+            i++;
+
+            if (i >= fmt.size)
+                break;
+
+            c = fmt[i];
+        }
+        else if (c == '%')
+            break;
+
+        s->data.data[offset++] = c;
+        i++;
+        written++;
+    }
+
+    if (i >= fmt.size)
+    {
+        *_i = i;
+        return written;
+    }
+
+    // %
+    s64 j = i + 1;
+    pl->has_placeholder = true;
+
+#define if_at_end_goto(Var, Label)\
+    if (Var >= fmt.size)\
+    {\
+        i = Var - 1;\
+        goto Label;\
+    }
+
+    if_at_end_goto(j, fmt_end);
+
+    c = fmt[j];
+
+    if (c == '#')
+    {
+        pl->alternative = true;
+        j++;
+
+        if_at_end_goto(j, fmt_end);
+        c = fmt[j];
+    }
+
+    switch (c)
+    {
+    case '-': pl->options.sign = '-'; j++; break;
+    case '+': pl->options.sign = '+'; j++; break;
+    }
+
+    if_at_end_goto(j, fmt_end);
+
+    c = fmt[j];
+
+    while (c >= '0' && c <= '9')
+    {
+        pl->options.pad_length += (pl->options.pad_length * 10) + (c - '0');
+        j++;
+
+        if (j >= fmt.size) // break here to apply sign
+            break;
+
+        c = fmt[j];
+    }
+
+    if (pl->options.sign == '-')
+        pl->options.pad_length = -pl->options.pad_length;
+
+    if_at_end_goto(j, fmt_end);
+
+    if (c == '.')
+    {
+        j++;
+
+        if_at_end_goto(j, fmt_end);
+
+        c = fmt[j];
+
+        if (c >= '0' && c <= '9')
+            pl->options.precision = -1;
+        
+        while (c >= '0' && c <= '9')
+        {
+            pl->options.precision += (pl->options.precision * 10) + (c - '0');
+            j++;
+
+            if_at_end_goto(j, fmt_end);
+            c = fmt[j];
+        }
+    }
+
+    if_at_end_goto(j, fmt_end);
+
+#undef read_decimal
+#undef if_at_end_goto
+    
+fmt_end:
+
+    *_i = i + 1;
+    return written;
+}
+
+s64 internal::_format_skip_until_placeholder(u64 *i, _placeholder_info<char>    *pl, string  *s, u64 offset, const_string  fmt)
+{
+    return ::_format_skip_until_placeholder(i, pl, s, offset, fmt);
+}
+
+s64 internal::_format_skip_until_placeholder(u64 *i, _placeholder_info<wchar_t> *pl, wstring *s, u64 offset, const_wstring fmt)
+{
+    return ::_format_skip_until_placeholder(i, pl, s, offset, fmt);
+}

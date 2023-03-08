@@ -218,15 +218,18 @@ define_test(format_formats_string)
     string str;
     init(&str);
 
+    
+    assert_format(str, "hello! "_cs, 7, "% "_cs, "hello!"_cs);
+    assert_format(str, "abc h"_cs, 5, "abc %"_cs, "h"_cs);
     assert_format(str, "hello! bye"_cs, 10, "% %"_cs, "hello!"_cs, "bye");
+
+    
     // escape with backslash
     assert_format(str, "a%b"_cs, 3, "%\\%b"_cs, 'a');
 
+    
     // space padding
     assert_format(str, "  abc"_cs, 5, "%5"_cs, "abc");
-    assert_format(str, "abc  "_cs, 5, "%-5"_cs, "abc");
-
-    // float
     assert_format(str, "abc  "_cs, 5, "%-5"_cs, "abc");
 
     free(&str);
