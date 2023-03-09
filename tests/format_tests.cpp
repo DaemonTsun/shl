@@ -223,14 +223,41 @@ define_test(format_formats_string)
     assert_format(str, "abc h"_cs, 5, "abc %"_cs, "h"_cs);
     assert_format(str, "hello! bye"_cs, 10, "% %"_cs, "hello!"_cs, "bye");
 
-    
     // escape with backslash
     assert_format(str, "a%b"_cs, 3, "%\\%b"_cs, 'a');
 
-    
     // space padding
     assert_format(str, "  abc"_cs, 5, "%5"_cs, "abc");
     assert_format(str, "abc  "_cs, 5, "%-5"_cs, "abc");
+
+    // float
+    assert_format(str, "123.456"_cs, 7, "%"_cs, 123.456);
+    assert_format(str, "123.456"_cs, 7, "%f"_cs, 123.456);
+    assert_format(str, "123.456"_cs, 7, "%.3f"_cs, 123.456f);
+
+    assert_format(str, "123.456"_cs,   7, "%.5f"_cs, 123.456);
+    assert_format(str, "123.45600"_cs, 9, "%#.5f"_cs, 123.456);
+
+    // int
+    assert_format(str, "123"_cs, 3, "%"_cs, 123);
+    assert_format(str, "1111011"_cs, 7, "%b"_cs, 123);
+    assert_format(str, "173"_cs, 3, "%o"_cs, 123);
+    assert_format(str, "7b"_cs, 2, "%x"_cs, 123);
+    assert_format(str, "7B"_cs, 2, "%X"_cs, 123);
+
+    assert_format(str, "0b1111011"_cs, 9, "%#b"_cs, 123);
+    assert_format(str, "0b01111011"_cs, 10, "%#.8b"_cs, 123);
+    assert_format(str, "0173"_cs, 4, "%#o"_cs, 123);
+    assert_format(str, "0x7b"_cs, 4, "%#x"_cs, 123);
+    assert_format(str, "0x7B"_cs, 4, "%#X"_cs, 123);
+
+    // pointer
+    void *voidptr = nullptr;
+    int *intptr = reinterpret_cast<int*>(0x13379001);
+
+    assert_format(str, "0x00000000"_cs, 10, "%"_cs, voidptr);
+    assert_format(str, "0x13379001"_cs, 10, "%"_cs, intptr);
+    assert_format(str, "0x13379001"_cs, 10, "%p"_cs, intptr);
 
     free(&str);
 }

@@ -26,11 +26,14 @@ inline constexpr format_options<C> default_format_options
     .precision = -1
 };
 
+// TODO: format options without int
 s64 to_string(string  *s, bool x);
 s64 to_string(string  *s, bool x, u64 offset);
+s64 to_string(string  *s, bool x, u64 offset, format_options<char> opt);
 s64 to_string(string  *s, bool x, u64 offset, format_options<char> opt, bool as_text);
 s64 to_string(wstring *s, bool x);
 s64 to_string(wstring *s, bool x, u64 offset);
+s64 to_string(wstring *s, bool x, u64 offset, format_options<wchar_t> options);
 s64 to_string(wstring *s, bool x, u64 offset, format_options<wchar_t> options, bool as_text);
 
 s64 to_string(string  *s, char    x);
@@ -79,28 +82,36 @@ inline constexpr integer_format_options default_integer_options =
 
 s64 to_string(string  *s, u8 x);
 s64 to_string(string  *s, u8 x, u64 offset);
+s64 to_string(string  *s, u8 x, u64 offset, format_options<char> opt);
 s64 to_string(string  *s, u8 x, u64 offset, format_options<char> opt, integer_format_options ioptions);
 s64 to_string(string  *s, u16 x);
 s64 to_string(string  *s, u16 x, u64 offset);
+s64 to_string(string  *s, u16 x, u64 offset, format_options<char> opt);
 s64 to_string(string  *s, u16 x, u64 offset, format_options<char> opt, integer_format_options ioptions);
 s64 to_string(string  *s, u32 x);
 s64 to_string(string  *s, u32 x, u64 offset);
+s64 to_string(string  *s, u32 x, u64 offset, format_options<char> opt);
 s64 to_string(string  *s, u32 x, u64 offset, format_options<char> opt, integer_format_options ioptions);
 s64 to_string(string  *s, u64 x);
 s64 to_string(string  *s, u64 x, u64 offset);
+s64 to_string(string  *s, u64 x, u64 offset, format_options<char> opt);
 s64 to_string(string  *s, u64 x, u64 offset, format_options<char> opt, integer_format_options ioptions);
 
 s64 to_string(string  *s, s8 x);
 s64 to_string(string  *s, s8 x, u64 offset);
+s64 to_string(string  *s, s8 x, u64 offset, format_options<char> opt);
 s64 to_string(string  *s, s8 x, u64 offset, format_options<char> opt, integer_format_options ioptions);
 s64 to_string(string  *s, s16 x);
 s64 to_string(string  *s, s16 x, u64 offset);
+s64 to_string(string  *s, s16 x, u64 offset, format_options<char> opt);
 s64 to_string(string  *s, s16 x, u64 offset, format_options<char> opt, integer_format_options ioptions);
 s64 to_string(string  *s, s32 x);
 s64 to_string(string  *s, s32 x, u64 offset);
+s64 to_string(string  *s, s32 x, u64 offset, format_options<char> opt);
 s64 to_string(string  *s, s32 x, u64 offset, format_options<char> opt, integer_format_options ioptions);
 s64 to_string(string  *s, s64 x);
 s64 to_string(string  *s, s64 x, u64 offset);
+s64 to_string(string  *s, s64 x, u64 offset, format_options<char> opt);
 s64 to_string(string  *s, s64 x, u64 offset, format_options<char> opt, integer_format_options ioptions);
 
 s64 to_string(string  *s, const void *x);
@@ -121,10 +132,12 @@ inline constexpr float_format_options default_float_options =
 
 s64 to_string(string  *s, float x);
 s64 to_string(string  *s, float x, u64 offset);
+s64 to_string(string  *s, float x, u64 offset, format_options<char> opt);
 s64 to_string(string  *s, float x, u64 offset, format_options<char> opt, float_format_options foptions);
 
 s64 to_string(string  *s, double x);
 s64 to_string(string  *s, double x, u64 offset);
+s64 to_string(string  *s, double x, u64 offset, format_options<char> opt);
 s64 to_string(string  *s, double x, u64 offset, format_options<char> opt, float_format_options foptions);
 
 // format
@@ -147,6 +160,23 @@ struct _placeholder_info
 s64 _format_skip_until_placeholder(u64 *i, _placeholder_info<char>    *pl, string  *s, u64 offset, const_string  fmt);
 s64 _format_skip_until_placeholder(u64 *i, _placeholder_info<wchar_t> *pl, wstring *s, u64 offset, const_wstring fmt);
 
+template<typename T>
+void *best_type_match(T &&arg)
+{
+    return (void*)(&arg);
+}
+
+template<typename T, typename T2, typename...Ts>
+auto best_type_match(T &&arg)
+{
+    if constexpr (is_same(T, T2))
+        return &arg;
+    else if constexpr (sizeof(T) >= sizeof(T2))
+        return (T2*)(void*)(&arg);
+    else
+        return best_type_match<T, Ts...>(forward<T>(arg));
+}
+
 template<typename C, typename T, typename... Ts>
 s64 _format(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base<C> fmt, T &&arg, Ts &&...args)
 {
@@ -162,6 +192,8 @@ s64 _format(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base
     written += pl_written;
     offset += pl_written;
 
+    u64 tostring_written = 0;
+
     if (i < fmt.size)
     {
         // skiped all non-placeholder characters and we're not at the end
@@ -171,25 +203,54 @@ s64 _format(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base
         {
         case 'f':
         {
-            /*
-            float_format_options fopt{.precision = precision, .number_pad_length = 0, .force_sign = (sign == '+'), .ignore_trailing_zeroes = true};
+            float_format_options fopt = default_float_options;
+            fopt.ignore_trailing_zeroes = !pl.alternative;
 
-            double val = *(double*)(void*)(&arg);
+            auto ptr = best_type_match<T, double, float>(forward<T>(arg));
 
-            written += to_string(s, val, offset, opt, fopt);
-            return _format(++i, written, s, offset + written, fmt, forward<Ts>(args)...);
-            */
-            i++;
-            break;
+            if constexpr (!is_same(decltype(ptr), void*))
+            {
+                tostring_written = to_string(s, *ptr, offset, pl.options, fopt);
+                return _format(++i, written + tostring_written, s, offset + tostring_written, fmt, forward<Ts>(args)...);
+            }
+            else
+                return -1;
         }
-        default:
+#define case_int_base(Lower, Upper, Base)\
+        case Lower:\
+        case Upper:\
+        {\
+            integer_format_options iopt = default_integer_options;\
+            iopt.base = Base;\
+            iopt.caps_letters = (c == Upper);\
+            iopt.include_prefix = pl.alternative;\
+\
+            auto ptr = best_type_match<T, u64, u32, u16, u8>(forward<T>(arg));\
+\
+            if constexpr (!is_same(decltype(ptr), void*))\
+            {\
+                tostring_written = to_string(s, *ptr, offset, pl.options, iopt);\
+                return _format(++i, written + tostring_written, s, offset + tostring_written, fmt, forward<Ts>(args)...);\
+            }\
+            else\
+                return -1;\
+        }
+        case_int_base('b', 'B', 2);
+        case_int_base('o', 'O', 8);
+        case_int_base('x', 'X', 16);
+#undef case_int_base
+        case 'c':
+        case 's':
+        case 'd':
+        case 'p':
+            i++;
             break;
         }
     }
     else if (!pl.has_placeholder)
         return written;
 
-    u64 tostring_written = to_string(s, forward<T>(arg), offset, pl.options);
+    tostring_written = to_string(s, forward<T>(arg), offset, pl.options);
     return _format(i, written + tostring_written, s, offset + tostring_written, fmt, forward<Ts>(args)...);
 }
 }

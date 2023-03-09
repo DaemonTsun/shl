@@ -95,9 +95,11 @@ s64 _bool_to_string(string_base<C> *s, bool x, u64 offset, format_options<C> opt
 
 s64 to_string(string  *s, bool x)                           to_string_body(_bool_to_string, s, x, 0, default_format_options<char>, false)
 s64 to_string(string  *s, bool x, u64 offset)               to_string_body(_bool_to_string, s, x, offset, default_format_options<char>, false)
+s64 to_string(string  *s, bool x, u64 offset, format_options<char> opt) to_string_body(_bool_to_string, s, x, offset, opt, false)
 s64 to_string(string  *s, bool x, u64 offset, format_options<char> opt, bool as_text) to_string_body(_bool_to_string, s, x, offset, opt, as_text)
 s64 to_string(wstring *s, bool x)                           to_string_body(_bool_to_string, s, x, 0, default_format_options<wchar_t>, false)
 s64 to_string(wstring *s, bool x, u64 offset)               to_string_body(_bool_to_string, s, x, offset, default_format_options<wchar_t>, false)
+s64 to_string(wstring *s, bool x, u64 offset, format_options<wchar_t> opt) to_string_body(_bool_to_string, s, x, offset, opt, false)
 s64 to_string(wstring *s, bool x, u64 offset, format_options<wchar_t> opt, bool as_text) to_string_body(_bool_to_string, s, x, offset, opt, as_text)
 
 template<typename C>
@@ -289,28 +291,36 @@ s64 _integer_to_string(string_base<C> *s, N x, u64 offset, format_options<C> opt
 
 s64 to_string(string  *s, u8 x)             to_string_body(_integer_to_string, s, x, 0, default_format_options<char>, default_integer_options);
 s64 to_string(string  *s, u8 x, u64 offset) to_string_body(_integer_to_string, s, x, offset, default_format_options<char>, default_integer_options);
+s64 to_string(string  *s, u8 x, u64 offset, format_options<char> opt) to_string_body(_integer_to_string, s, x, offset, opt, default_integer_options);
 s64 to_string(string  *s, u8 x, u64 offset, format_options<char> opt, integer_format_options iopt) to_string_body(_integer_to_string, s, x, offset, opt, iopt);
 s64 to_string(string  *s, u16 x)             to_string_body(_integer_to_string, s, x, 0, default_format_options<char>, default_integer_options);
 s64 to_string(string  *s, u16 x, u64 offset) to_string_body(_integer_to_string, s, x, offset, default_format_options<char>, default_integer_options);
+s64 to_string(string  *s, u16 x, u64 offset, format_options<char> opt) to_string_body(_integer_to_string, s, x, offset, opt, default_integer_options);
 s64 to_string(string  *s, u16 x, u64 offset, format_options<char> opt, integer_format_options iopt) to_string_body(_integer_to_string, s, x, offset, opt, iopt);
 s64 to_string(string  *s, u32 x)             to_string_body(_integer_to_string, s, x, 0, default_format_options<char>, default_integer_options);
 s64 to_string(string  *s, u32 x, u64 offset) to_string_body(_integer_to_string, s, x, offset, default_format_options<char>, default_integer_options);
+s64 to_string(string  *s, u32 x, u64 offset, format_options<char> opt) to_string_body(_integer_to_string, s, x, offset, opt, default_integer_options);
 s64 to_string(string  *s, u32 x, u64 offset, format_options<char> opt, integer_format_options iopt) to_string_body(_integer_to_string, s, x, offset, opt, iopt);
 s64 to_string(string  *s, u64 x)             to_string_body(_integer_to_string, s, x, 0, default_format_options<char>, default_integer_options);
 s64 to_string(string  *s, u64 x, u64 offset) to_string_body(_integer_to_string, s, x, offset, default_format_options<char>, default_integer_options);
+s64 to_string(string  *s, u64 x, u64 offset, format_options<char> opt) to_string_body(_integer_to_string, s, x, offset, opt, default_integer_options);
 s64 to_string(string  *s, u64 x, u64 offset, format_options<char> opt, integer_format_options iopt) to_string_body(_integer_to_string, s, x, offset, opt, iopt);
 
 s64 to_string(string  *s, s8 x)             to_string_body(_integer_to_string, s, x, 0, default_format_options<char>, default_integer_options);
 s64 to_string(string  *s, s8 x, u64 offset) to_string_body(_integer_to_string, s, x, offset, default_format_options<char>, default_integer_options);
+s64 to_string(string  *s, s8 x, u64 offset, format_options<char> opt) to_string_body(_integer_to_string, s, x, offset, opt, default_integer_options);
 s64 to_string(string  *s, s8 x, u64 offset, format_options<char> opt, integer_format_options iopt) to_string_body(_integer_to_string, s, x, offset, opt, iopt);
 s64 to_string(string  *s, s16 x)             to_string_body(_integer_to_string, s, x, 0, default_format_options<char>, default_integer_options);
 s64 to_string(string  *s, s16 x, u64 offset) to_string_body(_integer_to_string, s, x, offset, default_format_options<char>, default_integer_options);
+s64 to_string(string  *s, s16 x, u64 offset, format_options<char> opt) to_string_body(_integer_to_string, s, x, offset, opt, default_integer_options);
 s64 to_string(string  *s, s16 x, u64 offset, format_options<char> opt, integer_format_options iopt) to_string_body(_integer_to_string, s, x, offset, opt, iopt);
 s64 to_string(string  *s, s32 x)             to_string_body(_integer_to_string, s, x, 0, default_format_options<char>, default_integer_options);
 s64 to_string(string  *s, s32 x, u64 offset) to_string_body(_integer_to_string, s, x, offset, default_format_options<char>, default_integer_options);
+s64 to_string(string  *s, s32 x, u64 offset, format_options<char> opt) to_string_body(_integer_to_string, s, x, offset, opt, default_integer_options);
 s64 to_string(string  *s, s32 x, u64 offset, format_options<char> opt, integer_format_options iopt) to_string_body(_integer_to_string, s, x, offset, opt, iopt);
 s64 to_string(string  *s, s64 x)             to_string_body(_integer_to_string, s, x, 0, default_format_options<char>, default_integer_options);
 s64 to_string(string  *s, s64 x, u64 offset) to_string_body(_integer_to_string, s, x, offset, default_format_options<char>, default_integer_options);
+s64 to_string(string  *s, s64 x, u64 offset, format_options<char> opt) to_string_body(_integer_to_string, s, x, offset, opt, default_integer_options);
 s64 to_string(string  *s, s64 x, u64 offset, format_options<char> opt, integer_format_options iopt) to_string_body(_integer_to_string, s, x, offset, opt, iopt);
 
 template<typename C>
@@ -448,10 +458,12 @@ s64 _float_to_string(string_base<C> *s, N x, u64 offset, format_options<C> opt, 
 
 s64 to_string(string  *s, float x)             to_string_body(_float_to_string, s, x, 0, default_format_options<char>, default_float_options)
 s64 to_string(string  *s, float x, u64 offset) to_string_body(_float_to_string, s, x, offset, default_format_options<char>, default_float_options)
+s64 to_string(string  *s, float x, u64 offset, format_options<char> opt) to_string_body(_float_to_string, s, x, offset, opt, default_float_options)
 s64 to_string(string  *s, float x, u64 offset, format_options<char> opt, float_format_options fopt) to_string_body(_float_to_string, s, x, offset, opt, fopt)
 
 s64 to_string(string  *s, double x)             to_string_body(_float_to_string, s, x, 0, default_format_options<char>, default_float_options)
 s64 to_string(string  *s, double x, u64 offset) to_string_body(_float_to_string, s, x, offset, default_format_options<char>, default_float_options)
+s64 to_string(string  *s, double x, u64 offset, format_options<char> opt) to_string_body(_float_to_string, s, x, offset, opt, default_float_options)
 s64 to_string(string  *s, double x, u64 offset, format_options<char> opt, float_format_options fopt) to_string_body(_float_to_string, s, x, offset, opt, fopt)
 
 // format
@@ -598,7 +610,7 @@ s64 _format_skip_until_placeholder(u64 *_i, internal::_placeholder_info<C> *pl, 
         c = fmt[j];
 
         if (c >= '0' && c <= '9')
-            pl->options.precision = -1;
+            pl->options.precision = 0;
         
         while (c >= '0' && c <= '9')
         {
@@ -610,7 +622,7 @@ s64 _format_skip_until_placeholder(u64 *_i, internal::_placeholder_info<C> *pl, 
         }
     }
 
-    if_at_end_goto(j, fmt_end);
+    i = j - 1;
 
 #undef read_decimal
 #undef if_at_end_goto
