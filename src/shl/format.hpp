@@ -1,4 +1,7 @@
 
+// TODO: docs
+// TODO: wide functions
+
 #pragma once
 
 #include "shl/type_functions.hpp"
@@ -14,7 +17,8 @@ struct format_options
     C pad_char;
     C sign;         // only used by numbers, either +, - or 0x00
     int precision;  // only used by numbers, for float its remainder places
-                    // for integers, its zero pad count, excluding sign or prefix.
+                    // for integers its zero pad count excluding sign or prefix.
+                    // for floats its number of remainder places
 };
 
 template<typename C = char>
@@ -26,7 +30,6 @@ inline constexpr format_options<C> default_format_options
     .precision = -1
 };
 
-// TODO: format options without int
 s64 to_string(string  *s, bool x);
 s64 to_string(string  *s, bool x, u64 offset);
 s64 to_string(string  *s, bool x, u64 offset, format_options<char> opt);
@@ -286,4 +289,32 @@ s64 format(string_base<C> *s, u64 offset, const_string_base<C> fmt, Ts &&...args
     }
 
     return written;
+}
+
+// tformat
+// this is not the max size that the temporary string can have, but
+// the size at which the next format will reset the temporary string.
+#define TEMP_STRING_MAX_SIZE 4096
+
+namespace internal
+{
+void _get_temp_format_string(string  **s, u64 **offset);
+void _get_temp_format_string(wstring **s, u64 **offset);
+}
+
+template<typename C, typename... Ts>
+const_string_base<C> tformat(const_string_base<C> fmt, Ts &&...args)
+{
+    string_base<C> *s;
+    u64 *offset;
+    internal::_get_temp_format_string(&s, &offset);
+
+    s64 written = format(s, *offset, fmt, forward<Ts>(args)...);
+
+    if (written < 0)
+        return const_string_base<C>{nullptr, 0};
+
+    const_string_base<C> ret{s->data.data + *offset, static_cast<u64>(written)};
+    *offset += written;
+    return ret;
 }

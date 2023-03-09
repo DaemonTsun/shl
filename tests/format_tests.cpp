@@ -262,4 +262,16 @@ define_test(format_formats_string)
     free(&str);
 }
 
+define_test(tformat_formats_to_temporary_string)
+{
+    assert_equal(tformat("abc"_cs), "abc"_cs)
+    assert_equal(tformat("% %"_cs, "hello", "world"), "hello world"_cs)
+
+    for (int i = 0; i < TEMP_STRING_MAX_SIZE * 2; ++i)
+        tformat("% %"_cs, "hello", "world");
+
+    assert_equal(tformat("% %"_cs, "abc", "def"), "abc def"_cs)
+
+}
+
 define_default_test_main();

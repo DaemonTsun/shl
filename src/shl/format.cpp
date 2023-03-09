@@ -642,3 +642,33 @@ s64 internal::_format_skip_until_placeholder(u64 *i, _placeholder_info<wchar_t> 
 {
     return ::_format_skip_until_placeholder(i, pl, s, offset, fmt);
 }
+
+void internal::_get_temp_format_string(string  **s, u64 **offset)
+{
+    static thread_local string _temp_string = ""_s;
+    static thread_local u64    _temp_string_offset = TEMP_STRING_MAX_SIZE;
+
+    if (_temp_string_offset >= TEMP_STRING_MAX_SIZE)
+    {
+        resize(&_temp_string.data, TEMP_STRING_MAX_SIZE);
+        _temp_string_offset = 0;
+    }
+
+    *s = &_temp_string;
+    *offset = &_temp_string_offset;
+}
+
+void internal::_get_temp_format_string(wstring **s, u64 **offset)
+{
+    static thread_local wstring _temp_string = L""_s;
+    static thread_local u64     _temp_string_offset = TEMP_STRING_MAX_SIZE;
+
+    if (_temp_string_offset >= TEMP_STRING_MAX_SIZE)
+    {
+        resize(&_temp_string.data, TEMP_STRING_MAX_SIZE);
+        _temp_string_offset = 0;
+    }
+
+    *s = &_temp_string;
+    *offset = &_temp_string_offset;
+}
