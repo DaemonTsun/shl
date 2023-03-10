@@ -1,6 +1,5 @@
 
 // TODO: docs
-// TODO: wide functions
 
 #pragma once
 
@@ -99,6 +98,22 @@ s64 to_string(string  *s, u64 x);
 s64 to_string(string  *s, u64 x, u64 offset);
 s64 to_string(string  *s, u64 x, u64 offset, format_options<char> opt);
 s64 to_string(string  *s, u64 x, u64 offset, format_options<char> opt, integer_format_options ioptions);
+s64 to_string(wstring *s, u8 x);
+s64 to_string(wstring *s, u8 x, u64 offset);
+s64 to_string(wstring *s, u8 x, u64 offset, format_options<wchar_t> opt);
+s64 to_string(wstring *s, u8 x, u64 offset, format_options<wchar_t> opt, integer_format_options ioptions);
+s64 to_string(wstring *s, u16 x);
+s64 to_string(wstring *s, u16 x, u64 offset);
+s64 to_string(wstring *s, u16 x, u64 offset, format_options<wchar_t> opt);
+s64 to_string(wstring *s, u16 x, u64 offset, format_options<wchar_t> opt, integer_format_options ioptions);
+s64 to_string(wstring *s, u32 x);
+s64 to_string(wstring *s, u32 x, u64 offset);
+s64 to_string(wstring *s, u32 x, u64 offset, format_options<wchar_t> opt);
+s64 to_string(wstring *s, u32 x, u64 offset, format_options<wchar_t> opt, integer_format_options ioptions);
+s64 to_string(wstring *s, u64 x);
+s64 to_string(wstring *s, u64 x, u64 offset);
+s64 to_string(wstring *s, u64 x, u64 offset, format_options<wchar_t> opt);
+s64 to_string(wstring *s, u64 x, u64 offset, format_options<wchar_t> opt, integer_format_options ioptions);
 
 s64 to_string(string  *s, s8 x);
 s64 to_string(string  *s, s8 x, u64 offset);
@@ -116,10 +131,29 @@ s64 to_string(string  *s, s64 x);
 s64 to_string(string  *s, s64 x, u64 offset);
 s64 to_string(string  *s, s64 x, u64 offset, format_options<char> opt);
 s64 to_string(string  *s, s64 x, u64 offset, format_options<char> opt, integer_format_options ioptions);
+s64 to_string(wstring *s, s8 x);
+s64 to_string(wstring *s, s8 x, u64 offset);
+s64 to_string(wstring *s, s8 x, u64 offset, format_options<wchar_t> opt);
+s64 to_string(wstring *s, s8 x, u64 offset, format_options<wchar_t> opt, integer_format_options ioptions);
+s64 to_string(wstring *s, s16 x);
+s64 to_string(wstring *s, s16 x, u64 offset);
+s64 to_string(wstring *s, s16 x, u64 offset, format_options<wchar_t> opt);
+s64 to_string(wstring *s, s16 x, u64 offset, format_options<wchar_t> opt, integer_format_options ioptions);
+s64 to_string(wstring *s, s32 x);
+s64 to_string(wstring *s, s32 x, u64 offset);
+s64 to_string(wstring *s, s32 x, u64 offset, format_options<wchar_t> opt);
+s64 to_string(wstring *s, s32 x, u64 offset, format_options<wchar_t> opt, integer_format_options ioptions);
+s64 to_string(wstring *s, s64 x);
+s64 to_string(wstring *s, s64 x, u64 offset);
+s64 to_string(wstring *s, s64 x, u64 offset, format_options<wchar_t> opt);
+s64 to_string(wstring *s, s64 x, u64 offset, format_options<wchar_t> opt, integer_format_options ioptions);
 
 s64 to_string(string  *s, const void *x);
 s64 to_string(string  *s, const void *x, u64 offset);
 s64 to_string(string  *s, const void *x, u64 offset, format_options<char> opt);
+s64 to_string(wstring *s, const void *x);
+s64 to_string(wstring *s, const void *x, u64 offset);
+s64 to_string(wstring *s, const void *x, u64 offset, format_options<wchar_t> opt);
 
 struct float_format_options
 {
@@ -137,14 +171,22 @@ s64 to_string(string  *s, float x);
 s64 to_string(string  *s, float x, u64 offset);
 s64 to_string(string  *s, float x, u64 offset, format_options<char> opt);
 s64 to_string(string  *s, float x, u64 offset, format_options<char> opt, float_format_options foptions);
+s64 to_string(wstring *s, float x);
+s64 to_string(wstring *s, float x, u64 offset);
+s64 to_string(wstring *s, float x, u64 offset, format_options<wchar_t> opt);
+s64 to_string(wstring *s, float x, u64 offset, format_options<wchar_t> opt, float_format_options foptions);
 
 s64 to_string(string  *s, double x);
 s64 to_string(string  *s, double x, u64 offset);
 s64 to_string(string  *s, double x, u64 offset, format_options<char> opt);
 s64 to_string(string  *s, double x, u64 offset, format_options<char> opt, float_format_options foptions);
+s64 to_string(wstring *s, double x);
+s64 to_string(wstring *s, double x, u64 offset);
+s64 to_string(wstring *s, double x, u64 offset, format_options<wchar_t> opt);
+s64 to_string(wstring *s, double x, u64 offset, format_options<wchar_t> opt, float_format_options foptions);
 
-// format
-
+////////////////////
+// format function
 #define FORMAT_BUFFER_INCREMENT 32
 
 namespace internal
