@@ -1,5 +1,40 @@
 
-// TODO: docs
+// format.hpp
+// 
+// string formatting library
+//
+// provides the to_string(...) functions with overloads for basic types,
+// e.g. int, char, bool, float, string (const char*, string* and const_string),
+// pointers, etc.
+//
+// also provides the format(string, fmt, ...) function to format a string object
+// using the format string and the rest of the arguments.
+// format() is not (sn)printf compliant, but provides similar functionality.
+//
+// the formatting is generally type-safe, as every argument of a type T
+// in the variable argument list must have the following function signature
+// declared:
+//
+//      to_string(string_base<C> *s, T x, u64 offset, format_options<C> opt)
+//
+// this to_string overload is called with the argument when the placeholder
+// character '%' is encountered in the format string.
+// This also means that you can define your own to_string overload for other
+// types and use them with the format() function (be aware that you need to
+// reserve enough memory from within to_string on the string s to be able
+// to store the formatted value).
+//
+// Basic format() example:
+// 
+//      string str = ""_s;
+//      format(&str, "hello %!\n"_cs, "world");
+//
+// str will contain the string "hello world!" afterwards (don't forget to free(&str)).
+// format() (and the to_string functions) will allocate more memory in str as needed.
+//
+// format() also accepts options for placeholders, similar to (sn)printf, although
+// more limited.
+// See tests/format.tests for examples.
 
 #pragma once
 
