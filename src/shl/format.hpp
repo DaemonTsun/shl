@@ -359,6 +359,9 @@ s64 format(string_base<C> *s, u64 offset, const_string_base<C> fmt, Ts &&...args
     string_reserve(s, fmt.size);
     s64 written = internal::_format(0, 0, s, offset, fmt, forward<Ts>(args)...);
 
+    if (written < 0)
+        return written;
+
     if (offset + written > s->data.size)
     {
         s->data.size = offset + written;
@@ -394,4 +397,10 @@ const_string_base<C> tformat(const_string_base<C> fmt, Ts &&...args)
     const_string_base<C> ret{s->data.data + *offset, static_cast<u64>(written)};
     *offset += written;
     return ret;
+}
+
+template<typename C, typename... Ts>
+const_string_base<C> tformat(const C *fmt, Ts &&...args)
+{
+    return tformat(to_string_string(fmt), forward<Ts>(args)...);
 }

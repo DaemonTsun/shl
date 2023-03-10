@@ -116,6 +116,8 @@ u64 write_block(file_stream *stream, const void *in, u64 nth_block);
 u64 write_blocks(file_stream *stream, const void *in, u64 block_count);
 u64 write_blocks(file_stream *stream, const void *in, u64 nth_block, u64 block_count);
 
+// printf, not format.hpp
+// use tprint(stream->handle, fmt, ...) to use format.hpp format.
 int format(FILE *stream, const char *format_string, ...);
 int format(file_stream *stream, const char *format_string, ...);
 
