@@ -45,3 +45,4 @@ hash_t hash(const float *v);
 hash_t hash(const double *v);
 hash_t hash(const long double *v);
 hash_t hash(const void **v);
+
