@@ -47,8 +47,14 @@
  * clear(*arr) simply sets arr.size to 0, no memory is deallocated and
  *             reserved memory is kept. use free(*arr) to deallocate memory.
  *
- * free(*arr) frees memory and sets arr.size and arr.reserved_size to 0.
+ * free_values(*arr) calls free(*v) on each element in the array, but does
+ *                   not deallocate memory of the array.
+ *
+ * free(*arr) frees memory of the array and sets arr.size and arr.reserved_size to 0.
  *            you may call init(*arr, size) after calling free(*arr).
+ *            the difference between free and free_values is that free frees the
+ *            memory of the _array_, whereas free_values frees the memory that
+ *            the individual entries may have allocated.
  *
  * other functions:
  *
@@ -203,7 +209,7 @@ T *insert_elements(array<T> *arr, u64 index, u64 n_elements)
     return arr->data + index;
 }
 
-template<typename T>
+template<bool FreeValues = false, typename T>
 void remove_elements(array<T> *arr, u64 index, u64 n_elements)
 {
     assert(arr != nullptr);
@@ -213,6 +219,14 @@ void remove_elements(array<T> *arr, u64 index, u64 n_elements)
 
     if (index >= arr->size)
         return;
+
+    if constexpr (FreeValues)
+    {
+        u64 max = Min(index + n_elements, arr->size);
+        
+        for (u64 i = index; i < max; ++i)
+            free(arr->data + i);
+    }
 
     if (index + n_elements >= arr->size)
     {
@@ -248,7 +262,9 @@ bool reserve(array<T> *arr, u64 size)
     return true;
 }
 
-template<typename T>
+// if size makes array smaller and FreeValues is true, call free() on all
+// removed values before reallocating memory.
+template<bool FreeValues = false, typename T>
 bool resize(array<T> *arr, u64 size)
 {
     assert(arr != nullptr);
@@ -257,6 +273,13 @@ bool resize(array<T> *arr, u64 size)
     {
         arr->size = size;
         return true;
+    }
+
+    if constexpr (FreeValues)
+    {
+        if (arr->size > size)
+        for (u64 i = size; i < arr->size; ++i)
+            free(arr->data + i);
     }
 
     T *n = reallocate_memory<T>(arr->data, size);
@@ -332,19 +355,6 @@ void clear(array<T> *arr)
     arr->size = 0;
 }
 
-template<typename T>
-void free(array<T> *arr)
-{
-    assert(arr != nullptr);
-
-    if (arr->data != nullptr)
-        free_memory<T>(arr->data);
-
-    arr->data = nullptr;
-    arr->size = 0;
-    arr->reserved_size = 0;
-}
-
 #define _for_array_vars(I_Var, V_Var, ARRAY)\
     u64 I_Var = 0;\
     typename remove_pointer(decltype(ARRAY))::value_type *V_Var = (ARRAY)->data;
@@ -358,6 +368,30 @@ void free(array<T> *arr)
     for (; I_Var < (ARRAY)->size; ++I_Var, ++V_Var)
 
 #define for_array(...) GET_MACRO2(__VA_ARGS__, for_array_IV, for_array_V)(__VA_ARGS__)
+
+template<typename T>
+void free_values(array<T> *arr)
+{
+    assert(arr != nullptr);
+    
+    for_array(v, arr)
+        free(v);
+}
+
+template<bool FreeValues = false, typename T>
+void free(array<T> *arr)
+{
+    assert(arr != nullptr);
+
+    if constexpr (FreeValues) free_values(arr);
+
+    if (arr->data != nullptr)
+        free_memory<T>(arr->data);
+
+    arr->data = nullptr;
+    arr->size = 0;
+    arr->reserved_size = 0;
+}
 
 template<typename T>
 T *search(array<T> *arr, T key, equality_function<T> eq = equals<T>)

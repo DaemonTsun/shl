@@ -48,6 +48,9 @@ int compare_descending_p(const T1 *a, const T2 *b)
     return compare_descending(*a, *b);
 }
 
+#define Min(A, B) ((A) < (B) ? (A) : (B))
+#define Max(A, B) ((A) > (B) ? (A) : (B))
+
 template<typename T1, typename T2 = T1>
 using equality_function = bool (*)(T1, T2);
 

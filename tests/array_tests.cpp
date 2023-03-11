@@ -695,4 +695,56 @@ define_test(contains_returns_true_if_key_is_found)
     free(&arr);
 }
 
+define_test(free_values_frees_all_values)
+{
+    array<array<int>> arr_of_arrs;
+    init(&arr_of_arrs, 16);
+
+    for_array(v, &arr_of_arrs)
+        init(v, 16);
+
+    free_values(&arr_of_arrs);
+    free(&arr_of_arrs);
+}
+
+define_test(free_can_free_all_values)
+{
+    array<array<int>> arr_of_arrs;
+    init(&arr_of_arrs, 16);
+
+    for_array(v, &arr_of_arrs)
+        init(v, 16);
+
+    // true = free all values AND array memory
+    free<true>(&arr_of_arrs);
+}
+
+define_test(resize_can_free_values)
+{
+    array<array<int>> arr_of_arrs;
+    init(&arr_of_arrs, 16);
+
+    for_array(v, &arr_of_arrs)
+        init(v, 16);
+
+    resize<true>(&arr_of_arrs, 8);
+
+    // if resize<true> didn't free the arrays inside the array,
+    // we would have lost mememory after this free.
+    free<true>(&arr_of_arrs);
+}
+
+define_test(remove_elements_can_free_values)
+{
+    array<array<int>> arr_of_arrs;
+    init(&arr_of_arrs, 16);
+
+    for_array(v, &arr_of_arrs)
+        init(v, 16);
+
+    remove_elements<true>(&arr_of_arrs, 8, 4);
+
+    free<true>(&arr_of_arrs);
+}
+
 define_default_test_main();
