@@ -37,10 +37,15 @@
  *
  * at(*list, N) returns a pointer to the Nth element (not node) in the list.
  *
- * clear(*list) frees all nodes and sets list.first, list.last to nullptr,
- *              and sets list.size to 0.
+ * clear(*list) identical to free<false>(*list).
  *
- * free(*list) identical to clear(*list).
+ * free_values(*list) calls free(*v) on each element in the array, but does
+ *                   not deallocate memory of the linked list.
+ *
+ * free(*list) frees all nodes and sets list.first, list.last to nullptr,
+ *             and sets list.size to 0.
+ *             if template parameter FreeValues is true, calls free()
+ *             on every element.
  *
  * supports index operator: list[0] == nth_node(&list, 0)->value.
  *
@@ -266,7 +271,7 @@ list_node<T> *insert_elements(linked_list<T> *list, u64 index, u64 n_elements)
     return ret;
 }
 
-template<typename T>
+template<bool FreeValues = false, typename T>
 void remove_elements(linked_list<T> *list, u64 index, u64 n_elements)
 {
     assert(list != nullptr);
@@ -284,6 +289,8 @@ void remove_elements(linked_list<T> *list, u64 index, u64 n_elements)
     while (i < n_elements && node != nullptr)
     {
         list_node<T> *next = node->next;
+
+        if constexpr (FreeValues) free(&node->value);
         free_memory<list_node<T>>(node);
         node = next;
 
@@ -313,7 +320,7 @@ void remove_elements(linked_list<T> *list, u64 index, u64 n_elements)
     list->size -= i;
 }
 
-template<typename T>
+template<bool FreeValues = false, typename T>
 void resize(linked_list<T> *list, u64 n_elements)
 {
     assert(list != nullptr);
@@ -329,11 +336,11 @@ void resize(linked_list<T> *list, u64 n_elements)
 
     if (n_elements == 0)
     {
-        free(list);
+        free<FreeValues>(list);
         return;
     }
 
-    remove_elements(list, n_elements, list->size - n_elements);
+    remove_elements<FreeValues>(list, n_elements, list->size - n_elements);
 }
 
 template<typename T>
@@ -358,31 +365,6 @@ const T *at(const linked_list<T> *list, u64 n)
     return &nth_node(list, n)->value;
 }
 
-template<typename T>
-void clear(linked_list<T> *list)
-{
-    assert(list != nullptr);
-
-    list_node<T> *n = list->last;
-
-    while (n != nullptr)
-    {
-        list_node<T> *tmp = n->previous;
-        free_memory<list_node<T>>(n);
-        n = tmp;
-    }
-
-    list->first = nullptr;
-    list->last = nullptr;
-    list->size = 0;
-}
-
-template<typename T>
-void free(linked_list<T> *list)
-{
-    clear(list);
-}
-
 #define _for_list_vars(V_Var, N_Var, LIST)\
     typename remove_pointer(decltype(LIST))::node_type  *N_Var = (LIST)->first;\
     typename remove_pointer(decltype(LIST))::value_type *V_Var = N_Var ? &(N_Var->value) : nullptr;
@@ -402,6 +384,43 @@ void free(linked_list<T> *list)
     for (; N_Var != nullptr; N_Var = N_Var->next, ++I_Var, V_Var = &N_Var->value)
 
 #define for_list(...) GET_MACRO3(__VA_ARGS__, for_list_IVN, for_list_IV, for_list_V)(__VA_ARGS__)
+
+template<typename T>
+void free_values(linked_list<T> *list)
+{
+    assert(list != nullptr);
+
+    for_list(v, list)
+        free(v);
+}
+
+template<bool FreeValues = false, typename T>
+void free(linked_list<T> *list)
+{
+    assert(list != nullptr);
+
+    list_node<T> *n = list->last;
+
+    while (n != nullptr)
+    {
+        list_node<T> *tmp = n->previous;
+
+        if constexpr (FreeValues) free(&n->value);
+
+        free_memory<list_node<T>>(n);
+        n = tmp;
+    }
+
+    list->first = nullptr;
+    list->last = nullptr;
+    list->size = 0;
+}
+
+template<typename T>
+void clear(linked_list<T> *list)
+{
+    free<false>(list);
+}
 
 template<typename T>
 list_node<T> *search_node(linked_list<T> *list, T key, equality_function<T> eq = equals<T>)

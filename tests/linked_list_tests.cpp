@@ -1085,4 +1085,54 @@ define_test(contains_returns_true_if_key_is_found)
     free(&list);
 }
 
+define_test(free_values_frees_all_values)
+{
+    linked_list<linked_list<int>> list_of_lists;
+    init(&list_of_lists, 16);
+
+    for_list(v, &list_of_lists)
+        init(v, 16);
+
+    free_values(&list_of_lists);
+    free(&list_of_lists);
+}
+
+define_test(free_can_free_all_values)
+{
+    linked_list<linked_list<int>> list_of_lists;
+    init(&list_of_lists, 16);
+
+    for_list(v, &list_of_lists)
+        init(v, 16);
+
+    // true = free all values AND list memory
+    free<true>(&list_of_lists);
+}
+
+define_test(resize_can_free_values)
+{
+    linked_list<linked_list<int>> list_of_lists;
+    init(&list_of_lists, 16);
+
+    for_list(v, &list_of_lists)
+        init(v, 16);
+
+    resize<true>(&list_of_lists, 8);
+
+    free<true>(&list_of_lists);
+}
+
+define_test(remove_elements_can_free_values)
+{
+    linked_list<linked_list<int>> list_of_lists;
+    init(&list_of_lists, 16);
+
+    for_list(v, &list_of_lists)
+        init(v, 16);
+
+    remove_elements<true>(&list_of_lists, 8, 4);
+
+    free<true>(&list_of_lists);
+}
+
 define_default_test_main();
