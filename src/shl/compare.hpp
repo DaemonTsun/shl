@@ -6,14 +6,16 @@
  * defines function types for comparing and checking equality of
  * pointers of typed data.
  *
- * compare_function<T> = int(*)(const T *a, const T *b)
+ * compare_function<T> = int(*)(const T a, const T b)
  *      returns -1 if a < b
  *               0 if a == b
  *               1 if a > b
  *
- * equality_function = bool(*)(const T *a, const T *b)
+ * equality_function = bool(*)(const T a, const T b)
  *      returns true if a == b
  *              false otherwise
+ *
+ * _p variants for pointers.
  */
 
 template<typename T1, typename T2 = T1>

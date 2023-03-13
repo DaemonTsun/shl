@@ -21,6 +21,7 @@
 #define TABLE_SIZE_FACTOR 75
 #define MIN_TABLE_SIZE 64
 #define NULL_HASH 0
+#define REMOVED_HASH 1
 #define FIRST_HASH 2
 
 template<typename TKey, typename TValue>
@@ -42,13 +43,14 @@ struct hash_table
     u64 size;
 
     hash_function<TKey> hasher;
-    equality_function<TKey> eq;
+    equality_function_p<TKey> eq;
 
+    TValue &operator[](const TKey &key) { return *search_or_insert(this, &key); }
     TValue &operator[](const TKey *key) { return *search_or_insert(this, key); }
 };
 
 template<typename TKey, typename TValue>
-void init(hash_table<TKey, TValue> *table, u64 initial_size = MIN_TABLE_SIZE, hash_function<TKey> hasher = hash, equality_function<TKey> eq = equals<TKey>)
+void init(hash_table<TKey, TValue> *table, u64 initial_size = MIN_TABLE_SIZE, hash_function<TKey> hasher = hash, equality_function_p<TKey> eq = equals_p<TKey>)
 {
     assert(table != nullptr);
 
@@ -58,6 +60,9 @@ void init(hash_table<TKey, TValue> *table, u64 initial_size = MIN_TABLE_SIZE, ha
         initial_size = ceil_exp2(initial_size);
 
     init(&table->data, initial_size);
+
+    table->hasher = hasher;
+    table->eq = eq;
 
     for_array(v, &table->data)
         v->hash = NULL_HASH;
@@ -101,9 +106,8 @@ TValue *add_element_by_key(hash_table<TKey, TValue> *table, const TKey *key)
         _advance_table_it();
     }
 
+    hash_table_entry<TKey, TValue> *entry = at(&table->data, index);
     table->size++;
-
-    hash_table_entry<TKey, TValue> *entry = at(table->data, index);
     entry->hash = hsh;
     entry->key = *key;
 
@@ -123,11 +127,11 @@ bool remove_element_by_key(hash_table<TKey, TValue> *table, const TKey *key)
 
     _iterate_table(hsh, table)
     {
-        hash_table_entry<TKey, TValue> *ent = at(table->data, index);
+        hash_table_entry<TKey, TValue> *ent = at(&table->data, index);
 
-        if (ent->hash == hsh && table->eq(key, ent->key))
+        if (ent->hash == hsh && table->eq(key, &ent->key))
         {
-            ent->hash = NULL_HASH;
+            ent->hash = REMOVED_HASH;
 
             if constexpr (FreeKey)   free(&ent->key);
             if constexpr (FreeValue) free(&ent->value);
@@ -157,15 +161,15 @@ void expand_table(hash_table<TKey, TValue> *table)
         new_size = MIN_TABLE_SIZE;
 
     array<hash_table_entry<TKey, TValue>> old_entries = table->data;
-    init(table->data, new_size);
+    init(&table->data, new_size);
 
     table->size = 0;
 
     for_array(i, v, &old_entries)
         if (v->hash >= FIRST_HASH)
         {
-            TValue *added_val = add_element_by_key(table, v->key);
-            *added_val = *v;
+            TValue *added_val = add_element_by_key(table, &v->key);
+            *added_val = v->value;
         }
 
     free(&old_entries);
@@ -184,9 +188,9 @@ TValue *search(hash_table<TKey, TValue> *table, const TKey *key)
 
     _iterate_table(hsh, table)
     {
-        hash_table_entry<TKey, TValue> *ent = at(table->data, index);
+        hash_table_entry<TKey, TValue> *ent = at(&table->data, index);
 
-        if (ent->hash == hsh && table->eq(key, ent->key))
+        if (ent->hash == hsh && table->eq(key, &ent->key))
             return &ent->value;
 
         _advance_table_it();
@@ -217,7 +221,7 @@ void clear(hash_table<TKey, TValue> *table)
 {
     assert(table != nullptr);
 
-    for_array(v, table->data)
+    for_array(v, &table->data)
         v->hash = NULL_HASH;
 
     table->size = 0;
@@ -232,7 +236,7 @@ void free(hash_table<TKey, TValue> *table)
     {
         for_array(v, &table->data)
         {
-            if (v->hash == NULL_HASH)
+            if (v->hash < FIRST_HASH)
                 continue;
 
             if constexpr (FreeKeys)   free(&v->key);
@@ -253,18 +257,18 @@ void free(hash_table<TKey, TValue> *table)
 #define for_hash_table_V(V_Var, TABLE)\
     _for_hash_table_vars(V_Var##_index, V_Var##_entry, V_Var, TABLE)\
     for (; V_Var##_index < (TABLE)->data.size; ++V_Var##_index, ++V_Var##_entry, V_Var = &V_Var##_entry->value)\
-    if (V_Var##_entry->hash != NULL_HASH)
+    if (V_Var##_entry->hash >= FIRST_HASH)
 
 #define for_hash_table_KV(K_Var, V_Var, TABLE)\
     _for_hash_table_vars(K_Var##V_Var##_index, K_Var##V_Var##_entry, V_Var, TABLE)\
     typename remove_pointer_t<decltype(TABLE)>::key_value *K_Var = &K_Var##V_Var##_entry->key;\
     for (; K_Var##V_Var##_index < (TABLE)->data.size; ++K_Var##V_Var##_index, ++K_Var##V_Var##_entry, K_Var = &K_Var##V_Var##_entry->key, V_Var = &K_Var##V_Var##_entry->value)\
-    if (K_Var##V_Var##_entry->hash != NULL_HASH)
+    if (K_Var##V_Var##_entry->hash >= FIRST_HASH)
 
 #define for_hash_table_KVE(K_Var, V_Var, E_Var, TABLE)\
     _for_hash_table_vars(K_Var##V_Var##E_Var##_index, E_Var, V_Var, TABLE)\
     typename remove_pointer_t<decltype(TABLE)>::key_value *K_Var = &E_Var->key;\
     for (; K_Var##V_Var##E_Var##_index < (TABLE)->data.size; ++K_Var##V_Var##E_Var##_index, ++E_Var, K_Var = &E_Var->key, V_Var = &E_Var->value)\
-    if (E_Var->hash != NULL_HASH)
+    if (E_Var->hash >= FIRST_HASH)
 
 #define for_hash_table(...) GET_MACRO3(__VA_ARGS__, for_hash_table_KVE, for_hash_table_KV, for_hash_table_V)(__VA_ARGS__)
