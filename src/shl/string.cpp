@@ -143,7 +143,7 @@ bool _string_reserve(string_base<C> *s, u64 total_size)
     // +1 for \0
     if (s->data.reserved_size < total_size + 1)
     {
-        reserve(&s->data, total_size + 1);
+        reserve_exp2(&s->data, total_size + 1);
         return true;
     }
 
@@ -747,7 +747,7 @@ void _copy_string_cs_s(const_string_base<C> src, string_base<C> *dst, u64 n, u64
     u64 size_needed = n + dst_offset;
     if (dst->data.reserved_size < size_needed + 1)
     {
-        reserve(&dst->data, size_needed + 1);
+        string_reserve(dst, size_needed);
         dst->data.size = size_needed;
         append_null = true;
     }
@@ -861,7 +861,7 @@ void _append_string(string_base<C> *dst, const_string_base<C> other)
     if (size_left < other.size + 1)
     {
         u64 required_space = dst->data.reserved_size + ((other.size + 1) - size_left);
-        reserve(&dst->data, required_space);
+        string_reserve(dst, required_space);
     }
 
     copy_memory(other.c_str, dst->data.data + dst->data.size, sizeof(C) * other.size);
@@ -913,7 +913,7 @@ void _prepend_string(string_base<C> *dst, const_string_base<C> other)
     if (size_left < other.size + 1)
     {
         u64 required_space = dst->data.reserved_size + ((other.size + 1) - size_left);
-        reserve(&dst->data, required_space);
+        string_reserve(dst, required_space);
     }
 
     move_memory(dst->data.data, dst->data.data + other.size, sizeof(C) * dst->data.size);
@@ -1251,7 +1251,7 @@ void _substring_cs_s(const_string_base<C> s, u64 start, u64 length, string_base<
 
     if (out_start + length >= outlen)
     {
-        reserve(&out->data, out_start + length + 1);
+        string_reserve(out, out_start + length);
         append_null = true;
     }
 

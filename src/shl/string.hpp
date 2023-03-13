@@ -42,9 +42,10 @@
  *
  * c = character, s = string, n = number
  *
- * init(s, ...) initializes a string
- * clear(s)     sets string size to 0, but does not deallocate anything
- * free(s)      frees the string object, deallocating memory
+ * init(s, ...)         initializes a string
+ * string_reserve(s, N) allocates enough memory to store at least N+1 characters
+ * clear(s)             sets string size to 0, but does not deallocate anything
+ * free(s)              frees the string object, deallocating memory
  *
  * is_space(c)              true if c is a whitespace character
  * is_newline(c)            true if c is a newline character

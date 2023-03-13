@@ -35,6 +35,9 @@
  *                  arr.size is untouched.
  *                  cannot make arr smaller.
  *
+ * reserve_exp2(*arr, N) same as reserve, but if it allocates, it allocates
+ *                       up to the next power of 2 to store at least N elements.
+ *
  * resize(*arr, N) sets the size of the array to contain exactly N elements.
  *
  * shink_to_fit(*arr) reallocates to only use as much memory as required
@@ -260,6 +263,12 @@ bool reserve(array<T> *arr, u64 size)
     arr->reserved_size = size;
 
     return true;
+}
+
+template<typename T>
+bool reserve_exp2(array<T> *arr, u64 size)
+{
+    return reserve(arr, ceil_exp2(size));
 }
 
 // if size makes array smaller and FreeValues is true, call free() on all
