@@ -249,25 +249,25 @@ void free(hash_table<TKey, TValue> *table)
     table->size = 0;
 }
 
-#define _for_hash_table_vars(I_Var, E_Var, V_Var, TABLE)\
+#define _for_hash_table_vars(I_Var, V_Var, E_Var, TABLE)\
     u64 I_Var = 0;\
-    typename remove_pointer_t<decltype(TABLE)>::entry_type *E_Var = (TABLE)->data.data;\
-    typename remove_pointer_t<decltype(TABLE)>::value_type *V_Var = &E_Var->value;
+    typename remove_pointer(decltype(TABLE))::entry_type *E_Var = (TABLE)->data.data;\
+    typename remove_pointer(decltype(TABLE))::value_type *V_Var = &E_Var->value;
 
 #define for_hash_table_V(V_Var, TABLE)\
-    _for_hash_table_vars(V_Var##_index, V_Var##_entry, V_Var, TABLE)\
+    _for_hash_table_vars(V_Var##_index, V_Var, V_Var##_entry, TABLE)\
     for (; V_Var##_index < (TABLE)->data.size; ++V_Var##_index, ++V_Var##_entry, V_Var = &V_Var##_entry->value)\
     if (V_Var##_entry->hash >= FIRST_HASH)
 
 #define for_hash_table_KV(K_Var, V_Var, TABLE)\
-    _for_hash_table_vars(K_Var##V_Var##_index, K_Var##V_Var##_entry, V_Var, TABLE)\
-    typename remove_pointer_t<decltype(TABLE)>::key_value *K_Var = &K_Var##V_Var##_entry->key;\
+    _for_hash_table_vars(K_Var##V_Var##_index, V_Var, K_Var##V_Var##_entry, TABLE)\
+    typename remove_pointer(decltype(TABLE))::key_type *K_Var = &K_Var##V_Var##_entry->key;\
     for (; K_Var##V_Var##_index < (TABLE)->data.size; ++K_Var##V_Var##_index, ++K_Var##V_Var##_entry, K_Var = &K_Var##V_Var##_entry->key, V_Var = &K_Var##V_Var##_entry->value)\
     if (K_Var##V_Var##_entry->hash >= FIRST_HASH)
 
 #define for_hash_table_KVE(K_Var, V_Var, E_Var, TABLE)\
-    _for_hash_table_vars(K_Var##V_Var##E_Var##_index, E_Var, V_Var, TABLE)\
-    typename remove_pointer_t<decltype(TABLE)>::key_value *K_Var = &E_Var->key;\
+    _for_hash_table_vars(K_Var##V_Var##E_Var##_index, V_Var, E_Var, TABLE)\
+    typename remove_pointer(decltype(TABLE))::key_type *K_Var = &E_Var->key;\
     for (; K_Var##V_Var##E_Var##_index < (TABLE)->data.size; ++K_Var##V_Var##E_Var##_index, ++E_Var, K_Var = &E_Var->key, V_Var = &E_Var->value)\
     if (E_Var->hash >= FIRST_HASH)
 

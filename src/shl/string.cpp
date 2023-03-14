@@ -583,6 +583,27 @@ int compare_strings(const wstring *s1, const wstring *s2, u64 n)
     return _compare_strings_s(s1, s2, n);
 }
 
+template<> bool equals(string  s1, string  s2)
+{
+    return compare_strings(&s1, &s2) == 0;
+}
+
+template<> bool equals(wstring s1, wstring s2)
+{
+    return compare_strings(&s1, &s2) == 0;
+}
+
+template<> bool equals_p(const string  *s1, const string  *s2)
+{
+    return compare_strings(s1, s2) == 0;
+}
+
+template<> bool equals_p(const wstring *s1, const wstring *s2)
+{
+    return compare_strings(s1, s2) == 0;
+}
+
+
 template<typename C>
 bool _begins_with(const C *s, const C *prefix)
 {

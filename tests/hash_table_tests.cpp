@@ -197,6 +197,70 @@ define_test(clear_clears_hash_table)
     free(&table);
 }
 
-// TODO: for-loop tests, key & value freeing tests
+define_test(for_hash_table_iterates_hash_table)
+{
+    hash_table<u32, const char *> table;
+    init(&table);
+
+    u32 key = 5;
+    u32 key2 = 10;
+
+    add_element_by_key(&table, &key);
+    add_element_by_key(&table, &key);
+    add_element_by_key(&table, &key2);
+
+    assert_equal(table.size, 3);
+
+    int i = 0;
+
+    for_hash_table(v, &table)
+        i++;
+
+    assert_equal(i, table.size);
+
+    for_hash_table(k, v2, &table)
+        assert_equal(*k == key || *k == key2, true)
+
+    free(&table);
+}
+
+define_test(free_can_free_keys)
+{
+   hash_table<string, int> table; 
+   init(&table);
+
+   // string allocates memory
+   table["hello"_s] = 5;
+
+   assert_equal(table.size, 1);
+
+   // <true> frees keys as well
+   free<true>(&table);
+}
+
+define_test(free_can_free_values)
+{
+   hash_table<int, string> table; 
+   init(&table);
+
+   table[5] = "hello"_s;
+
+   assert_equal(table.size, 1);
+
+   // <..., true> frees values as well
+   free<false, true>(&table);
+}
+
+define_test(free_can_free_keys_and_values)
+{
+   hash_table<string, string> table; 
+   init(&table);
+
+   table["abc"_s] = "hello"_s;
+
+   assert_equal(table.size, 1);
+
+   free<true, true>(&table);
+}
 
 define_default_test_main();

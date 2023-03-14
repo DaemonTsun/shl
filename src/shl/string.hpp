@@ -99,6 +99,7 @@
 
 #include "shl/hash.hpp"
 #include "shl/array.hpp"
+#include "shl/compare.hpp"
 #include "shl/number_types.hpp"
 
 template<typename C>
@@ -231,6 +232,11 @@ int compare_strings(const string  *s1, const string  *s2);
 int compare_strings(const string  *s1, const string  *s2, u64 n);
 int compare_strings(const wstring *s1, const wstring *s2);
 int compare_strings(const wstring *s1, const wstring *s2, u64 n);
+
+template<> bool equals(string  s1, string  s2);
+template<> bool equals(wstring s1, wstring s2);
+template<> bool equals_p(const string  *s1, const string  *s2);
+template<> bool equals_p(const wstring *s1, const wstring *s2);
 
 bool begins_with(const char    *s, const char    *prefix);
 bool begins_with(const wchar_t *s, const wchar_t *prefix);
