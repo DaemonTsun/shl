@@ -87,6 +87,28 @@ define_test(remove_element_by_key_removes_element_by_key_and_returns_whether_it_
     free(&table);
 }
 
+define_test(remove_element_by_hash_removes_element_by_hash)
+{
+    hash_table<string, string> table;
+    init(&table);
+
+    string key = "abc"_s;
+
+    bool ret = remove_element_by_hash<true, true>(&table, hash(key));
+    assert_equal(ret, false);
+
+    *add_element_by_key(&table, &key) = "hello"_s;
+
+    ret = remove_element_by_hash<true, true>(&table, hash(key));
+    assert_equal(ret, true);
+    assert_equal(table.size, 0);
+
+    ret = remove_element_by_hash<true, true>(&table, hash("abc"_cs));
+    assert_equal(ret, false);
+
+    free(&table);
+}
+
 define_test(search_looks_up_first_match_if_hash_is_contained_in_hash_table)
 {
     hash_table<u32, const char *> table;
@@ -132,6 +154,37 @@ define_test(search_returns_nullptr_if_no_match_was_found)
     assert_equal(search(&table, &key2), nullptr);
 
     free(&table);
+}
+
+define_test(search_by_hash_searches_entry_by_hash)
+{
+    hash_table<string, u32> table;
+    init(&table);
+
+    assert_equal(table.size, 0);
+
+    string key = "abc"_s;
+    table[key] = 5;
+    assert_equal(table.size, 1);
+
+    u32 *v = search(&table, &key);
+    assert_not_equal(v, nullptr);
+
+    u32 *v2 = search_by_hash(&table, hash(&key));
+    assert_not_equal(v2, nullptr);
+    assert_equal(v2, v);
+
+    u32 *v3 = search_by_hash(&table, hash("abc"_cs));
+    assert_equal(v3, v);
+    assert_equal(v3, v2);
+
+    u32 *v4 = search_by_hash(&table, "abc"_h); // _h string literal hash operator
+    assert_equal(v4, v);
+    assert_equal(v4, v2);
+    assert_equal(v4, v3);
+
+    free(&table);
+    free(&key);
 }
 
 define_test(search_or_insert_returns_pointer_to_inserted_element)
@@ -226,41 +279,62 @@ define_test(for_hash_table_iterates_hash_table)
 
 define_test(free_can_free_keys)
 {
-   hash_table<string, int> table; 
-   init(&table);
+    hash_table<string, int> table; 
+    init(&table);
 
-   // string allocates memory
-   table["hello"_s] = 5;
+    // string allocates memory
+    table["hello"_s] = 5;
 
-   assert_equal(table.size, 1);
+    assert_equal(table.size, 1);
 
-   // <true> frees keys as well
-   free<true>(&table);
+    // <true> frees keys as well
+    free<true>(&table);
 }
 
 define_test(free_can_free_values)
 {
-   hash_table<int, string> table; 
-   init(&table);
+    hash_table<int, string> table; 
+    init(&table);
 
-   table[5] = "hello"_s;
+    table[5] = "hello"_s;
 
-   assert_equal(table.size, 1);
+    assert_equal(table.size, 1);
 
-   // <..., true> frees values as well
-   free<false, true>(&table);
+    // <..., true> frees values as well
+    free<false, true>(&table);
 }
 
 define_test(free_can_free_keys_and_values)
 {
-   hash_table<string, string> table; 
-   init(&table);
+    hash_table<string, string> table; 
+    init(&table);
 
-   table["abc"_s] = "hello"_s;
+    table["abc"_s] = "hello"_s;
 
-   assert_equal(table.size, 1);
+    assert_equal(table.size, 1);
 
-   free<true, true>(&table);
+    free<true, true>(&table);
+}
+
+define_test(remove_element_by_key_can_free_keys_and_values)
+{
+    hash_table<string, string> table; 
+    init(&table);
+
+    string key = "abc"_s;
+    table["abc"_s] = "hello"_s;
+
+    assert_equal(table.size, 1);
+
+    bool ret = remove_element_by_key<true, true>(&table, &key);
+    assert_equal(ret, true);
+    assert_equal(table.size, 0);
+
+    ret = remove_element_by_key<true, true>(&table, &key);
+    assert_equal(ret, false);
+
+    free(&key);
+    free(&table);
 }
 
 define_default_test_main();

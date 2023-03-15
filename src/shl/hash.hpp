@@ -46,3 +46,5 @@ hash_t hash(const double *v);
 hash_t hash(const long double *v);
 hash_t hash(const void **v);
 
+hash_t operator""_h(const char    *str, u64 size);
+hash_t operator""_h(const wchar_t *str, u64 size);

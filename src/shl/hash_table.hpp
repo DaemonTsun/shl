@@ -145,6 +145,34 @@ bool remove_element_by_key(hash_table<TKey, TValue> *table, const TKey *key)
     return false;
 }
 
+template<bool FreeKey = false, bool FreeValue = false, typename TKey, typename TValue>
+bool remove_element_by_hash(hash_table<TKey, TValue> *table, hash_t hsh)
+{
+    assert(table != nullptr);
+
+    if (table->data.size == 0)
+        return false;
+
+    _iterate_table(hsh, table)
+    {
+        hash_table_entry<TKey, TValue> *ent = at(&table->data, index);
+
+        if (ent->hash == hsh) // && table->eq(key, &ent->key))
+        {
+            ent->hash = REMOVED_HASH;
+
+            if constexpr (FreeKey)   free(&ent->key);
+            if constexpr (FreeValue) free(&ent->value);
+            table->size--;
+            return true;
+        }
+
+        _advance_table_it();
+    }
+
+    return false;
+}
+
 template<typename TKey, typename TValue>
 void expand_table(hash_table<TKey, TValue> *table)
 {
@@ -200,6 +228,27 @@ TValue *search(hash_table<TKey, TValue> *table, const TKey *key)
 }
 
 template<typename TKey, typename TValue>
+TValue *search_by_hash(hash_table<TKey, TValue> *table, hash_t hsh)
+{
+    assert(table != nullptr);
+
+    if (table->data.size == 0)
+        return nullptr;
+
+    _iterate_table(hsh, table)
+    {
+        hash_table_entry<TKey, TValue> *ent = at(&table->data, index);
+
+        if (ent->hash == hsh) // && table->eq(key, &ent->key))
+            return &ent->value;
+
+        _advance_table_it();
+    }
+
+    return nullptr;
+}
+
+template<typename TKey, typename TValue>
 TValue *search_or_insert(hash_table<TKey, TValue> *table, const TKey *key)
 {
     TValue *v = search(table, key);
@@ -214,6 +263,12 @@ template<typename TKey, typename TValue>
 bool contains(hash_table<TKey, TValue> *table, const TKey *key)
 {
     return search(table, key) != nullptr;
+}
+
+template<typename TKey, typename TValue>
+bool contains_hash(hash_table<TKey, TValue> *table, hash_t hash)
+{
+    return search_by_hash(table, hash) != nullptr;
 }
 
 template<typename TKey, typename TValue>

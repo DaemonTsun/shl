@@ -1465,6 +1465,22 @@ hash_t hash(const_wstring str)
     return _hash(str);
 }
 
+template<typename C>
+hash_t _hash(const const_string_base<C> *str)
+{
+    return hash_data(str->c_str, str->size);
+}
+
+hash_t hash(const const_string  *str)
+{
+    return _hash(str);
+}
+
+hash_t hash(const const_wstring *str)
+{
+    return _hash(str);
+}
+
 hash_t hash(const string *str)
 {
     return _hash(to_const_string(str));

@@ -392,6 +392,8 @@ hash the entire size of the string, including all null characters
 */
 hash_t hash(const_string  str);
 hash_t hash(const_wstring str);
+hash_t hash(const const_string  *str);
+hash_t hash(const const_wstring *str);
 hash_t hash(const string  *str);
 hash_t hash(const wstring *str);
 

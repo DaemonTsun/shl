@@ -248,3 +248,12 @@ hash_t hash(const void **v)
     return hash_data(reinterpret_cast<const void*>(v), sizeof(const void*));
 }
 
+hash_t operator""_h(const char    *str, u64 size)
+{
+    return hash_data(str, size);
+}
+
+hash_t operator""_h(const wchar_t *str, u64 size)
+{
+    return hash_data(str, size);
+}
