@@ -337,4 +337,27 @@ define_test(remove_element_by_key_can_free_keys_and_values)
     free(&table);
 }
 
+define_test(add_element_by_key_expands_table)
+{
+    hash_table<int, int> table; 
+    init(&table, 64);
+
+    assert_equal(table.size, 0);
+    assert_greater_or_equal(table.data.reserved_size, 64);
+
+    for (int i = 0; i < 64; ++i)
+        add_element_by_key(&table, &i);
+
+    assert_equal(table.size, 64);
+    assert_greater_or_equal(table.data.reserved_size, 128);
+
+    for (int i = 64; i < 128; ++i)
+        add_element_by_key(&table, &i);
+
+    assert_equal(table.size, 128);
+    assert_greater_or_equal(table.data.reserved_size, 256);
+
+    free(&table);
+}
+
 define_default_test_main();

@@ -191,9 +191,12 @@ void expand_table(hash_table<TKey, TValue> *table)
     array<hash_table_entry<TKey, TValue>> old_entries = table->data;
     init(&table->data, new_size);
 
+    for_array(nv, &table->data)
+        nv->hash = NULL_HASH;
+
     table->size = 0;
 
-    for_array(i, v, &old_entries)
+    for_array(v, &old_entries)
         if (v->hash >= FIRST_HASH)
         {
             TValue *added_val = add_element_by_key(table, &v->key);
