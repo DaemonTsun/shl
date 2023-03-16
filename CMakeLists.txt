@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-find_package(better REQUIRED NO_DEFAULT_PATH PATHS ext/better-cmake/cmake)
+find_package(better REQUIRED PATHS ext/better-cmake/cmake)
 
 project(shl VERSION 0.5.3)
 project_author("DaemonTsun")
@@ -18,10 +18,9 @@ find_sources(shl_SOURCES "${shl_SOURCES_DIR}")
 find_headers(shl_HEADERS "${shl_SOURCES_DIR}")
 
 # library
-add_library(${shl_TARGET} SHARED)
+add_library(${shl_TARGET} STATIC)
 target_include_directories(${shl_TARGET} PRIVATE "${shl_SOURCES_DIR}")
-target_sources(${shl_TARGET} PUBLIC ${shl_HEADERS} ${shl_SOURCES})
-set_property(TARGET ${shl_TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_sources(${shl_TARGET} PRIVATE ${shl_HEADERS} ${shl_SOURCES})
 
 if (NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     export_library_variables(shl)

@@ -5,6 +5,7 @@
  *
  * the hash table.
  *
+ * TODO: docs
  */
 
 #include "shl/compare.hpp"
