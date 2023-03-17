@@ -1,46 +1,24 @@
 cmake_minimum_required(VERSION 3.10)
 find_package(better REQUIRED PATHS ext/better-cmake/cmake)
 
-project(shl VERSION 0.5.3)
+project(shl)
 project_author("DaemonTsun")
-get_version_target(shl_TARGET ${PROJECT_NAME})
 
-if(TARGET ${shl_TARGET})
-    return()
-endif()
-
-#settings
-set(CMAKE_CXX_STANDARD 20)
-
-set(shl_SOURCES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/")
-generate_project_header("${shl_SOURCES_DIR}/${PROJECT_NAME}/${PROJECT_NAME}_info.hpp")
-find_sources(shl_SOURCES "${shl_SOURCES_DIR}")
-find_headers(shl_HEADERS "${shl_SOURCES_DIR}")
-
-# library
-add_library(${shl_TARGET} STATIC)
-target_include_directories(${shl_TARGET} PRIVATE "${shl_SOURCES_DIR}")
-target_sources(${shl_TARGET} PRIVATE ${shl_HEADERS} ${shl_SOURCES})
-
-if (NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-    export_library_variables(shl)
-    return()
-endif()
-
-# not included file
-
-# install
-install_library(TARGET ${shl_TARGET} HEADERS ${shl_HEADERS})
-
-# tests
 set(TEST_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 set(TEST_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/tests)
 
+# library
+add_lib(shl STATIC
+    VERSION 0.6
+    SOURCES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/"
+    GENERATE_TARGET_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/src/shl/shl_info.hpp"
+    CPP_VERSION 20
+    CPP_WARNINGS ALL
+    TESTS "${TEST_SOURCE_DIR}"
+    )
+
 find_package(t1 QUIET)
-if(NOT DEFINED t1_DIR OR t1_DIR)
-    add_test_directory("${TEST_SOURCE_DIR}" INCLUDE_DIRS "${shl_SOURCES_DIR}" LIBRARIES ${shl_TARGET} pthread)
-    register_tests()
-    
+if (t1_FOUND)
     configure_file(${TEST_SOURCE_DIR}/file_stream_binary_data.bin
                    ${TEST_BINARY_DIR}/file_stream_binary_data.bin
                    COPYONLY)
