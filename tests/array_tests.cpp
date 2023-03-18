@@ -282,7 +282,6 @@ define_test(insert_elements_does_nothing_when_inserting_no_elements)
 
     init(&arr, 10);
 
-    u64 previous_size = arr.size;
     int *ptr = insert_elements(&arr, 5, 0);
 
     assert_not_equal(arr.data, nullptr);
@@ -646,7 +645,6 @@ define_test(index_of_returns_negative_one_if_key_is_not_found)
     for_array(i, v, &arr)
         *v = i;
     
-    int val = 6;
     assert_equal(index_of(&arr, 6), -1ull);
 
     free(&arr);

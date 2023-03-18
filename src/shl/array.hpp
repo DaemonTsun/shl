@@ -198,7 +198,7 @@ T *insert_elements(array<T> *arr, u64 index, u64 n_elements)
     if (n_elements == 0)
         return arr->data + index;
 
-    u64 prev_size = arr->size;
+    // u64 prev_size = arr->size;
     T *n = add_elements(arr, n_elements);
 
     if (n == nullptr)

@@ -4,16 +4,16 @@ find_package(better REQUIRED PATHS ext/better-cmake/cmake)
 project(shl)
 project_author("DaemonTsun")
 
-set(TEST_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
-set(TEST_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/tests)
+set(TEST_SOURCE_DIR ${ROOT}/tests)
+set(TEST_BINARY_DIR ${ROOT_BIN}/tests)
 
 # library
 add_lib(shl STATIC
     VERSION 0.6
-    SOURCES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/"
-    GENERATE_TARGET_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/src/shl/shl_info.hpp"
+    SOURCES_DIR "${ROOT}/src/"
+    GENERATE_TARGET_HEADER "${ROOT}/src/shl/shl_info.hpp"
     CPP_VERSION 20
-    CPP_WARNINGS ALL
+    CPP_WARNINGS ALL SANE
     TESTS "${TEST_SOURCE_DIR}"
     )
 
