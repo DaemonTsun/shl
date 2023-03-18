@@ -17,6 +17,8 @@ add_lib(shl STATIC
     TESTS "${TEST_SOURCE_DIR}"
     )
 
+exit_if_included()
+
 find_package(t1 QUIET)
 if (t1_FOUND)
     configure_file(${TEST_SOURCE_DIR}/file_stream_binary_data.bin
