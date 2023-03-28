@@ -360,4 +360,30 @@ define_test(add_element_by_key_expands_table)
     free(&table);
 }
 
+define_test(equality_operator_checks_hash_table_equality)
+{
+    hash_table<u32, u32> table1; 
+    hash_table<u32, u32> table2;
+    init(&table1);
+    init(&table2);
+
+    assert_equal(table1, table2);
+
+    table1[10] = 10;
+
+    assert_not_equal(table1, table2);
+
+    table2[5] = 5;
+
+    assert_not_equal(table1, table2);
+
+    table1[5] = 5;
+    table2[10] = 10;
+
+    assert_equal(table1, table2);
+
+    free(&table1);
+    free(&table2);
+}
+
 define_default_test_main();

@@ -44,6 +44,16 @@ wstring operator ""_s(const wchar_t *str, u64 n)
     return ret;
 }
 
+bool operator==(const string &a, const string &b)
+{
+    return compare_strings(a, b) == 0;
+}
+
+bool operator==(const wstring &a, const wstring &b)
+{
+    return compare_strings(a, b) == 0;
+}
+
 template<typename C>
 void _init(string_base<C> *str)
 {

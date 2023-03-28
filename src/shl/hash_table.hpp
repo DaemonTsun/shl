@@ -331,3 +331,23 @@ void free(hash_table<TKey, TValue> *table)
     if (E_Var->hash >= FIRST_HASH)
 
 #define for_hash_table(...) GET_MACRO3(__VA_ARGS__, for_hash_table_KVE, for_hash_table_KV, for_hash_table_V)(__VA_ARGS__)
+
+template<typename TKey, typename TValue>
+bool operator==(hash_table<TKey, TValue> &lhs, hash_table<TKey, TValue> &rhs)
+{
+    if (lhs.size != rhs.size)
+        return false;
+
+    for_hash_table(key, val, &lhs)
+    {
+        TValue *other = search(&rhs, key);
+
+        if (other == nullptr)
+            return false;
+
+        if (!(*other == *val))
+            return false;
+    }
+
+    return true;
+}

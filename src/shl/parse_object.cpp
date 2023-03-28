@@ -4,9 +4,11 @@
 #include "shl/parse_object.hpp"
 
 template<typename CharT>
-std::basic_string<CharT> slice(const CharT *input, const parse_range *range)
+void init_slice(string_base<CharT> *out, const CharT *input, const parse_range *range)
 {
-    return std::basic_string<CharT>(input + range->start.pos, range_length(range));
+    u64 len = range_length(range);
+    init(out, len);
+    copy_string(input + range->start.pos, out, len);
 }
 
 #define PARSE_STRING_DELIM '"'
@@ -36,95 +38,47 @@ bool operator==(const parsed_identifier<CharT> &lhs, const parsed_identifier<Cha
 DEFINE_PARSED_IDENTIFIER_EQUALITY_OPERATOR(char);
 DEFINE_PARSED_IDENTIFIER_EQUALITY_OPERATOR(wchar_t);
 
-template<typename CharT>
-std::basic_ostream<CharT> &operator<<(std::basic_ostream<CharT> &lhs, const parsed_identifier<CharT> &rhs)
+template<typename C>
+bool _equals(parsed_object_base<C> &lhs, parsed_object_base<C> &rhs)
 {
-    return lhs << rhs.value;
+    if (lhs.type != rhs.type)
+        return false;
+
+    switch (lhs.type)
+    {
+    case parsed_object_type::None:
+        return true;
+    case parsed_object_type::Bool:
+        return lhs.data._bool == rhs.data._bool;
+    case parsed_object_type::Integer:
+        return lhs.data._integer == rhs.data._integer;
+    case parsed_object_type::Decimal:
+        return lhs.data._decimal == rhs.data._decimal;
+    case parsed_object_type::String:
+        return lhs.data._string == rhs.data._string;
+    case parsed_object_type::Identifier:
+        return lhs.data._identifier.value == rhs.data._identifier.value;
+    case parsed_object_type::List:
+        return lhs.data._list == rhs.data._list;
+    case parsed_object_type::Table:
+        return lhs.data._table == rhs.data._table;
+    }
+
+    return false;
 }
 
-#define DEFINE_PARSED_OBJECT_STREAM_SHIFT_OPERATOR(CharT, CharT2)\
-std::basic_ostream<CharT> &operator<<(std::basic_ostream<CharT> &lhs, const basic_parsed_object<CharT2> &rhs)\
-{\
-    if (std::holds_alternative<typename basic_parsed_object<CharT2>::bool_type>(rhs.data))\
-        return lhs << (std::get<typename basic_parsed_object<CharT2>::bool_type>(rhs.data) ? "true" : "false");\
-    else\
-    if (std::holds_alternative<typename basic_parsed_object<CharT2>::integer_type>(rhs.data))\
-        return lhs << std::get<typename basic_parsed_object<CharT2>::integer_type>(rhs.data);\
-    else\
-    if (std::holds_alternative<typename basic_parsed_object<CharT2>::decimal_type>(rhs.data))\
-        return lhs << std::get<typename basic_parsed_object<CharT2>::decimal_type>(rhs.data);\
-    else\
-    if (std::holds_alternative<typename basic_parsed_object<CharT2>::string_type>(rhs.data))\
-        return lhs << PARSE_STRING_DELIM << std::get<typename basic_parsed_object<CharT2>::string_type>(rhs.data) << PARSE_STRING_DELIM;\
-    else\
-    if (std::holds_alternative<typename basic_parsed_object<CharT2>::identifier_type>(rhs.data))\
-        return lhs << std::get<typename basic_parsed_object<CharT2>::identifier_type>(rhs.data).value;\
-    else\
-    if (std::holds_alternative<typename basic_parsed_object<CharT2>::list_type>(rhs.data))\
-    {\
-        const auto &list = std::get<typename basic_parsed_object<CharT2>::list_type>(rhs.data);\
-        lhs << PARSE_LIST_OPENING_BRACKET;\
-\
-        if (!list.empty())\
-        {\
-            lhs << list[0];\
-\
-            for (size_t i = 1; i < list.size(); ++i)\
-            {\
-                lhs << PARSE_LIST_ITEM_DELIM << ' ';\
-                lhs << list[i];\
-            }\
-        }\
-\
-        lhs << PARSE_LIST_CLOSING_BRACKET;\
-\
-        return lhs;\
-    }\
-    else\
-    if (std::holds_alternative<typename basic_parsed_object<CharT2>::table_type>(rhs.data))\
-    {\
-        const auto &tab = std::get<typename basic_parsed_object<CharT2>::table_type>(rhs.data);\
-        lhs << PARSE_TABLE_OPENING_BRACKET;\
-\
-        if (!tab.empty())\
-        {\
-            auto it = tab.begin();\
-\
-            lhs << it->first << ' '\
-                << PARSE_TABLE_KEY_VALUE_DELIM << ' '\
-                << it->second;\
-\
-            while (++it != tab.end())\
-            {\
-                lhs << PARSE_TABLE_ITEM_DELIM << ' '\
-                    << it->first << ' '\
-                    << PARSE_TABLE_KEY_VALUE_DELIM << ' '\
-                    << it->second;\
-            }\
-        }\
-\
-        lhs << PARSE_TABLE_CLOSING_BRACKET;\
-\
-        return lhs;\
-    }\
-\
-    return lhs;\
+bool operator==(parsed_object_base<char> &lhs, parsed_object_base<char> &rhs)
+{
+    return _equals(lhs, rhs);
 }
 
-DEFINE_PARSED_OBJECT_STREAM_SHIFT_OPERATOR(char, char);
-DEFINE_PARSED_OBJECT_STREAM_SHIFT_OPERATOR(wchar_t, wchar_t);
-
-#define DEFINE_PARSED_OBJECT_EQUALITY_OPERATOR(CharT)\
-bool operator==(const basic_parsed_object<CharT> &lhs, const basic_parsed_object<CharT> &rhs)\
-{\
-    return lhs.data == rhs.data;\
+bool operator==(parsed_object_base<wchar_t> &lhs, parsed_object_base<wchar_t> &rhs)
+{
+    return _equals(lhs, rhs);
 }
-
-DEFINE_PARSED_OBJECT_EQUALITY_OPERATOR(char);
-DEFINE_PARSED_OBJECT_EQUALITY_OPERATOR(wchar_t);
 
 template<typename CharT>
-bool _parse_number_object(parser<CharT> *p, basic_parsed_object<CharT> *obj, parse_error<CharT> *err)
+bool _parse_number_object(parser<CharT> *p, parsed_object_base<CharT> *obj, parse_error<CharT> *err)
 {
     if (!is_ok(p))
     {
@@ -139,8 +93,8 @@ bool _parse_number_object(parser<CharT> *p, basic_parsed_object<CharT> *obj, par
     parse_error<CharT> int_err;
     parse_error<CharT> dec_err;
 
-    typename basic_parsed_object<CharT>::integer_type integer;
-    typename basic_parsed_object<CharT>::decimal_type decimal;
+    typename parsed_object_base<CharT>::integer_type integer;
+    typename parsed_object_base<CharT>::decimal_type decimal;
 
     int_success = parse_integer(&int_p, &integer, &int_err);
     dec_success = parse_decimal(&dec_p, &decimal, &dec_err);
@@ -152,23 +106,27 @@ bool _parse_number_object(parser<CharT> *p, basic_parsed_object<CharT> *obj, par
         // if one is longer than the other, choose that one
         if (int_p.it.pos >= dec_p.it.pos)
         {
-            obj->data.template emplace<decltype(integer)>(integer);
+            obj->type = parsed_object_type::Integer;
+            obj->data._integer = integer;
             p->it = int_p.it;
         }
         else
         {
-            obj->data.template emplace<decltype(decimal)>(decimal);
+            obj->type = parsed_object_type::Decimal;
+            obj->data._decimal = decimal;
             p->it = dec_p.it;
         }
     }
     else if (int_success)
     {
-        obj->data.template emplace<decltype(integer)>(integer);
+        obj->type = parsed_object_type::Integer;
+        obj->data._integer = integer;
         p->it = int_p.it;
     }
     else if (dec_success)
     {
-        obj->data.template emplace<decltype(decimal)>(decimal);
+        obj->type = parsed_object_type::Decimal;
+        obj->data._decimal = decimal;
         p->it = dec_p.it;
     }
     else
@@ -189,18 +147,18 @@ bool _parse_number_object(parser<CharT> *p, basic_parsed_object<CharT> *obj, par
     return true;
 }
 
-bool parse_number_object(parser<char> *p, basic_parsed_object<char> *obj, parse_error<char> *err)
+bool parse_number_object(parser<char> *p, parsed_object_base<char> *obj, parse_error<char> *err)
 {
     return _parse_number_object(p, obj, err);
 }
 
-bool parse_number_object(parser<wchar_t> *p, basic_parsed_object<wchar_t> *obj, parse_error<wchar_t> *err)
+bool parse_number_object(parser<wchar_t> *p, parsed_object_base<wchar_t> *obj, parse_error<wchar_t> *err)
 {
     return _parse_number_object(p, obj, err);
 }
 
 template<typename CharT>
-bool _parse_object_list(parser<CharT> *p, typename basic_parsed_object<CharT>::list_type *out, parse_error<CharT> *err)
+bool _parse_object_list(parser<CharT> *p, typename parsed_object_base<CharT>::list_type *out, parse_error<CharT> *err)
 {
     if (!is_ok(p))
     {
@@ -208,6 +166,7 @@ bool _parse_object_list(parser<CharT> *p, typename basic_parsed_object<CharT>::l
         return false;
     }
 
+    init(out);
     parse_iterator start = p->it;
 
     CharT c = current_char(p);
@@ -237,7 +196,7 @@ bool _parse_object_list(parser<CharT> *p, typename basic_parsed_object<CharT>::l
         return true;
     }
 
-    basic_parsed_object<CharT> obj;
+    parsed_object_base<CharT> obj;
 
     if (!parse_object(p, &obj, err))
     {
@@ -245,7 +204,7 @@ bool _parse_object_list(parser<CharT> *p, typename basic_parsed_object<CharT>::l
         return false;
     }
         
-    out->emplace_back(std::move(obj));
+    add_elements(out, 1)->value = obj;
 
     skip_whitespace_and_comments(p);
 
@@ -277,7 +236,7 @@ bool _parse_object_list(parser<CharT> *p, typename basic_parsed_object<CharT>::l
             return false;
         }
 
-        out->emplace_back(std::move(obj));
+        add_elements(out, 1)->value = obj;
 
         skip_whitespace_and_comments(p);
 
@@ -314,7 +273,7 @@ bool parse_object_list(parser<wchar_t> *p, wobject_list *out, parse_error<wchar_
 }
 
 template<typename CharT>
-bool _parse_object_table(parser<CharT> *p, typename basic_parsed_object<CharT>::table_type *out, parse_error<CharT> *err)
+bool _parse_object_table(parser<CharT> *p, typename parsed_object_base<CharT>::table_type *out, parse_error<CharT> *err)
 {
     if (!is_ok(p))
     {
@@ -322,6 +281,7 @@ bool _parse_object_table(parser<CharT> *p, typename basic_parsed_object<CharT>::
         return false;
     }
 
+    init(out);
     parse_iterator start = p->it;
 
     CharT c = current_char(p);
@@ -350,7 +310,7 @@ bool _parse_object_table(parser<CharT> *p, typename basic_parsed_object<CharT>::
         return true;
     }
 
-    typename basic_parsed_object<CharT>::identifier_type ident;
+    typename parsed_object_base<CharT>::identifier_type ident;
     parse_range rn;
     
     if (!parse_identifier(p, &rn, err))
@@ -359,7 +319,7 @@ bool _parse_object_table(parser<CharT> *p, typename basic_parsed_object<CharT>::
         return false;
     }
 
-    ident.value = slice(p->input, &rn);
+    init_slice(&ident.value, p->input, &rn);
 
     skip_whitespace_and_comments(p);
 
@@ -381,23 +341,22 @@ bool _parse_object_table(parser<CharT> *p, typename basic_parsed_object<CharT>::
 
     advance(&p->it);
 
-    basic_parsed_object<CharT> obj;
+    parsed_object_base<CharT> obj;
+
     if (!parse_object(p, &obj, err))
     {
         p->it = start;
         return false;
     }
 
-    auto dup = out->find(ident.value);
-
-    if (dup != out->end())
+    if (contains(out, &ident.value))
     {
-        get_parse_error(CharT, err, p, "duplicate key '%s' at " IT_FMT ", in table at " IT_FMT, ident.value.c_str(), format_it(p->it), format_it(start));
+        get_parse_error(CharT, err, p, "duplicate key '%s' at " IT_FMT ", in table at " IT_FMT, ident.value.data.data, format_it(p->it), format_it(start));
         p->it = start;
         return false;
     }
 
-    out->insert_or_assign(ident.value, std::move(obj));
+    *add_element_by_key(out, &ident.value) = obj;
     skip_whitespace_and_comments(p);
 
     if (is_at_end(p))
@@ -427,7 +386,8 @@ bool _parse_object_table(parser<CharT> *p, typename basic_parsed_object<CharT>::
             return false;
         }
 
-        ident.value = slice(p->input, &rn);
+        // we init again because table stores string anyway
+        init_slice(&ident.value, p->input, &rn);
 
         skip_whitespace_and_comments(p);
 
@@ -449,24 +409,20 @@ bool _parse_object_table(parser<CharT> *p, typename basic_parsed_object<CharT>::
 
         advance(&p->it);
 
-        basic_parsed_object<CharT> obj;
-
         if (!parse_object(p, &obj, err))
         {
             p->it = start;
             return false;
         }
 
-        dup = out->find(ident.value);
-
-        if (dup != out->end())
+        if (contains(out, &ident.value))
         {
-            get_parse_error(CharT, err, p, "duplicate key '%s' at " IT_FMT ", in table at " IT_FMT, ident.value.c_str(), format_it(p->it), format_it(start));
+            get_parse_error(CharT, err, p, "duplicate key '%s' at " IT_FMT ", in table at " IT_FMT, ident.value.data.data, format_it(p->it), format_it(start));
             p->it = start;
             return false;
         }
 
-        out->insert_or_assign(ident.value, std::move(obj));
+        *add_element_by_key(out, &ident.value) = obj;
         skip_whitespace_and_comments(p);
 
         if (is_at_end(p))
@@ -502,7 +458,7 @@ bool parse_object_table(parser<wchar_t> *p, wobject_table *out, parse_error<wcha
 }
 
 template<typename CharT>
-bool _parse_object(parser<CharT> *p, basic_parsed_object<CharT> *out, parse_error<CharT> *err)
+bool _parse_object(parser<CharT> *p, parsed_object_base<CharT> *out, parse_error<CharT> *err)
 {
     if (!is_ok(p))
     {
@@ -522,7 +478,7 @@ bool _parse_object(parser<CharT> *p, basic_parsed_object<CharT> *out, parse_erro
 
     CharT c = current_char(p);
 
-    basic_parsed_object<CharT> ret;
+    parsed_object_base<CharT> ret;
 
     if (c == PARSE_STRING_DELIM)
     {
@@ -533,34 +489,28 @@ bool _parse_object(parser<CharT> *p, basic_parsed_object<CharT> *out, parse_erro
             return false;
         }
 
-        ret.data.template emplace<typename basic_parsed_object<CharT>::string_type>
-            (p->input + rn.start.pos, range_length(&rn));
+        ret.type = parsed_object_type::String;
+        init_slice(&ret.data._string, p->input, &rn);
     }
     else if (c == PARSE_LIST_OPENING_BRACKET)
     {
-        typename basic_parsed_object<CharT>::list_type list;
-        
-        if (!parse_object_list(p, &list, err))
+        if (!parse_object_list(p, &ret.data._list, err))
         {
             p->it = start;
             return false;
         }
 
-        ret.data.template emplace<typename basic_parsed_object<CharT>::list_type>
-            (std::move(list));
+        ret.type = parsed_object_type::List;
     }
     else if (c == PARSE_TABLE_OPENING_BRACKET)
     {
-        typename basic_parsed_object<CharT>::table_type table;
-        
-        if (!parse_object_table(p, &table, err))
+        if (!parse_object_table(p, &ret.data._table, err))
         {
             p->it = start;
             return false;
         }
 
-        ret.data.template emplace<typename basic_parsed_object<CharT>::table_type>
-            (std::move(table));
+        ret.type = parsed_object_type::Table;
     }
     else if (c == '0' || c == '+' || c == '-' || c == '.')
     {
@@ -585,7 +535,7 @@ bool _parse_object(parser<CharT> *p, basic_parsed_object<CharT> *out, parse_erro
 
         parser<CharT> num_p = *p;
         parse_error<CharT> num_err;
-        basic_parsed_object<CharT> num_obj;
+        parsed_object_base<CharT> num_obj;
         bool num_success = parse_number_object(&num_p, &num_obj, &num_err);
 
         if (bool_success)
@@ -593,14 +543,14 @@ bool _parse_object(parser<CharT> *p, basic_parsed_object<CharT> *out, parse_erro
             if (id_p.it.pos > bool_p.it.pos)
             {
                 p->it = id_p.it;
-                ret.data.template emplace<typename basic_parsed_object<CharT>::identifier_type>
-                    (parsed_identifier<CharT>{std::basic_string<CharT>{id_p.input + id_rn.start.pos, range_length(&id_rn)}});
+                ret.type = parsed_object_type::Identifier;
+                init_slice(&ret.data._identifier.value, p->input, &id_rn);
             }
             else
             {
                 p->it = bool_p.it;
-                ret.data.template emplace<typename basic_parsed_object<CharT>::bool_type>
-                    (to_lower(bool_p.input[bool_rn.start.pos]) == 't');
+                ret.type = parsed_object_type::Bool;
+                ret.data._bool = to_lower(bool_p.input[bool_rn.start.pos]) == 't';
             }
         }
         else
@@ -610,25 +560,27 @@ bool _parse_object(parser<CharT> *p, basic_parsed_object<CharT> *out, parse_erro
                 if (id_p.it.pos > num_p.it.pos)
                 {
                     p->it = id_p.it;
-                    ret.data.template emplace<typename basic_parsed_object<CharT>::identifier_type>
-                        (parsed_identifier<CharT>{std::basic_string<CharT>{id_p.input + id_rn.start.pos, range_length(&id_rn)}});
+                    ret.type = parsed_object_type::Identifier;
+                    init_slice(&ret.data._identifier.value, p->input, &id_rn);
                 }
                 else
                 {
                     p->it = num_p.it;
-                    ret.data = std::move(num_obj.data);
+                    ret.type = num_obj.type;
+                    ret.data = num_obj.data;
                 }
             }
             else if (id_success)
             {
                 p->it = id_p.it;
-                ret.data.template emplace<typename basic_parsed_object<CharT>::identifier_type>
-                    (parsed_identifier<CharT>{std::basic_string<CharT>{id_p.input + id_rn.start.pos, range_length(&id_rn)}});
+                ret.type = parsed_object_type::Identifier;
+                init_slice(&ret.data._identifier.value, p->input, &id_rn);
             }
             else if (num_success)
             {
                 p->it = num_p.it;
-                ret.data = std::move(num_obj.data);
+                ret.type = num_obj.type;
+                ret.data = num_obj.data;
             }
             else
             {
@@ -653,17 +605,52 @@ bool _parse_object(parser<CharT> *p, basic_parsed_object<CharT> *out, parse_erro
         }
     }
 
-    out->data = std::move(ret.data);
+    out->type = ret.type;
+    out->data = ret.data;
 
     return true;
 }
 
-bool parse_object(parser<char> *p, basic_parsed_object<char> *out, parse_error<char> *err)
+bool parse_object(parser<char> *p, parsed_object_base<char> *out, parse_error<char> *err)
 {
     return _parse_object(p, out, err);
 }
 
-bool parse_object(parser<wchar_t> *p, basic_parsed_object<wchar_t> *out, parse_error<wchar_t> *err)
+bool parse_object(parser<wchar_t> *p, parsed_object_base<wchar_t> *out, parse_error<wchar_t> *err)
 {
     return _parse_object(p, out, err);
+}
+
+template<typename C>
+void _free(parsed_object_base<C> *obj)
+{
+    assert(obj != nullptr);
+
+    switch (obj->type)
+    {
+    case parsed_object_type::String:
+        free(&obj->data._string);
+        break;
+    case parsed_object_type::Identifier:
+        free(&obj->data._identifier.value);
+        break;
+    case parsed_object_type::List:
+        free<true>(&obj->data._list);
+        break;
+    case parsed_object_type::Table:
+        free<true, true>(&obj->data._table);
+        break;
+    default:
+        break;
+    }
+}
+
+void free(parsed_object  *obj)
+{
+    _free(obj);
+}
+
+void free(wparsed_object *obj)
+{
+    _free(obj);
 }

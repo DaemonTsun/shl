@@ -123,6 +123,19 @@ struct array
 };
 
 template<typename T>
+bool operator==(const array<T> &lhs, const array<T> &rhs)
+{
+    if (lhs.size != rhs.size)
+        return false;
+
+    for (u64 i = 0; i < lhs.size; ++i)
+        if (!(lhs.data[i] == rhs.data[i]))
+            return false;
+
+    return true;
+}
+
+template<typename T>
 void init(array<T> *arr)
 {
     assert(arr != nullptr);

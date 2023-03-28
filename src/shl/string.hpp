@@ -151,6 +151,9 @@ typedef string_base<wchar_t> wstring;
 string  operator ""_s(const char    *, u64);
 wstring operator ""_s(const wchar_t *, u64);
 
+bool operator==(const string &a, const string &b);
+bool operator==(const wstring &a, const wstring &b);
+
 void init(string *str);
 void init(string *str, u64 size);
 void init(string *str, const char *c);
@@ -288,11 +291,11 @@ wchar_t *copy_string(const wchar_t *src, wchar_t *dst, u64 n);
 
 // allocates more memory in dst if dst is not large enough to store src
 void copy_string(const char    *src, string  *dst);
-void copy_string(const wchar_t *src, string  *dst);
+void copy_string(const wchar_t *src, wstring *dst);
 void copy_string(const char    *src, string  *dst, u64 n);
-void copy_string(const wchar_t *src, string  *dst, u64 n);
+void copy_string(const wchar_t *src, wstring *dst, u64 n);
 void copy_string(const char    *src, string  *dst, u64 n, u64 dst_offset);
-void copy_string(const wchar_t *src, string  *dst, u64 n, u64 dst_offset);
+void copy_string(const wchar_t *src, wstring *dst, u64 n, u64 dst_offset);
 void copy_string(const_string   src, string  *dst);
 void copy_string(const_wstring  src, wstring *dst);
 void copy_string(const_string   src, string  *dst, u64 n);

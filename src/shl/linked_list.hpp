@@ -131,6 +131,24 @@ struct linked_list
 };
 
 template<typename T>
+bool operator==(const linked_list<T> &lhs, const linked_list<T> &rhs)
+{
+    if (lhs.size != rhs.size)
+        return false;
+
+    auto n1 = lhs.first;
+    auto n2 = rhs.first;
+
+    while (n1 != nullptr && n1->value == n2->value)
+    {
+        n1 = n1->next;
+        n2 = n2->next;
+    }
+
+    return n1 == nullptr;
+}
+
+template<typename T>
 void init(linked_list<T> *list)
 {
     assert(list != nullptr);
