@@ -23,7 +23,7 @@ s64 copy_string_reverse(const C* src, C *dst, u64 size)
 }
 
 template<typename C>
-s64 pad_string(string_base<C> *s, C chr, s64 count, u64 offset = 0)
+s64 _pad_string(string_base<C> *s, C chr, s64 count, u64 offset)
 {
     if (count <= 0)
         return 0;
@@ -34,6 +34,16 @@ s64 pad_string(string_base<C> *s, C chr, s64 count, u64 offset = 0)
         s->data.data[i + offset] = chr;
 
     return count;
+}
+
+s64 pad_string(string *s, char chr, s64 count, u64 offset)
+{
+    return _pad_string(s, chr, count, offset);
+}
+
+s64 pad_string(wstring *s, wchar_t chr, s64 count, u64 offset)
+{
+    return _pad_string(s, chr, count, offset);
 }
 
 template<typename C>

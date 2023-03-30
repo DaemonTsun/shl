@@ -1,6 +1,5 @@
 
 #include "shl/string.hpp"
-#include "shl/string_manip.hpp"
 #include "shl/parse_object.hpp"
 
 template<typename CharT>
@@ -135,11 +134,13 @@ bool _parse_number_object(parser<CharT> *p, parsed_object_base<CharT> *obj, pars
         if (int_err.it.pos >= dec_err.it.pos)
         {
             *err = int_err;
+            obj->type = parsed_object_type::None;
             return false;
         }
         else
         {
             *err = dec_err;
+            obj->type = parsed_object_type::None;
             return false;
         }
     }
@@ -160,13 +161,14 @@ bool parse_number_object(parser<wchar_t> *p, parsed_object_base<wchar_t> *obj, p
 template<typename CharT>
 bool _parse_object_list(parser<CharT> *p, typename parsed_object_base<CharT>::list_type *out, parse_error<CharT> *err)
 {
+    init(out);
+
     if (!is_ok(p))
     {
         get_parse_error(CharT, err, p, "input is nullptr or end was reached");
         return false;
     }
 
-    init(out);
     parse_iterator start = p->it;
 
     CharT c = current_char(p);
@@ -275,13 +277,14 @@ bool parse_object_list(parser<wchar_t> *p, wobject_list *out, parse_error<wchar_
 template<typename CharT>
 bool _parse_object_table(parser<CharT> *p, typename parsed_object_base<CharT>::table_type *out, parse_error<CharT> *err)
 {
+    init(out);
+
     if (!is_ok(p))
     {
         get_parse_error(CharT, err, p, "input is nullptr or end was reached");
         return false;
     }
 
-    init(out);
     parse_iterator start = p->it;
 
     CharT c = current_char(p);
@@ -463,6 +466,7 @@ bool _parse_object(parser<CharT> *p, parsed_object_base<CharT> *out, parse_error
     if (!is_ok(p))
     {
         get_parse_error(CharT, err, p, "input is nullptr or end was reached");
+        out->type = parsed_object_type::None;
         return false;
     }
 
@@ -472,6 +476,7 @@ bool _parse_object(parser<CharT> *p, parsed_object_base<CharT> *out, parse_error
     if (is_at_end(p))
     {
         get_parse_error(CharT, err, p, "no object at " IT_FMT, format_it(start));
+        out->type = parsed_object_type::None;
         p->it = start;
         return false;
     }
@@ -485,6 +490,7 @@ bool _parse_object(parser<CharT> *p, parsed_object_base<CharT> *out, parse_error
         parse_range rn;
         if (!parse_string(p, &rn, err, PARSE_STRING_DELIM, false))
         {
+            out->type = parsed_object_type::None;
             p->it = start;
             return false;
         }
@@ -496,6 +502,8 @@ bool _parse_object(parser<CharT> *p, parsed_object_base<CharT> *out, parse_error
     {
         if (!parse_object_list(p, &ret.data._list, err))
         {
+            free<true>(&ret.data._list);
+            out->type = parsed_object_type::None;
             p->it = start;
             return false;
         }
@@ -506,6 +514,8 @@ bool _parse_object(parser<CharT> *p, parsed_object_base<CharT> *out, parse_error
     {
         if (!parse_object_table(p, &ret.data._table, err))
         {
+            free<true, true>(&ret.data._table);
+            out->type = parsed_object_type::None;
             p->it = start;
             return false;
         }
@@ -516,6 +526,7 @@ bool _parse_object(parser<CharT> *p, parsed_object_base<CharT> *out, parse_error
     {
         if (!parse_number_object(p, &ret, err))
         {
+            out->type = parsed_object_type::None;
             p->it = start;
             return false;
         }
@@ -588,16 +599,19 @@ bool _parse_object(parser<CharT> *p, parsed_object_base<CharT> *out, parse_error
                 if (bool_err.it.pos >= id_err.it.pos
                  && bool_err.it.pos >= num_err.it.pos)
                 {
+                    out->type = parsed_object_type::None;
                     *err = bool_err;
                     return false;
                 }
                 else if (num_err.it.pos >= id_err.it.pos)
                 {
+                    out->type = parsed_object_type::None;
                     *err = num_err;
                     return false;
                 }
                 else
                 {
+                    out->type = parsed_object_type::None;
                     *err = id_err;
                     return false;
                 }
@@ -654,3 +668,194 @@ void free(wparsed_object *obj)
 {
     _free(obj);
 }
+
+template<typename C>
+s64 _parsed_object_to_string(string_base<C> *s, const parsed_object_base<C> *x, u64 offset, format_options<C> opt)
+{
+    s64 written = 0;
+
+    switch (x->type)
+    {
+    case parsed_object_type::Bool:
+        written += to_string(s, x->data._bool, offset, opt, true);
+        break;
+
+    case parsed_object_type::Integer:
+        // can't really supply number format info here since all formatting info is lost
+        // on parsing, so just write normal signed integer.
+        written += to_string(s, x->data._integer, offset, opt /*, ...*/);
+        break;
+
+    case parsed_object_type::Decimal:
+        written += to_string(s, x->data._decimal, offset, opt /*, ...*/);
+        break;
+
+    case parsed_object_type::String:
+    {
+        u64 len = string_length(&x->data._string);
+        string_reserve(s, offset + 2 + len);
+
+        s->data.data[offset] = PARSE_STRING_DELIM;
+        written++;
+
+        copy_string(&x->data._string, s, len, written + offset);
+        written += len;
+
+        s->data.data[offset + written] = PARSE_STRING_DELIM;
+        written++;
+        break;
+    }
+
+    case parsed_object_type::Identifier:
+    {
+        u64 len = string_length(&x->data._string);
+        string_reserve(s, offset + len);
+
+        copy_string(&x->data._string, s, len, written + offset);
+        written += len;
+        break;
+    }
+
+    case parsed_object_type::List:
+    {
+        string_reserve(s, offset + 1);
+        s->data.data[offset] = PARSE_LIST_OPENING_BRACKET;
+        written++;
+
+        auto *list = &x->data._list;
+
+        if (list->size != 0)
+        {
+            auto *node = list->first;
+
+            written += to_string(s, &node->value, offset + written);
+            node = node->next;
+
+            while (node != nullptr)
+            {
+                string_reserve(s, offset + written + 2);
+
+                s->data.data[offset + written] = PARSE_LIST_ITEM_DELIM;
+                written++;
+                s->data.data[offset + written] = ' ';
+                written++;
+
+                written += to_string(s, &node->value, offset + written);
+                node = node->next;
+            }
+        }
+
+        string_reserve(s, offset + written + 1);
+        s->data.data[offset + written] = PARSE_LIST_CLOSING_BRACKET;
+        written++;
+
+        break;
+    }
+
+    case parsed_object_type::Table:
+    {
+        string_reserve(s, offset + 1);
+        s->data.data[offset] = PARSE_TABLE_OPENING_BRACKET;
+        written++;
+
+        auto *table = &x->data._table;
+
+        if (table->size != 0)
+        {
+            u64 i = 0;
+            auto *node = table->data.data;
+
+            while (i < table->data.size)
+            {
+                node = table->data.data + i;
+
+                if (node->hash >= FIRST_HASH)
+                    break;
+
+                i++;
+            }
+
+            if (node->hash >= FIRST_HASH)
+            {
+                written += to_string(s, &node->key, offset + written);
+                string_reserve(s, offset + written + 3);
+
+                s->data.data[offset + written] = ' ';
+                written++;
+                s->data.data[offset + written] = PARSE_TABLE_KEY_VALUE_DELIM;
+                written++;
+                s->data.data[offset + written] = ' ';
+                written++;
+
+                written += to_string(s, &node->value, offset + written);
+
+                i++;
+
+                while (i < table->data.size)
+                {
+                    node = table->data.data + i;
+
+                    if (node->hash < FIRST_HASH)
+                    {
+                        i++;
+                        continue;
+                    }
+
+                    string_reserve(s, offset + written + 2);
+
+                    s->data.data[offset + written] = PARSE_TABLE_ITEM_DELIM;
+                    written++;
+                    s->data.data[offset + written] = ' ';
+                    written++;
+
+                    written += to_string(s, &node->key, offset + written);
+                    string_reserve(s, offset + written + 3);
+
+                    s->data.data[offset + written] = ' ';
+                    written++;
+                    s->data.data[offset + written] = PARSE_TABLE_KEY_VALUE_DELIM;
+                    written++;
+                    s->data.data[offset + written] = ' ';
+                    written++;
+
+                    written += to_string(s, &node->value, offset + written);
+
+                    i++;
+                }
+            }
+        }
+
+        string_reserve(s, offset + written + 1);
+        s->data.data[offset + written] = PARSE_TABLE_CLOSING_BRACKET;
+        written++;
+
+        break;
+    }
+    default:
+        break;
+    }
+
+    return written;
+}
+
+#define to_string_body(F, String, Value, Offset, Options, ...)\
+{\
+    s64 written = F(String, Value, Offset, Options __VA_OPT__(,) __VA_ARGS__);\
+\
+    if (Options.pad_length < 0) written += pad_string(String, Options.pad_char, -Options.pad_length - written, written + Offset);\
+\
+    if (written + Offset >= String->data.size)\
+    {\
+        String->data.size = written + Offset;\
+        String->data.data[String->data.size] = '\0';\
+    }\
+\
+    return written;\
+}
+
+s64 to_string(string  *s, const parsed_object  *x)             to_string_body(_parsed_object_to_string, s, x, 0, default_format_options<char>);
+s64 to_string(string  *s, const parsed_object  *x, u64 offset) to_string_body(_parsed_object_to_string, s, x, offset, default_format_options<char>);
+s64 to_string(string  *s, const parsed_object  *x, u64 offset, format_options<char> opt) to_string_body(_parsed_object_to_string, s, x, offset, opt);
+s64 to_string(wstring *s, const wparsed_object *x)             to_string_body(_parsed_object_to_string, s, x, 0, default_format_options<wchar_t>);
+s64 to_string(wstring *s, const wparsed_object *x, u64 offset) to_string_body(_parsed_object_to_string, s, x, offset, default_format_options<wchar_t>);
+s64 to_string(wstring *s, const wparsed_object *x, u64 offset, format_options<wchar_t> opt) to_string_body(_parsed_object_to_string, s, x, offset, opt);

@@ -1,42 +1,44 @@
 
 /* parse_object.hpp
- * v1.0
- *
- * depends on parse.hpp
- *
- * parses strings into objects, similar to json.
- * an object is either a boolean (true, false), a number (integer,
- * floating point), a string ("..."), an identifier, a list of objects ([x, y, z])
- * or a table of objects ({a: obj, b: obj}) (where the keys are identifiers).
- *
- * example:
- * {
- *     name: "John Doe",
- *     age: 50,
- *     address: {
- *          streetAddress: "21 2nd Street",
- *          city: "New York",
- *          state: "NY",
- *          postalCode: "10021-3100"
- *     },
- *     phoneNumbers: [
- *         "212 555-1234",
- *         "646 555-4567"
- *     ]
- * }
- *
- * comments can be inserted anywhere between values with C line or multiline comments.
- *
- * objects can be cast to their value to obtain a reference or const reference,
- * the value can also be obtained via the get<T> method or directly via obj.data.
- * to check whether an object holds a given type, use the .has_value method.
- */
+v1.0
+
+depends on parse.hpp
+
+parses strings into objects, similar to json.
+an object is either a boolean (true, false), a number (integer,
+floating point), a string ("..."), an identifier, a list of objects ([x, y, z])
+or a table of objects ({a: obj, b: obj}) (where the keys are identifiers).
+
+example:
+{
+    name: "John Doe",
+    age: 50,
+    address: {
+         streetAddress: "21 2nd Street",
+         city: "New York",
+         state: "NY",
+         postalCode: "10021-3100"
+    },
+    phoneNumbers: [
+        "212 555-1234",
+        "646 555-4567"
+    ]
+}
+
+comments can be inserted anywhere between values with C line or multiline comments.
+
+objects can be cast to their value to obtain a reference or const reference,
+the value can also be obtained via the get<T> method or directly via obj.data.
+to check whether an object holds a given type, use the .has_value method.
+
+*/
 
 #pragma once
 
 #include "shl/string.hpp"
 #include "shl/linked_list.hpp"
 #include "shl/hash_table.hpp"
+#include "shl/format.hpp"
 #include "shl/parse.hpp"
 
 template<typename C = char>
@@ -90,17 +92,15 @@ struct parsed_object_base
     const parsed_object_base<C> &operator[](u64 n) const
     { return data._list[n]; }
 
-    parsed_object_base<C> &operator[](const string_type &i)
-    { return data._table[i]; }
+    parsed_object_base<C> &operator[](const C *i) { return this->operator[](to_const_string(i)); }
+    parsed_object_base<C> &operator[](const_string i) { return *search_by_hash(&data._table, hash(&i)); }
+    parsed_object_base<C> &operator[](const string_type &i) { return data._table[i]; }
+    parsed_object_base<C> &operator[](const string_type *i) { return data._table[i]; }
 
-    parsed_object_base<C> &operator[](const string_type *i)
-    { return data._table[i]; }
-
-    const parsed_object_base<C> &operator[](const string_type &i) const
-    { return *search(&data._table, &i); }
-
-    const parsed_object_base<C> &operator[](const string_type *i) const
-    { return *search(&data._table, i); }
+    const parsed_object_base<C> &operator[](const C *i) const { return this->operator[](to_const_string(i)); }
+    const parsed_object_base<C> &operator[](const_string i) const { return *search_by_hash(&data._table, hash(&i)); }
+    const parsed_object_base<C> &operator[](const string_type &i) const { return *search(&data._table, &i); }
+    const parsed_object_base<C> &operator[](const string_type *i) const { return *search(&data._table, i); }
 };
 
 bool operator==(parsed_object_base<char> &lhs, parsed_object_base<char> &rhs);
@@ -132,4 +132,10 @@ bool parse_object(parser<wchar_t> *p, wparsed_object *out, parse_error<wchar_t> 
 void free(parsed_object  *obj);
 void free(wparsed_object *obj);
 
-// TODO: to_string possibly
+
+s64 to_string(string  *s, const parsed_object  *x);
+s64 to_string(string  *s, const parsed_object  *x, u64 offset);
+s64 to_string(string  *s, const parsed_object  *x, u64 offset, format_options<char> opt);
+s64 to_string(wstring *s, const wparsed_object *x);
+s64 to_string(wstring *s, const wparsed_object *x, u64 offset);
+s64 to_string(wstring *s, const wparsed_object *x, u64 offset, format_options<wchar_t> opt);

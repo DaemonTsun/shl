@@ -2,7 +2,6 @@
 #include <stdio.h>
 
 #include "shl/string.hpp"
-#include "shl/string_manip.hpp"
 #include "shl/parse.hpp"
 
 #define get_parse_error_(CharT, p, FMT, ...) \
