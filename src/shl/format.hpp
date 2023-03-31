@@ -405,5 +405,5 @@ const_string_base<C> tformat(const_string_base<C> fmt, Ts &&...args)
 template<typename C, typename... Ts>
 const_string_base<C> tformat(const C *fmt, Ts &&...args)
 {
-    return tformat(to_string_string(fmt), forward<Ts>(args)...);
+    return tformat(to_const_string(fmt), forward<Ts>(args)...);
 }
