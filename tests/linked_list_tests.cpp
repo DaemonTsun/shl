@@ -1135,4 +1135,58 @@ define_test(remove_elements_can_free_values)
     free<true>(&list_of_lists);
 }
 
+define_test(add_at_end_adds_element_at_end)
+{
+    linked_list<int> lst;
+    init(&lst);
+
+    assert_equal(lst.size, 0);
+
+    auto n = add_at_end(&lst, 5);
+
+    assert_equal(lst.size, 1);
+    assert_equal(n, lst.first);
+    assert_equal(n, lst.last);
+    assert_equal(lst[0], 5);
+
+    int x = 10;
+    n = add_at_end(&lst, &x);
+
+    assert_equal(lst.size, 2);
+    assert_equal(n, lst.last);
+    assert_equal(lst[0], 5);
+    assert_equal(lst[1], 10);
+
+    assert_list_integrity(&lst);
+
+    free(&lst);
+}
+
+define_test(add_at_start_adds_element_at_start)
+{
+    linked_list<int> lst;
+    init(&lst);
+
+    assert_equal(lst.size, 0);
+
+    auto n = add_at_start(&lst, 5);
+
+    assert_equal(lst.size, 1);
+    assert_equal(n, lst.first);
+    assert_equal(n, lst.last);
+    assert_equal(lst[0], 5);
+
+    int x = 10;
+    n = add_at_start(&lst, &x);
+
+    assert_equal(lst.size, 2);
+    assert_equal(n, lst.first);
+    assert_equal(lst[0], 10);
+    assert_equal(lst[1], 5);
+
+    assert_list_integrity(&lst);
+
+    free(&lst);
+}
+
 define_default_test_main();

@@ -2,94 +2,102 @@
 #pragma once
 
 /* linked_list.hpp
- * 
- * non-contiguous linked memory structure.
- * contains nodes, each node contains one element, access via node.value.
- * each node has a previous and next pointer to the previous and next node respectively.
- *
- * initialize a list with init(*list, size), free with free(*list).
- *
- * add_elements(*list, N) adds N elements to the list at the end and returns a pointer
- *                        to the first node inserted.
- *
- * insert_elements(*list, pos, N) inserts N elements at position pos in the list.
- *                                if pos == list.size, behaves like add_elements(list, N).
- *                                if pos > list.size, does nothing and returns nullptr.
- *                                otherwise, inserts nodes at position pos and chains
- *                                them correctly to the neighboring nodes.
- *                                if pos == 0, sets list.first accordingly.
- *                                if pos == list.size, sets list.last accordingly.
- *                                returns a pointer to the first node inserted.
- *
- * remove_elements(*list, pos, N) removes N nodes starting at position pos from the list.
- *                                does nothing if pos >= list.size.
- *                                if pos + n >= list.size, only removes nodes up to list.last.
- *                                if pos == 0, sets list.first accordingly.
- *                                if pos + n >= list.size, sets list.last accordingly.
- *
- * resize(*list, N) sets the size of the list to contain exactly N elements.
- *                  allocates new nodes if size is greater than list.size.
- *                  removes and deallocates nodes starting from the back
- *                  if size is smaller than list.size.
- *                  does nothing if size == list.size.
- *
- * nth_node(*list, N) returns a pointer to the Nth node (not not element) in the list.
- *
- * at(*list, N) returns a pointer to the Nth element (not node) in the list.
- *
- * clear(*list) identical to free<false>(*list).
- *
- * free_values(*list) calls free(*v) on each element in the array, but does
- *                   not deallocate memory of the linked list.
- *
- * free(*list) frees all nodes and sets list.first, list.last to nullptr,
- *             and sets list.size to 0.
- *             if template parameter FreeValues is true, calls free()
- *             on every element.
- *
- * supports index operator: list[0] == nth_node(&list, 0)->value.
- *
- * other functions:
- *
- * search_node(*list, *key, eq) returns a pointer to the node that eq(node.value, key)
- *                              returns true to, otherwise returns nullptr if key
- *                              was not found. does not assume anything about the
- *                              list and will do a full scan in the worst case.
- *
- * search(*list, *key, eq) returns a pointer to an element that eq(elem, key)
- *                         returns true to, otherwise returns nullptr if key
- *                         was not found. does not assume anything about the
- *                         list and will do a full scan in the worst case.
- *
- * index_of(*list, *key, eq) returns the index of an element that eq(elem, key)
- *                           returns true to, otherwise returns -1 if key
- *                           was not found. does not assume anything about the
- *                           list and will do a full scan in the worst case.
- *
- * contains(*list, *key, eq) returns true if key is in the list, false
- *                           otherwise. does not assume anything about the
- *                           list and will do a full scan in the worst case.
- *
- * hash(*list) returns the default hash of the _memory_ of the _elements_
- *             stored in the list.
- *
- * for_list(v, *list) iterate a list. v will be a pointer to an element in the list.
- *                    example, setting all values to 5:
- *
- *                    linked_list<int> list;
- *                    init(&list, 3)
- *                    
- *                    for_list(v, &list)
- *                    {
- *                        *v = 5;
- *                    }
- *
- * for_list(i, v, *list) iterate a list. i will be the index of an element and
- *                       v will be a pointer to an element in the list.
- *
- * for_list(i, v, n, *list) iterate a list. i will be the index of an element and
- *                          v will be a pointer to an element and
- *                          n will be a pointer to a node in the list.
+
+non-contiguous linked memory structure.
+contains nodes, each node contains one element, access via node.value.
+each node has a previous and next pointer to the previous and next node respectively.
+
+initialize a list with init(*list, size), free with free(*list).
+
+add_at_start(*list, V) adds the value V at the end of the list.
+                       returns a pointer to the node of the inserted value,
+                       which is always list.first.
+
+add_at_end(*list, V) adds the value V at the end of the list.
+                     returns a pointer to the node of the inserted value,
+                     which is always list.last.
+
+add_elements(*list, N) adds N elements to the list at the end and returns a pointer
+                       to the first node inserted.
+
+insert_elements(*list, pos, N) inserts N elements at position pos in the list.
+                               if pos == list.size, behaves like add_elements(list, N).
+                               if pos > list.size, does nothing and returns nullptr.
+                               otherwise, inserts nodes at position pos and chains
+                               them correctly to the neighboring nodes.
+                               if pos == 0, sets list.first accordingly.
+                               if pos == list.size, sets list.last accordingly.
+                               returns a pointer to the first node inserted.
+
+remove_elements(*list, pos, N) removes N nodes starting at position pos from the list.
+                               does nothing if pos >= list.size.
+                               if pos + n >= list.size, only removes nodes up to list.last.
+                               if pos == 0, sets list.first accordingly.
+                               if pos + n >= list.size, sets list.last accordingly.
+
+resize(*list, N) sets the size of the list to contain exactly N elements.
+                 allocates new nodes if size is greater than list.size.
+                 removes and deallocates nodes starting from the back
+                 if size is smaller than list.size.
+                 does nothing if size == list.size.
+
+nth_node(*list, N) returns a pointer to the Nth node (not not element) in the list.
+
+at(*list, N) returns a pointer to the Nth element (not node) in the list.
+
+clear(*list) identical to free<false>(*list).
+
+free_values(*list) calls free(*v) on each element in the array, but does
+                  not deallocate memory of the linked list.
+
+free(*list) frees all nodes and sets list.first, list.last to nullptr,
+            and sets list.size to 0.
+            if template parameter FreeValues is true, calls free()
+            on every element.
+
+supports index operator: list[0] == nth_node(&list, 0)->value.
+
+other functions:
+
+search_node(*list, *key, eq) returns a pointer to the node that eq(node.value, key)
+                             returns true to, otherwise returns nullptr if key
+                             was not found. does not assume anything about the
+                             list and will do a full scan in the worst case.
+
+search(*list, *key, eq) returns a pointer to an element that eq(elem, key)
+                        returns true to, otherwise returns nullptr if key
+                        was not found. does not assume anything about the
+                        list and will do a full scan in the worst case.
+
+index_of(*list, *key, eq) returns the index of an element that eq(elem, key)
+                          returns true to, otherwise returns -1 if key
+                          was not found. does not assume anything about the
+                          list and will do a full scan in the worst case.
+
+contains(*list, *key, eq) returns true if key is in the list, false
+                          otherwise. does not assume anything about the
+                          list and will do a full scan in the worst case.
+
+hash(*list) returns the default hash of the _memory_ of the _elements_
+            stored in the list.
+
+for_list(v, *list) iterate a list. v will be a pointer to an element in the list.
+                   example, setting all values to 5:
+
+                   linked_list<int> list;
+                   init(&list, 3)
+                   
+                   for_list(v, &list)
+                   {
+                       *v = 5;
+                   }
+
+for_list(i, v, *list) iterate a list. i will be the index of an element and
+                      v will be a pointer to an element in the list.
+
+for_list(i, v, n, *list) iterate a list. i will be the index of an element and
+                         v will be a pointer to an element and
+                         n will be a pointer to a node in the list.
  */
 
 #include "shl/compare.hpp"
@@ -202,6 +210,38 @@ list_node<T> *nth_node(const linked_list<T> *list, u64 n)
     }
 
     return ret;
+}
+
+template<typename T>
+inline list_node<T> *add_at_start(linked_list<T> *list, T val)
+{
+    list_node<T> *n = insert_elements(list, 0, 1);
+    n->value = val;
+    return n;
+}
+
+template<typename T>
+inline list_node<T> *add_at_start(linked_list<T> *list, const T *val)
+{
+    list_node<T> *n = insert_elements(list, 0, 1);
+    n->value = *val;
+    return n;
+}
+
+template<typename T>
+inline list_node<T> *add_at_end(linked_list<T> *list, T val)
+{
+    list_node<T> *n = add_elements(list, 1);
+    n->value = val;
+    return n;
+}
+
+template<typename T>
+inline list_node<T> *add_at_end(linked_list<T> *list, const T *val)
+{
+    list_node<T> *n = add_elements(list, 1);
+    n->value = *val;
+    return n;
 }
 
 template<typename T>

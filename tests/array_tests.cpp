@@ -745,4 +745,52 @@ define_test(remove_elements_can_free_values)
     free<true>(&arr_of_arrs);
 }
 
+define_test(add_at_end_adds_element_at_end)
+{
+    array<int> arr;
+    init(&arr);
+
+    assert_equal(arr.size, 0);
+
+    auto ret = add_at_end(&arr, 5);
+
+    assert_equal(arr.size, 1);
+    assert_equal(ret, arr.data);
+    assert_equal(arr[0], 5);
+
+    int x = 10;
+    ret = add_at_end(&arr, &x);
+
+    assert_equal(arr.size, 2);
+    assert_equal(ret, arr.data + 1);
+    assert_equal(arr[0], 5);
+    assert_equal(arr[1], 10);
+
+    free(&arr);
+}
+
+define_test(add_at_start_adds_element_at_start)
+{
+    array<int> arr;
+    init(&arr);
+
+    assert_equal(arr.size, 0);
+
+    auto ret = add_at_start(&arr, 5);
+
+    assert_equal(arr.size, 1);
+    assert_equal(ret, arr.data);
+    assert_equal(arr[0], 5);
+
+    int x = 10;
+    ret = add_at_start(&arr, &x);
+
+    assert_equal(arr.size, 2);
+    assert_equal(ret, arr.data);
+    assert_equal(arr[0], 10);
+    assert_equal(arr[1], 5);
+
+    free(&arr);
+}
+
 define_default_test_main();

@@ -2,99 +2,107 @@
 #pragma once
 
 /* array.hpp
- * 
- * contiguous dynamic memory structure.
- * 
- * functions:
- *
- * init(*arr) initializes an empty array with no elements. arr.data will be nullptr.
- * init(*arr, N) initializes an array with N elements. the elements will be uninitialized.
- *
- * add_elements(*arr, N) adds N elements to the array at the end and returns a pointer
- *                       to the start of the new elements.
- *                       may allocate more memory than needed to store N elements,
- *                       or allocate nothing if the array has enough reserved memory.
- *
- * insert_elements(*arr, pos, N) inserts N elements at position pos in the array.
- *                               if pos == arr.size, behaves like add_elements(arr, N).
- *                               if pos > arr.size, does nothing and returns nullptr.
- *                               otherwise, adds N elements using add_elements,
- *                               moves elements from [pos, arr.size[ to pos + N,
- *                               then returns a pointer to where the elements
- *                               were inserted.
- *
- * remove_elements(*arr, pos, N) removes N elements starting at position pos from the array.
- *                               does nothing if pos >= arr.size.
- *                               if pos + n >= arr.size, simply changes the size of
- *                               the array and keeps the reserved memory.
- *                               use shrink_to_fit to remove the excess memory.
- *
- * reserve(*arr, N) if number of allocated elements in arr is smaller than N,
- *                  allocates enough elements for arr to store N total elements
- *                  and sets arr.reserved_size accordingly.
- *                  arr.size is untouched.
- *                  cannot make arr smaller.
- *
- * reserve_exp2(*arr, N) same as reserve, but if it allocates, it allocates
- *                       up to the next power of 2 to store at least N elements.
- *
- * resize(*arr, N) sets the size of the array to contain exactly N elements.
- *
- * shink_to_fit(*arr) reallocates to only use as much memory as required
- *                    to store all the elements in the array if
- *                    more memory is being used.
- *                    does nothing if arr.size == arr.reserved_size.
- *
- * at(*arr, N) returns a pointer to the Nth element in the array.
- *
- * clear(*arr) simply sets arr.size to 0, no memory is deallocated and
- *             reserved memory is kept. use free(*arr) to deallocate memory.
- *
- * array_size(*arr) returns arr.size
- *
- * free_values(*arr) calls free(*v) on each element in the array, but does
- *                   not deallocate memory of the array.
- *
- * free(*arr) frees memory of the array and sets arr.size and arr.reserved_size to 0.
- *            you may call init(*arr, size) after calling free(*arr).
- *            the difference between free and free_values is that free frees the
- *            memory of the _array_, whereas free_values frees the memory that
- *            the individual entries may have allocated.
- *
- * other functions:
- *
- * search(*arr, *key, eq) returns a pointer to an element that eq(elem, key)
- *                        returns true to, otherwise returns nullptr if key
- *                        was not found. does not assume anything about the
- *                        array and will do a full scan in the worst case.
- *
- * index_of(*arr, *key, eq) returns the index of an element that eq(elem, key)
- *                          returns true to, otherwise returns -1 if key
- *                          was not found. does not assume anything about the
- *                          array and will do a full scan in the worst case.
- *
- * contains(*arr, *key, eq) returns true if key is in the array, false
- *                          otherwise. does not assume anything about the
- *                          array and will do a full scan in the worst case.
- *
- * hash(*arr) returns the default hash of the _memory_ of the elements
- *            of the array.
- *
- * supports index operator: arr[0] == arr.data[0].
- *
- * for_array(v, *arr) iterate an array. v will be a pointer to an element in the array.
- *                    example, setting all values to 5:
- *
- *                    array<int> arr;
- *                    init(&arr, 3)
- *                    
- *                    for_array(v, &arr)
- *                    {
- *                        *v = 5;
- *                    }
- *
- * for_array(i, v, *arr) iterate an array. i will be the index of an element and
- *                       v will be a pointer to an element in the array.
+
+contiguous dynamic memory structure.
+
+functions:
+
+init(*arr) initializes an empty array with no elements. arr.data will be nullptr.
+init(*arr, N) initializes an array with N elements. the elements will be uninitialized.
+
+add_at_start(*arr, V) adds the value V at the end of the array, allocating more memory
+                      if necessary.
+                      returns a pointer to the inserted value, which is always start.
+
+add_at_end(*arr, V) adds the value V at the end of the array, allocating more memory
+                    if necessary.
+                    returns a pointer to the inserted value.
+
+add_elements(*arr, N) adds N elements to the array at the end and returns a pointer
+                      to the start of the new elements.
+                      may allocate more memory than needed to store N elements,
+                      or allocate nothing if the array has enough reserved memory.
+
+insert_elements(*arr, pos, N) inserts N elements at position pos in the array.
+                              if pos == arr.size, behaves like add_elements(arr, N).
+                              if pos > arr.size, does nothing and returns nullptr.
+                              otherwise, adds N elements using add_elements,
+                              moves elements from [pos, arr.size[ to pos + N,
+                              then returns a pointer to where the elements
+                              were inserted.
+
+remove_elements(*arr, pos, N) removes N elements starting at position pos from the array.
+                              does nothing if pos >= arr.size.
+                              if pos + n >= arr.size, simply changes the size of
+                              the array and keeps the reserved memory.
+                              use shrink_to_fit to remove the excess memory.
+
+reserve(*arr, N) if number of allocated elements in arr is smaller than N,
+                 allocates enough elements for arr to store N total elements
+                 and sets arr.reserved_size accordingly.
+                 arr.size is untouched.
+                 cannot make arr smaller.
+
+reserve_exp2(*arr, N) same as reserve, but if it allocates, it allocates
+                      up to the next power of 2 to store at least N elements.
+
+resize(*arr, N) sets the size of the array to contain exactly N elements.
+
+shink_to_fit(*arr) reallocates to only use as much memory as required
+                   to store all the elements in the array if
+                   more memory is being used.
+                   does nothing if arr.size == arr.reserved_size.
+
+at(*arr, N) returns a pointer to the Nth element in the array.
+
+clear(*arr) simply sets arr.size to 0, no memory is deallocated and
+            reserved memory is kept. use free(*arr) to deallocate memory.
+
+array_size(*arr) returns arr.size
+
+free_values(*arr) calls free(*v) on each element in the array, but does
+                  not deallocate memory of the array.
+
+free(*arr) frees memory of the array and sets arr.size and arr.reserved_size to 0.
+           you may call init(*arr, size) after calling free(*arr).
+           the difference between free and free_values is that free frees the
+           memory of the _array_, whereas free_values frees the memory that
+           the individual entries may have allocated.
+
+other functions:
+
+search(*arr, *key, eq) returns a pointer to an element that eq(elem, key)
+                       returns true to, otherwise returns nullptr if key
+                       was not found. does not assume anything about the
+                       array and will do a full scan in the worst case.
+
+index_of(*arr, *key, eq) returns the index of an element that eq(elem, key)
+                         returns true to, otherwise returns -1 if key
+                         was not found. does not assume anything about the
+                         array and will do a full scan in the worst case.
+
+contains(*arr, *key, eq) returns true if key is in the array, false
+                         otherwise. does not assume anything about the
+                         array and will do a full scan in the worst case.
+
+hash(*arr) returns the default hash of the _memory_ of the elements
+           of the array.
+
+supports index operator: arr[0] == arr.data[0].
+
+for_array(v, *arr) iterate an array. v will be a pointer to an element in the array.
+                   example, setting all values to 5:
+
+                   array<int> arr;
+                   init(&arr, 3)
+                   
+                   for_array(v, &arr)
+                   {
+                       *v = 5;
+                   }
+
+for_array(i, v, *arr) iterate an array. i will be the index of an element and
+                      v will be a pointer to an element in the array.
  */
 
 #include "shl/macros.hpp"
@@ -155,6 +163,38 @@ void init(array<T> *arr, u64 n_elements)
     arr->data = allocate_memory<T>(n_elements);
     arr->size = n_elements;
     arr->reserved_size = n_elements;
+}
+
+template<typename T>
+inline T *add_at_start(array<T> *arr, T val)
+{
+    T *ret = insert_elements(arr, 0, 1);
+    *ret = val;
+    return ret;
+}
+
+template<typename T>
+inline T *add_at_start(array<T> *arr, const T *val)
+{
+    T *ret = insert_elements(arr, 0, 1);
+    *ret = *val;
+    return ret;
+}
+
+template<typename T>
+inline T *add_at_end(array<T> *arr, T val)
+{
+    T *ret = add_elements(arr, 1);
+    *ret = val;
+    return ret;
+}
+
+template<typename T>
+inline T *add_at_end(array<T> *arr, const T *val)
+{
+    T *ret = add_elements(arr, 1);
+    *ret = *val;
+    return ret;
 }
 
 template<typename T>
