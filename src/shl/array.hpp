@@ -3,7 +3,7 @@
 
 /* array.hpp
  * 
- * contiguous memory structure.
+ * contiguous dynamic memory structure.
  * 
  * functions:
  *
@@ -49,6 +49,8 @@
  *
  * clear(*arr) simply sets arr.size to 0, no memory is deallocated and
  *             reserved memory is kept. use free(*arr) to deallocate memory.
+ *
+ * array_size(*arr) returns arr.size
  *
  * free_values(*arr) calls free(*v) on each element in the array, but does
  *                   not deallocate memory of the array.
@@ -377,19 +379,15 @@ void clear(array<T> *arr)
     arr->size = 0;
 }
 
-#define _for_array_vars(I_Var, V_Var, ARRAY)\
-    u64 I_Var = 0;\
-    typename remove_pointer(decltype(ARRAY))::value_type *V_Var = (ARRAY)->data;
+template<typename T>
+u64 array_size(const array<T> *arr)
+{
+    assert(arr != nullptr);
 
-#define for_array_V(V_Var, ARRAY)\
-    _for_array_vars(V_Var##_index, V_Var, ARRAY)\
-    for (; V_Var##_index < (ARRAY)->size; ++V_Var##_index, ++V_Var)
+    return arr->size;
+}
 
-#define for_array_IV(I_Var, V_Var, ARRAY)\
-    _for_array_vars(I_Var, V_Var, ARRAY)\
-    for (; I_Var < (ARRAY)->size; ++I_Var, ++V_Var)
-
-#define for_array(...) GET_MACRO2(__VA_ARGS__, for_array_IV, for_array_V)(__VA_ARGS__)
+#include "shl/impl/for_array.hpp"
 
 template<typename T>
 void free_values(array<T> *arr)
