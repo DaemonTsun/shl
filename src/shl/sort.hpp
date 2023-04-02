@@ -40,36 +40,36 @@ void sort(T *ptr, u64 size, compare_function_p<T> comp = compare_ascending_p<T>)
 
 // TODO: quicksort
 
-void *search(const void *value, void *ptr, u64 count, u64 size, compare_function_p<void> comp);
+void *sorted_search(const void *value, void *ptr, u64 count, u64 size, compare_function_p<void> comp);
 
 template<typename T>
-T *search(const T *value, T *ptr, u64 size, compare_function_p<T> comp = compare_descending_p<T>)
+T *sorted_search(const T *value, T *ptr, u64 size, compare_function_p<T> comp = compare_descending_p<T>)
 {
     assert(value != nullptr);
     assert(ptr != nullptr);
 
-    return reinterpret_cast<T*>(search(reinterpret_cast<const void*>(value),
-                                       reinterpret_cast<void*>(ptr),
-                                       size,
-                                       sizeof(T),
-                                       (compare_function_p<void>)(comp)));
+    return reinterpret_cast<T*>(sorted_search(reinterpret_cast<const void*>(value),
+                                              reinterpret_cast<void*>(ptr),
+                                              size,
+                                              sizeof(T),
+                                              (compare_function_p<void>)(comp)));
 }
 
 // TODO: binary_search
 
 template<typename T>
-bool contains(const T *value, T *ptr, u64 size, compare_function_p<T> comp = compare_descending_p<T>)
+bool sorted_contains(const T *value, T *ptr, u64 size, compare_function_p<T> comp = compare_descending_p<T>)
 {
-    return search(value, ptr, size, comp) != nullptr;
+    return sorted_search(value, ptr, size, comp) != nullptr;
 }
 
 template<typename T>
-u64 index_of(const T *value, T *ptr, u64 size, compare_function_p<T> comp = compare_descending_p<T>)
+u64 sorted_index_of(const T *value, T *ptr, u64 size, compare_function_p<T> comp = compare_descending_p<T>)
 {
     assert(value != nullptr);
     assert(ptr != nullptr);
 
-    T *res = search(value, ptr, size, comp);
+    T *res = sorted_search(value, ptr, size, comp);
 
     if (res == nullptr)
         return -1ull;

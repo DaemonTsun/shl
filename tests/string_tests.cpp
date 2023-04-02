@@ -607,6 +607,11 @@ define_test(index_of_returns_index_of_first_needle_occurence_in_haystack_startin
     assert_equal(index_of(L"hello hello hello hello"_cs, L"hell"_cs, 6), 6);
     assert_equal(index_of(L"hello hello hello hello"_cs, L"hell"_cs, 7), 12);
     assert_equal(index_of(L"hello hello hello hello"_cs, L"hell"_cs, 13), 18);
+
+    assert_equal(index_of("hello"_cs, 'e'), 1);
+    assert_equal(index_of("hello"_cs, 'l'), 2);
+    assert_equal(index_of("hello"_cs, 'l', 3), 3);
+    assert_equal(index_of("hello"_cs, 'l', 4), -1);
 }
 
 define_test(to_upper_converts_to_upper)

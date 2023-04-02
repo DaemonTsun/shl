@@ -54,7 +54,7 @@ define_test(sort_sorts_according_to_comparer)
     free(&arr);
 }
 
-define_test(search_returns_pointer_to_searched_element)
+define_test(sorted_search_returns_pointer_to_searched_element)
 {
     array<int> arr;
     init(&arr, 4);
@@ -65,7 +65,7 @@ define_test(search_returns_pointer_to_searched_element)
     arr.data[3] = 0;
 
     int searchfor = 6;
-    int *ptr = search(&searchfor, arr.data, arr.size);
+    int *ptr = sorted_search(&searchfor, arr.data, arr.size);
 
     assert_not_equal(ptr, nullptr);
     assert_equal(ptr, arr.data + 1);
@@ -74,7 +74,7 @@ define_test(search_returns_pointer_to_searched_element)
     free(&arr);
 }
 
-define_test(search_returns_nullptr_when_element_not_found)
+define_test(sorted_search_returns_nullptr_when_element_not_found)
 {
     array<int> arr;
     init(&arr, 4);
@@ -85,14 +85,14 @@ define_test(search_returns_nullptr_when_element_not_found)
     arr.data[3] = 0;
 
     int searchfor = 7;
-    int *ptr = search(&searchfor, arr.data, arr.size);
+    int *ptr = sorted_search(&searchfor, arr.data, arr.size);
 
     assert_equal(ptr, nullptr);
 
     free(&arr);
 }
 
-define_test(index_of_returns_the_index_of_an_element_when_found)
+define_test(sorted_index_of_returns_the_sorted_index_of_an_element_when_found)
 {
     array<int> arr;
     init(&arr, 4);
@@ -103,14 +103,14 @@ define_test(index_of_returns_the_index_of_an_element_when_found)
     arr.data[3] = 0;
 
     int searchfor = 6;
-    u64 index = index_of(&searchfor, arr.data, arr.size);
+    u64 index = sorted_index_of(&searchfor, arr.data, arr.size);
 
     assert_equal(index, 1);
 
     free(&arr);
 }
 
-define_test(index_of_returns_largest_number_when_not_found)
+define_test(sorted_index_of_returns_largest_number_when_not_found)
 {
     array<int> arr;
     init(&arr, 4);
@@ -121,7 +121,7 @@ define_test(index_of_returns_largest_number_when_not_found)
     arr.data[3] = 0;
 
     int searchfor = 7;
-    u64 index = index_of(&searchfor, arr.data, arr.size);
+    u64 index = sorted_index_of(&searchfor, arr.data, arr.size);
 
     assert_equal(index, -1);
 

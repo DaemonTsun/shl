@@ -9,11 +9,11 @@ set(TEST_BINARY_DIR ${ROOT_BIN}/tests)
 
 # library
 add_lib(shl STATIC
-    VERSION 0.6.3
+    VERSION 0.6.4
     SOURCES_DIR "${ROOT}/src/"
     GENERATE_TARGET_HEADER "${ROOT}/src/shl/shl_info.hpp"
     CPP_VERSION 20
-    CPP_WARNINGS ALL SANE
+    CPP_WARNINGS ALL SANE FATAL
     TESTS "${TEST_SOURCE_DIR}"
     )
 

@@ -984,73 +984,109 @@ void prepend_string(wstring *dst, const wstring *other)
     _prepend_string(dst, to_const_string(other));
 }
 
-s64 index_of(const_string  str, const char    *other)
-{
-    return index_of(str, to_const_string(other), 0);
-}
-
-s64 index_of(const_wstring str, const wchar_t *other)
-{
-    return index_of(str, to_const_string(other), 0);
-}
-
-s64 index_of(const_string  str, const_string  other)
-{
-    return index_of(str, other, 0);
-}
-
-s64 index_of(const_wstring str, const_wstring other)
-{
-    return index_of(str, other, 0);
-}
-
-s64 index_of(const_string  str, const string  *other)
-{
-    return index_of(str, to_const_string(other), 0);
-}
-
-s64 index_of(const_wstring str, const wstring *other)
-{
-    return index_of(str, to_const_string(other), 0);
-}
-
-s64 index_of(const string  *str, const char    *other)
-{
-    return index_of(to_const_string(str), to_const_string(other), 0);
-}
-
-s64 index_of(const wstring *str, const wchar_t *other)
-{
-    return index_of(to_const_string(str), to_const_string(other), 0);
-}
-
-s64 index_of(const string  *str, const_string  other)
-{
-    return index_of(to_const_string(str), other, 0);
-}
-
-s64 index_of(const wstring *str, const_wstring other)
-{
-    return index_of(to_const_string(str), other, 0);
-}
-
-s64 index_of(const string  *str, const string  *other)
-{
-    return index_of(to_const_string(str), to_const_string(other), 0);
-}
-
-s64 index_of(const wstring *str, const wstring *other)
-{
-    return index_of(to_const_string(str), to_const_string(other), 0);
-}
-
 template<typename C>
-s64 _index_of(const_string_base<C> str, const_string_base<C> other, s64 offset)
+s64 _index_of_c(const_string_base<C> str, C needle, s64 offset)
 {
     if (offset < 0)
         return -1;
 
-    if (other.size == 0)
+    if (offset >= str.size)
+        return -1;
+
+    for (s64 i = offset; i < str.size; ++i)
+        if (str.c_str[i] == needle)
+            return i;
+
+    return -1;
+}
+
+s64 index_of(const_string str, char    needle)
+{
+    return _index_of_c(str, needle, 0);
+}
+
+s64 index_of(const_wstring str, wchar_t needle)
+{
+    return _index_of_c(str, needle, 0);
+}
+
+s64 index_of(const_string  str, const char    *needle)
+{
+    return index_of(str, to_const_string(needle), 0);
+}
+
+s64 index_of(const_wstring str, const wchar_t *needle)
+{
+    return index_of(str, to_const_string(needle), 0);
+}
+
+s64 index_of(const_string  str, const_string  needle)
+{
+    return index_of(str, needle, 0);
+}
+
+s64 index_of(const_wstring str, const_wstring needle)
+{
+    return index_of(str, needle, 0);
+}
+
+s64 index_of(const_string  str, const string  *needle)
+{
+    return index_of(str, to_const_string(needle), 0);
+}
+
+s64 index_of(const_wstring str, const wstring *needle)
+{
+    return index_of(str, to_const_string(needle), 0);
+}
+
+s64 index_of(const string  *str, char needle)
+{
+    return _index_of_c(to_const_string(str), needle, 0);
+}
+
+s64 index_of(const wstring *str, wchar_t needle)
+{
+    return _index_of_c(to_const_string(str), needle, 0);
+}
+
+s64 index_of(const string  *str, const char    *needle)
+{
+    return index_of(to_const_string(str), to_const_string(needle), 0);
+}
+
+s64 index_of(const wstring *str, const wchar_t *needle)
+{
+    return index_of(to_const_string(str), to_const_string(needle), 0);
+}
+
+s64 index_of(const string  *str, const_string  needle)
+{
+    return index_of(to_const_string(str), needle, 0);
+}
+
+s64 index_of(const wstring *str, const_wstring needle)
+{
+    return index_of(to_const_string(str), needle, 0);
+}
+
+s64 index_of(const string  *str, const string  *needle)
+{
+    return index_of(to_const_string(str), to_const_string(needle), 0);
+}
+
+s64 index_of(const wstring *str, const wstring *needle)
+{
+    return index_of(to_const_string(str), to_const_string(needle), 0);
+}
+
+template<typename C>
+s64 _index_of(const_string_base<C> str, const_string_base<C> needle, s64 offset)
+{
+    if (offset < 0)
+        return -1;
+
+    if (needle.size == 0)
         return offset;
 
     if (offset >= str.size)
@@ -1062,7 +1098,7 @@ s64 _index_of(const_string_base<C> str, const_string_base<C> other, s64 offset)
         void *begin = (void*)(str.c_str + offset);
         u64 size = str.size - offset;
 
-        void *f = memmem(begin, size, other.c_str, other.size);
+        void *f = memmem(begin, size, needle.c_str, needle.size);
 
         if (f == nullptr)
             return -1;
@@ -1076,7 +1112,7 @@ s64 _index_of(const_string_base<C> str, const_string_base<C> other, s64 offset)
         void *begin = (void*)(str.c_str + offset);
         u64 size = (str.size - offset) * sizeof(C);
 
-        void *f = memmem(begin, size, other.c_str, other.size * sizeof(C));
+        void *f = memmem(begin, size, needle.c_str, needle.size * sizeof(C));
 
         if (f == nullptr)
             return -1;
@@ -1086,64 +1122,84 @@ s64 _index_of(const_string_base<C> str, const_string_base<C> other, s64 offset)
     }
 }
 
-s64 index_of(const_string  str, const char    *other, s64 offset)
+s64 index_of(const_string  str, char needle, s64 offset)
 {
-    return index_of(str, to_const_string(other), offset);
+    return _index_of_c(str, needle, offset);
 }
 
-s64 index_of(const_wstring str, const wchar_t *other, s64 offset)
+s64 index_of(const_wstring str, wchar_t needle, s64 offset)
 {
-    return index_of(str, to_const_string(other), offset);
+    return _index_of_c(str, needle, offset);
 }
 
-s64 index_of(const_string  str, const_string  other, s64 offset)
+s64 index_of(const_string  str, const char    *needle, s64 offset)
 {
-    return _index_of(str, other, offset);
+    return index_of(str, to_const_string(needle), offset);
 }
 
-s64 index_of(const_wstring str, const_wstring other, s64 offset)
+s64 index_of(const_wstring str, const wchar_t *needle, s64 offset)
 {
-    return _index_of(str, other, offset);
+    return index_of(str, to_const_string(needle), offset);
 }
 
-s64 index_of(const_string  str, const string  *other, s64 offset)
+s64 index_of(const_string  str, const_string  needle, s64 offset)
 {
-    return index_of(str, to_const_string(other), offset);
+    return _index_of(str, needle, offset);
 }
 
-s64 index_of(const_wstring str, const wstring *other, s64 offset)
+s64 index_of(const_wstring str, const_wstring needle, s64 offset)
 {
-    return index_of(str, to_const_string(other), offset);
+    return _index_of(str, needle, offset);
 }
 
-s64 index_of(const string  *str, const char    *other, s64 offset)
+s64 index_of(const_string  str, const string  *needle, s64 offset)
 {
-    return index_of(to_const_string(str), to_const_string(other), offset);
+    return index_of(str, to_const_string(needle), offset);
 }
 
-s64 index_of(const wstring *str, const wchar_t *other, s64 offset)
+s64 index_of(const_wstring str, const wstring *needle, s64 offset)
 {
-    return index_of(to_const_string(str), to_const_string(other), offset);
+    return index_of(str, to_const_string(needle), offset);
 }
 
-s64 index_of(const string  *str, const_string  other, s64 offset)
+s64 index_of(const string  *str, char needle, s64 offset)
 {
-    return index_of(to_const_string(str), other, offset);
+    return _index_of_c(to_const_string(str), needle, offset);
 }
 
-s64 index_of(const wstring *str, const_wstring other, s64 offset)
+s64 index_of(const wstring *str, wchar_t needle, s64 offset)
 {
-    return index_of(to_const_string(str), other, offset);
+    return _index_of_c(to_const_string(str), needle, offset);
 }
 
-s64 index_of(const string  *str, const string  *other, s64 offset)
+s64 index_of(const string  *str, const char    *needle, s64 offset)
 {
-    return index_of(to_const_string(str), to_const_string(other), offset);
+    return index_of(to_const_string(str), to_const_string(needle), offset);
 }
 
-s64 index_of(const wstring *str, const wstring *other, s64 offset)
+s64 index_of(const wstring *str, const wchar_t *needle, s64 offset)
 {
-    return index_of(to_const_string(str), to_const_string(other), offset);
+    return index_of(to_const_string(str), to_const_string(needle), offset);
+}
+
+s64 index_of(const string  *str, const_string  needle, s64 offset)
+{
+    return index_of(to_const_string(str), needle, offset);
+}
+
+s64 index_of(const wstring *str, const_wstring needle, s64 offset)
+{
+    return index_of(to_const_string(str), needle, offset);
+}
+
+s64 index_of(const string  *str, const string  *needle, s64 offset)
+{
+    return index_of(to_const_string(str), to_const_string(needle), offset);
+}
+
+s64 index_of(const wstring *str, const wstring *needle, s64 offset)
+{
+    return index_of(to_const_string(str), to_const_string(needle), offset);
 }
 
 template<typename C>

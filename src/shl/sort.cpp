@@ -9,7 +9,7 @@ void sort(void *ptr, u64 count, u64 size, compare_function_p<void> comp)
     qsort(ptr, count, size, comp);
 }
 
-void *search(const void *key, void *ptr, u64 count, u64 size, compare_function_p<void> comp)
+void *sorted_search(const void *key, void *ptr, u64 count, u64 size, compare_function_p<void> comp)
 {
     // TODO: implement this
     return bsearch(key, ptr, count, size, comp);
