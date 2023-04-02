@@ -1293,6 +1293,106 @@ void trim(wstring *s)
     _trim(s);
 }
 
+char to_upper(char c)
+{
+    return toupper(static_cast<int>(c));
+}
+
+wchar_t to_upper(wchar_t c)
+{
+    return towupper(static_cast<wint_t>(c));
+}
+
+template<typename C>
+inline void _to_upper(C *s)
+{
+    while (*s)
+    {
+        *s = to_upper(*s);
+        s++;
+    }
+}
+
+void to_upper(char *s)
+{
+    _to_upper(s);
+}
+
+void to_upper(wchar_t *s)
+{
+    _to_upper(s);
+}
+
+template<typename C>
+inline void _to_upper_s(string_base<C> *s)
+{
+    assert(s != nullptr);
+
+    for (u64 i = 0; i < s->data.size; ++i)
+        s->data.data[i] = to_upper(s->data.data[i]);
+}
+
+void to_upper(string *s)
+{
+    _to_upper_s(s);
+}
+
+void to_upper(wstring *s)
+{
+    _to_upper_s(s);
+}
+
+char to_lower(char c)
+{
+    return tolower(static_cast<int>(c));
+}
+
+wchar_t to_lower(wchar_t c)
+{
+    return towlower(static_cast<wint_t>(c));
+}
+
+template<typename C>
+inline void _to_lower(C *s)
+{
+    while (*s)
+    {
+        *s = to_lower(*s);
+        s++;
+    }
+}
+
+void to_lower(char *s)
+{
+    _to_lower(s);
+}
+
+void to_lower(wchar_t *s)
+{
+    _to_lower(s);
+}
+
+template<typename C>
+inline void _to_lower_s(string_base<C> *s)
+{
+    assert(s != nullptr);
+
+    u64 len = string_length(s);
+
+    for (u64 i = 0; i < len; ++i)
+        s->data.data[i] = to_lower(s->data.data[i]);
+}
+
+void to_lower(string *s)
+{
+    _to_lower_s(s);
+}
+
+void to_lower(wstring *s)
+{
+    _to_lower_s(s);
+}
+
 template<typename C>
 void _substring(const C *s, u64 start, u64 length, C *out, u64 out_offset)
 {
@@ -1415,104 +1515,261 @@ void substring(const wstring *s, u64 start, u64 length, wstring *out, u64 out_of
     substring(to_const_string(s), start, length, out, out_offset);
 }
 
-char to_upper(char c)
+template<typename C>
+void _replace_c(string_base<C> *s, C needle, C replacement, s64 offset)
 {
-    return toupper(static_cast<int>(c));
-}
+    s64 idx = index_of(s, needle, offset);
 
-wchar_t to_upper(wchar_t c)
-{
-    return towupper(static_cast<wint_t>(c));
+    if (idx < 0)
+        return;
+
+    s->data.data[idx] = replacement;
 }
 
 template<typename C>
-inline void _to_upper(C *s)
+void _replace(string_base<C> *s, const_string_base<C> needle, const_string_base<C> replacement, s64 offset)
 {
-    while (*s)
+    if (needle.size == 0)
+        return;
+
+    s64 idx = index_of(s, needle, offset);
+
+    if (idx < 0)
+        return;
+
+    if (needle.size > replacement.size)
     {
-        *s = to_upper(*s);
-        s++;
+        u64 size_diff = needle.size - replacement.size;
+        u64 remaining_size = string_length(s) - idx - needle.size;
+
+        s->data.size -= size_diff;
+
+        move_memory(s->data.data + idx + needle.size, s->data.data + idx + replacement.size, sizeof(C) * remaining_size);
+        s->data.data[s->data.size] = '\0';
+    }
+    else if (needle.size < replacement.size)
+    {
+        u64 size_diff = replacement.size - needle.size;
+        u64 remaining_size = string_length(s) - idx - needle.size;
+
+        string_reserve(s, string_length(s) + size_diff);
+        s->data.size += size_diff;
+
+        move_memory(s->data.data + idx + needle.size, s->data.data + idx + replacement.size, sizeof(C) * remaining_size);
+        s->data.data[s->data.size] = '\0';
+    }
+
+    copy_string(replacement, s, -1, idx);
+}
+
+void replace(string *s, char needle, char replacement)
+{
+    _replace_c(s, needle, replacement, 0);
+}
+
+void replace(string *s, const char   *needle, const_string replacement)
+{
+    _replace(s, to_const_string(needle), replacement, 0);
+}
+
+void replace(string *s, const_string needle, const_string replacement)
+{
+    _replace(s, needle, replacement, 0);
+}
+
+void replace(string *s, const string *needle, const_string replacement)
+{
+    _replace(s, to_const_string(needle), replacement, 0);
+}
+
+void replace(string *s, char needle, char replacement, s64 offset)
+{
+    _replace_c(s, needle, replacement, offset);
+}
+
+void replace(string *s, const char   *needle, const_string replacement, s64 offset)
+{
+    _replace(s, to_const_string(needle), replacement, offset);
+}
+
+void replace(string *s, const_string needle, const_string replacement, s64 offset)
+{
+    _replace(s, needle, replacement, offset);
+}
+
+void replace(string *s, const string *needle, const_string replacement, s64 offset)
+{
+    _replace(s, to_const_string(needle), replacement, offset);
+}
+
+void replace(wstring *s, wchar_t needle, wchar_t replacement)
+{
+    _replace_c(s, needle, replacement, 0);
+}
+
+void replace(wstring *s, const wchar_t   *needle, const_wstring replacement)
+{
+    _replace(s, to_const_string(needle), replacement, 0);
+}
+
+void replace(wstring *s, const_wstring needle, const_wstring replacement)
+{
+    _replace(s, needle, replacement, 0);
+}
+
+void replace(wstring *s, const wstring *needle, const_wstring replacement)
+{
+    _replace(s, to_const_string(needle), replacement, 0);
+}
+
+void replace(wstring *s, wchar_t needle, wchar_t replacement, s64 offset)
+{
+    _replace_c(s, needle, replacement, offset);
+}
+
+void replace(wstring *s, const wchar_t   *needle, const_wstring replacement, s64 offset)
+{
+    _replace(s, to_const_string(needle), replacement, offset);
+}
+
+void replace(wstring *s, const_wstring needle, const_wstring replacement, s64 offset)
+{
+    _replace(s, needle, replacement, offset);
+}
+
+void replace(wstring *s, const wstring *needle, const_wstring replacement, s64 offset)
+{
+    _replace(s, to_const_string(needle), replacement, offset);
+}
+
+template<typename C>
+void _replace_all_c(string_base<C> *s, C needle, C replacement, s64 offset)
+{
+    s64 idx = index_of(s, needle, offset);
+
+    while (idx >= 0)
+    {
+        s->data.data[idx] = replacement;
+        idx = index_of(s, needle, idx + 1);
     }
 }
 
-void to_upper(char *s)
-{
-    _to_upper(s);
-}
-
-void to_upper(wchar_t *s)
-{
-    _to_upper(s);
-}
-
 template<typename C>
-inline void _to_upper_s(string_base<C> *s)
+void _replace_all(string_base<C> *s, const_string_base<C> needle, const_string_base<C> replacement, s64 offset)
 {
-    assert(s != nullptr);
+    if (needle.size == 0)
+        return;
 
-    for (u64 i = 0; i < s->data.size; ++i)
-        s->data.data[i] = to_upper(s->data.data[i]);
-}
+    s64 idx = index_of(s, needle, offset);
 
-void to_upper(string *s)
-{
-    _to_upper_s(s);
-}
-
-void to_upper(wstring *s)
-{
-    _to_upper_s(s);
-}
-
-char to_lower(char c)
-{
-    return tolower(static_cast<int>(c));
-}
-
-wchar_t to_lower(wchar_t c)
-{
-    return towlower(static_cast<wint_t>(c));
-}
-
-template<typename C>
-inline void _to_lower(C *s)
-{
-    while (*s)
+    while (idx >= 0)
     {
-        *s = to_lower(*s);
-        s++;
+        if (needle.size > replacement.size)
+        {
+            u64 size_diff = needle.size - replacement.size;
+            u64 remaining_size = string_length(s) - idx - needle.size;
+
+            s->data.size -= size_diff;
+
+            move_memory(s->data.data + idx + needle.size, s->data.data + idx + replacement.size, sizeof(C) * remaining_size);
+            s->data.data[s->data.size] = '\0';
+        }
+        else if (needle.size < replacement.size)
+        {
+            u64 size_diff = replacement.size - needle.size;
+            u64 remaining_size = string_length(s) - idx - needle.size;
+
+            string_reserve(s, string_length(s) + size_diff);
+            s->data.size += size_diff;
+
+            move_memory(s->data.data + idx + needle.size, s->data.data + idx + replacement.size, sizeof(C) * remaining_size);
+            s->data.data[s->data.size] = '\0';
+        }
+
+        copy_string(replacement, s, -1, idx);
+
+        idx = index_of(s, needle, idx + 1);
     }
 }
 
-void to_lower(char *s)
+void replace_all(string *s, char needle, char replacement)
 {
-    _to_lower(s);
+    _replace_all_c(s, needle, replacement, 0);
 }
 
-void to_lower(wchar_t *s)
+void replace_all(string *s, const char   *needle, const_string replacement)
 {
-    _to_lower(s);
+    _replace_all(s, to_const_string(needle), replacement, 0);
 }
 
-template<typename C>
-inline void _to_lower_s(string_base<C> *s)
+void replace_all(string *s, const_string needle, const_string replacement)
 {
-    assert(s != nullptr);
-
-    u64 len = string_length(s);
-
-    for (u64 i = 0; i < len; ++i)
-        s->data.data[i] = to_lower(s->data.data[i]);
+    _replace_all(s, needle, replacement, 0);
 }
 
-void to_lower(string *s)
+void replace_all(string *s, const string *needle, const_string replacement)
 {
-    _to_lower_s(s);
+    _replace_all(s, to_const_string(needle), replacement, 0);
 }
 
-void to_lower(wstring *s)
+void replace_all(string *s, char needle, char replacement, s64 offset)
 {
-    _to_lower_s(s);
+    _replace_all_c(s, needle, replacement, offset);
+}
+
+void replace_all(string *s, const char   *needle, const_string replacement, s64 offset)
+{
+    _replace_all(s, to_const_string(needle), replacement, offset);
+}
+
+void replace_all(string *s, const_string needle, const_string replacement, s64 offset)
+{
+    _replace_all(s, needle, replacement, offset);
+}
+
+void replace_all(string *s, const string *needle, const_string replacement, s64 offset)
+{
+    _replace_all(s, to_const_string(needle), replacement, offset);
+}
+
+void replace_all(wstring *s, wchar_t needle, wchar_t replacement)
+{
+    _replace_all_c(s, needle, replacement, 0);
+}
+
+void replace_all(wstring *s, const wchar_t   *needle, const_wstring replacement)
+{
+    _replace_all(s, to_const_string(needle), replacement, 0);
+}
+
+void replace_all(wstring *s, const_wstring needle, const_wstring replacement)
+{
+    _replace_all(s, needle, replacement, 0);
+}
+
+void replace_all(wstring *s, const wstring *needle, const_wstring replacement)
+{
+    _replace_all(s, to_const_string(needle), replacement, 0);
+}
+
+void replace_all(wstring *s, wchar_t needle, wchar_t replacement, s64 offset)
+{
+    _replace_all_c(s, needle, replacement, offset);
+}
+
+void replace_all(wstring *s, const wchar_t   *needle, const_wstring replacement, s64 offset)
+{
+    _replace_all(s, to_const_string(needle), replacement, offset);
+}
+
+void replace_all(wstring *s, const_wstring needle, const_wstring replacement, s64 offset)
+{
+    _replace_all(s, needle, replacement, offset);
+}
+
+void replace_all(wstring *s, const wstring *needle, const_wstring replacement, s64 offset)
+{
+    _replace_all(s, to_const_string(needle), replacement, offset);
 }
 
 template<typename C>

@@ -859,4 +859,193 @@ define_test(hash_hashes_string_with_null_characters)
     free(&str);
 }
 
+define_test(replace_does_nothing_on_empty_needle)
+{
+    string str = "hello world"_s;
+
+    replace(&str, "", ""_cs);
+    replace(&str, "", "abc"_cs);
+
+    assert_equal(str, "hello world"_cs);
+    assert_equal(str[string_length(&str)], '\0');
+
+    free(&str);
+}
+
+define_test(replace_replaces_characters)
+{
+    string str = "hello world"_s;
+
+    replace(&str, 'o', ' ');
+
+    assert_equal(str, "hell  world"_cs);
+    assert_equal(string_length(&str), 11);
+    assert_equal(str[string_length(&str)], '\0');
+
+    free(&str);
+}
+
+define_test(replace_replaces_equal_length_strings)
+{
+    string str = "hello world"_s;
+
+    replace(&str, "hell"_cs, "beef"_cs);
+
+    assert_equal(str, "beefo world"_cs);
+    assert_equal(string_length(&str), 11);
+    assert_equal(str[string_length(&str)], '\0');
+
+    free(&str);
+}
+
+define_test(replace_replaces_needle_with_larger_replacement)
+{
+    string str = "hello world"_s;
+
+    replace(&str, "hello"_cs, "good morning"_cs);
+
+    assert_equal(str, "good morning world"_cs);
+    assert_equal(string_length(&str), 18);
+    assert_equal(str[string_length(&str)], '\0');
+
+    free(&str);
+}
+
+define_test(replace_replaces_needle_with_shorter_replacement)
+{
+    string str = "hello world"_s;
+
+    replace(&str, "hello"_cs, "hell"_cs);
+
+    assert_equal(str, "hell world"_cs);
+    assert_equal(string_length(&str), 10);
+    assert_equal(str[string_length(&str)], '\0');
+
+    free(&str);
+}
+
+define_test(replace_replaces_needle_with_shorter_replacement2)
+{
+    string str = "hello world"_s;
+
+    replace(&str, "hello"_cs, ""_cs);
+
+    assert_equal(str, " world"_cs);
+    assert_equal(string_length(&str), 6);
+    assert_equal(str[string_length(&str)], '\0');
+
+    free(&str);
+}
+
+define_test(replace_replaces_needle_with_shorter_replacement3)
+{
+    string str = "hello world"_s;
+
+    replace(&str, "hello world"_cs, ""_cs);
+
+    assert_equal(str, ""_cs);
+    assert_equal(string_length(&str), 0);
+    assert_equal(str[string_length(&str)], '\0');
+
+    free(&str);
+}
+
+define_test(replace_replaces_needle_with_replacement)
+{
+    string str = "hello hello"_s;
+
+    replace(&str, "hello"_cs, "world"_cs);
+
+    assert_equal(str, "world hello"_cs);
+
+    free(&str);
+}
+
+define_test(replace_replaces_needle_with_replacement_at_offset)
+{
+    string str = "hello hello"_s;
+
+    replace(&str, "hello"_cs, "world"_cs, 1);
+
+    assert_equal(str, "hello world"_cs);
+
+    free(&str);
+}
+
+define_test(replace_does_nothing_if_offset_is_outside_string)
+{
+    string str = "hello world"_s;
+
+    replace(&str, "hello"_cs, "world"_cs, -500);
+
+    assert_equal(str, "hello world"_cs);
+
+    replace(&str, "hello"_cs, "world"_cs, 200);
+
+    assert_equal(str, "hello world"_cs);
+
+    free(&str);
+}
+
+define_test(replace_all_replaces_all_occurrences_of_character)
+{
+    string str = "hello world"_s;
+
+    replace_all(&str, 'l', ' ');
+
+    assert_equal(str, "he  o wor d"_cs);
+
+    free(&str);
+}
+
+define_test(replace_all_replaces_all_occurrences_of_character_starting_at_offset)
+{
+    string str = "hello world"_s;
+
+    replace_all(&str, 'l', ' ', 3);
+
+    assert_equal(str, "hel o wor d"_cs);
+
+    free(&str);
+}
+
+define_test(replace_all_replaces_all_occurrences_of_string)
+{
+    string str = "hello hello hello world"_s;
+
+    replace_all(&str, "hello"_cs, "bye"_cs);
+
+    assert_equal(str, "bye bye bye world"_cs);
+    assert_equal(string_length(&str), 17);
+    assert_equal(str[string_length(&str)], '\0');
+
+    free(&str);
+}
+
+define_test(replace_all_replaces_all_occurrences_of_string_starting_at_offset)
+{
+    string str = "hello hello hello world"_s;
+
+    replace_all(&str, "hello"_cs, "bye"_cs, 1);
+
+    assert_equal(str, "hello bye bye world"_cs);
+    assert_equal(string_length(&str), 19);
+    assert_equal(str[string_length(&str)], '\0');
+
+    free(&str);
+}
+
+define_test(replace_all_replaces_all_occurrences_of_string_starting_at_offset2)
+{
+    string str = "hello hello hello world"_s;
+
+    replace_all(&str, "hello"_cs, "bye"_cs, 5);
+
+    assert_equal(str, "hello bye bye world"_cs);
+    assert_equal(string_length(&str), 19);
+    assert_equal(str[string_length(&str)], '\0');
+
+    free(&str);
+}
+
 define_default_test_main();

@@ -1,100 +1,100 @@
 #pragma once
 
 /* string.hpp
- *
- * string utility header
- *
- * defines const_string and const_wstring, basically const char pointers with
- * size attached to them. const_strings are not guaranteed to be null terminated,
- * but in most cases will be (e.g. string literals). can be explicitly converted
- * to const C *, where C is char in the case of const_string, or wchar_t in the
- * case of const_wstring.
- *
- * to construct a const_string, either initialize with const_string{ptr, size} or
- * use the string literal suffix _cs, such as:
- *
- *      const_string mystr = "hello world!"_cs;
- *      const char *cstr = mystr.c_str;
- *      u64 size = mystr.size; // or string_length(mystr);
- *
- * since const_strings are relatively lightweight, they can be copied and don't
- * need to be referenced (they're essentially just a pointer with a size).
- * const_strings also don't own the string they point to, and as such don't
- * need to be freed.
- *
- *
- * string and wstring are also defined here. basically dynamic character arrays
- * with common string functions. always guaranteed to be null terminated (unless
- * you explicitly change that). can be implicitly converted to const_string.
- * can be explicitly converted to const C *, where C is char in the case of
- * string, and wchar_t in the case of wstring.
- * 
- * to construct a string, either use init(&str, ...) or use the _s suffix for
- * string literals, such as:
- *
- *      string mystr = "hello world!"_s;                    // copy of string literal
- *      const char *cstr = static_cast<const char*>(mystr); // or mystr.data.data;
- *      u64 size = string_length(&mystr);
- *      free(&mystr);                                       // every string must be freed.
- *
- *
- * string/character functions
- *
- * c = character, s = string, n = number
- *
- * init(s, ...)         initializes a string
- * string_reserve(s, N) allocates enough memory to store at least N+1 characters
- * clear(s)             sets string size to 0, but does not deallocate anything
- * free(s)              frees the string object, deallocating memory
- *
- * is_space(c)              true if c is a whitespace character
- * is_newline(c)            true if c is a newline character
- * is_alpha(c)              true if c is an alphabet character
- * is_digit(c)              true if c is a digit
- * is_bin_digit(c)          true if c is a binary digit (0 or 1)
- * is_oct_digit(c)          true if c is an octal digit (0-7)
- * is_hex_digit(c)          true if c is a hexadecimal digit
- * is_alphanum(c)           true if is_digit(c) || is_alpha(c)
- * is_upper(c)              true if c is an uppercase letter
- * is_lower(c)              true if c is an lowercase letter
- *
- * is_empty(s)              true if s an empty string, but not nullptr
- * is_null_or_empty(s)      true if s is nullptr or an empty string
- * is_blank(s)              true if s is nullptr, an empty string or only contains
- *                          whitespaces
- *
- * string_length(s)            returns the length of the string
- * compare_strings(s1, s2)     compares two strings
- * compare_strings(s1, s2, n)  compares two strings, up to n characters
- *
- * begins_with(s, prefix)   returns true if prefix is a prefix of s
- * ends_with(s, suffix)     returns true if suffix is a suffix of s
- *
- * to_int(s)           converts the string to an int
- * to_long(s)          converts the string to a long
- * to_long_long(s)     you get the idea
- * ...
- * to_float(s)         converts the string to a float
- * ...
- *
- * string manipulation functions
- *
- * copy_string(src, dest)           copies one string to another
- * copy_string(src, dest, n)        copies one string to another, up to n characters
- * copy_string(src, dest, n, off)   copies one string to another, up to n characters, starting in
- *                                  dest at offset off
- *
- * trim_left(s)                 trims whitespaces from the left of string s, in-place
- * trim_right(s)                trims whitespaces from the right of string s, in-place
- * trim(s)                      trims whitespaces from the left and right of string s, in-place
- * to_upper(c/s)                converts the given character or string to upper case
- * to_lower(c/s)                converts the given character or string to upper case
- *
- * substring(const_string src, u64 start, u64 length, string out, u64 out_start)
- *          copies src, starting at start, for up to length characters, into out,
- *          starting at out_start.
- *          allocates more memory in out if out does not have enough to fit
- *          out_start + length characters.
+
+string utility header
+
+defines const_string and const_wstring, basically const char pointers with
+size attached to them. const_strings are not guaranteed to be null terminated,
+but in most cases will be (e.g. string literals). can be explicitly converted
+to const C *, where C is char in the case of const_string, or wchar_t in the
+case of const_wstring.
+
+to construct a const_string, either initialize with const_string{ptr, size} or
+use the string literal suffix _cs, such as:
+
+     const_string mystr = "hello world!"_cs;
+     const char *cstr = mystr.c_str;
+     u64 size = mystr.size; // or string_length(mystr);
+
+since const_strings are relatively lightweight, they can be copied and don't
+need to be referenced (they're essentially just a pointer with a size).
+const_strings also don't own the string they point to, and as such don't
+need to be freed.
+
+
+string and wstring are also defined here. basically dynamic character arrays
+with common string functions. always guaranteed to be null terminated (unless
+you explicitly change that). can be implicitly converted to const_string.
+can be explicitly converted to const C *, where C is char in the case of
+string, and wchar_t in the case of wstring.
+
+to construct a string, either use init(&str, ...) or use the _s suffix for
+string literals, such as:
+
+     string mystr = "hello world!"_s;                    // copy of string literal
+     const char *cstr = static_cast<const char*>(mystr); // or mystr.data.data;
+     u64 size = string_length(&mystr);
+     free(&mystr);                                       // every string must be freed.
+
+
+string/character functions
+
+c = character, s = string, n = number
+
+init(s, ...)         initializes a string
+string_reserve(s, N) allocates enough memory to store at least N+1 characters
+clear(s)             sets string size to 0, but does not deallocate anything
+free(s)              frees the string object, deallocating memory
+
+is_space(c)              true if c is a whitespace character
+is_newline(c)            true if c is a newline character
+is_alpha(c)              true if c is an alphabet character
+is_digit(c)              true if c is a digit
+is_bin_digit(c)          true if c is a binary digit (0 or 1)
+is_oct_digit(c)          true if c is an octal digit (0-7)
+is_hex_digit(c)          true if c is a hexadecimal digit
+is_alphanum(c)           true if is_digit(c) || is_alpha(c)
+is_upper(c)              true if c is an uppercase letter
+is_lower(c)              true if c is an lowercase letter
+
+is_empty(s)              true if s an empty string, but not nullptr
+is_null_or_empty(s)      true if s is nullptr or an empty string
+is_blank(s)              true if s is nullptr, an empty string or only contains
+                         whitespaces
+
+string_length(s)            returns the length of the string
+compare_strings(s1, s2)     compares two strings
+compare_strings(s1, s2, n)  compares two strings, up to n characters
+
+begins_with(s, prefix)   returns true if prefix is a prefix of s
+ends_with(s, suffix)     returns true if suffix is a suffix of s
+
+to_int(s)           converts the string to an int
+to_long(s)          converts the string to a long
+to_long_long(s)     you get the idea
+...
+to_float(s)         converts the string to a float
+...
+
+string manipulation functions
+
+copy_string(src, dest)           copies one string to another
+copy_string(src, dest, n)        copies one string to another, up to n characters
+copy_string(src, dest, n, off)   copies one string to another, up to n characters, starting in
+                                 dest at offset off
+
+trim_left(s)                 trims whitespaces from the left of string s, in-place
+trim_right(s)                trims whitespaces from the right of string s, in-place
+trim(s)                      trims whitespaces from the left and right of string s, in-place
+to_upper(c/s)                converts the given character or string to upper case
+to_lower(c/s)                converts the given character or string to upper case
+
+substring(const_string src, u64 start, u64 length, string out, u64 out_start)
+         copies src, starting at start, for up to length characters, into out,
+         starting at out_start.
+         allocates more memory in out if out does not have enough to fit
+         out_start + length characters.
  */
 
 #include "shl/hash.hpp"
@@ -362,6 +362,20 @@ void trim_right(wstring *s);
 void trim(string  *s);
 void trim(wstring *s);
 
+char    to_upper(char    c);
+wchar_t to_upper(wchar_t c);
+void    to_upper(char    *s);
+void    to_upper(wchar_t *s);
+void    to_upper(string  *s);
+void    to_upper(wstring *s);
+
+char    to_lower(char    c);
+wchar_t to_lower(wchar_t c);
+void    to_lower(char    *s);
+void    to_lower(wchar_t *s);
+void    to_lower(string  *s);
+void    to_lower(wstring *s);
+
 void substring(const char    *s, u64 start, u64 length, char    *out);
 void substring(const wchar_t *s, u64 start, u64 length, wchar_t *out);
 void substring(const char    *s, u64 start, u64 length, string  *out);
@@ -379,19 +393,39 @@ void substring(const_wstring  s, u64 start, u64 length, wstring *out, u64 out_of
 void substring(const string  *s, u64 start, u64 length, string  *out, u64 out_offset);
 void substring(const wstring *s, u64 start, u64 length, wstring *out, u64 out_offset);
 
-char    to_upper(char    c);
-wchar_t to_upper(wchar_t c);
-void    to_upper(char    *s);
-void    to_upper(wchar_t *s);
-void    to_upper(string  *s);
-void    to_upper(wstring *s);
+void replace(string  *s, char           needle, char          replacement);
+void replace(string  *s, const char    *needle, const_string  replacement);
+void replace(string  *s, const_string   needle, const_string  replacement);
+void replace(string  *s, const string  *needle, const_string  replacement);
+void replace(string  *s, char           needle, char          replacement, s64 offset);
+void replace(string  *s, const char    *needle, const_string  replacement, s64 offset);
+void replace(string  *s, const_string   needle, const_string  replacement, s64 offset);
+void replace(string  *s, const string  *needle, const_string  replacement, s64 offset);
+void replace(wstring *s, wchar_t        needle, wchar_t       replacement);
+void replace(wstring *s, const wchar_t *needle, const_wstring replacement);
+void replace(wstring *s, const_wstring  needle, const_wstring replacement);
+void replace(wstring *s, const wstring *needle, const_wstring replacement);
+void replace(wstring *s, wchar_t        needle, wchar_t       replacement, s64 offset);
+void replace(wstring *s, const wchar_t *needle, const_wstring replacement, s64 offset);
+void replace(wstring *s, const_wstring  needle, const_wstring replacement, s64 offset);
+void replace(wstring *s, const wstring *needle, const_wstring replacement, s64 offset);
 
-char    to_lower(char    c);
-wchar_t to_lower(wchar_t c);
-void    to_lower(char    *s);
-void    to_lower(wchar_t *s);
-void    to_lower(string  *s);
-void    to_lower(wstring *s);
+void replace_all(string  *s, char           needle, char          replacement);
+void replace_all(string  *s, const char    *needle, const_string  replacement);
+void replace_all(string  *s, const_string   needle, const_string  replacement);
+void replace_all(string  *s, const string  *needle, const_string  replacement);
+void replace_all(string  *s, char           needle, char          replacement, s64 offset);
+void replace_all(string  *s, const char    *needle, const_string  replacement, s64 offset);
+void replace_all(string  *s, const_string   needle, const_string  replacement, s64 offset);
+void replace_all(string  *s, const string  *needle, const_string  replacement, s64 offset);
+void replace_all(wstring *s, wchar_t        needle, wchar_t       replacement);
+void replace_all(wstring *s, const wchar_t *needle, const_wstring replacement);
+void replace_all(wstring *s, const_wstring  needle, const_wstring replacement);
+void replace_all(wstring *s, const wstring *needle, const_wstring replacement);
+void replace_all(wstring *s, wchar_t        needle, wchar_t       replacement, s64 offset);
+void replace_all(wstring *s, const wchar_t *needle, const_wstring replacement, s64 offset);
+void replace_all(wstring *s, const_wstring  needle, const_wstring replacement, s64 offset);
+void replace_all(wstring *s, const wstring *needle, const_wstring replacement, s64 offset);
 
 /*
 these are not the same as hash(const char *c) because hash(const char *c)
