@@ -1048,4 +1048,249 @@ define_test(replace_all_replaces_all_occurrences_of_string_starting_at_offset2)
     free(&str);
 }
 
+define_test(split_splits_by_char)
+{
+    const_string str = "hello;world"_cs;
+    array<const_string> splits;
+    init(&splits);
+
+    assert_equal(split(str, ';', &splits), 1);
+
+    assert_equal(splits.size, 2);
+    assert_equal(splits[0], "hello"_cs);
+    assert_equal(splits[0].size, 5);
+    assert_equal(splits[1], "world"_cs);
+    assert_equal(splits[1].size, 5);
+
+    free(&splits);
+}
+
+define_test(split_splits_by_char2)
+{
+    const_string str = "hello world, this is a test"_cs;
+    array<const_string> splits;
+    init(&splits);
+
+    assert_equal(split(str, ' ', &splits), 5);
+
+    assert_equal(splits.size, 6);
+    assert_equal(splits[0], "hello"_cs);
+    assert_equal(splits[0].size, 5);
+    assert_equal(splits[1], "world,"_cs);
+    assert_equal(splits[1].size, 6);
+    assert_equal(splits[2], "this"_cs);
+    assert_equal(splits[2].size, 4);
+    assert_equal(splits[3], "is"_cs);
+    assert_equal(splits[3].size, 2);
+    assert_equal(splits[4], "a"_cs);
+    assert_equal(splits[4].size, 1);
+    assert_equal(splits[5], "test"_cs);
+    assert_equal(splits[5].size, 4);
+
+    free(&splits);
+}
+
+define_test(split_splits_by_char3)
+{
+    const_string str = "hello world, this is a test"_cs;
+    array<const_string> splits;
+    init(&splits);
+
+    assert_equal(split(str, '!', &splits), 0);
+
+    assert_equal(splits.size, 1);
+    assert_equal(splits[0], str);
+    assert_equal(splits[0].size, str.size);
+
+    free(&splits);
+}
+
+define_test(split_splits_by_char4)
+{
+    const_string str = "!hello world, this is a test!"_cs;
+    array<const_string> splits;
+    init(&splits);
+
+    assert_equal(split(str, '!', &splits), 2);
+
+    assert_equal(splits.size, 3);
+    assert_equal(splits[0], ""_cs);
+    assert_equal(splits[0].size, 0);
+    assert_equal(splits[1], "hello world, this is a test"_cs);
+    assert_equal(splits[1].size, 27);
+    assert_equal(splits[2], ""_cs);
+    assert_equal(splits[2].size, 0);
+
+    free(&splits);
+}
+
+define_test(split_splits_by_string)
+{
+    const_string str = "hello ABC world"_cs;
+    array<const_string> splits;
+    init(&splits);
+
+    assert_equal(split(str, " ABC ", &splits), 1);
+
+    assert_equal(splits.size, 2);
+    assert_equal(splits[0], "hello"_cs);
+    assert_equal(splits[0].size, 5);
+    assert_equal(splits[1], "world"_cs);
+    assert_equal(splits[1].size, 5);
+
+    str = "hello ABC world, ABC this ABC is ABC a ABC test"_cs;
+    assert_equal(split(str, " ABC "_cs, &splits), 5);
+
+    assert_equal(splits.size, 6);
+    assert_equal(splits[0], "hello"_cs);
+    assert_equal(splits[0].size, 5);
+    assert_equal(splits[1], "world,"_cs);
+    assert_equal(splits[1].size, 6);
+    assert_equal(splits[2], "this"_cs);
+    assert_equal(splits[2].size, 4);
+    assert_equal(splits[3], "is"_cs);
+    assert_equal(splits[3].size, 2);
+    assert_equal(splits[4], "a"_cs);
+    assert_equal(splits[4].size, 1);
+    assert_equal(splits[5], "test"_cs);
+    assert_equal(splits[5].size, 4);
+
+    free(&splits);
+}
+
+define_test(split_splits_by_string2)
+{
+    const_string str = "!!!hello world, this is a test!!!"_cs;
+    array<const_string> splits;
+    init(&splits);
+
+    assert_equal(split(str, "!!!", &splits), 2);
+
+    assert_equal(splits.size, 3);
+    assert_equal(splits[0], ""_cs);
+    assert_equal(splits[0].size, 0);
+    assert_equal(splits[1], "hello world, this is a test"_cs);
+    assert_equal(splits[1].size, 27);
+    assert_equal(splits[2], ""_cs);
+    assert_equal(splits[2].size, 0);
+
+    free(&splits);
+}
+
+define_test(join_joins_strings_by_char)
+{
+    const_string str = "a,b,c,d"_cs;
+    array<const_string> splits;
+    init(&splits);
+
+    split(str, ',', &splits);
+
+    string out = ""_s;
+    join(&splits, ';', &out);
+
+    assert_equal(string_length(&out), 7);
+    assert_equal(out[string_length(&out)], '\0');
+    assert_equal(out, "a;b;c;d"_cs);
+
+    free(&out);
+    free(&splits);
+}
+
+define_test(join_joins_strings_by_char2)
+{
+    const_string str = ",a,b,,,c,d,"_cs;
+    array<const_string> splits;
+    init(&splits);
+
+    split(str, ',', &splits);
+
+    string out = ""_s;
+    join(&splits, ';', &out);
+
+    assert_equal(string_length(&out), 11);
+    assert_equal(out[string_length(&out)], '\0');
+    assert_equal(out, ";a;b;;;c;d;"_cs);
+
+    free(&out);
+    free(&splits);
+}
+
+define_test(join_joins_strings_by_char3)
+{
+    const_string str = "a,b,c,d"_cs;
+
+    string out = ""_s;
+    join(&str, 1, ' ', &out);
+
+    assert_equal(string_length(&out), 7);
+    assert_equal(out[string_length(&out)], '\0');
+    assert_equal(out, str);
+
+    join(&str, 0, ' ', &out);
+
+    assert_equal(string_length(&out), 7);
+    assert_equal(out[string_length(&out)], '\0');
+    assert_equal(out, str);
+
+    free(&out);
+}
+
+define_test(join_joins_strings_by_string_delim)
+{
+    const_string str = "a,b,c,d"_cs;
+    array<const_string> splits;
+    init(&splits);
+
+    split(str, ',', &splits);
+
+    string out = ""_s;
+    join(&splits, "hello", &out);
+
+    assert_equal(string_length(&out), 19);
+    assert_equal(out[string_length(&out)], '\0');
+    assert_equal(out, "ahellobhellochellod"_cs);
+
+    free(&out);
+    free(&splits);
+}
+
+define_test(join_joins_strings_by_string_delim2)
+{
+    const_string str = ",a,,,b,"_cs;
+    array<const_string> splits;
+    init(&splits);
+
+    split(str, ',', &splits);
+
+    string out = ""_s;
+    join(&splits, "HEY"_cs, &out);
+
+    assert_equal(string_length(&out), 17);
+    assert_equal(out[string_length(&out)], '\0');
+    assert_equal(out, "HEYaHEYHEYHEYbHEY"_cs);
+
+    free(&out);
+    free(&splits);
+}
+
+define_test(join_joins_strings_by_string_delim3)
+{
+    const_string str = "a,b,c"_cs;
+    array<const_string> splits;
+    init(&splits);
+
+    split(str, ',', &splits);
+
+    string out = ""_s;
+    join(&splits, "", &out);
+
+    assert_equal(string_length(&out), 3);
+    assert_equal(out[string_length(&out)], '\0');
+    assert_equal(out, "abc"_cs);
+
+    free(&out);
+    free(&splits);
+}
+
+
 define_default_test_main();

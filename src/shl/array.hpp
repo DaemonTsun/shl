@@ -48,7 +48,7 @@ reserve_exp2(*arr, N) same as reserve, but if it allocates, it allocates
 
 resize(*arr, N) sets the size of the array to contain exactly N elements.
 
-shink_to_fit(*arr) reallocates to only use as much memory as required
+shrink_to_fit(*arr) reallocates to only use as much memory as required
                    to store all the elements in the array if
                    more memory is being used.
                    does nothing if arr.size == arr.reserved_size.

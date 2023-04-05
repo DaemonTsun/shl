@@ -10,6 +10,9 @@
 #include "shl/compare.hpp"
 #include "shl/string.hpp"
 
+#define LIT(C, Literal)\
+    inline_const_if(is_same(C, char), Literal, L##Literal)
+
 const_string  operator ""_cs(const char *str, u64 n)
 {
     return const_string{str, n};
@@ -1770,6 +1773,533 @@ void replace_all(wstring *s, const_wstring needle, const_wstring replacement, s6
 void replace_all(wstring *s, const wstring *needle, const_wstring replacement, s64 offset)
 {
     _replace_all(s, to_const_string(needle), replacement, offset);
+}
+
+template<typename C>
+s64 _split_c(const_string_base<C> s, C delim, array<const_string_base<C>> *out)
+{
+    s64 split_count = 0;
+    out->size = 0;
+
+    s64 begin = 0;
+    s64 end = index_of(s, delim);
+    s64 diff = 0;
+
+    const_string_base<C> to_add;
+
+    while (end >= 0)
+    {
+        split_count++;
+        diff = end - begin;
+
+        if (diff <= 0)
+        {
+            to_add.c_str = LIT(C, "");
+            to_add.size = 0;
+        }
+        else
+        {
+            to_add.c_str = s.c_str + begin;
+            to_add.size = end - begin;
+        }
+
+        add_at_end(out, to_add);
+
+        begin = end + 1;
+        end = index_of(s, delim, end + 1);
+    }
+
+    end = s.size;
+    diff = end - begin;
+
+    if (diff <= 0)
+    {
+        to_add.c_str = LIT(C, "");
+        to_add.size = 0;
+    }
+    else
+    {
+        to_add.c_str = s.c_str + begin;
+        to_add.size = end - begin;
+    }
+
+    add_at_end(out, to_add);
+
+    return split_count;
+}
+
+template<typename C>
+s64 _split(const_string_base<C> s, const_string_base<C> delim, array<const_string_base<C>> *out)
+{
+    if (delim.size == 0)
+        return 0;
+
+    s64 split_count = 0;
+    out->size = 0;
+
+    s64 begin = 0;
+    s64 end = index_of(s, delim);
+    s64 diff = 0;
+
+    const_string_base<C> to_add;
+
+    while (end >= 0)
+    {
+        split_count++;
+        diff = end - begin;
+
+        if (diff <= 0)
+        {
+            to_add.c_str = LIT(C, "");
+            to_add.size = 0;
+        }
+        else
+        {
+            to_add.c_str = s.c_str + begin;
+            to_add.size = end - begin;
+        }
+
+        add_at_end(out, to_add);
+
+        begin = end + delim.size;
+        end = index_of(s, delim, end + delim.size);
+    }
+
+    end = s.size;
+    diff = end - begin;
+
+    if (diff <= 0)
+    {
+        to_add.c_str = LIT(C, "");
+        to_add.size = 0;
+    }
+    else
+    {
+        to_add.c_str = s.c_str + begin;
+        to_add.size = end - begin;
+    }
+
+    add_at_end(out, to_add);
+
+    return split_count;
+}
+
+s64 split(const_string   s, char           delim, array<const_string>  *out)
+{
+    return _split_c(s, delim, out);
+}
+
+s64 split(const_string   s, const char    *delim, array<const_string>  *out)
+{
+    return _split(s, to_const_string(delim), out);
+}
+
+s64 split(const_string   s, const_string   delim, array<const_string>  *out)
+{
+    return _split(s, delim, out);
+}
+
+s64 split(const_string   s, const string  *delim, array<const_string>  *out)
+{
+    return _split(s, to_const_string(delim), out);
+}
+
+s64 split(const string  *s, char           delim, array<const_string>  *out)
+{
+    return _split_c(to_const_string(s), delim, out);
+}
+
+s64 split(const string  *s, const char    *delim, array<const_string>  *out)
+{
+    return _split(to_const_string(s), to_const_string(delim), out);
+}
+
+s64 split(const string  *s, const_string   delim, array<const_string>  *out)
+{
+    return _split(to_const_string(s), delim, out);
+}
+
+s64 split(const string  *s, const string  *delim, array<const_string>  *out)
+{
+    return _split(to_const_string(s), to_const_string(delim), out);
+}
+
+s64 split(const_wstring  s, wchar_t           delim, array<const_wstring> *out)
+{
+    return _split_c(s, delim, out);
+}
+
+s64 split(const_wstring  s, const wchar_t    *delim, array<const_wstring> *out)
+{
+    return _split(s, to_const_string(delim), out);
+}
+
+s64 split(const_wstring  s, const_wstring  delim, array<const_wstring> *out)
+{
+    return _split(s, delim, out);
+}
+
+s64 split(const_wstring  s, const wstring *delim, array<const_wstring> *out)
+{
+    return _split(s, to_const_string(delim), out);
+}
+
+s64 split(const wstring *s, wchar_t           delim, array<const_wstring> *out)
+{
+    return _split_c(to_const_string(s), delim, out);
+}
+
+s64 split(const wstring *s, const wchar_t    *delim, array<const_wstring> *out)
+{
+    return _split(to_const_string(s), to_const_string(delim), out);
+}
+
+s64 split(const wstring *s, const_wstring  delim, array<const_wstring> *out)
+{
+    return _split(to_const_string(s), delim, out);
+}
+
+s64 split(const wstring *s, const wstring *delim, array<const_wstring> *out)
+{
+    return _split(to_const_string(s), to_const_string(delim), out);
+}
+
+template<typename C> inline const_string_base<C> _to_const_string(const C **s) { return to_const_string(*s); }
+template<typename C> inline const_string_base<C> _to_const_string(const_string_base<C> *s) { return *s; }
+template<typename C> inline const_string_base<C> _to_const_string(const string_base<C> *s) { return to_const_string(s); }
+template<typename C> inline u64 _string_length(const C  **s) { return string_length(*s); }
+template<typename C> inline u64 _string_length(const_string_base<C> *s) { return s->size; }
+template<typename C> inline u64 _string_length(const string_base<C> *s) { return string_length(s); }
+
+template<typename Str, typename C>
+void _join_c(Str *strings, u64 count, C delim, string_base<C> *out)
+{
+    if (count == 0)
+        return;
+
+    u64 total_size = 0;
+    u64 i = 0;
+
+    total_size += count - 1; // delims
+
+    for (; i < count ; ++i)
+        total_size += _string_length(strings + i);
+
+    string_reserve(out, total_size);
+
+    u64 offset = 0;
+    i = 0;
+
+    const_string_base<C> s = _to_const_string(strings + i);
+    
+    if (s.size > 0)
+        copy_memory(s.c_str, out->data.data + offset, sizeof(C) * s.size);
+
+    offset += s.size;
+    i++;
+
+    while (i < count)
+    {
+        out->data.data[offset] = delim;
+        offset++;
+
+        s = _to_const_string(strings + i);
+
+        if (s.size > 0)
+            copy_memory(s.c_str, out->data.data + offset, sizeof(C) * s.size);
+
+        offset += s.size;
+        i++;
+    }
+
+    out->data.size = total_size;
+    out->data.data[total_size] = 0;
+}
+
+template<typename Str, typename C>
+void _join(Str *strings, u64 count, const_string_base<C> delim, string_base<C> *out)
+{
+    if (count == 0)
+        return;
+
+    u64 total_size = 0;
+    u64 i = 0;
+
+    total_size += (count - 1) * delim.size;
+
+    for (; i < count ; ++i)
+        total_size += _string_length(strings + i);
+
+    string_reserve(out, total_size);
+
+    u64 offset = 0;
+    i = 0;
+
+    const_string_base<C> s = _to_const_string(strings + i);
+    
+    if (s.size > 0)
+        copy_memory(s.c_str, out->data.data + offset, sizeof(C) * s.size);
+
+    offset += s.size;
+    i++;
+
+    while (i < count)
+    {
+        if (delim.size > 0)
+            copy_memory(delim.c_str, out->data.data + offset, sizeof(C) * delim.size);
+
+        offset += delim.size;
+        s = _to_const_string(strings + i);
+
+        if (s.size > 0)
+            copy_memory(s.c_str, out->data.data + offset, sizeof(C) * s.size);
+
+        offset += s.size;
+        i++;
+    }
+
+    out->data.size = total_size;
+    out->data.data[total_size] = 0;
+}
+
+void join(const char  **strings, u64 count, char          delim, string *out)
+{
+    _join_c(strings, count, delim, out);
+}
+
+void join(const char  **strings, u64 count, const char   *delim, string *out)
+{
+    _join(strings, count, to_const_string(delim), out);
+}
+
+void join(const char  **strings, u64 count, const_string  delim, string *out)
+{
+    _join(strings, count, delim, out);
+}
+
+void join(const char  **strings, u64 count, const string *delim, string *out)
+{
+    _join(strings, count, to_const_string(delim), out);
+}
+
+void join(const_string *strings, u64 count, char          delim, string *out)
+{
+    _join_c(strings, count, delim, out);
+}
+
+void join(const_string *strings, u64 count, const char   *delim, string *out)
+{
+    _join(strings, count, to_const_string(delim), out);
+}
+
+void join(const_string *strings, u64 count, const_string  delim, string *out)
+{
+    _join(strings, count, delim, out);
+}
+
+void join(const_string *strings, u64 count, const string *delim, string *out)
+{
+    _join(strings, count, to_const_string(delim), out);
+}
+
+void join(const string *strings, u64 count, char          delim, string *out)
+{
+    _join_c(strings, count, delim, out);
+}
+
+void join(const string *strings, u64 count, const char   *delim, string *out)
+{
+    _join(strings, count, to_const_string(delim), out);
+}
+
+void join(const string *strings, u64 count, const_string  delim, string *out)
+{
+    _join(strings, count, delim, out);
+}
+
+void join(const string *strings, u64 count, const string *delim, string *out)
+{
+    _join(strings, count, to_const_string(delim), out);
+}
+
+void join(const array<const char*>    *arr, char          delim, string *out)
+{
+    join(arr->data, arr->size, delim, out);
+}
+
+void join(const array<const char*>    *arr, const char   *delim, string *out)
+{
+    join(arr->data, arr->size, to_const_string(delim), out);
+}
+
+void join(const array<const char*>    *arr, const_string  delim, string *out)
+{
+    join(arr->data, arr->size, delim, out);
+}
+
+void join(const array<const char*>    *arr, const string *delim, string *out)
+{
+    join(arr->data, arr->size, to_const_string(delim), out);
+}
+
+void join(const array<const_string>   *arr, char          delim, string *out)
+{
+    join(arr->data, arr->size, delim, out);
+}
+
+void join(const array<const_string>   *arr, const char   *delim, string *out)
+{
+    join(arr->data, arr->size, to_const_string(delim), out);
+}
+
+void join(const array<const_string>   *arr, const_string  delim, string *out)
+{
+    join(arr->data, arr->size, delim, out);
+}
+
+void join(const array<const_string>   *arr, const string *delim, string *out)
+{
+    join(arr->data, arr->size, to_const_string(delim), out);
+}
+
+void join(const array<string>         *arr, char          delim, string *out)
+{
+    join(arr->data, arr->size, delim, out);
+}
+
+void join(const array<string>         *arr, const char   *delim, string *out)
+{
+    join(arr->data, arr->size, to_const_string(delim), out);
+}
+
+void join(const array<string>         *arr, const_string  delim, string *out)
+{
+    join(arr->data, arr->size, delim, out);
+}
+
+void join(const array<string>         *arr, const string *delim, string *out)
+{
+    join(arr->data, arr->size, to_const_string(delim), out);
+}
+
+void join(const wchar_t  **strings, u64 count, wchar_t          delim, wstring *out)
+{
+    _join_c(strings, count, delim, out);
+}
+
+void join(const wchar_t  **strings, u64 count, const wchar_t   *delim, wstring *out)
+{
+    _join(strings, count, to_const_string(delim), out);
+}
+
+void join(const wchar_t  **strings, u64 count, const_wstring  delim, wstring *out)
+{
+    _join(strings, count, delim, out);
+}
+
+void join(const wchar_t  **strings, u64 count, const wstring *delim, wstring *out)
+{
+    _join(strings, count, to_const_string(delim), out);
+}
+
+void join(const_wstring *strings, u64 count, wchar_t          delim, wstring *out)
+{
+    _join_c(strings, count, delim, out);
+}
+
+void join(const_wstring *strings, u64 count, const wchar_t   *delim, wstring *out)
+{
+    _join(strings, count, to_const_string(delim), out);
+}
+
+void join(const_wstring *strings, u64 count, const_wstring  delim, wstring *out)
+{
+    _join(strings, count, delim, out);
+}
+
+void join(const_wstring *strings, u64 count, const wstring *delim, wstring *out)
+{
+    _join(strings, count, to_const_string(delim), out);
+}
+
+void join(const wstring *strings, u64 count, wchar_t          delim, wstring *out)
+{
+    _join_c(strings, count, delim, out);
+}
+
+void join(const wstring *strings, u64 count, const wchar_t   *delim, wstring *out)
+{
+    _join(strings, count, to_const_string(delim), out);
+}
+
+void join(const wstring *strings, u64 count, const_wstring  delim, wstring *out)
+{
+    _join(strings, count, delim, out);
+}
+
+void join(const wstring *strings, u64 count, const wstring *delim, wstring *out)
+{
+    _join(strings, count, to_const_string(delim), out);
+}
+
+void join(const array<const wchar_t*>    *arr, wchar_t          delim, wstring *out)
+{
+    join(arr->data, arr->size, delim, out);
+}
+
+void join(const array<const wchar_t*>    *arr, const wchar_t   *delim, wstring *out)
+{
+    join(arr->data, arr->size, to_const_string(delim), out);
+}
+
+void join(const array<const wchar_t*>    *arr, const_wstring  delim, wstring *out)
+{
+    join(arr->data, arr->size, delim, out);
+}
+
+void join(const array<const wchar_t*>    *arr, const wstring *delim, wstring *out)
+{
+    join(arr->data, arr->size, to_const_string(delim), out);
+}
+
+void join(const array<const_wstring>   *arr, wchar_t          delim, wstring *out)
+{
+    join(arr->data, arr->size, delim, out);
+}
+
+void join(const array<const_wstring>   *arr, const wchar_t   *delim, wstring *out)
+{
+    join(arr->data, arr->size, to_const_string(delim), out);
+}
+
+void join(const array<const_wstring>   *arr, const_wstring  delim, wstring *out)
+{
+    join(arr->data, arr->size, delim, out);
+}
+
+void join(const array<const_wstring>   *arr, const wstring *delim, wstring *out)
+{
+    join(arr->data, arr->size, to_const_string(delim), out);
+}
+
+void join(const array<wstring>         *arr, wchar_t          delim, wstring *out)
+{
+    join(arr->data, arr->size, delim, out);
+}
+
+void join(const array<wstring>         *arr, const wchar_t   *delim, wstring *out)
+{
+    join(arr->data, arr->size, to_const_string(delim), out);
+}
+
+void join(const array<wstring>         *arr, const_wstring  delim, wstring *out)
+{
+    join(arr->data, arr->size, delim, out);
+}
+
+void join(const array<wstring>         *arr, const wstring *delim, wstring *out)
+{
+    join(arr->data, arr->size, to_const_string(delim), out);
 }
 
 template<typename C>

@@ -77,12 +77,19 @@ to_long_long(s)     you get the idea
 to_float(s)         converts the string to a float
 ...
 
-string manipulation functions
 
 copy_string(src, dest)           copies one string to another
 copy_string(src, dest, n)        copies one string to another, up to n characters
 copy_string(src, dest, n, off)   copies one string to another, up to n characters, starting in
                                  dest at offset off
+
+append_string(dest, other)  appends the string other to the string dest
+prepend_string(dest, other) prepends the string other to the string dest
+
+index_of(haystack, needle[, offset]) returns the index of the first occurrence of needle
+                                     [starting at offset] within the string haystack, or
+                                     -1 if needle was not found.
+
 
 trim_left(s)                 trims whitespaces from the left of string s, in-place
 trim_right(s)                trims whitespaces from the right of string s, in-place
@@ -95,7 +102,27 @@ substring(const_string src, u64 start, u64 length, string out, u64 out_start)
          starting at out_start.
          allocates more memory in out if out does not have enough to fit
          out_start + length characters.
- */
+
+replace(str, needle, replacement[, offset]) replaces the first occurrence of needle
+                                            with replacement [starting at offset] in
+                                            str.
+
+replace_all(str, needle, replacement[, offset]) replaces all occurrences of needle
+                                                with replacement [starting at offset] in
+                                                str.
+
+split(str, delim, out_arr) splits the string str by string or character delimiter delim
+                           and stores const_strings (pointing to memory inside str) in
+                           the array out_arr. resets the size of out_arr.
+
+join(strings*, N, delim, out) joins strings together, separated by delim, and writes
+                              the output to out. strings is a pointer to N
+                              strings (const char**, const_string*, string*, etc.).
+join(string array, delim, out) same thing as above, except strings is a pointer to an
+                               array of strings.
+
+hash(str) returns a 32 bit hash of the string.
+*/
 
 #include "shl/hash.hpp"
 #include "shl/array.hpp"
@@ -310,13 +337,13 @@ void copy_string(const string  *src, string  *dst, u64 n, u64 dst_offset);
 void copy_string(const wstring *src, wstring *dst, u64 n, u64 dst_offset);
 
 void append_string(string  *dst, const char    *other);
-void append_string(string  *dst, const wchar_t *other);
+void append_string(wstring *dst, const wchar_t *other);
 void append_string(string  *dst, const_string  other);
 void append_string(wstring *dst, const_wstring other);
 void append_string(string  *dst, const string  *other);
 void append_string(wstring *dst, const wstring *other);
 void prepend_string(string  *dst, const char    *other);
-void prepend_string(string  *dst, const wchar_t *other);
+void prepend_string(wstring *dst, const wchar_t *other);
 void prepend_string(string  *dst, const_string  other);
 void prepend_string(wstring *dst, const_wstring other);
 void prepend_string(string  *dst, const string  *other);
@@ -385,8 +412,8 @@ void substring(const_wstring  s, u64 start, u64 length, wstring *out);
 void substring(const string  *s, u64 start, u64 length, string  *out);
 void substring(const wstring *s, u64 start, u64 length, wstring *out);
 void substring(const char    *s, u64 start, u64 length, char    *out, u64 out_offset);
-void substring(const wchar_t *s, u64 start, u64 length, wchar_t *out, u64 out_offset);
 void substring(const char    *s, u64 start, u64 length, string  *out, u64 out_offset);
+void substring(const wchar_t *s, u64 start, u64 length, wchar_t *out, u64 out_offset);
 void substring(const wchar_t *s, u64 start, u64 length, wstring *out, u64 out_offset);
 void substring(const_string   s, u64 start, u64 length, string  *out, u64 out_offset);
 void substring(const_wstring  s, u64 start, u64 length, wstring *out, u64 out_offset);
@@ -426,6 +453,50 @@ void replace_all(wstring *s, wchar_t        needle, wchar_t       replacement, s
 void replace_all(wstring *s, const wchar_t *needle, const_wstring replacement, s64 offset);
 void replace_all(wstring *s, const_wstring  needle, const_wstring replacement, s64 offset);
 void replace_all(wstring *s, const wstring *needle, const_wstring replacement, s64 offset);
+
+s64 split(const_string   s, char           delim, array<const_string>  *out);
+s64 split(const_string   s, const char    *delim, array<const_string>  *out);
+s64 split(const_string   s, const_string   delim, array<const_string>  *out);
+s64 split(const_string   s, const string  *delim, array<const_string>  *out);
+s64 split(const string  *s, char           delim, array<const_string>  *out);
+s64 split(const string  *s, const char    *delim, array<const_string>  *out);
+s64 split(const string  *s, const_string   delim, array<const_string>  *out);
+s64 split(const string  *s, const string  *delim, array<const_string>  *out);
+s64 split(const_wstring  s, wchar_t        delim, array<const_wstring> *out);
+s64 split(const_wstring  s, const wchar_t *delim, array<const_wstring> *out);
+s64 split(const_wstring  s, const_wstring  delim, array<const_wstring> *out);
+s64 split(const_wstring  s, const wstring *delim, array<const_wstring> *out);
+s64 split(const wstring *s, wchar_t        delim, array<const_wstring> *out);
+s64 split(const wstring *s, const wchar_t *delim, array<const_wstring> *out);
+s64 split(const wstring *s, const_wstring  delim, array<const_wstring> *out);
+s64 split(const wstring *s, const wstring *delim, array<const_wstring> *out);
+
+void join(const char  **strings, u64 count, char          delim, string *out);
+void join(const char  **strings, u64 count, const char   *delim, string *out);
+void join(const char  **strings, u64 count, const_string  delim, string *out);
+void join(const char  **strings, u64 count, const string *delim, string *out);
+void join(const_string *strings, u64 count, char          delim, string *out);
+void join(const_string *strings, u64 count, const char   *delim, string *out);
+void join(const_string *strings, u64 count, const_string  delim, string *out);
+void join(const_string *strings, u64 count, const string *delim, string *out);
+void join(const string *strings, u64 count, char          delim, string *out);
+void join(const string *strings, u64 count, const char   *delim, string *out);
+void join(const string *strings, u64 count, const_string  delim, string *out);
+void join(const string *strings, u64 count, const string *delim, string *out);
+void join(const array<const char*>    *arr, char          delim, string *out);
+void join(const array<const char*>    *arr, const char   *delim, string *out);
+void join(const array<const char*>    *arr, const_string  delim, string *out);
+void join(const array<const char*>    *arr, const string *delim, string *out);
+void join(const array<const_string>   *arr, char          delim, string *out);
+void join(const array<const_string>   *arr, const char   *delim, string *out);
+void join(const array<const_string>   *arr, const_string  delim, string *out);
+void join(const array<const_string>   *arr, const string *delim, string *out);
+void join(const array<string>         *arr, char          delim, string *out);
+void join(const array<string>         *arr, const char   *delim, string *out);
+void join(const array<string>         *arr, const_string  delim, string *out);
+void join(const array<string>         *arr, const string *delim, string *out);
+
+// TODO: join wstring
 
 /*
 these are not the same as hash(const char *c) because hash(const char *c)
