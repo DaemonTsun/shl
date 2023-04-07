@@ -10,10 +10,14 @@ functions:
 init(*arr) initializes an empty array with no elements. arr.data will be nullptr.
 init(*arr, N) initializes an array with N elements. the elements will be uninitialized.
 
+add_at_start(*arr) returns a pointer to a new element at the start of the array.
+                   may allocate more memory if necessary.
 add_at_start(*arr, V) adds the value V at the end of the array, allocating more memory
                       if necessary.
                       returns a pointer to the inserted value, which is always start.
 
+add_at_end(*arr) returns a pointer to a new element at the end of the array.
+                 may allocate more memory if necessary.
 add_at_end(*arr, V) adds the value V at the end of the array, allocating more memory
                     if necessary.
                     returns a pointer to the inserted value.
@@ -166,9 +170,15 @@ void init(array<T> *arr, u64 n_elements)
 }
 
 template<typename T>
+inline T *add_at_start(array<T> *arr)
+{
+    return insert_elements(arr, 0, 1);
+}
+
+template<typename T>
 inline T *add_at_start(array<T> *arr, T val)
 {
-    T *ret = insert_elements(arr, 0, 1);
+    T *ret = add_at_start(arr);
     *ret = val;
     return ret;
 }
@@ -176,15 +186,21 @@ inline T *add_at_start(array<T> *arr, T val)
 template<typename T>
 inline T *add_at_start(array<T> *arr, const T *val)
 {
-    T *ret = insert_elements(arr, 0, 1);
+    T *ret = add_at_start(arr);
     *ret = *val;
     return ret;
 }
 
 template<typename T>
+inline T *add_at_end(array<T> *arr)
+{
+    return add_elements(arr, 1);
+}
+
+template<typename T>
 inline T *add_at_end(array<T> *arr, T val)
 {
-    T *ret = add_elements(arr, 1);
+    T *ret = add_at_end(arr);
     *ret = val;
     return ret;
 }
@@ -192,7 +208,7 @@ inline T *add_at_end(array<T> *arr, T val)
 template<typename T>
 inline T *add_at_end(array<T> *arr, const T *val)
 {
-    T *ret = add_elements(arr, 1);
+    T *ret = add_at_end(arr, 1);
     *ret = *val;
     return ret;
 }

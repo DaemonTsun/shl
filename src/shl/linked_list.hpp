@@ -9,10 +9,14 @@ each node has a previous and next pointer to the previous and next node respecti
 
 initialize a list with init(*list, size), free with free(*list).
 
+add_at_start(*list) returns a pointer to the node of the newly inserted value,
+                    which is always list.first.
 add_at_start(*list, V) adds the value V at the end of the list.
                        returns a pointer to the node of the inserted value,
                        which is always list.first.
 
+add_at_end(*list) returns a pointer to the node of the newly inserted value,
+                  which is always list.last.
 add_at_end(*list, V) adds the value V at the end of the list.
                      returns a pointer to the node of the inserted value,
                      which is always list.last.
@@ -213,9 +217,15 @@ list_node<T> *nth_node(const linked_list<T> *list, u64 n)
 }
 
 template<typename T>
+inline list_node<T> *add_at_start(linked_list<T> *list)
+{
+    return insert_elements(list, 0, 1);
+}
+
+template<typename T>
 inline list_node<T> *add_at_start(linked_list<T> *list, T val)
 {
-    list_node<T> *n = insert_elements(list, 0, 1);
+    list_node<T> *n = add_at_start(list);
     n->value = val;
     return n;
 }
@@ -223,15 +233,21 @@ inline list_node<T> *add_at_start(linked_list<T> *list, T val)
 template<typename T>
 inline list_node<T> *add_at_start(linked_list<T> *list, const T *val)
 {
-    list_node<T> *n = insert_elements(list, 0, 1);
+    list_node<T> *n = add_at_start(list);
     n->value = *val;
     return n;
 }
 
 template<typename T>
+inline list_node<T> *add_at_end(linked_list<T> *list)
+{
+    return add_elements(list, 1);
+}
+
+template<typename T>
 inline list_node<T> *add_at_end(linked_list<T> *list, T val)
 {
-    list_node<T> *n = add_elements(list, 1);
+    list_node<T> *n = add_at_end(list);
     n->value = val;
     return n;
 }
@@ -239,7 +255,7 @@ inline list_node<T> *add_at_end(linked_list<T> *list, T val)
 template<typename T>
 inline list_node<T> *add_at_end(linked_list<T> *list, const T *val)
 {
-    list_node<T> *n = add_elements(list, 1);
+    list_node<T> *n = add_at_end(list);
     n->value = *val;
     return n;
 }
