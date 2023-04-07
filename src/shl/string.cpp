@@ -778,10 +778,14 @@ void _copy_string_cs_s(const_string_base<C> src, string_base<C> *dst, u64 n, u64
     if (n == 0)
         return;
 
+    u64 prev_size = string_length(dst);
     u64 size_needed = n + dst_offset;
+
     if (dst->data.reserved_size < size_needed + 1)
-    {
         string_reserve(dst, size_needed);
+
+    if (prev_size < size_needed)
+    {
         dst->data.size = size_needed;
         append_null = true;
     }

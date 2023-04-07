@@ -464,6 +464,24 @@ define_test(copy_string_copies_at_destination_offset_and_allocates_if_offset_is_
     free(&str);
 }
 
+define_test(copy_string_copies_string3)
+{
+    string a = ""_s;
+
+    copy_string("hello", &a);
+
+    assert_equal(string_length(&a), 5);
+    assert_equal(a, "hello"_cs);
+
+    copy_string("hello_", &a);
+
+    assert_equal(string_length(&a), 6);
+    assert_equal(a, "hello_"_cs);
+
+    free(&a);
+}
+
+
 define_test(append_string_appends_to_empty_string_object)
 {
     string str;
