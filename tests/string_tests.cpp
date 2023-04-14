@@ -481,6 +481,16 @@ define_test(copy_string_copies_string3)
     free(&a);
 }
 
+define_test(copy_string_copies_to_new_string)
+{
+    const char *str1 = "abc";
+
+    string ret = copy_string(str1);
+
+    assert_equal(ret, "abc"_cs);
+
+    free(&ret);
+}
 
 define_test(append_string_appends_to_empty_string_object)
 {

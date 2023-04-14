@@ -82,6 +82,9 @@ copy_string(src, dest)           copies one string to another
 copy_string(src, dest, n)        copies one string to another, up to n characters
 copy_string(src, dest, n, off)   copies one string to another, up to n characters, starting in
                                  dest at offset off
+copy_string(src)    copies string src and returns a new string instance of the copied string.
+copy_string(src, n) copies string src, up to n characters,
+                    and returns a new string instance of the copied string.
 
 append_string(dest, other)  appends the string other to the string dest
 prepend_string(dest, other) prepends the string other to the string dest
@@ -335,6 +338,19 @@ void copy_string(const string  *src, string  *dst, u64 n);
 void copy_string(const wstring *src, wstring *dst, u64 n);
 void copy_string(const string  *src, string  *dst, u64 n, u64 dst_offset);
 void copy_string(const wstring *src, wstring *dst, u64 n, u64 dst_offset);
+
+string copy_string(const char   *src);
+string copy_string(const char   *src, u64 n);
+string copy_string(const_string  src);
+string copy_string(const_string  src, u64 n);
+string copy_string(const string *src);
+string copy_string(const string *src, u64 n);
+wstring copy_string(const wchar_t *src);
+wstring copy_string(const wchar_t *src, u64 n);
+wstring copy_string(const_wstring  src);
+wstring copy_string(const_wstring  src, u64 n);
+wstring copy_string(const wstring *src);
+wstring copy_string(const wstring *src, u64 n);
 
 void append_string(string  *dst, const char    *other);
 void append_string(wstring *dst, const wchar_t *other);

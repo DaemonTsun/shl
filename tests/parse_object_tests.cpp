@@ -8,11 +8,11 @@
 using namespace std::literals;
 
 #define SETUP(STR) \
-    parser<char> p;\
+    parser p;\
     init(&p, STR, STR == nullptr ? 0 : string_length(static_cast<const char*>(STR)));
 
 #define WSETUP(STR) \
-    parser<wchar_t> p;\
+    wparser p;\
     init(&p, STR, STR == nullptr ? 0 : string_length(static_cast<const wchar_t*>(STR)));
 
 define_test(parse_object_parses_bool)
@@ -477,7 +477,6 @@ define_test(parsed_object_equality_test2)
     free(&obj1);
     free(&obj2);
 
-    printf("%s\n", objstr.data.data);
     free(&objstr);
 }
 

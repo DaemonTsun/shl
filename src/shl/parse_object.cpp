@@ -2,8 +2,8 @@
 #include "shl/string.hpp"
 #include "shl/parse_object.hpp"
 
-template<typename CharT>
-void init_slice(string_base<CharT> *out, const CharT *input, const parse_range *range)
+template<typename C>
+void init_slice(string_base<C> *out, const C *input, const parse_range *range)
 {
     u64 len = range_length(range);
     init(out, len);
@@ -22,14 +22,14 @@ void init_slice(string_base<CharT> *out, const CharT *input, const parse_range *
 #define PARSE_TABLE_OPENING_BRACKET PARSE_TABLE_BRACKETS[0]
 #define PARSE_TABLE_CLOSING_BRACKET PARSE_TABLE_BRACKETS[1]
 
-#define get_parse_error_(CharT, p, FMT, ...) \
-    parse_error<CharT>{format_error(FMT __VA_OPT__(,) __VA_ARGS__), __FILE__, __LINE__, p->it, p->input, p->input_size}
+#define get_parse_error_(C, p, FMT, ...) \
+    parse_error<C>{format_error(FMT __VA_OPT__(,) __VA_ARGS__), __FILE__, __LINE__, p->it, p->input, p->input_size}
 
-#define get_parse_error(CharT, ERR, p, FMT, ...) \
-    if (ERR != nullptr) { *ERR = get_parse_error_(CharT, p, FMT, __VA_ARGS__); }
+#define get_parse_error(C, ERR, p, FMT, ...) \
+    if (ERR != nullptr) { *ERR = get_parse_error_(C, p, FMT, __VA_ARGS__); }
 
-#define DEFINE_PARSED_IDENTIFIER_EQUALITY_OPERATOR(CharT)\
-bool operator==(const parsed_identifier<CharT> &lhs, const parsed_identifier<CharT> &rhs)\
+#define DEFINE_PARSED_IDENTIFIER_EQUALITY_OPERATOR(C)\
+bool operator==(const parsed_identifier<C> &lhs, const parsed_identifier<C> &rhs)\
 {\
     return lhs.value == rhs.value;\
 }
@@ -76,24 +76,24 @@ bool operator==(parsed_object_base<wchar_t> &lhs, parsed_object_base<wchar_t> &r
     return _equals(lhs, rhs);
 }
 
-template<typename CharT>
-bool _parse_number_object(parser<CharT> *p, parsed_object_base<CharT> *obj, parse_error<CharT> *err)
+template<typename C>
+bool _parse_number_object(parser_base<C> *p, parsed_object_base<C> *obj, parse_error<C> *err)
 {
     if (!is_ok(p))
     {
-        get_parse_error(CharT, err, p, "input is nullptr or end was reached");
+        get_parse_error(C, err, p, "input is nullptr or end was reached");
         return false;
     }
 
     bool int_success = false;
     bool dec_success = false;
-    parser<CharT> int_p = *p;
-    parser<CharT> dec_p = *p;
-    parse_error<CharT> int_err;
-    parse_error<CharT> dec_err;
+    parser_base<C> int_p = *p;
+    parser_base<C> dec_p = *p;
+    parse_error<C> int_err;
+    parse_error<C> dec_err;
 
-    typename parsed_object_base<CharT>::integer_type integer;
-    typename parsed_object_base<CharT>::decimal_type decimal;
+    typename parsed_object_base<C>::integer_type integer;
+    typename parsed_object_base<C>::decimal_type decimal;
 
     int_success = parse_integer(&int_p, &integer, &int_err);
     dec_success = parse_decimal(&dec_p, &decimal, &dec_err);
@@ -148,34 +148,58 @@ bool _parse_number_object(parser<CharT> *p, parsed_object_base<CharT> *obj, pars
     return true;
 }
 
-bool parse_number_object(parser<char> *p, parsed_object_base<char> *obj, parse_error<char> *err)
+bool parse_number_object(parser *p, parsed_object_base<char> *obj, parse_error<char> *err)
 {
     return _parse_number_object(p, obj, err);
 }
 
-bool parse_number_object(parser<wchar_t> *p, parsed_object_base<wchar_t> *obj, parse_error<wchar_t> *err)
+bool parse_number_object(wparser *p, parsed_object_base<wchar_t> *obj, parse_error<wchar_t> *err)
 {
     return _parse_number_object(p, obj, err);
 }
 
-template<typename CharT>
-bool _parse_object_list(parser<CharT> *p, typename parsed_object_base<CharT>::list_type *out, parse_error<CharT> *err)
+bool parse_number_object(const_string   input, parsed_object  *obj, parse_error<char>    *err)
+{
+    parser p;
+    init(&p, input);
+    return parse_number_object(&p, obj, err);
+}
+
+bool parse_number_object(const_wstring  input, wparsed_object *obj, parse_error<wchar_t> *err)
+{
+    wparser p;
+    init(&p, input);
+    return parse_number_object(&p, obj, err);
+}
+
+bool parse_number_object(const string  *input, parsed_object  *obj, parse_error<char>    *err)
+{
+    return parse_number_object(to_const_string(input), obj, err);
+}
+
+bool parse_number_object(const wstring *input, wparsed_object *obj, parse_error<wchar_t> *err)
+{
+    return parse_number_object(to_const_string(input), obj, err);
+}
+
+template<typename C>
+bool _parse_object_list(parser_base<C> *p, typename parsed_object_base<C>::list_type *out, parse_error<C> *err)
 {
     init(out);
 
     if (!is_ok(p))
     {
-        get_parse_error(CharT, err, p, "input is nullptr or end was reached");
+        get_parse_error(C, err, p, "input is nullptr or end was reached");
         return false;
     }
 
     parse_iterator start = p->it;
 
-    CharT c = current_char(p);
+    C c = current_char(p);
 
     if (c != PARSE_LIST_OPENING_BRACKET)
     {
-        get_parse_error(CharT, err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in list at " IT_FMT, c, format_it(p->it), PARSE_LIST_OPENING_BRACKET, format_it(start));
+        get_parse_error(C, err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in list at " IT_FMT, c, format_it(p->it), PARSE_LIST_OPENING_BRACKET, format_it(start));
         return false;
     }
 
@@ -185,7 +209,7 @@ bool _parse_object_list(parser<CharT> *p, typename parsed_object_base<CharT>::li
 
     if (is_at_end(p))
     {
-        get_parse_error(CharT, err, p, "unterminated list starting at " IT_FMT, format_it(start));
+        get_parse_error(C, err, p, "unterminated list starting at " IT_FMT, format_it(start));
         p->it = start;
         return false;
     }
@@ -198,7 +222,7 @@ bool _parse_object_list(parser<CharT> *p, typename parsed_object_base<CharT>::li
         return true;
     }
 
-    parsed_object_base<CharT> obj;
+    parsed_object_base<C> obj;
 
     if (!parse_object(p, &obj, err))
     {
@@ -212,7 +236,7 @@ bool _parse_object_list(parser<CharT> *p, typename parsed_object_base<CharT>::li
 
     if (is_at_end(p))
     {
-        get_parse_error(CharT, err, p, "unterminated list starting at " IT_FMT, format_it(start));
+        get_parse_error(C, err, p, "unterminated list starting at " IT_FMT, format_it(start));
         p->it = start;
         return false;
     }
@@ -227,7 +251,7 @@ bool _parse_object_list(parser<CharT> *p, typename parsed_object_base<CharT>::li
 
         if (is_at_end(p))
         {
-            get_parse_error(CharT, err, p, "unterminated list starting at " IT_FMT, format_it(start));
+            get_parse_error(C, err, p, "unterminated list starting at " IT_FMT, format_it(start));
             p->it = start;
             return false;
         }
@@ -244,7 +268,7 @@ bool _parse_object_list(parser<CharT> *p, typename parsed_object_base<CharT>::li
 
         if (is_at_end(p))
         {
-            get_parse_error(CharT, err, p, "unterminated list starting at " IT_FMT, format_it(start));
+            get_parse_error(C, err, p, "unterminated list starting at " IT_FMT, format_it(start));
             p->it = start;
             return false;
         }
@@ -254,7 +278,7 @@ bool _parse_object_list(parser<CharT> *p, typename parsed_object_base<CharT>::li
 
     if (c != PARSE_LIST_CLOSING_BRACKET)
     {
-        get_parse_error(CharT, err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in list at " IT_FMT, c, format_it(p->it), PARSE_LIST_CLOSING_BRACKET, format_it(start));
+        get_parse_error(C, err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in list at " IT_FMT, c, format_it(p->it), PARSE_LIST_CLOSING_BRACKET, format_it(start));
         p->it = start;
         return false;
     }
@@ -264,34 +288,58 @@ bool _parse_object_list(parser<CharT> *p, typename parsed_object_base<CharT>::li
     return true;
 }
 
-bool parse_object_list(parser<char> *p, object_list *out, parse_error<char> *err)
+bool parse_object_list(parser *p, object_list *out, parse_error<char> *err)
 {
     return _parse_object_list(p, out, err);
 }
 
-bool parse_object_list(parser<wchar_t> *p, wobject_list *out, parse_error<wchar_t> *err)
+bool parse_object_list(wparser *p, wobject_list *out, parse_error<wchar_t> *err)
 {
     return _parse_object_list(p, out, err);
 }
 
-template<typename CharT>
-bool _parse_object_table(parser<CharT> *p, typename parsed_object_base<CharT>::table_type *out, parse_error<CharT> *err)
+bool parse_object_list(const_string   input, object_list  *obj, parse_error<char>    *err)
+{
+    parser p;
+    init(&p, input);
+    return parse_object_list(&p, obj, err);
+}
+
+bool parse_object_list(const_wstring  input, wobject_list *obj, parse_error<wchar_t> *err)
+{
+    wparser p;
+    init(&p, input);
+    return parse_object_list(&p, obj, err);
+}
+
+bool parse_object_list(const string  *input, object_list  *obj, parse_error<char>    *err)
+{
+    return parse_object_list(to_const_string(input), obj, err);
+}
+
+bool parse_object_list(const wstring *input, wobject_list *obj, parse_error<wchar_t> *err)
+{
+    return parse_object_list(to_const_string(input), obj, err);
+}
+
+template<typename C>
+bool _parse_object_table(parser_base<C> *p, typename parsed_object_base<C>::table_type *out, parse_error<C> *err)
 {
     init(out);
 
     if (!is_ok(p))
     {
-        get_parse_error(CharT, err, p, "input is nullptr or end was reached");
+        get_parse_error(C, err, p, "input is nullptr or end was reached");
         return false;
     }
 
     parse_iterator start = p->it;
 
-    CharT c = current_char(p);
+    C c = current_char(p);
 
     if (c != PARSE_TABLE_OPENING_BRACKET)
     {
-        get_parse_error(CharT, err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in table at " IT_FMT, c, format_it(p->it), PARSE_TABLE_OPENING_BRACKET, format_it(start));
+        get_parse_error(C, err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in table at " IT_FMT, c, format_it(p->it), PARSE_TABLE_OPENING_BRACKET, format_it(start));
         return false;
     }
 
@@ -300,7 +348,7 @@ bool _parse_object_table(parser<CharT> *p, typename parsed_object_base<CharT>::t
 
     if (is_at_end(p))
     {
-        get_parse_error(CharT, err, p, "unterminated table starting at " IT_FMT, format_it(start));
+        get_parse_error(C, err, p, "unterminated table starting at " IT_FMT, format_it(start));
         p->it = start;
         return false;
     }
@@ -313,7 +361,7 @@ bool _parse_object_table(parser<CharT> *p, typename parsed_object_base<CharT>::t
         return true;
     }
 
-    typename parsed_object_base<CharT>::identifier_type ident;
+    typename parsed_object_base<C>::identifier_type ident;
     parse_range rn;
     
     if (!parse_identifier(p, &rn, err))
@@ -328,7 +376,7 @@ bool _parse_object_table(parser<CharT> *p, typename parsed_object_base<CharT>::t
 
     if (is_at_end(p))
     {
-        get_parse_error(CharT, err, p, "unexpected EOF at " IT_FMT ", expected '%c' in table at " IT_FMT, format_it(p->it), PARSE_TABLE_KEY_VALUE_DELIM, format_it(start));
+        get_parse_error(C, err, p, "unexpected EOF at " IT_FMT ", expected '%c' in table at " IT_FMT, format_it(p->it), PARSE_TABLE_KEY_VALUE_DELIM, format_it(start));
         p->it = start;
         return false;
     }
@@ -337,14 +385,14 @@ bool _parse_object_table(parser<CharT> *p, typename parsed_object_base<CharT>::t
 
     if (c != PARSE_TABLE_KEY_VALUE_DELIM)
     {
-        get_parse_error(CharT, err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in table at " IT_FMT, c, format_it(p->it), PARSE_TABLE_KEY_VALUE_DELIM, format_it(start));
+        get_parse_error(C, err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in table at " IT_FMT, c, format_it(p->it), PARSE_TABLE_KEY_VALUE_DELIM, format_it(start));
         p->it = start;
         return false;
     }
 
     advance(&p->it);
 
-    parsed_object_base<CharT> obj;
+    parsed_object_base<C> obj;
 
     if (!parse_object(p, &obj, err))
     {
@@ -354,7 +402,7 @@ bool _parse_object_table(parser<CharT> *p, typename parsed_object_base<CharT>::t
 
     if (contains(out, &ident.value))
     {
-        get_parse_error(CharT, err, p, "duplicate key '%s' at " IT_FMT ", in table at " IT_FMT, ident.value.data.data, format_it(p->it), format_it(start));
+        get_parse_error(C, err, p, "duplicate key '%s' at " IT_FMT ", in table at " IT_FMT, ident.value.data.data, format_it(p->it), format_it(start));
         p->it = start;
         return false;
     }
@@ -364,7 +412,7 @@ bool _parse_object_table(parser<CharT> *p, typename parsed_object_base<CharT>::t
 
     if (is_at_end(p))
     {
-        get_parse_error(CharT, err, p, "unterminated table starting at " IT_FMT, format_it(start));
+        get_parse_error(C, err, p, "unterminated table starting at " IT_FMT, format_it(start));
         p->it = start;
         return false;
     }
@@ -378,7 +426,7 @@ bool _parse_object_table(parser<CharT> *p, typename parsed_object_base<CharT>::t
 
         if (is_at_end(p))
         {
-            get_parse_error(CharT, err, p, "unterminated table starting at " IT_FMT, format_it(start));
+            get_parse_error(C, err, p, "unterminated table starting at " IT_FMT, format_it(start));
             p->it = start;
             return false;
         }
@@ -396,7 +444,7 @@ bool _parse_object_table(parser<CharT> *p, typename parsed_object_base<CharT>::t
 
         if (is_at_end(p))
         {
-            get_parse_error(CharT, err, p, "unexpected EOF at " IT_FMT ", expected '%c' in table at " IT_FMT, format_it(p->it), PARSE_TABLE_KEY_VALUE_DELIM, format_it(start));
+            get_parse_error(C, err, p, "unexpected EOF at " IT_FMT ", expected '%c' in table at " IT_FMT, format_it(p->it), PARSE_TABLE_KEY_VALUE_DELIM, format_it(start));
             p->it = start;
             return false;
         }
@@ -405,7 +453,7 @@ bool _parse_object_table(parser<CharT> *p, typename parsed_object_base<CharT>::t
 
         if (c != PARSE_TABLE_KEY_VALUE_DELIM)
         {
-            get_parse_error(CharT, err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in table at " IT_FMT, c, format_it(p->it), PARSE_TABLE_KEY_VALUE_DELIM, format_it(start));
+            get_parse_error(C, err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in table at " IT_FMT, c, format_it(p->it), PARSE_TABLE_KEY_VALUE_DELIM, format_it(start));
             p->it = start;
             return false;
         }
@@ -420,7 +468,7 @@ bool _parse_object_table(parser<CharT> *p, typename parsed_object_base<CharT>::t
 
         if (contains(out, &ident.value))
         {
-            get_parse_error(CharT, err, p, "duplicate key '%s' at " IT_FMT ", in table at " IT_FMT, ident.value.data.data, format_it(p->it), format_it(start));
+            get_parse_error(C, err, p, "duplicate key '%s' at " IT_FMT ", in table at " IT_FMT, ident.value.data.data, format_it(p->it), format_it(start));
             p->it = start;
             return false;
         }
@@ -430,7 +478,7 @@ bool _parse_object_table(parser<CharT> *p, typename parsed_object_base<CharT>::t
 
         if (is_at_end(p))
         {
-            get_parse_error(CharT, err, p, "unterminated table starting at " IT_FMT, format_it(start));
+            get_parse_error(C, err, p, "unterminated table starting at " IT_FMT, format_it(start));
             p->it = start;
             return false;
         }
@@ -440,7 +488,7 @@ bool _parse_object_table(parser<CharT> *p, typename parsed_object_base<CharT>::t
 
     if (c != PARSE_TABLE_CLOSING_BRACKET)
     {
-        get_parse_error(CharT, err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in table at " IT_FMT, c, format_it(p->it), PARSE_TABLE_CLOSING_BRACKET, format_it(start));
+        get_parse_error(C, err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in table at " IT_FMT, c, format_it(p->it), PARSE_TABLE_CLOSING_BRACKET, format_it(start));
         p->it = start;
         return false;
     }
@@ -450,22 +498,46 @@ bool _parse_object_table(parser<CharT> *p, typename parsed_object_base<CharT>::t
     return true;
 }
 
-bool parse_object_table(parser<char> *p, object_table *out, parse_error<char> *err)
+bool parse_object_table(parser *p, object_table *out, parse_error<char> *err)
 {
     return _parse_object_table(p, out, err);
 }
 
-bool parse_object_table(parser<wchar_t> *p, wobject_table *out, parse_error<wchar_t> *err)
+bool parse_object_table(wparser *p, wobject_table *out, parse_error<wchar_t> *err)
 {
     return _parse_object_table(p, out, err);
 }
 
-template<typename CharT>
-bool _parse_object(parser<CharT> *p, parsed_object_base<CharT> *out, parse_error<CharT> *err)
+bool parse_object_table(const_string   input, object_table  *obj, parse_error<char>    *err)
+{
+    parser p;
+    init(&p, input);
+    return parse_object_table(&p, obj, err);
+}
+
+bool parse_object_table(const_wstring  input, wobject_table *obj, parse_error<wchar_t> *err)
+{
+    wparser p;
+    init(&p, input);
+    return parse_object_table(&p, obj, err);
+}
+
+bool parse_object_table(const string  *input, object_table  *obj, parse_error<char>    *err)
+{
+    return parse_object_table(to_const_string(input), obj, err);
+}
+
+bool parse_object_table(const wstring *input, wobject_table *obj, parse_error<wchar_t> *err)
+{
+    return parse_object_table(to_const_string(input), obj, err);
+}
+
+template<typename C>
+bool _parse_object(parser_base<C> *p, parsed_object_base<C> *out, parse_error<C> *err)
 {
     if (!is_ok(p))
     {
-        get_parse_error(CharT, err, p, "input is nullptr or end was reached");
+        get_parse_error(C, err, p, "input is nullptr or end was reached");
         out->type = parsed_object_type::None;
         return false;
     }
@@ -475,15 +547,15 @@ bool _parse_object(parser<CharT> *p, parsed_object_base<CharT> *out, parse_error
 
     if (is_at_end(p))
     {
-        get_parse_error(CharT, err, p, "no object at " IT_FMT, format_it(start));
+        get_parse_error(C, err, p, "no object at " IT_FMT, format_it(start));
         out->type = parsed_object_type::None;
         p->it = start;
         return false;
     }
 
-    CharT c = current_char(p);
+    C c = current_char(p);
 
-    parsed_object_base<CharT> ret;
+    parsed_object_base<C> ret;
 
     if (c == PARSE_STRING_DELIM)
     {
@@ -534,19 +606,19 @@ bool _parse_object(parser<CharT> *p, parsed_object_base<CharT> *out, parse_error
     else
     {
         // either identifier, boolean or number
-        parser<CharT> bool_p = *p;
+        parser_base<C> bool_p = *p;
         parse_range bool_rn;
-        parse_error<CharT> bool_err;
+        parse_error<C> bool_err;
         bool bool_success = parse_bool(&bool_p, &bool_rn, &bool_err);
         
-        parser<CharT> id_p = *p;
+        parser_base<C> id_p = *p;
         parse_range id_rn;
-        parse_error<CharT> id_err;
+        parse_error<C> id_err;
         bool id_success = parse_identifier(&id_p, &id_rn, &id_err);
 
-        parser<CharT> num_p = *p;
-        parse_error<CharT> num_err;
-        parsed_object_base<CharT> num_obj;
+        parser_base<C> num_p = *p;
+        parse_error<C> num_err;
+        parsed_object_base<C> num_obj;
         bool num_success = parse_number_object(&num_p, &num_obj, &num_err);
 
         if (bool_success)
@@ -625,14 +697,38 @@ bool _parse_object(parser<CharT> *p, parsed_object_base<CharT> *out, parse_error
     return true;
 }
 
-bool parse_object(parser<char> *p, parsed_object_base<char> *out, parse_error<char> *err)
+bool parse_object(parser *p, parsed_object_base<char> *out, parse_error<char> *err)
 {
     return _parse_object(p, out, err);
 }
 
-bool parse_object(parser<wchar_t> *p, parsed_object_base<wchar_t> *out, parse_error<wchar_t> *err)
+bool parse_object(wparser *p, parsed_object_base<wchar_t> *out, parse_error<wchar_t> *err)
 {
     return _parse_object(p, out, err);
+}
+
+bool parse_object(const_string   input, parsed_object  *obj, parse_error<char>    *err)
+{
+    parser p;
+    init(&p, input);
+    return parse_object(&p, obj, err);
+}
+
+bool parse_object(const_wstring  input, wparsed_object *obj, parse_error<wchar_t> *err)
+{
+    wparser p;
+    init(&p, input);
+    return parse_object(&p, obj, err);
+}
+
+bool parse_object(const string  *input, parsed_object  *obj, parse_error<char>    *err)
+{
+    return parse_object(to_const_string(input), obj, err);
+}
+
+bool parse_object(const wstring *input, wparsed_object *obj, parse_error<wchar_t> *err)
+{
+    return parse_object(to_const_string(input), obj, err);
 }
 
 template<typename C>

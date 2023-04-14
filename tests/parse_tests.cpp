@@ -5,17 +5,17 @@
 #include "shl/parse.hpp"
 
 #define SETUP(STR) \
-    parser<char> p;\
+    parser p;\
     init(&p, STR, STR == nullptr ? 0 : string_length(static_cast<const char*>(STR)));
 
 #define WSETUP(STR) \
-    parser<wchar_t> p;\
+    wparser p;\
     init(&p, STR, STR == nullptr ? 0 : string_length(static_cast<const wchar_t*>(STR)));
 
-template<typename CharT>
-std::basic_string<CharT> slice(const CharT *input, const parse_range *range)
+template<typename C>
+std::basic_string<C> slice(const C *input, const parse_range *range)
 {
-    return std::basic_string<CharT>(input + range->start.pos, range_length(range));
+    return std::basic_string<C>(input + range->start.pos, range_length(range));
 }
 
 define_test(skip_whitespace_does_nothing_on_nullptr)
@@ -808,6 +808,15 @@ define_test(parse_integer_yields_error_on_invalid_input5)
     assert_equal(err.input, "+");
 }
 
+define_test(parse_integer_parses_from_string)
+{
+    int out;
+    bool success = parse_integer("123"_cs, &out);
+
+    assert_equal(success, true);
+    assert_equal(out, 123);
+}
+
 define_test(parse_decimal_parses_float)
 {
     SETUP("1.0");
@@ -1234,6 +1243,15 @@ define_test(parse_decimal_yields_error_on_invalid_input4)
     assert_equal(err.it.pos, 3);
 }
 
+define_test(parse_decimal_parses_from_string)
+{
+    float out;
+    bool success = parse_decimal("1.23"_cs, &out);
+
+    assert_equal(success, true);
+    assert_equal(out, 1.23f);
+}
+
 define_test(parse_identifier_throws_on_invalid_first_character)
 {
     SETUP("9abc");
@@ -1415,6 +1433,15 @@ define_test(parse_bool_throws_on_invalid_input3)
     assert_equal(err.it.line, 1);
     assert_equal(err.it.line_pos, 3);
     assert_equal(err.input, "tX");
+}
+
+define_test(parse_bool_parses_from_string)
+{
+    bool out = false;
+    bool success = parse_bool("true"_cs, &out);
+
+    assert_equal(success, true);
+    assert_equal(out, true);
 }
 
 define_default_test_main();

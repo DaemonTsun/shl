@@ -886,6 +886,76 @@ void copy_string(const wstring *src, wstring *dst, u64 n, u64 dst_offset)
     _copy_string_cs_s(to_const_string(src), dst, n, dst_offset);
 }
 
+template<typename C, typename T>
+string_base<C> _copy_new_string(T src, u64 n)
+{
+    string_base<C> ret;
+    init(&ret);
+    copy_string(src, &ret, n);
+
+    return ret;
+}
+
+string copy_string(const char   *src)
+{
+    return _copy_new_string<char>(src, -1);
+}
+
+string copy_string(const char   *src, u64 n)
+{
+    return _copy_new_string<char>(src, n);
+}
+
+string copy_string(const_string  src)
+{
+    return _copy_new_string<char>(src, -1);
+}
+
+string copy_string(const_string  src, u64 n)
+{
+    return _copy_new_string<char>(src, n);
+}
+
+string copy_string(const string *src)
+{
+    return _copy_new_string<char>(src, -1);
+}
+
+string copy_string(const string *src, u64 n)
+{
+    return _copy_new_string<char>(src, n);
+}
+
+wstring copy_string(const wchar_t *src)
+{
+    return _copy_new_string<wchar_t>(src, -1);
+}
+
+wstring copy_string(const wchar_t *src, u64 n)
+{
+    return _copy_new_string<wchar_t>(src, n);
+}
+
+wstring copy_string(const_wstring  src)
+{
+    return _copy_new_string<wchar_t>(src, -1);
+}
+
+wstring copy_string(const_wstring  src, u64 n)
+{
+    return _copy_new_string<wchar_t>(src, n);
+}
+
+wstring copy_string(const wstring *src)
+{
+    return _copy_new_string<wchar_t>(src, -1);
+}
+
+wstring copy_string(const wstring *src, u64 n)
+{
+    return _copy_new_string<wchar_t>(src, n);
+}
+
 template<typename C>
 void _append_string(string_base<C> *dst, const_string_base<C> other)
 {
