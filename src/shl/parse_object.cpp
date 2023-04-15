@@ -7,7 +7,7 @@ void init_slice(string_base<C> *out, const C *input, const parse_range *range)
 {
     u64 len = range_length(range);
     init(out, len);
-    copy_string(input + range->start.pos, out, len);
+    copy_string(const_string_base<C>{input + range->start.pos, len}, out, len);
 }
 
 #define PARSE_STRING_DELIM '"'
