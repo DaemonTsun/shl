@@ -497,24 +497,17 @@ u64 string_length(const wstring *s)
     return s->data.size;
 }
 
-int compare_strings(const char *s1, const char *s2)
+template<typename C>
+int _compare_strings_c(const C *s1, const C *s2, u64 n)
 {
-    return strcmp(s1, s2);
-}
-
-int compare_strings(const char *s1, const char *s2, u64 n)
-{
-    return strncmp(s1, s2, n);
-}
-
-int compare_strings(const wchar_t *s1, const wchar_t *s2)
-{
-    return wcscmp(s1, s2);
-}
-
-int compare_strings(const wchar_t *s1, const wchar_t *s2, u64 n)
-{
-    return wcsncmp(s1, s2, n);
+    if constexpr (is_same(C, char))
+    {
+        return strncmp(s1, s2, n);
+    }
+    else
+    {
+        return wcsncmp(s1, s2, n);
+    }
 }
 
 template<typename C>
@@ -541,60 +534,186 @@ int _compare_strings_cs(const_string_base<C> s1, const_string_base<C> s2, u64 n)
     return res;
 }
 
-int compare_strings(const_string s1, const_string s2)
+int compare_strings(const char    *s1, const char    *s2)
+{
+    return _compare_strings_c(s1, s2, -1);
+}
+
+int compare_strings(const char    *s1, const_string   s2)
+{
+    return _compare_strings_cs(to_const_string(s1), s2, -1);
+}
+
+int compare_strings(const char    *s1, const string  *s2)
+{
+    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), -1);
+}
+
+int compare_strings(const_string   s1, const char    *s2)
+{
+    return _compare_strings_cs(s1, to_const_string(s2), -1);
+}
+
+int compare_strings(const_string   s1, const_string   s2)
 {
     return _compare_strings_cs(s1, s2, -1);
 }
 
-int compare_strings(const_string s1, const_string s2, u64 n)
+int compare_strings(const_string   s1, const string  *s2)
 {
-    return _compare_strings_cs(s1, s2, n);
+    return _compare_strings_cs(s1, to_const_string(s2), -1);
 }
 
-int compare_strings(const_wstring s1, const_wstring s2)
+int compare_strings(const string  *s1, const char    *s2)
 {
-    return _compare_strings_cs(s1, s2, -1);
+    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), -1);
 }
 
-int compare_strings(const_wstring s1, const_wstring s2, u64 n)
+int compare_strings(const string  *s1, const_string   s2)
 {
-    return _compare_strings_cs(s1, s2, n);
+    return _compare_strings_cs(to_const_string(s1), s2, -1);
 }
 
-template<typename C>
-int _compare_strings_s(const string_base<C> *s1, const string_base<C> *s2, u64 n)
+int compare_strings(const string  *s1, const string  *s2)
 {
-    if (s1 == s2)
-        return 0;
+    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), -1);
+}
 
-    if (s1 == nullptr)
-        return -1;
+int compare_strings(const char    *s1, const char    *s2, u64 n)
+{
+    return _compare_strings_c(s1, s2, n);
+}
 
-    if (s2 == nullptr)
-        return 1;
+int compare_strings(const char    *s1, const_string   s2, u64 n)
+{
+    return _compare_strings_cs(to_const_string(s1), s2, n);
+}
 
+int compare_strings(const char    *s1, const string  *s2, u64 n)
+{
     return _compare_strings_cs(to_const_string(s1), to_const_string(s2), n);
 }
 
-int compare_strings(const string *s1, const string *s2)
+int compare_strings(const_string   s1, const char    *s2, u64 n)
 {
-    return _compare_strings_s(s1, s2, -1);
+    return _compare_strings_cs(s1, to_const_string(s2), n);
 }
 
-int compare_strings(const string *s1, const string *s2, u64 n)
+int compare_strings(const_string   s1, const_string   s2, u64 n)
 {
-    return _compare_strings_s(s1, s2, n);
+    return _compare_strings_cs(s1, s2, n);
+}
+
+int compare_strings(const_string   s1, const string  *s2, u64 n)
+{
+    return _compare_strings_cs(s1, to_const_string(s2), n);
+}
+
+int compare_strings(const string  *s1, const char    *s2, u64 n)
+{
+    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), n);
+}
+
+int compare_strings(const string  *s1, const_string   s2, u64 n)
+{
+    return _compare_strings_cs(to_const_string(s1), s2, n);
+}
+
+int compare_strings(const string  *s1, const string  *s2, u64 n)
+{
+    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), n);
+}
+
+int compare_strings(const wchar_t *s1, const wchar_t *s2)
+{
+    return _compare_strings_c(s1, s2, -1);
+}
+
+int compare_strings(const wchar_t *s1, const_wstring  s2)
+{
+    return _compare_strings_cs(to_const_string(s1), s2, -1);
+}
+
+int compare_strings(const wchar_t *s1, const wstring *s2)
+{
+    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), -1);
+}
+
+int compare_strings(const_wstring  s1, const wchar_t *s2)
+{
+    return _compare_strings_cs(s1, to_const_string(s2), -1);
+}
+
+int compare_strings(const_wstring  s1, const_wstring  s2)
+{
+    return _compare_strings_cs(s1, s2, -1);
+}
+
+int compare_strings(const_wstring  s1, const wstring *s2)
+{
+    return _compare_strings_cs(s1, to_const_string(s2), -1);
+}
+
+int compare_strings(const wstring *s1, const wchar_t *s2)
+{
+    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), -1);
+}
+
+int compare_strings(const wstring *s1, const_wstring  s2)
+{
+    return _compare_strings_cs(to_const_string(s1), s2, -1);
 }
 
 int compare_strings(const wstring *s1, const wstring *s2)
 {
-    return _compare_strings_s(s1, s2, -1);
+    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), -1);
+}
+
+int compare_strings(const wchar_t *s1, const wchar_t *s2, u64 n)
+{
+    return _compare_strings_c(s1, s2, n);
+}
+
+int compare_strings(const wchar_t *s1, const_wstring  s2, u64 n)
+{
+    return _compare_strings_cs(to_const_string(s1), s2, n);
+}
+
+int compare_strings(const wchar_t *s1, const wstring *s2, u64 n)
+{
+    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), n);
+}
+
+int compare_strings(const_wstring  s1, const wchar_t *s2, u64 n)
+{
+    return _compare_strings_cs(s1, to_const_string(s2), n);
+}
+
+int compare_strings(const_wstring  s1, const_wstring  s2, u64 n)
+{
+    return _compare_strings_cs(s1, s2, n);
+}
+
+int compare_strings(const_wstring  s1, const wstring *s2, u64 n)
+{
+    return _compare_strings_cs(s1, to_const_string(s2), n);
+}
+
+int compare_strings(const wstring *s1, const wchar_t *s2, u64 n)
+{
+    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), n);
+}
+
+int compare_strings(const wstring *s1, const_wstring  s2, u64 n)
+{
+    return _compare_strings_cs(to_const_string(s1), s2, n);
 }
 
 int compare_strings(const wstring *s1, const wstring *s2, u64 n)
 {
-    return _compare_strings_s(s1, s2, n);
+    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), n);
 }
+
 
 template<> bool equals(string  s1, string  s2)
 {
