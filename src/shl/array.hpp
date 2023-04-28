@@ -35,6 +35,14 @@ insert_elements(*arr, pos, N) inserts N elements at position pos in the array.
                               then returns a pointer to where the elements
                               were inserted.
 
+remove_from_start(*arr) removes the first element from the start of the array,
+                        shifting all others back. probably a heavy operation if
+                        the array contains many elements. does nothing if the
+                        array is empty.
+
+remove_from_end(*arr) reduces the size of the array by 1 (does not deallocate anything).
+                      does nothing if the array is empty.
+
 remove_elements(*arr, pos, N) removes N elements starting at position pos from the array.
                               does nothing if pos >= arr.size.
                               if pos + n >= arr.size, simply changes the size of
@@ -281,6 +289,18 @@ T *insert_elements(array<T> *arr, u64 index, u64 n_elements)
     ::move_memory(start, new_start, n_elements * sizeof(T));
 
     return arr->data + index;
+}
+
+template<bool FreeValues = false, typename T>
+void remove_from_start(array<T> *arr)
+{
+    remove_elements<FreeValues>(arr, 0, 1);
+}
+
+template<bool FreeValues = false, typename T>
+void remove_from_end(array<T> *arr)
+{
+    remove_elements<FreeValues>(arr, arr->size - 1, 1);
 }
 
 template<bool FreeValues = false, typename T>

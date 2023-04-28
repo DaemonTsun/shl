@@ -33,6 +33,14 @@ insert_elements(*list, pos, N) inserts N elements at position pos in the list.
                                if pos == list.size, sets list.last accordingly.
                                returns a pointer to the first node inserted.
 
+remove_from_start(*list) removes the first element of the list, deallocating the
+                         node, and sets list->first accordingly.
+                         does nothing if the list is empty.
+
+remove_from_end(*list) removes the last element of the list, deallocating the
+                       node, and sets list->last accordingly.
+                       does nothing if the list is empty.
+
 remove_elements(*list, pos, N) removes N nodes starting at position pos from the list.
                                does nothing if pos >= list.size.
                                if pos + n >= list.size, only removes nodes up to list.last.
@@ -343,6 +351,18 @@ list_node<T> *insert_elements(linked_list<T> *list, u64 index, u64 n_elements)
     list->size = list->size + n_elements;
 
     return ret;
+}
+
+template<bool FreeValues = false, typename T>
+void remove_from_start(linked_list<T> *list)
+{
+    remove_elements<FreeValues>(list, 0, 1);
+}
+
+template<bool FreeValues = false, typename T>
+void remove_from_end(linked_list<T> *list)
+{
+    remove_elements<FreeValues>(list, list.size - 1, 1);
 }
 
 template<bool FreeValues = false, typename T>
