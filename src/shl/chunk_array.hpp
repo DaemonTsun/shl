@@ -12,7 +12,7 @@ TODO: write
 
 // pointer to an array of Ts of size N...
 template<typename T, u64 N = Default_chunk_size>
-typedef T (*array_chunk)[N];
+using array_chunk = T (*)[N];
 
 template<typename T, u64 N = Default_chunk_size>
 struct chunk_array
@@ -32,7 +32,6 @@ void init(chunk_array<T, N> *arr)
     assert(arr != nullptr);
 
     init(&arr->chunks);
-    arr->size = 0;
 }
 
 template<typename T, u64 N>
@@ -61,11 +60,21 @@ inline array_chunk<T, N> *add_at_end(chunk_array<T, N> *arr)
 }
 
 template<typename T, u64 N>
-void _init_chunks(array_chunk<T, N> *chunk, u64 n)
+void _alloc_chunks(array_chunk<T, N> *chunk, u64 n)
 {
     for (u64 i = 0; i < n; ++i)
     {
         *chunk = allocate_memory<T[N]>();
+        chunk++;
+    }
+}
+
+template<typename T, u64 N>
+void _free_chunks(array_chunk<T, N> *chunk, u64 n)
+{
+    for (u64 i = 0; i < n; ++i)
+    {
+        free_memory<T[N]>(*chunk);
         chunk++;
     }
 }
@@ -80,7 +89,7 @@ array_chunk<T, N> *add_chunks(chunk_array<T, N> *arr, u64 n)
     if (ret == nullptr)
         return ret;
 
-    _init_chunks(ret, n);
+    _alloc_chunks(ret, n);
 
     return ret;
 }
@@ -95,7 +104,7 @@ array_chunk<T, N> *insert_chunks(chunk_array<T, N> *arr, u64 index, u64 n)
     if (ret == nullptr)
         return ret;
 
-    _init_chunks(ret, n);
+    _alloc_chunks(ret, n);
 
     return ret;
 }
@@ -137,14 +146,8 @@ void remove_chunks(chunk_array<T, N> *arr, u64 index, u64 n)
         }
     }
 
-    auto it = arr->chunks.data + index;
-    auto last_chunk_to_remove = arr->chunks.data + max;
-
-    while (it != last_chunk_to_remove)
-    {
-        free_memory(*it);
-        it++;
-    }
+    auto first_chunk = arr->chunks.data + index;
+    _free_chunks(first_chunk, max - index);
 
     remove_elements(&arr->chunks, index, n);
 }
@@ -180,12 +183,14 @@ bool resize(chunk_array<T, N> *arr, u64 n)
         }
     }
 
-    u64 prev_size = arr->chunks.size;
+    if (arr->chunks.size > n)
+        _free_chunks(arr->chunks.data + n, arr->chunks.size - n);
 
+    u64 prev_size = arr->chunks.size;
     resize(&arr->chunks, n);
 
     if (prev_size < n)
-        _init_chunks(arr->chunks.data + prev_size, n - prev_size);
+        _alloc_chunks(arr->chunks.data + prev_size, n - prev_size);
 }
 
 template<typename T, u64 N>
@@ -212,24 +217,39 @@ array_chunk<T, N> *end(chunk_array<T, N> *arr)
     return arr->chunks.data + arr->chunks.size;
 }
 
+// gets the nth element within the entire chunk_array,
+// not the nth chunk
 template<typename T, u64 N>
 T *at(chunk_array<T, N> *arr, u64 index)
 {
     assert(arr != nullptr);
     assert(index < arr->size);
 
-    // TODO: implement
+    u64 chunk_index = index / N;
+    u64 index_within_chunk = index % N;
 
-    return arr->data + index;
+    return (*arr->chunks[chunk_index]) + index_within_chunk;
 }
 
 template<typename T, u64 N>
 const T *at(const chunk_array<T, N> *arr, u64 index)
 {
     assert(arr != nullptr);
-    assert(index < arr->size);
+    assert(index < arr->chunks.size * N);
 
-    return arr->data + index;
+    u64 chunk_index = index / N;
+    u64 index_within_chunk = index % N;
+
+    return (*arr->chunks[chunk_index]) + index_within_chunk;
+}
+
+template<typename T, u64 N>
+array_chunk<T, N> *nth_chunk(chunk_array<T, N> *arr, u64 index)
+{
+    assert(arr != nullptr);
+    assert(index < arr->chunks.size);
+
+    return at(&arr->chunks, index);
 }
 
 template<typename T, u64 N>
@@ -237,26 +257,47 @@ void clear(chunk_array<T, N> *arr)
 {
     assert(arr != nullptr);
 
+    _free_chunks(arr->chunks.data, arr->chunks.size);
     arr->size = 0;
 }
 
+// number of elements
 template<typename T, u64 N>
 u64 array_size(const chunk_array<T, N> *arr)
 {
     assert(arr != nullptr);
 
-    return arr->size;
+    return arr->chunks.size * N;
 }
 
-#include "shl/impl/for_array.hpp"
+template<typename T, u64 N>
+u64 chunk_count(const chunk_array<T, N> *arr)
+{
+    assert(arr != nullptr);
+
+    return arr->chunks.size;
+}
+
+// TODO: loop macros
 
 template<typename T, u64 N>
 void free_values(chunk_array<T, N> *arr)
 {
     assert(arr != nullptr);
     
+    /*
+     * TODO: implement
+     *
+    for (u64 i = 0; i < arr->chunks.size; ++i)
+    {
+        auto chunk = arr->chunks.data + i;
+
+        for (u64 j = 0; j < N; ++j)
+            free((*chunk) + j);
+    }
     for_array(v, arr)
         free(v);
+        */
 }
 
 template<bool FreeValues = false, typename T, u64 N>
@@ -266,12 +307,8 @@ void free(chunk_array<T, N> *arr)
 
     if constexpr (FreeValues) free_values(arr);
 
-    if (arr->data != nullptr)
-        free_memory<T>(arr->data);
-
-    arr->data = nullptr;
-    arr->size = 0;
-    arr->reserved_size = 0;
+    _free_chunks(arr->chunks.data, arr->chunks.size);
+    free<false>(&arr->chunks);
 }
 
 template<typename T, u64 N>
@@ -279,9 +316,11 @@ T *search(chunk_array<T, N> *arr, T key, equality_function<T> eq = equals<T>)
 {
     assert(arr != nullptr);
     
+    /* TODO: implement
     for_array(v, arr)
         if (eq(*v, key))
             return v;
+    */
 
     return nullptr;
 }
@@ -291,9 +330,11 @@ T *search(chunk_array<T, N> *arr, const T *key, equality_function_p<T> eq = equa
 {
     assert(arr != nullptr);
     
+    /* TODO: implement
     for_array(v, arr)
         if (eq(v, key))
             return v;
+            */
 
     return nullptr;
 }
@@ -303,9 +344,11 @@ s64 index_of(const chunk_array<T, N> *arr, T key, equality_function<T> eq = equa
 {
     assert(arr != nullptr);
     
+    /* TODO: implement
     for_array(i, v, arr)
         if (eq(*v, key))
             return i;
+            */
 
     return -1;
 }
@@ -315,9 +358,11 @@ s64 index_of(const chunk_array<T, N> *arr, const T *key, equality_function_p<T> 
 {
     assert(arr != nullptr);
     
+    /* TODO: implement
     for_array(i, v, arr)
         if (eq(v, key))
             return i;
+            */
 
     return -1;
 }
@@ -337,5 +382,7 @@ bool contains(const chunk_array<T, N> *arr, const T *key, equality_function_p<T>
 template<typename T, u64 N>
 hash_t hash(const chunk_array<T, N> *arr)
 {
-    return hash_data(reinterpret_cast<void*>(arr->data), arr->size * sizeof(T));
+    // TODO: implement
+    // return hash_data(reinterpret_cast<void*>(arr->data), arr->size * sizeof(T));
+    return 0;
 }
