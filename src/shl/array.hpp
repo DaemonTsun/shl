@@ -70,6 +70,7 @@ at(*arr, N) returns a pointer to the Nth element in the array.
 clear(*arr) simply sets arr.size to 0, no memory is deallocated and
             reserved memory is kept. use free(*arr) to deallocate memory.
 
+array_data(*arr) returns arr.data, pointer to the first element
 array_size(*arr) returns arr.size
 
 free_values(*arr) calls free(*v) on each element in the array, but does
@@ -453,6 +454,22 @@ void clear(array<T> *arr)
     assert(arr != nullptr);
 
     arr->size = 0;
+}
+
+template<typename T>
+T *array_data(array<T> *arr)
+{
+    assert(arr != nullptr);
+
+    return arr->data;
+}
+
+template<typename T>
+const T *array_data(const array<T> *arr)
+{
+    assert(arr != nullptr);
+
+    return arr->data;
 }
 
 template<typename T>

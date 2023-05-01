@@ -9,6 +9,7 @@
  *
  * at(*arr, N) returns a pointer to the Nth element in the array.
  *
+ * array_data(*arr) returns a pointer to the first element in the array
  * array_size(*arr) returns the size of the array
  *
  * other functions:
@@ -91,6 +92,18 @@ constexpr const T *at(const fixed_array<T, N> *arr, u64 index)
     assert(index < arr->size);
 
     return arr->data + index;
+}
+
+template<typename T, u64 N>
+constexpr T *array_data(fixed_array<T, N> *arr)
+{
+    return arr->data;
+}
+
+template<typename T, u64 N>
+constexpr const T *array_data(const fixed_array<T, N> *arr)
+{
+    return arr->data;
 }
 
 template<typename T, u64 N>
