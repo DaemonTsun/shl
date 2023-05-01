@@ -351,3 +351,9 @@ bool operator==(hash_table<TKey, TValue> &lhs, hash_table<TKey, TValue> &rhs)
 
     return true;
 }
+
+template<typename TKey, typename TValue>
+bool operator!=(hash_table<TKey, TValue> &lhs, hash_table<TKey, TValue> &rhs)
+{
+    return !(lhs == rhs);
+}

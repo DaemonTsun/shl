@@ -225,50 +225,6 @@ list_node<T> *nth_node(const linked_list<T> *list, u64 n)
 }
 
 template<typename T>
-inline list_node<T> *add_at_start(linked_list<T> *list)
-{
-    return insert_elements(list, 0, 1);
-}
-
-template<typename T>
-inline list_node<T> *add_at_start(linked_list<T> *list, T val)
-{
-    list_node<T> *n = add_at_start(list);
-    n->value = val;
-    return n;
-}
-
-template<typename T>
-inline list_node<T> *add_at_start(linked_list<T> *list, const T *val)
-{
-    list_node<T> *n = add_at_start(list);
-    n->value = *val;
-    return n;
-}
-
-template<typename T>
-inline list_node<T> *add_at_end(linked_list<T> *list)
-{
-    return add_elements(list, 1);
-}
-
-template<typename T>
-inline list_node<T> *add_at_end(linked_list<T> *list, T val)
-{
-    list_node<T> *n = add_at_end(list);
-    n->value = val;
-    return n;
-}
-
-template<typename T>
-inline list_node<T> *add_at_end(linked_list<T> *list, const T *val)
-{
-    list_node<T> *n = add_at_end(list);
-    n->value = *val;
-    return n;
-}
-
-template<typename T>
 list_node<T> *add_elements(linked_list<T> *list, u64 n_elements)
 {
     assert(list != nullptr);
@@ -353,16 +309,48 @@ list_node<T> *insert_elements(linked_list<T> *list, u64 index, u64 n_elements)
     return ret;
 }
 
-template<bool FreeValues = false, typename T>
-void remove_from_start(linked_list<T> *list)
+template<typename T>
+inline list_node<T> *add_at_start(linked_list<T> *list)
 {
-    remove_elements<FreeValues>(list, 0, 1);
+    return insert_elements(list, 0, 1);
 }
 
-template<bool FreeValues = false, typename T>
-void remove_from_end(linked_list<T> *list)
+template<typename T>
+inline list_node<T> *add_at_start(linked_list<T> *list, T val)
 {
-    remove_elements<FreeValues>(list, list.size - 1, 1);
+    list_node<T> *n = add_at_start(list);
+    n->value = val;
+    return n;
+}
+
+template<typename T>
+inline list_node<T> *add_at_start(linked_list<T> *list, const T *val)
+{
+    list_node<T> *n = add_at_start(list);
+    n->value = *val;
+    return n;
+}
+
+template<typename T>
+inline list_node<T> *add_at_end(linked_list<T> *list)
+{
+    return add_elements(list, 1);
+}
+
+template<typename T>
+inline list_node<T> *add_at_end(linked_list<T> *list, T val)
+{
+    list_node<T> *n = add_at_end(list);
+    n->value = val;
+    return n;
+}
+
+template<typename T>
+inline list_node<T> *add_at_end(linked_list<T> *list, const T *val)
+{
+    list_node<T> *n = add_at_end(list);
+    n->value = *val;
+    return n;
 }
 
 template<bool FreeValues = false, typename T>
@@ -415,26 +403,15 @@ void remove_elements(linked_list<T> *list, u64 index, u64 n_elements)
 }
 
 template<bool FreeValues = false, typename T>
-void resize(linked_list<T> *list, u64 n_elements)
+inline void remove_from_start(linked_list<T> *list)
 {
-    assert(list != nullptr);
+    remove_elements<FreeValues>(list, 0, 1);
+}
 
-    if (n_elements == list->size)
-        return;
-
-    if (n_elements > list->size)
-    {
-        add_elements(list, n_elements - list->size);
-        return;
-    }
-
-    if (n_elements == 0)
-    {
-        free<FreeValues>(list);
-        return;
-    }
-
-    remove_elements<FreeValues>(list, n_elements, list->size - n_elements);
+template<bool FreeValues = false, typename T>
+inline void remove_from_end(linked_list<T> *list)
+{
+    remove_elements<FreeValues>(list, list.size - 1, 1);
 }
 
 template<typename T>
@@ -508,6 +485,29 @@ void free(linked_list<T> *list)
     list->first = nullptr;
     list->last = nullptr;
     list->size = 0;
+}
+
+template<bool FreeValues = false, typename T>
+void resize(linked_list<T> *list, u64 n_elements)
+{
+    assert(list != nullptr);
+
+    if (n_elements == list->size)
+        return;
+
+    if (n_elements > list->size)
+    {
+        add_elements(list, n_elements - list->size);
+        return;
+    }
+
+    if (n_elements == 0)
+    {
+        free<FreeValues, T>(list);
+        return;
+    }
+
+    remove_elements<FreeValues>(list, n_elements, list->size - n_elements);
 }
 
 template<typename T>

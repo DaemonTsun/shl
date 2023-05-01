@@ -15,7 +15,7 @@ add_lib(shl STATIC
     VERSION 0.6.8
     SOURCES_DIR "${ROOT}/src/"
     GENERATE_TARGET_HEADER "${ROOT}/src/shl/shl_info.hpp"
-    CPP_VERSION 20
+    CPP_VERSION 17
     CPP_WARNINGS ALL SANE FATAL
     TESTS "${TEST_SOURCE_DIR}"
     )

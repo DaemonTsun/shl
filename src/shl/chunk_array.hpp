@@ -51,22 +51,6 @@ void init(chunk_array<T, N> *arr, u64 n_elements)
 }
 
 template<typename T, u64 N>
-inline array_chunk<T, N> *add_chunk_at_start(chunk_array<T, N> *arr)
-{
-    assert(arr != nullptr);
-
-    return insert_chunks(arr, 0, 1);
-}
-
-template<typename T, u64 N>
-inline array_chunk<T, N> *add_chunk_at_end(chunk_array<T, N> *arr)
-{
-    assert(arr != nullptr);
-
-    return add_chunks(arr, 1);
-}
-
-template<typename T, u64 N>
 void _alloc_chunks(array_chunk<T, N> *chunk, u64 n)
 {
     for (u64 i = 0; i < n; ++i)
@@ -116,20 +100,20 @@ array_chunk<T, N> *insert_chunks(chunk_array<T, N> *arr, u64 index, u64 n)
     return ret;
 }
 
-template<bool FreeValues = false, typename T, u64 N>
-void remove_chunk_from_start(chunk_array<T, N> *arr)
+template<typename T, u64 N>
+inline array_chunk<T, N> *add_chunk_at_start(chunk_array<T, N> *arr)
 {
     assert(arr != nullptr);
 
-    remove_chunks<FreeValues>(arr, 0, 1);
+    return insert_chunks(arr, 0, 1);
 }
 
-template<bool FreeValues = false, typename T, u64 N>
-void remove_chunk_from_end(chunk_array<T, N> *arr)
+template<typename T, u64 N>
+inline array_chunk<T, N> *add_chunk_at_end(chunk_array<T, N> *arr)
 {
     assert(arr != nullptr);
 
-    remove_chunks<FreeValues>(arr, arr->chunks.size - 1, 1);
+    return add_chunks(arr, 1);
 }
 
 // if FreeValues == true, calls free on ALL elements in removed chunks.
@@ -161,6 +145,22 @@ void remove_chunks(chunk_array<T, N> *arr, u64 index, u64 n)
     _free_chunks(first_chunk, max - index);
 
     remove_elements(&arr->chunks, index, n);
+}
+
+template<bool FreeValues = false, typename T, u64 N>
+inline void remove_chunk_from_start(chunk_array<T, N> *arr)
+{
+    assert(arr != nullptr);
+
+    remove_chunks<FreeValues>(arr, 0, 1);
+}
+
+template<bool FreeValues = false, typename T, u64 N>
+inline void remove_chunk_from_end(chunk_array<T, N> *arr)
+{
+    assert(arr != nullptr);
+
+    remove_chunks<FreeValues>(arr, arr->chunks.size - 1, 1);
 }
 
 template<typename T, u64 N>

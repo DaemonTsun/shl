@@ -179,50 +179,6 @@ void init(array<T> *arr, u64 n_elements)
 }
 
 template<typename T>
-inline T *add_at_start(array<T> *arr)
-{
-    return insert_elements(arr, 0, 1);
-}
-
-template<typename T>
-inline T *add_at_start(array<T> *arr, T val)
-{
-    T *ret = add_at_start(arr);
-    *ret = val;
-    return ret;
-}
-
-template<typename T>
-inline T *add_at_start(array<T> *arr, const T *val)
-{
-    T *ret = add_at_start(arr);
-    *ret = *val;
-    return ret;
-}
-
-template<typename T>
-inline T *add_at_end(array<T> *arr)
-{
-    return add_elements(arr, 1);
-}
-
-template<typename T>
-inline T *add_at_end(array<T> *arr, T val)
-{
-    T *ret = add_at_end(arr);
-    *ret = val;
-    return ret;
-}
-
-template<typename T>
-inline T *add_at_end(array<T> *arr, const T *val)
-{
-    T *ret = add_at_end(arr, 1);
-    *ret = *val;
-    return ret;
-}
-
-template<typename T>
 T *add_elements(array<T> *arr, u64 n_elements)
 {
     assert(arr != nullptr);
@@ -292,16 +248,48 @@ T *insert_elements(array<T> *arr, u64 index, u64 n_elements)
     return arr->data + index;
 }
 
-template<bool FreeValues = false, typename T>
-void remove_from_start(array<T> *arr)
+template<typename T>
+inline T *add_at_start(array<T> *arr)
 {
-    remove_elements<FreeValues>(arr, 0, 1);
+    return insert_elements(arr, 0, 1);
 }
 
-template<bool FreeValues = false, typename T>
-void remove_from_end(array<T> *arr)
+template<typename T>
+inline T *add_at_start(array<T> *arr, T val)
 {
-    remove_elements<FreeValues>(arr, arr->size - 1, 1);
+    T *ret = add_at_start(arr);
+    *ret = val;
+    return ret;
+}
+
+template<typename T>
+inline T *add_at_start(array<T> *arr, const T *val)
+{
+    T *ret = add_at_start(arr);
+    *ret = *val;
+    return ret;
+}
+
+template<typename T>
+inline T *add_at_end(array<T> *arr)
+{
+    return add_elements(arr, 1);
+}
+
+template<typename T>
+inline T *add_at_end(array<T> *arr, T val)
+{
+    T *ret = add_at_end(arr);
+    *ret = val;
+    return ret;
+}
+
+template<typename T>
+inline T *add_at_end(array<T> *arr, const T *val)
+{
+    T *ret = add_at_end(arr, 1);
+    *ret = *val;
+    return ret;
 }
 
 template<bool FreeValues = false, typename T>
@@ -336,6 +324,18 @@ void remove_elements(array<T> *arr, u64 index, u64 n_elements)
     ::move_memory(after, before, num_items_after * sizeof(T));
 
     arr->size = arr->size - n_elements;
+}
+
+template<bool FreeValues = false, typename T>
+inline void remove_from_start(array<T> *arr)
+{
+    remove_elements<FreeValues>(arr, 0, 1);
+}
+
+template<bool FreeValues = false, typename T>
+inline void remove_from_end(array<T> *arr)
+{
+    remove_elements<FreeValues>(arr, arr->size - 1, 1);
 }
 
 template<typename T>
