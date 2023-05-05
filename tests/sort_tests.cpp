@@ -61,8 +61,8 @@ define_test(sorted_search_returns_pointer_to_searched_element)
 
     arr.data[0] = 5;
     arr.data[1] = 6;
-    arr.data[2] = 2;
-    arr.data[3] = 0;
+    arr.data[2] = 8;
+    arr.data[3] = 10;
 
     int searchfor = 6;
     int *ptr = sorted_search(&searchfor, arr.data, arr.size);
@@ -81,8 +81,8 @@ define_test(sorted_search_returns_nullptr_when_element_not_found)
 
     arr.data[0] = 5;
     arr.data[1] = 6;
-    arr.data[2] = 2;
-    arr.data[3] = 0;
+    arr.data[2] = 8;
+    arr.data[3] = 10;
 
     int searchfor = 7;
     int *ptr = sorted_search(&searchfor, arr.data, arr.size);
@@ -99,8 +99,8 @@ define_test(sorted_index_of_returns_the_sorted_index_of_an_element_when_found)
 
     arr.data[0] = 5;
     arr.data[1] = 6;
-    arr.data[2] = 2;
-    arr.data[3] = 0;
+    arr.data[2] = 8;
+    arr.data[3] = 10;
 
     int searchfor = 6;
     u64 index = sorted_index_of(&searchfor, arr.data, arr.size);
@@ -127,5 +127,41 @@ define_test(sorted_index_of_returns_largest_number_when_not_found)
 
     free(&arr);
 }
+
+define_test(abc)
+{
+    array<int> arr;
+    init(&arr, 16);
+
+    // 0, 1, 2, ...
+    for_array(i, v, &arr)
+        *v = i;
+
+    int searchfor = 0;
+    assert_equal(sorted_index_of(&searchfor, arr.data, arr.size), searchfor);
+    searchfor = 1;
+    assert_equal(sorted_index_of(&searchfor, arr.data, arr.size), searchfor);
+    searchfor = 1;
+    assert_equal(sorted_index_of(&searchfor, arr.data, arr.size), searchfor);
+    searchfor = 2;
+    assert_equal(sorted_index_of(&searchfor, arr.data, arr.size), searchfor);
+    searchfor = 3;
+    assert_equal(sorted_index_of(&searchfor, arr.data, arr.size), searchfor);
+    searchfor = 4;
+    assert_equal(sorted_index_of(&searchfor, arr.data, arr.size), searchfor);
+    searchfor = 5;
+    assert_equal(sorted_index_of(&searchfor, arr.data, arr.size), searchfor);
+    searchfor = 6;
+    assert_equal(sorted_index_of(&searchfor, arr.data, arr.size), searchfor);
+    searchfor = 7;
+    assert_equal(sorted_index_of(&searchfor, arr.data, arr.size), searchfor);
+    searchfor = 8;
+    assert_equal(sorted_index_of(&searchfor, arr.data, arr.size), searchfor);
+    searchfor = 9;
+    assert_equal(sorted_index_of(&searchfor, arr.data, arr.size), searchfor);
+
+    free(&arr);
+}
+
 
 define_default_test_main();

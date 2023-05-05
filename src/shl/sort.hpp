@@ -43,7 +43,7 @@ void sort(T *ptr, u64 size, compare_function_p<T> comp = compare_ascending_p<T>)
 void *sorted_search(const void *value, void *ptr, u64 count, u64 size, compare_function_p<void> comp);
 
 template<typename T>
-T *sorted_search(const T *value, T *ptr, u64 size, compare_function_p<T> comp = compare_descending_p<T>)
+T *sorted_search(const T *value, T *ptr, u64 size, compare_function_p<T> comp = compare_ascending_p<T>)
 {
     assert(value != nullptr);
     assert(ptr != nullptr);
@@ -58,13 +58,13 @@ T *sorted_search(const T *value, T *ptr, u64 size, compare_function_p<T> comp = 
 // TODO: binary_search
 
 template<typename T>
-bool sorted_contains(const T *value, T *ptr, u64 size, compare_function_p<T> comp = compare_descending_p<T>)
+bool sorted_contains(const T *value, T *ptr, u64 size, compare_function_p<T> comp = compare_ascending_p<T>)
 {
     return sorted_search(value, ptr, size, comp) != nullptr;
 }
 
 template<typename T>
-u64 sorted_index_of(const T *value, T *ptr, u64 size, compare_function_p<T> comp = compare_descending_p<T>)
+u64 sorted_index_of(const T *value, T *ptr, u64 size, compare_function_p<T> comp = compare_ascending_p<T>)
 {
     assert(value != nullptr);
     assert(ptr != nullptr);
