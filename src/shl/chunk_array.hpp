@@ -3,7 +3,74 @@
 
 /* chunk_array.hpp
 
-TODO: write
+An array of pointers to C arrays of a fixed size.
+Used when reallocating arrays is too expensive or pointer integrity
+is needed.
+Does not support normal array functions (e.g. add_at_end) to avoid
+confusion. Only supports chunk functions.
+Index operator accesses the nth element in the chunk array, using the
+correct chunk.
+example:
+
+    chunk_array<int, 32> arr;
+    init(&arr, 10); // allocates 10 chunks of 32 integers, 320 elements total
+    arr[200] = 5;   // 200 / 32 = 6 (7th) chunk.
+    free(&arr);
+
+add_chunks(*arr, N) adds N chunks to the chunk array and returns a pointer
+    to the first chunk added. The pointer can be incremented to advance to
+    the next allocated chunk.
+
+insert_chunks(*arr, index, N) inserts N chunks into the chunk array at index
+    index and returns a pointer to the first chunk added.
+
+add_chunk_at_start(*arr) adds a chunk to the chunk array at the beginning and
+    returns a pointer to it.
+
+add_chunk_at_end(*arr) adds a chunk to the chunk array at the end and
+    returns a pointer to it.
+
+remove_chunks(*arr, index, N) removes up to N chunks from the chunk array
+    beginning at index index.
+
+remove_chunk_from_start(*arr) removes the first chunk from the chunk array.
+remove_chunk_from_end(*arr)   removes the last chunk from the chunk array.
+
+reserve(*arr, N) reserves up to N chunk pointers of memory in the chunk array.
+
+resize(*arr, N) resizes the chunk array to have exactly N chunks.
+
+shrink_to_fit(*arr) removes excess chunk pointers of reserved memory.
+
+at(*arr, N) returns a pointer to the Nth element in the chunk array, accessing
+    the correct chunk.
+
+nth_chunk(*arr, N) returns a pointer to the Nth chunk in the chunk array.
+
+clear(*arr, N) deallocates all chunks and sets the size of the chunk array
+    to 0.
+
+array_size(*arr)  returns the number of elements in the array.
+chunk_count(*arr) returns the number of chunks in the array.
+
+free_values(*arr) calls free() on all elements in the chunk array.
+
+free(*arr) frees all chunks and memory of the chunk array.
+
+search/index_of/contains/hash function the same as a regular array.
+
+for_chunk_array(*value, *arr)
+for_chunk_array(index, *value, *arr)
+for_chunk_array(index, *value, *chunk, *arr)
+    iterates the chunk array arr. example:
+
+    chunk_array<int, 32> arr;
+    init(&arr);
+
+    for_chunk_array(i, v, &arr)
+        *v = i;
+
+    free(&arr);
  */
 
 #include "shl/array.hpp"
@@ -38,16 +105,16 @@ void init(chunk_array<T, N> *arr)
 }
 
 template<typename T, u64 N>
-void init(chunk_array<T, N> *arr, u64 n_elements)
+void init(chunk_array<T, N> *arr, u64 n_chunks)
 {
     assert(arr != nullptr);
 
     init(arr);
 
-    if (n_elements == 0)
+    if (n_chunks == 0)
         return;
 
-    add_chunks(arr, n_elements);
+    add_chunks(arr, n_chunks);
 }
 
 template<typename T, u64 N>

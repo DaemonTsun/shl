@@ -7,8 +7,8 @@ allows the use of defer { ... }; blocks in code.
 
 example:
 
-string a = "hello"_cs;
-defer { free(&a); }
+string a = "hello"_s;
+defer { free(&a); };
 
 tprint("% world!\n", &a);
 
