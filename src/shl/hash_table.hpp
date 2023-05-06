@@ -2,11 +2,88 @@
 #pragma once
 
 /* hash_table.hpp
- *
- * the hash table.
- *
- * TODO: docs
- */
+
+the hash table.
+
+A pretty simple hash table that stores everything in an array and marks
+entries as unused/removed/used by setting the hash in the entry.
+Hash collisions are dealt with by simply advancing to the next unoccupied slot
+in the array. For this, the keys are compared using a comparator function.
+After enough entries are occupied in the hash_table, the table expands
+automatically on insert.
+
+The index operator works the same as search_or_insert, except it also accepts
+references and returns a reference to the element instead, e.g.:
+    
+    hash_table<int, const char*> table;
+    init(&table);
+    table[5] = "hello";
+    free(&table);
+
+hash_table.size is the number of currently used entries in the table.
+hash_table.data is the array with all entires, unused and used.
+hash_table.hasher is the hash function used to hash the keys.
+hash_table.eq is the equality function used to compare the keys when hashes
+match.
+
+add_element_by_key(*table, *K) returns a pointer to a newly added
+    element with key K and hash table->hasher(K).
+    expands the table automatically when necessary.
+    does not compare keys on collision and simply adds a new entry.
+
+remove_element_by_key(*table, *K) removes the given entry with key K
+    from the table. Returns whether it was successful or not.
+    No hash table memory is deallocated and the entry is simply marked
+    "removed".
+    Optional template parameters FreeKey and FreeValue can be used to
+    call free() on the key or value of the removed entry.
+
+remove_element_by_hash(*table, H) same thing as remove_element_by_key,
+    but removes the element of hash H instead.
+
+expand_table(*table) expands the table. used internally.
+
+search(*table, *K) returns a pointer to the element in the table that has
+    the same hash as table->hasher(K) and the same key K.
+    If no entry is found, returns nullptr.
+    Does not modify the table.
+
+search_by_hash(*table, H) same thing as search(), but looks up only the
+    first entry matching the hash H.
+
+search_or_insert(*table, *K) returns a pointer to the element in the table
+    that has the same hash as table->hasher(K) and the same key K, or
+    if none was found, a pointer to a newly inserted element that has the
+    key K and the hash table->hasher(K).
+    Should never return nullptr.
+
+contains(*table, *K) returns whether the table contains an element with the
+    key K.
+
+contains_hash(*table, H) returns whether the table contains an element with
+    the hash H.
+
+clear(*table) marks all entries as unused and sets table size to 0.
+    Does not deallocate table memory.
+
+free(*table) deallocates the tables memory.
+
+for_hash_table(*value, *table)
+for_hash_table(*key, *value, *table)
+for_hash_table(*key, *value, *entry, *table)
+    iterates the table. order is not guaranteed. example:
+
+    hash_table<int, const char*> table;
+    init(&table);
+    table[5] = "hello";
+    table[10] = "world";
+    table[100] = "abc";
+
+    for_hash_table(key, value, entry, &table)
+        printf("%d: %s\n", *key, *value);
+
+    free(&table);
+*/
 
 #include "shl/compare.hpp"
 #include "shl/bits.hpp"
