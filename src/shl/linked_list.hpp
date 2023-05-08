@@ -112,18 +112,13 @@ for_list(i, v, n, *list) iterate a list. i will be the index of an element and
                          n will be a pointer to a node in the list.
  */
 
+#include <assert.h>
 #include "shl/compare.hpp"
 #include "shl/macros.hpp"
 #include "shl/type_functions.hpp"
 #include "shl/number_types.hpp"
 #include "shl/memory.hpp"
 #include "shl/hash.hpp"
-
-#ifndef NDEBUG
-#include <assert.h>
-#else
-#define assert(...) do {} while (0);
-#endif
 
 template<typename T>
 struct list_node

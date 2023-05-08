@@ -536,7 +536,7 @@ int _compare_strings_cs(const_string_base<C> s1, const_string_base<C> s2, u64 n)
 
 int compare_strings(const char    *s1, const char    *s2)
 {
-    return _compare_strings_c(s1, s2, -1);
+    return _compare_strings_c(s1, s2, INT64_MAX);
 }
 
 int compare_strings(const char    *s1, const_string   s2)

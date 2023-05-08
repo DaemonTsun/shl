@@ -1,5 +1,6 @@
 
 #include <iostream>
+#include <string.h>
 
 #include <t1/t1.hpp>
 #include "shl/hash.hpp"
@@ -104,12 +105,9 @@ define_test(hash_hashes_basic_types)
 
     // valgrind complains about long doubles not being initialized if
     // we don't set all bytes explicitly here for some reason.
-    ((u64*)&long_doublea)[0] = 0;
-    ((u64*)&long_doublea)[1] = 0;
-    ((u64*)&long_doubleb)[0] = 0;
-    ((u64*)&long_doubleb)[1] = 0;
-    ((u64*)&long_doublec)[0] = 0;
-    ((u64*)&long_doublec)[1] = 1;
+    memset(&long_doublea, 0, sizeof(long double));
+    memset(&long_doubleb, 0, sizeof(long double));
+    memset(&long_doublec, 0xff, sizeof(long double));
 
     assert_equal(hash(&long_doublea), hash(&long_doubleb));
     assert_not_equal(hash(&long_doublea), hash(&long_doublec));

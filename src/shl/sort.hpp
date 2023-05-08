@@ -19,14 +19,9 @@
  *
  */
 
+#include <assert.h>
 #include "shl/compare.hpp"
 #include "shl/number_types.hpp"
-
-#ifndef NDEBUG
-#include <assert.h>
-#else
-#define assert(...) do {} while (0);
-#endif
 
 void sort(void *ptr, u64 count, u64 size, compare_function_p<void> comp);
 

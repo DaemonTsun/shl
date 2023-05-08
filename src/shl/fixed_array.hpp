@@ -48,18 +48,13 @@
  *                       v will be a pointer to an element in the array.
  */
 
+#include <assert.h>
 #include "shl/macros.hpp"
 #include "shl/compare.hpp"
 #include "shl/type_functions.hpp"
 #include "shl/number_types.hpp"
 #include "shl/hash.hpp"
 #include "shl/bits.hpp"
-
-#ifndef NDEBUG
-#include <assert.h>
-#else
-#define assert(...) do {} while (0);
-#endif
 
 template<typename T, u64 N>
 struct fixed_array

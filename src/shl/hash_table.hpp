@@ -85,16 +85,11 @@ for_hash_table(*key, *value, *entry, *table)
     free(&table);
 */
 
+#include <assert.h>
 #include "shl/compare.hpp"
 #include "shl/bits.hpp"
 #include "shl/hash.hpp"
 #include "shl/array.hpp"
-
-#ifndef NDEBUG
-#include <assert.h>
-#else
-#define assert(...) do {} while (0);
-#endif
 
 #define TABLE_SIZE_FACTOR 75
 #define MIN_TABLE_SIZE 64
