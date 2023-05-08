@@ -20,7 +20,7 @@ See individual header files for documentation.
 
 ## building
 
-make sure git submodules are properly initialized with `git submodule update --init --recursive`, then run the following:
+run the following:
 
 ```sh
 $ mkdir bin
