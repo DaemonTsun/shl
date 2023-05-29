@@ -4,17 +4,24 @@
 #include "shl/number_types.hpp"
 
 void *allocate_memory(u64 size);
+void *allocate_zeroed_memory(u64 size);
 
-template<typename T>
+template<typename T, bool Zero = false>
 T *allocate_memory()
 {
-    return reinterpret_cast<T*>(allocate_memory(sizeof(T)));
+    if constexpr (Zero)
+        return reinterpret_cast<T*>(allocate_zeroed_memory(sizeof(T)));
+    else
+        return reinterpret_cast<T*>(allocate_memory(sizeof(T)));
 }
 
-template<typename T>
+template<typename T, bool Zero = false>
 T *allocate_memory(u64 n_elements)
 {
-    return reinterpret_cast<T*>(allocate_memory(sizeof(T) * n_elements));
+    if constexpr (Zero)
+        return reinterpret_cast<T*>(allocate_zeroed_memory(sizeof(T) * n_elements));
+    else
+        return reinterpret_cast<T*>(allocate_memory(sizeof(T) * n_elements));
 }
 
 void *reallocate_memory(void *ptr, u64 size);

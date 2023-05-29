@@ -9,6 +9,11 @@ void *allocate_memory(u64 size)
     return ::malloc(size);
 }
 
+void *allocate_zeroed_memory(u64 size)
+{
+    return ::calloc(1, size);
+}
+
 void *reallocate_memory(void *ptr, u64 size)
 {
     return ::realloc(ptr, size);
