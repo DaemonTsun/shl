@@ -134,7 +134,14 @@ void init(hash_table<TKey, TValue> *table, u64 initial_size = MIN_TABLE_SIZE, ha
 
     init(&table->data, initial_size);
 
+    if (hasher == nullptr)
+        hasher = hash;
+
     table->hasher = hasher;
+
+    if (eq == nullptr)
+        eq = equals_p<TKey>;
+
     table->eq = eq;
 
     for_array(v, &table->data)
@@ -163,14 +170,18 @@ TValue *add_element_by_key(hash_table<TKey, TValue> *table, const TKey *key)
     assert(table != nullptr);
     assert(key != nullptr);
 
-    if (table->data.size == 0)
-        return nullptr;
+    if (table->data.data == nullptr)
+    {
+        init(table, MIN_TABLE_SIZE, table->hasher, table->eq);
+    }
+    else
+    {
+        u64 max_size = table->data.size * TABLE_SIZE_FACTOR;
+        u64 cur_size = (table->size * 2 + 1) * 100;
 
-    u64 max_size = table->data.size * TABLE_SIZE_FACTOR;
-    u64 cur_size = (table->size * 2 + 1) * 100;
-
-    if (cur_size >= max_size)
-        expand_table(table);
+        if (cur_size >= max_size)
+            expand_table(table);
+    }
 
     hash_t hsh = table->hasher(key);
 
@@ -193,7 +204,7 @@ bool remove_element_by_key(hash_table<TKey, TValue> *table, const TKey *key)
     assert(table != nullptr);
     assert(key != nullptr);
 
-    if (table->data.size == 0)
+    if (table->data.data == nullptr || table->data.size == 0)
         return false;
 
     hash_t hsh = table->hasher(key);
@@ -223,7 +234,7 @@ bool remove_element_by_hash(hash_table<TKey, TValue> *table, hash_t hsh)
 {
     assert(table != nullptr);
 
-    if (table->data.size == 0)
+    if (table->data.data == nullptr || table->data.size == 0)
         return false;
 
     _iterate_table(hsh, table)
@@ -250,6 +261,13 @@ template<typename TKey, typename TValue>
 void expand_table(hash_table<TKey, TValue> *table)
 {
     assert(table != nullptr);
+
+    if (table->data.data == nullptr)
+    {
+        // I suppose initializing is expanding
+        init(table, MIN_TABLE_SIZE, table->hasher, table->eq);
+        return;
+    }
 
     u64 new_size = table->data.size;
     u64 max_size = table->data.size * TABLE_SIZE_FACTOR;
