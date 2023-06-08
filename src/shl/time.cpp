@@ -22,7 +22,9 @@ void get_time(timespan *t)
     t->seconds = _t.tv_sec;
     t->nanoseconds = _t.tv_nsec;
 #else
-#error "we cant into windows yet"
+#warning "Non-Linux systems not yet supported"
+    t->seconds = 0;
+    t->nanoseconds = 0;
 #endif 
 }
 
