@@ -381,7 +381,7 @@ bool resize(array<T> *arr, u64 size)
 
     T *n = reallocate_memory<T>(arr->data, size);
 
-    if (n == nullptr)
+    if (n == nullptr && size > 0)
         return false;
 
     arr->data = n;
@@ -418,6 +418,7 @@ T *begin(array<T> *arr)
     return arr->data;
 }
 
+// past-the-end pointer
 template<typename T>
 T *end(array<T> *arr)
 {
