@@ -1,14 +1,13 @@
 #pragma once
 
 /* enum_flag.hpp
- * v1.0
- *
- * defines the macro enum_flag which defines
- * operators and functions:
- *      value  - returns the underlying value of the enum
- *      is_set - checks if a given flag is set
- *      set    - sets a flag
- *      unset  - unsets a flag
+
+defines the macro enum_flag which defines
+operators and functions:
+     value       - returns the underlying value of the enum
+     is_flag_set - checks if a given flag is set
+     set_flag    - sets a flag
+     unset_flag  - unsets a flag
  */
 
 #include "shl/type_functions.hpp"
@@ -40,13 +39,13 @@
     constexpr inline T& operator&=(T& a, underlying_type(T) b) { return a = static_cast<T>(static_cast<underlying_type(T)>(a) & b); }\
     constexpr inline T& operator^=(T& a, T b) { return a = static_cast<T>(static_cast<underlying_type(T)>(a) ^ static_cast<underlying_type(T)>(b)); }\
     constexpr inline T& operator^=(T& a, underlying_type(T) b) { return a = static_cast<T>(static_cast<underlying_type(T)>(a) ^ b); }\
-    constexpr inline bool is_set(T a, T b) { return (a & b) == b; }\
-    constexpr inline bool is_set(T a, underlying_type(T) b) { return (a & b) == b; }\
-    constexpr inline bool is_set(underlying_type(T) a, T b) { return static_cast<T>(a & b) == b; }\
-    constexpr inline T& set(T& a, T b) { return a |= b; } \
-    constexpr inline T& set(T& a, underlying_type(T) b) { return a |= b; } \
-    constexpr inline T& unset(T& a, T b) { return a &= ~b; } \
-    constexpr inline T& unset(T& a, underlying_type(T) b) { return a &= ~b; }
+    constexpr inline bool is_flag_set(T a, T b) { return (a & b) == b; }\
+    constexpr inline bool is_flag_set(T a, underlying_type(T) b) { return (a & b) == b; }\
+    constexpr inline bool is_flag_set(underlying_type(T) a, T b) { return static_cast<T>(a & b) == b; }\
+    constexpr inline T& set_flag(T& a, T b) { return a |= b; } \
+    constexpr inline T& set_flag(T& a, underlying_type(T) b) { return a |= b; } \
+    constexpr inline T& unset_flag(T& a, T b) { return a &= ~b; } \
+    constexpr inline T& unset_flag(T& a, underlying_type(T) b) { return a &= ~b; }
 
 #define enum_flag(T)\
     ENUM_CLASS_FLAG_OPS(T)
