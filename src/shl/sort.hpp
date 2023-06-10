@@ -59,7 +59,7 @@ bool sorted_contains(const T *value, T *ptr, u64 size, compare_function_p<T> com
 }
 
 template<typename T>
-u64 sorted_index_of(const T *value, T *ptr, u64 size, compare_function_p<T> comp = compare_ascending_p<T>)
+s64 sorted_index_of(const T *value, T *ptr, u64 size, compare_function_p<T> comp = compare_ascending_p<T>)
 {
     assert(value != nullptr);
     assert(ptr != nullptr);
@@ -67,7 +67,7 @@ u64 sorted_index_of(const T *value, T *ptr, u64 size, compare_function_p<T> comp
     T *res = sorted_search(value, ptr, size, comp);
 
     if (res == nullptr)
-        return -1ull;
+        return -1;
 
     return res - ptr;
 }

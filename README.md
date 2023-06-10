@@ -3,7 +3,7 @@ at this point this is just a wrapper/replacement library for the standard librar
 
 ## features
 
-- `array`, `linked_list`, `hash_table`: lightweight containers that don't take 10 billion years to compile
+- `array`, `set`, `linked_list`, `hash_table`: lightweight containers that don't take 10 billion years to compile
 - `format` and `to_string`: formatting library with a better and type-safe interface
 - type functions: compile-time functions for type information, like is_same(T1, T2)
 - `file_stream` and `memory_stream`: consistent API for streams.

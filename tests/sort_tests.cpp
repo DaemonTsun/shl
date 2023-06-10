@@ -103,7 +103,7 @@ define_test(sorted_index_of_returns_the_sorted_index_of_an_element_when_found)
     arr.data[3] = 10;
 
     int searchfor = 6;
-    u64 index = sorted_index_of(&searchfor, arr.data, arr.size);
+    s64 index = sorted_index_of(&searchfor, arr.data, arr.size);
 
     assert_equal(index, 1);
 
@@ -121,7 +121,7 @@ define_test(sorted_index_of_returns_largest_number_when_not_found)
     arr.data[3] = 0;
 
     int searchfor = 7;
-    u64 index = sorted_index_of(&searchfor, arr.data, arr.size);
+    s64 index = sorted_index_of(&searchfor, arr.data, arr.size);
 
     assert_equal(index, -1);
 
