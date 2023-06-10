@@ -5,44 +5,62 @@
 
 contiguous, sorted dynamic memory structure with unique elements.
 
+Use set_data(*set) or array_data(*set) to get a pointer to the elements of the set.
+Use set_size(*set) or array_size(*set) to get the size of the set.
+
 functions:
 
 init(*st, comp) initializes an empty set with no elements. st.data will be nullptr.
-              comp is the compare function to use when arranging the elements of the set.
-              comp can be ascending or descending.
-init(*st, N, comp) initializes an set with N elements. the elements will be uninitialized.
-                 comp is the compare function to use when arranging the elements of the set.
+                comp is the compare function to use when arranging the elements of the set.
+                comp can be ascending or descending.
+init(*st, N, comp) initializes an set with N reserved elements.
+                   comp is the compare function to use when arranging the elements of the set.
 
-add_elements(*st, N) adds N elements to the set at the end and returns a pointer
-                      to the start of the new elements.
-                      may allocate more memory than needed to store N elements,
-                      or allocate nothing if the set has enough reserved memory.
+nearest_index_of(*st, Val) returns the nearest index of the given value Val and
+                           the last binary search comparison. if the comparison is
+                           0, Val is inside the set and the index is the index inside
+                           the set. If the comparison is anything but 0, index is the
+                           index where Val would be if Val was inserted into the set.
 
-remove_elements(*st, pos, N) removes N elements starting at position pos from the set.
-                              does nothing if pos >= st.size.
-                              if pos + n >= st.size, simply changes the size of
-                              the set and keeps the reserved memory.
-                              use shrink_to_fit to remove the excess memory.
+insert_element(*st, Val) inserts value Val into the set at the correct, sorted place.
+                         Uses st->compare to determine the order. If Val is already
+                         inside the set, Val is _not_ inserted again.
+                         Returns a pointer to an element in the set which has the
+                         value Val.
+
+remove_element(*st, Val) removes an element X from the set if
+                         st->compare(Val, X) == 0.
+                         Does nothing if Val is not in the set.
+
+remove_elements_at_index(*st, pos, N)
+                         removes N elements starting at position pos from the set.
+                         does nothing if pos >= st.data.size.
+                         if pos + n >= st.data.size, simply changes the size of
+                         the set and keeps the reserved memory.
+                         use shrink_to_fit to remove the excess memory.
 
 reserve(*st, N) if number of allocated elements in st is smaller than N,
                  allocates enough elements for st to store N total elements
                  and sets st.reserved_size accordingly.
-                 st.size is untouched.
+                 st.data.size is untouched.
                  cannot make st smaller.
 
 reserve_exp2(*st, N) same as reserve, but if it allocates, it allocates
                       up to the next power of 2 to store at least N elements.
 
 resize(*st, N) sets the size of the set to contain exactly N elements.
+               truncates from the right if N < st.data.size.
+               ps: I can't think of a reason to use resize with N > st.data.size;
+               uninitialized elements in a set cause huge issues because you can't
+               really compare them, so only use this when absolutely necessary.
 
 shrink_to_fit(*st) reallocates to only use as much memory as required
                    to store all the elements in the set if
                    more memory is being used.
-                   does nothing if st.size == st.reserved_size.
 
 at(*st, N) returns a pointer to the Nth element in the set.
 
-clear(*st) simply sets st.size to 0, no memory is deallocated and
+clear(*st) simply sets the size of the set to 0, no memory is deallocated and
             reserved memory is kept. use free(*st) to deallocate memory.
 
 set_data(*st) returns st.data, pointer to the first element
@@ -60,38 +78,35 @@ free(*st) frees memory of the set and sets st.size and st.reserved_size to 0.
 
 other functions:
 
-search(*st, *key) returns a pointer to an element that eq(elem, key)
-                       returns true to, otherwise returns nullptr if key
-                       was not found. does not assume anything about the
-                       set and will do a full scan in the worst case.
+search(*st, Val) does a binary search on the set and returns the element X
+                 for which st->compare(Val, X) == 0, or nullptr if Val
+                 is not found in the set.
 
-index_of(*st, *key) returns the index of an element that eq(elem, key)
-                         returns true to, otherwise returns -1 if key
-                         was not found. does not assume anything about the
-                         set and will do a full scan in the worst case.
+index_of(*st, Val) does a binary search on the set and returns the index of
+                 an element X for which st->compare(Val, X) == 0,
+                 or nullptr if Val is not found in the set.
 
-contains(*st, *key, eq) returns true if key is in the set, false
-                         otherwise. does not assume anything about the
-                         set and will do a full scan in the worst case.
+contains(*st, Val) returns true if Val is inside the set, false if not.
 
 hash(*st) returns the default hash of the _memory_ of the elements
-           of the set.
+          of the set.
 
 supports index operator: st[0] == st.data[0].
 
-for_array(v, *st) iterate an set. v will be a pointer to an element in the set.
-                example, setting all values to 5:
+for_array works on sets, too. examples from array.hpp:
+for_array(v, *st) iterate a set. v will be a pointer to an element in the set.
+                  example, setting all values to 5:
 
-                set<int> st;
-                init(&st, 3)
-                
-                for_array(v, &st)
-                {
-                    *v = 5;
-                }
+                  set<int> st;
+                  init(&st, 3)
+                  
+                  for_array(v, &st)
+                  {
+                      *v = 5;
+                  }
 
-for_array(i, v, *st) iterate an set. i will be the index of an element and
-                   v will be a pointer to an element in the set.
+for_array(i, v, *st) iterate a set. i will be the index of an element and
+                     v will be a pointer to an element in the set.
  */
 
 #include <assert.h>
