@@ -37,6 +37,9 @@ struct chunk
 
     bool used[N];
     T data[N];
+
+          T &operator[](u64 index)       { return data[index]; }
+    const T &operator[](u64 index) const { return data[index]; }
 };
 
 template<typename T, u64 N = Default_chunk_size>
@@ -53,8 +56,10 @@ struct chunk_array
     // number of items in the array
     u64 size;
 
-    T &operator[](chunk_item_index index)       { return *at(this, index); }
-    // const T &operator[](chunk_item_index index) const { return *at(this, index); }
+          chunk_type &operator[](u64 index)       { return *all_chunks[index]; }
+    const chunk_type &operator[](u64 index) const { return *all_chunks[index]; }
+          T &operator[](chunk_item_index index)       { return all_chunks[index.chunk_index]->data[index.slot_index]; }
+    const T &operator[](chunk_item_index index) const { return all_chunks[index.chunk_index]->data[index.slot_index]; }
 };
 
 template<typename T, u64 N>
@@ -205,9 +210,16 @@ T *at(chunk_array<T, N> *arr, chunk_item_index index)
 {
     assert(arr != nullptr);
 
+    if (index.slot_index >= N)
+        return nullptr;
+
+    if (index.chunk_index >= arr->all_chunks.size)
+        return nullptr;
+
     chunk<T, N> *c = arr->all_chunks[index.chunk_index];
 
-    assert(c->used[index.slot_index] == true);
+    if (c->used[index.slot_index] != true)
+        return nullptr;
 
     return c->data + index.slot_index;
 }
@@ -217,8 +229,20 @@ void clear(chunk_array<T, N> *arr)
 {
     assert(arr != nullptr);
 
-    _free_chunks(arr->chunks.data, arr->chunks.size);
-    clear(&arr->chunks);
+    clear(&arr->nonfull_chunks);
+
+    for_array(chnk_, &arr->all_chunks)
+    {
+        chunk<T, N> *chnk = *chnk_;
+
+        for_array(used, &chnk->used)
+            *used = false;
+
+        chnk->used_count = 0;
+        add_at_end(&arr->nonfull_chunks, chnk);
+    }
+
+    arr->size = 0;
 }
 
 // number of elements
@@ -241,12 +265,12 @@ u64 chunk_count(const chunk_array<T, N> *arr)
 #define for_chunk_array_IVC(I_Var, V_Var, Chunk_Var, ARRAY)\
     u64 I_Var = 0;\
     auto *Chunk_Var = array_data(&((ARRAY)->all_chunks));\
-    auto *V_Var = array_data((*Chunk_Var)->data);\
+    auto *V_Var = array_data(&(*Chunk_Var)->data);\
     for (u64 Chunk_Var##_index = 0;\
         Chunk_Var##_index < chunk_count(ARRAY);\
         ++Chunk_Var##_index, ++Chunk_Var, V_Var = (Chunk_Var##_index < chunk_count(ARRAY) ? (*Chunk_Var)->data : nullptr))\
     for (u64 I_Var##_in_chunk = 0;\
-         I_Var##_in_chunk < array_size((*Chunk_Var)->data);\
+         I_Var##_in_chunk < array_size(&(*Chunk_Var)->data);\
          ++I_Var##_in_chunk, V_Var = (*Chunk_Var)->data + I_Var##_in_chunk, ++I_Var)\
     if ((*Chunk_Var)->used[I_Var##_in_chunk])
 
