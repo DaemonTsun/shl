@@ -1,6 +1,7 @@
 
 #include <t1/t1.hpp>
 
+#include "shl/defer.hpp"
 #include "shl/set.hpp"
 
 define_test(init_initializes_set)

@@ -230,7 +230,7 @@ T *insert_elements(array<T> *arr, u64 index, u64 n_elements)
     if (n_elements == 0)
         return arr->data + index;
 
-    // u64 prev_size = arr->size;
+    u64 prev_size = arr->size;
     T *n = add_elements(arr, n_elements);
 
     if (n == nullptr)
@@ -238,8 +238,9 @@ T *insert_elements(array<T> *arr, u64 index, u64 n_elements)
 
     void *start = reinterpret_cast<void*>(arr->data + index);
     void *new_start = reinterpret_cast<void*>(arr->data + index + n_elements);
+    u64 elem_count = prev_size - index;
 
-    ::move_memory(start, new_start, n_elements * sizeof(T));
+    ::move_memory(start, new_start, elem_count * sizeof(T));
 
     return arr->data + index;
 }

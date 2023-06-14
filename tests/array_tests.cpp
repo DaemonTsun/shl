@@ -320,6 +320,29 @@ define_test(insert_elements_adds_elements_and_moves_next_elements_back)
     free(&arr);
 }
 
+define_test(insert_elements_adds_elements_and_moves_next_elements_back2)
+{
+    array<int> arr;
+
+    init(&arr, 4);
+
+    arr[0] = 1;
+    arr[1] = 2;
+    arr[2] = 3;
+    arr[3] = 4;
+
+    insert_elements(&arr, 0, 1);
+
+    assert_equal(arr.size, 5);
+
+    assert_equal(arr[1], 1);
+    assert_equal(arr[2], 2);
+    assert_equal(arr[3], 3);
+    assert_equal(arr[4], 4);
+
+    free(&arr);
+}
+
 define_test(remove_elements_does_nothing_on_empty_array)
 {
     array<int> arr;
