@@ -283,7 +283,7 @@ inline T *add_at_end(array<T> *arr, T val)
 template<typename T>
 inline T *add_at_end(array<T> *arr, const T *val)
 {
-    T *ret = add_at_end(arr, 1);
+    T *ret = add_at_end(arr);
     *ret = *val;
     return ret;
 }
