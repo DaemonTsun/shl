@@ -347,4 +347,30 @@ define_test(hash_hashes_chunk_array)
     assert_not_equal(h1, h3);
 }
 
+define_test(for_chunk_array_iterates_chunk_array)
+{
+    chunk_array<chunk_item_index, 3> arr{};
+    defer { free(&arr); };
+
+    add_element(&arr, {0, 0});
+    add_element(&arr, {0, 0});
+    add_element(&arr, {0, 0});
+    add_element(&arr, {0, 0});
+
+    for_chunk_array(i, v, &arr)
+        *v = i;
+
+    assert_equal(arr[0][0].chunk_index, 0);
+    assert_equal(arr[0][0].slot_index,  0);
+
+    assert_equal(arr[0][1].chunk_index, 0);
+    assert_equal(arr[0][1].slot_index,  1);
+
+    assert_equal(arr[0][2].chunk_index, 0);
+    assert_equal(arr[0][2].slot_index,  2);
+
+    assert_equal(arr[1][0].chunk_index, 1);
+    assert_equal(arr[1][0].slot_index,  0);
+}
+
 define_default_test_main();

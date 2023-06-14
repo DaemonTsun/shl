@@ -3,18 +3,75 @@
 
 /* chunk_array.hpp
 
-TODO: docs
+A dynamic data structure of fixed-size chunks that doesn't move memory.
+
+Elements must be added using add_element before they may be accessed in
+the chunk_array.
+The chunks are stored in chunk_array->all_chunks, the number of elements
+in the array are in chunk_array->size.
+Items are accessed not by a single index but by a combination of
+chunk index and slot index within the chunk.
+Alternatively, the chunk_array defines the index operator to access
+the Nth chunk, and chunks define the index operator to access the Nth
+slot within the chunk.
+Example:
+
+    chunk_array<int, 4> arr{};
+    add_element(&arr, 5);
+
+    printf("%d\n", arr[0][0]);
+
+Chunks are not guaranteed to be next to each other in memory, but a
+chunks elements are contiguous.
+
+Functions:
+
+init(*arr): initializes the chunk_array
+add_element(*arr, Val): inserts the value Val into the array at the first
+                        free slot in a nonfull chunk.
+                        The nonfull chunk may not be the first nonfull chunk in the
+                        array.
+                        Returns a pointer to the inserted element as well as the index
+                        to the element in the array.
+
+remove_element(*arr, index): removes an element from the array by item index.
+                             chunk_item_index is a struct containing the chunk and
+                             slot index.
+                             example:
+                             remove_element(&arr, {.chunk_index = 0, .slot_index = 0});
+
+at(*arr, index): returns a pointer to an element in the array by item index.
+                 If the index is out of range (chunk or slot), return nullptr.
+                 If the element at the given index is not used (i.e. not added
+                 with add_element), also returns nullptr.
+                 
+clear(*arr): marks all chunks as empty and resets size, but does not deallocate
+             any memory.
+
+free_values(*arr): calls free() on every used element in the array.
+
+free(*arr): frees the memory of the chunks and the array and resets the data structure.
+free<True>(*arr): frees the memory of the elements, chunks and the array and resets
+                  the data structure. Use when storing e.g. strings.
+
+search/index_of/contains/hash: as usual, index_of yields an item index.
 
 for_chunk_array(*value, *arr)
 for_chunk_array(index, *value, *arr)
 for_chunk_array(index, *value, *chunk, *arr)
-    iterates the chunk array arr. example:
+    iterates the used elements of a chunk_array. example:
 
-    chunk_array<int, 32> arr;
-    init(&arr);
+    chunk_array<int, 4> arr{};
+    add_element(&arr, 1);
+    add_element(&arr, 2);
+    add_element(&arr, 3);
+    add_element(&arr, 4);
+    add_element(&arr, 5);
 
+    // there's an allocated 8 values, but only the 5 used will be
+    // iterated.
     for_chunk_array(i, v, &arr)
-        *v = i;
+        printf("[%d:%d]: %d\n", i.chunk_index, i.slot_index, *v);
 
     free(&arr);
  */
@@ -26,7 +83,7 @@ for_chunk_array(index, *value, *chunk, *arr)
 struct chunk_item_index
 {
     u32 chunk_index;
-    u32 slot_index;
+    s32 slot_index;
 };
 
 template<typename T, u64 N = Default_chunk_size>
@@ -263,16 +320,16 @@ u64 chunk_count(const chunk_array<T, N> *arr)
 }
 
 #define for_chunk_array_IVC(I_Var, V_Var, Chunk_Var, ARRAY)\
-    u64 I_Var = 0;\
+    chunk_item_index I_Var{};\
     auto *Chunk_Var = array_data(&((ARRAY)->all_chunks));\
     auto *V_Var = array_data(&(*Chunk_Var)->data);\
-    for (u64 Chunk_Var##_index = 0;\
-        Chunk_Var##_index < chunk_count(ARRAY);\
-        ++Chunk_Var##_index, ++Chunk_Var, V_Var = (Chunk_Var##_index < chunk_count(ARRAY) ? (*Chunk_Var)->data : nullptr))\
-    for (u64 I_Var##_in_chunk = 0;\
-         I_Var##_in_chunk < array_size(&(*Chunk_Var)->data);\
-         ++I_Var##_in_chunk, V_Var = (*Chunk_Var)->data + I_Var##_in_chunk, ++I_Var)\
-    if ((*Chunk_Var)->used[I_Var##_in_chunk])
+    for (I_Var.chunk_index = 0;\
+        I_Var.chunk_index < chunk_count(ARRAY);\
+        ++I_Var.chunk_index, ++Chunk_Var, V_Var = (I_Var.chunk_index < chunk_count(ARRAY) ? (*Chunk_Var)->data : nullptr))\
+    for (I_Var.slot_index = 0;\
+         I_Var.slot_index < array_size(&(*Chunk_Var)->data);\
+         ++I_Var.slot_index, V_Var = (*Chunk_Var)->data + I_Var.slot_index)\
+    if ((*Chunk_Var)->used[I_Var.slot_index])
 
 
 #define for_chunk_array_IV(I_Var, V_Var, ARRAY)\
@@ -332,19 +389,7 @@ T *search(chunk_array<T, N> *arr, const T *key, equality_function_p<T> eq = equa
 }
 
 template<typename T, u64 N>
-s64 index_of(const chunk_array<T, N> *arr, T key, equality_function<T> eq = equals<T>)
-{
-    assert(arr != nullptr);
-    
-    for_chunk_array(i, v, arr)
-        if (eq(*v, key))
-            return i;
-
-    return -1;
-}
-
-template<typename T, u64 N>
-s64 index_of(const chunk_array<T, N> *arr, const T *key, equality_function_p<T> eq = equals_p<T>)
+chunk_item_index index_of(const chunk_array<T, N> *arr, const T *key, equality_function_p<T> eq = equals_p<T>)
 {
     assert(arr != nullptr);
     
@@ -352,7 +397,13 @@ s64 index_of(const chunk_array<T, N> *arr, const T *key, equality_function_p<T> 
         if (eq(v, key))
             return i;
 
-    return -1;
+    return {.chunk_index = -1, .slot_index = -1};
+}
+
+template<typename T, u64 N>
+chunk_item_index index_of(const chunk_array<T, N> *arr, T key, equality_function<T> eq = equals<T>)
+{
+    return index_of(arr, &key, eq);
 }
 
 template<typename T, u64 N>
