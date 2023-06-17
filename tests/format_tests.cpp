@@ -432,7 +432,25 @@ define_test(tformat_formats_to_temporary_string)
         tformat("% %"_cs, "hello", "world");
 
     assert_equal(tformat("% %"_cs, "abc", "def"), "abc def"_cs)
+}
 
+define_test(format_formats_int_padding)
+{
+    string str;
+    init(&str);
+
+    typedef char C;
+    
+    assert_format(str, "ff"_cs, 2, "%x"_cs, 0xff);
+    assert_format(str, "0xff"_cs, 4, "%#x"_cs, 0xff);
+
+    assert_format(str, "ff 0x11"_cs, 7, "%x %#x"_cs, 0xff, 0x11);
+
+    assert_format(str, "      ff 0x11"_cs, 13, "%8x %#x"_cs, 0xff, 0x11);
+    assert_format(str, "000000ff 0x11"_cs, 13, "%08x %#x"_cs, 0xff, 0x11);
+    assert_format(str, "000000ff 0x000011 0x00001337"_cs, 28, "%08x %#08x 0x%08x"_cs, 0xff, 0x11, 0x1337);
+
+    free(&str);
 }
 
 define_default_test_main();

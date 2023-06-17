@@ -275,7 +275,10 @@ s64 _integer_to_string(string_base<C> *s, N x, u64 offset, format_options<C> opt
 
     string_reserve(s, offset + bytes_to_reserve);
 
-    u64 i = offset + pad_string(s, opt.pad_char, opt.pad_length - buf_write_size, offset);
+    u64 i = offset;
+
+    if (opt.pad_char == ' ')
+        i += pad_string(s, opt.pad_char, opt.pad_length - buf_write_size, offset);
 
     // sign, can be forced (+ or -), or negative numbers
     if (opt.sign == '+')
@@ -298,6 +301,9 @@ s64 _integer_to_string(string_base<C> *s, N x, u64 offset, format_options<C> opt
         case 16: s->data[i++] = '0'; s->data[i++] = iopt.caps_prefix ? 'X' : 'x'; break;
         }
     }
+
+    if (opt.pad_char != ' ')
+        i += pad_string(s, opt.pad_char, opt.pad_length - buf_write_size, i);
 
     i += pad_string(s, (C)'0', opt.precision - buf_size, i);
 
@@ -646,6 +652,9 @@ s64 _format_skip_until_placeholder(u64 *_i, internal::_placeholder_info<C> *pl, 
     if_at_end_goto(j, fmt_end);
 
     c = fmt[j];
+
+    if (c == '0')
+        pl->options.pad_char = '0';
 
     while (c >= '0' && c <= '9')
     {
