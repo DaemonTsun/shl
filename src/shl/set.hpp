@@ -171,8 +171,8 @@ struct nearest_search_result
 // also returns the last comparison result, if result is 0
 // then the value was found and the index is exactly where it
 // is in the set.
-template<typename T>
-nearest_search_result nearest_index_of(const set<T> *st, const T *val)
+template<typename T1, typename T2>
+nearest_search_result nearest_index_of(const set<T1> *st, const T2 *val, compare_function_p<T2, T1> comp)
 {
     assert(st != nullptr);
     assert(val != nullptr);
@@ -186,7 +186,7 @@ nearest_search_result nearest_index_of(const set<T> *st, const T *val)
     {
         m = l + (r - l) / 2;
 
-        last_comp = st->compare(val, st->data.data + m);
+        last_comp = comp(val, st->data.data + m);
 
         if (last_comp == 0)
             break;
@@ -206,6 +206,30 @@ nearest_search_result nearest_index_of(const set<T> *st, const T *val)
         m++;
 
     return nearest_search_result{.index = m, .last_comparison = last_comp};
+}
+
+template<typename T1, typename T2>
+nearest_search_result nearest_index_of(const set<T1> *st, T2 val, compare_function_p<T2, T1> comp)
+{
+    return nearest_index_of(st, &val, comp);
+}
+
+template<typename T>
+nearest_search_result nearest_index_of(const set<T> *st, const T *val)
+{
+    assert(st != nullptr);
+    assert(val != nullptr);
+
+    return nearest_index_of(st, val, st->compare);
+}
+
+template<typename T>
+nearest_search_result nearest_index_of(const set<T> *st, T val)
+{
+    assert(st != nullptr);
+    assert(val != nullptr);
+
+    return nearest_index_of(st, &val, st->compare);
 }
 
 template<typename T>
@@ -245,12 +269,12 @@ T *insert_element(set<T> *st, T val)
     return insert_element(st, &val);
 }
 
-template<bool FreeValues = false, typename T>
-void remove_element(set<T> *st, const T *val)
+template<bool FreeValues = false, typename T1, typename T2>
+void remove_element(set<T1> *st, const T2 *val, compare_function_p<T2, T1> comp)
 {
     assert(st != nullptr);
 
-    nearest_search_result result = nearest_index_of(st, val);
+    nearest_search_result result = nearest_index_of(st, val, comp);
 
     if (result.index < 0 || result.last_comparison != 0)
         return;
@@ -258,12 +282,22 @@ void remove_element(set<T> *st, const T *val)
     remove_elements<FreeValues>(&st->data, result.index, 1);
 }
 
+template<bool FreeValues = false, typename T1, typename T2>
+void remove_element(set<T1> *st, T2 val, compare_function_p<T2, T1> comp)
+{
+    remove_element<FreeValues>(st, &val, st->compare);
+}
+
+template<bool FreeValues = false, typename T>
+void remove_element(set<T> *st, const T *val)
+{
+    remove_element<FreeValues>(st, val, st->compare);
+}
+
 template<bool FreeValues = false, typename T>
 void remove_element(set<T> *st, T val)
 {
-    assert(st != nullptr);
-
-    return remove_element<FreeValues>(st, &val);
+    remove_element<FreeValues>(st, &val, st->compare);
 }
 
 template<bool FreeValues = false, typename T>
@@ -415,68 +449,91 @@ void free(set<T> *st)
     st->compare = nullptr;
 }
 
-template<typename T>
-T *search(const set<T> *st, T key)
+template<typename T1, typename T2>
+T1 *search(const set<T1> *st, const T2 *key, compare_function_p<T2, T1> comp)
 {
     assert(st != nullptr);
-
-    nearest_search_result result = nearest_index_of(st, &key);
+    assert(key != nullptr);
+    
+    nearest_search_result result = nearest_index_of(st, key, comp);
 
     if (result.last_comparison == 0)
         return st->data.data + result.index;
 
     return nullptr;
+}
+
+template<typename T1, typename T2>
+T1 *search(const set<T1> *st, T2 key, compare_function_p<T2, T1> comp)
+{
+    return search(st, &key, comp);
 }
 
 template<typename T>
 T *search(const set<T> *st, const T *key)
 {
-    assert(st != nullptr);
-    
-    nearest_search_result result = nearest_index_of(st, key);
-
-    if (result.last_comparison == 0)
-        return st->data.data + result.index;
-
-    return nullptr;
+    return search(st, key, st->compare);
 }
 
 template<typename T>
-s64 index_of(const set<T> *st, T key)
+T *search(const set<T> *st, T key)
+{
+    return search(st, &key, st->compare);
+}
+
+template<typename T1, typename T2>
+s64 index_of(const set<T1> *st, const T2 *key, compare_function_p<T2, T1> comp)
 {
     assert(st != nullptr);
 
-    nearest_search_result result = nearest_index_of(st, &key);
+    nearest_search_result result = nearest_index_of(st, key, comp);
 
     if (result.last_comparison == 0)
         return result.index;
 
     return -1;
+}
+
+template<typename T1, typename T2>
+s64 index_of(const set<T1> *st, T2 key, compare_function_p<T2, T1> comp)
+{
+    return index_of(st, &key, comp);
 }
 
 template<typename T>
 s64 index_of(const set<T> *st, const T *key)
 {
-    assert(st != nullptr);
+    return index_of(st, key, st->compare);
+}
 
-    nearest_search_result result = nearest_index_of(st, key);
-    
-    if (result.last_comparison == 0)
-        return result.index;
+template<typename T>
+s64 index_of(const set<T> *st, T key)
+{
+    return index_of(st, &key, st->compare);
+}
 
-    return -1;
+template<typename T1, typename T2>
+bool contains(const set<T1> *st, const T2 *key, compare_function_p<T2, T1> comp)
+{
+    return search(st, key, comp) != nullptr;
+}
+
+template<typename T1, typename T2>
+bool contains(const set<T1> *st, T2 key, compare_function_p<T2, T1> comp)
+{
+    return search(st, key, comp) != nullptr;
 }
 
 template<typename T>
 bool contains(const set<T> *st, T key)
 {
-    return search(st, key) != nullptr;
+    return contains(st, key, st->compare);
 }
 
 template<typename T>
 bool contains(const set<T> *st, const T *key)
 {
-    return search(st, key) != nullptr;
+    return contains(st, key, st->compare);
 }
 
 template<typename T>

@@ -305,4 +305,47 @@ define_test(index_of_returns_minus_one_when_not_found)
     free(&st);
 }
 
+struct myvec
+{
+    u8 x;
+    u8 y;
+    u8 z;
+    u8 w;
+};
+
+template<>
+constexpr int compare_ascending_p(const myvec *l, const myvec *r)
+{
+    return compare_ascending(*((u32*)l), *((u32*)r));
+}
+
+constexpr int y_comparator(const u8 *l, const myvec *r)
+{
+    return compare_ascending(*l, r->y);
+}
+
+define_test(index_of_custom_comparator_compares_different_data_types)
+{
+    set<myvec> st{};
+    defer { free(&st); };
+
+    myvec vec2{2,4,6};
+
+    insert_element(&st, myvec{1,2,3});
+    insert_element(&st, vec2);
+    insert_element(&st, myvec{8,16,32});
+
+    compare_function_p<u8, myvec> y_comp = y_comparator;
+
+    assert_equal(index_of(&st, vec2), 1);
+    assert_equal(index_of(&st, vec2.y, y_comp), 1);
+    assert_equal(index_of(&st, (u8)4, y_comp), 1);
+    assert_equal(index_of(&st, (u8)2, y_comp), 0);
+    assert_equal(index_of(&st, (u8)16, y_comp), 2);
+    assert_equal(index_of(&st, (u8)32, y_comp), -1);
+
+    assert_equal(contains(&st, (u8)16, y_comp), true);
+    assert_equal(contains(&st, (u8)32, y_comp), false);
+}
+
 define_default_test_main();
