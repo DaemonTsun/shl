@@ -9,14 +9,13 @@
  * hash_raw(T) is the same as hash_data, but using a type T and its size instead of
  * a pointer and size.
  *
- * default hashing algorithm used in hash_data is murmur3.
+ * default hashing algorithm used in hash_data is murmur3. implementation of murmur3 is in
+ * murmur_hash.hpp.
  */
 
 #include "shl/number_types.hpp"
 
 typedef u32 hash_t;
-
-#define DEFAULT_MURMUR3_SEED 0xc70f6907
 
 hash_t hash_data(const void *data, u64 size);
 hash_t hash_data(const void *data, u64 size, u32 seed);
