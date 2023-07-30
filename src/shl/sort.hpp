@@ -50,7 +50,54 @@ T *sorted_search(const T *value, T *ptr, u64 size, compare_function_p<T> comp = 
                                               (compare_function_p<void>)(comp)));
 }
 
-// TODO: binary_search
+struct binary_search_result
+{
+    s64 index;
+    int last_comparison;
+};
+
+template<typename T1, typename T2>
+binary_search_result binary_search(const T1 *data, u64 size, const T2 *val, compare_function_p<T2, T1> comp)
+{
+    if (size <= 0)
+        return binary_search_result{-1, 0};
+
+    assert(data != nullptr);
+    assert(val != nullptr);
+
+    s64 l = 0;
+    s64 r = size - 1;
+    s64 m = 0;
+    int last_comp = 0;
+
+    while (l <= r)
+    {
+        m = l + (r - l) / 2;
+
+        last_comp = comp(val, data + m);
+
+        if (last_comp == 0)
+            break;
+ 
+        if (last_comp > 0)
+            l = m + 1;
+        else
+        {
+            if (m == 0)
+                break;
+
+            r = m - 1;
+        }
+    }
+
+    return binary_search_result{.index = m, .last_comparison = last_comp};
+}
+
+template<typename T1, typename T2>
+binary_search_result binary_search(const T1 *data, T2 val, compare_function_p<T2, T1> comp)
+{
+    return binary_search(data, &val, comp);
+}
 
 template<typename T>
 bool sorted_contains(const T *value, T *ptr, u64 size, compare_function_p<T> comp = compare_ascending_p<T>)

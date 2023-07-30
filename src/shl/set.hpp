@@ -160,62 +160,33 @@ void init(set<T> *st, u64 reserve_size, compare_function_p<T> comp = compare_asc
     reserve(&st->data, reserve_size);
 }
 
-struct nearest_search_result
-{
-    s64 index;
-    int last_comparison;
-};
-
 // binary search the value, then return the index where it
 // WOULD be inserted at / is at.
 // also returns the last comparison result, if result is 0
 // then the value was found and the index is exactly where it
 // is in the set.
 template<typename T1, typename T2>
-nearest_search_result nearest_index_of(const set<T1> *st, const T2 *val, compare_function_p<T2, T1> comp)
+binary_search_result nearest_index_of(const set<T1> *st, const T2 *val, compare_function_p<T2, T1> comp)
 {
     assert(st != nullptr);
     assert(val != nullptr);
 
-    s64 l = 0;
-    s64 r = array_size(st) - 1;
-    s64 m = 0;
-    int last_comp = 0;
+    binary_search_result res = binary_search(st->data.data, array_size(st), val, comp); 
 
-    while (l <= r)
-    {
-        m = l + (r - l) / 2;
+    if (res.last_comparison > 0)
+        res.index++;
 
-        last_comp = comp(val, st->data.data + m);
-
-        if (last_comp == 0)
-            break;
- 
-        if (last_comp > 0)
-            l = m + 1;
-        else
-        {
-            if (m == 0)
-                break;
-
-            r = m - 1;
-        }
-    }
-
-    if (last_comp > 0)
-        m++;
-
-    return nearest_search_result{.index = m, .last_comparison = last_comp};
+    return res;
 }
 
 template<typename T1, typename T2>
-nearest_search_result nearest_index_of(const set<T1> *st, T2 val, compare_function_p<T2, T1> comp)
+binary_search_result nearest_index_of(const set<T1> *st, T2 val, compare_function_p<T2, T1> comp)
 {
     return nearest_index_of(st, &val, comp);
 }
 
 template<typename T>
-nearest_search_result nearest_index_of(const set<T> *st, const T *val)
+binary_search_result nearest_index_of(const set<T> *st, const T *val)
 {
     assert(st != nullptr);
     assert(val != nullptr);
@@ -224,7 +195,7 @@ nearest_search_result nearest_index_of(const set<T> *st, const T *val)
 }
 
 template<typename T>
-nearest_search_result nearest_index_of(const set<T> *st, T val)
+binary_search_result nearest_index_of(const set<T> *st, T val)
 {
     assert(st != nullptr);
     assert(val != nullptr);
@@ -244,7 +215,7 @@ T *insert_element(set<T> *st, const T *val)
     if (st->data.size == 0)
         return add_at_end(&st->data, val);
 
-    nearest_search_result result = nearest_index_of(st, val);
+    binary_search_result result = nearest_index_of(st, val);
  
     // if found, just return the one found
     if (result.last_comparison == 0)
@@ -274,7 +245,7 @@ void remove_element(set<T1> *st, const T2 *val, compare_function_p<T2, T1> comp)
 {
     assert(st != nullptr);
 
-    nearest_search_result result = nearest_index_of(st, val, comp);
+    binary_search_result result = nearest_index_of(st, val, comp);
 
     if (result.index < 0 || result.last_comparison != 0)
         return;
@@ -455,7 +426,7 @@ T1 *search(const set<T1> *st, const T2 *key, compare_function_p<T2, T1> comp)
     assert(st != nullptr);
     assert(key != nullptr);
     
-    nearest_search_result result = nearest_index_of(st, key, comp);
+    binary_search_result result = nearest_index_of(st, key, comp);
 
     if (result.last_comparison == 0)
         return st->data.data + result.index;
@@ -486,7 +457,7 @@ s64 index_of(const set<T1> *st, const T2 *key, compare_function_p<T2, T1> comp)
 {
     assert(st != nullptr);
 
-    nearest_search_result result = nearest_index_of(st, key, comp);
+    binary_search_result result = nearest_index_of(st, key, comp);
 
     if (result.last_comparison == 0)
         return result.index;
