@@ -50,8 +50,42 @@ constexpr int compare_descending_p(const T1 *a, const T2 *b)
     return compare_descending(*a, *b);
 }
 
-#define Min(A, B) ((A) < (B) ? (A) : (B))
-#define Max(A, B) ((A) > (B) ? (A) : (B))
+template<typename T, typename TMin = T, typename TMax = T>
+constexpr int compare_clamp_ascending(T val, TMin min, TMax max)
+{
+    if (val >= min && val <= max)
+        return 0;
+    else if (val < min)
+        return -1;
+    else
+        return 1;
+}
+
+template<typename T, typename TMin = T, typename TMax = T>
+constexpr int compare_clamp_descending(T val, TMin min, TMax max)
+{
+    return -compare_clamp_ascending(val, min, max);
+}
+
+template<typename T>
+constexpr T Min(T lhs, T rhs)
+{
+    if (lhs < rhs)  return lhs;
+    else            return rhs;
+}
+
+template<typename T>
+constexpr T Max(T lhs, T rhs)
+{
+    if (lhs > rhs)  return lhs;
+    else            return rhs;
+}
+
+template<typename T>
+constexpr T Clamp(T val, T min, T max)
+{
+    return Min(Max(val, min), max);
+}
 
 template<typename T1, typename T2 = T1>
 using equality_function = bool (*)(T1, T2);
