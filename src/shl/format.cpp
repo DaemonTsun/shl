@@ -193,7 +193,7 @@ s64 _c_unsigned_pow2_to_string_reverse(C *s, N x, bool caps_letters = false)
         return i;
     }
 
-    constexpr u64 Shift = log2(Pow);
+    constexpr u64 Shift = const_log2(Pow);
     constexpr u64 mask = bitmask<u64>(0, Shift - 1);
 
     while (x > 0)

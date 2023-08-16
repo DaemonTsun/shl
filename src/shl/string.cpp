@@ -9,9 +9,31 @@
 #include "shl/memory.hpp"
 #include "shl/compare.hpp"
 #include "shl/string.hpp"
+#include "shl/platform.hpp"
 
 #define LIT(C, Literal)\
     inline_const_if(is_same(C, char), Literal, L##Literal)
+
+#if Windows
+// https://stackoverflow.com/a/52989329
+void* memmem(const void* haystack, size_t haystack_len,
+    const void* const needle, const size_t needle_len)
+{
+    if (haystack == NULL) return NULL; // or assert(haystack != NULL);
+    if (haystack_len == 0) return NULL;
+    if (needle == NULL) return NULL; // or assert(needle != NULL);
+    if (needle_len == 0) return NULL;
+
+    for (const char* h = (const char*)haystack;
+        haystack_len >= needle_len;
+        ++h, --haystack_len) {
+        if (!memcmp(h, needle, needle_len)) {
+            return (void*)h;
+        }
+    }
+    return NULL;
+}
+#endif
 
 const_string  operator ""_cs(const char *str, u64 n)
 {
@@ -864,24 +886,47 @@ DEFINE_DECIMAL_BODY(float, to_float, strtof, wcstof);
 DEFINE_DECIMAL_BODY(double, to_double, strtod, wcstod);
 DEFINE_DECIMAL_BODY(long double, to_long_double, strtold, wcstold);
 
+// Windows:
+// we are assuming dst is always at least n / string_length(src) characters long.
+
 char *copy_string(const char *src, char *dst)
 {
+#if Windows
+    strcpy_s(dst, string_length(src), src);
+    return dst;
+#else
     return strcpy(dst, src);
+#endif
 }
 
 wchar_t *copy_string(const wchar_t *src, wchar_t *dst)
 {
+#if Windows
+    wcscpy_s(dst, string_length(src), src);
+    return dst;
+#else
     return wcscpy(dst, src);
+#endif
 }
 
 char *copy_string(const char *src, char *dst, u64 n)
 {
+#if Windows
+    strncpy_s(dst, n, src, n);
+    return dst;
+#else
     return strncpy(dst, src, n);
+#endif
 }
 
 wchar_t *copy_string(const wchar_t *src, wchar_t *dst, u64 n)
 {
+#if Windows
+    wcsncpy_s(dst, n, src, n);
+    return dst;
+#else
     return wcsncpy(dst, src, n);
+#endif
 }
 
 template<typename C>
@@ -1275,6 +1320,7 @@ s64 index_of(const wstring *str, const wstring *needle)
 {
     return index_of(to_const_string(str), to_const_string(needle), 0);
 }
+
 
 template<typename C>
 s64 _index_of(const_string_base<C> str, const_string_base<C> needle, s64 offset)

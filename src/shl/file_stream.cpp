@@ -5,6 +5,12 @@
 #include <assert.h>
 #include <stdarg.h>
 #include "shl/file_stream.hpp"
+#include "shl/platform.hpp"
+
+#if Windows
+#define fseeko _fseeki64
+#define ftello _ftelli64
+#endif
 
 file_stream::operator FILE*() const
 {
@@ -121,6 +127,7 @@ int seek(file_stream *stream, long offset, int whence)
 {
     assert(stream != nullptr);
     assert(stream->handle != nullptr);
+
     return fseeko(stream->handle, offset, whence);
 }
 

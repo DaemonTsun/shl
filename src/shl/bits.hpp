@@ -2,7 +2,7 @@
 #pragma once
 
 template<typename T>
-constexpr inline T log2(T x)
+constexpr inline T const_log2(T x)
 {
     T ret = 0;
 
@@ -16,7 +16,7 @@ template<unsigned N, typename T>
 constexpr inline T bit_log(T x)
 {
     if constexpr (N == 1)
-        return log2(x);
+        return const_log2(x);
 
     T ret = 0;
 

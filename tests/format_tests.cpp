@@ -205,7 +205,7 @@ define_test(to_string_converts_float_to_string)
     string str;
     init(&str);
 
-    format_options<char> opt = default_format_options<char>;
+    // format_options<char> opt = default_format_options<char>;
 
     // float
     assert_to_string(str, "0"_cs,          1, 0.f);
@@ -247,7 +247,7 @@ define_test(to_string_converts_float_to_wstring)
     wstring str;
     init(&str);
 
-    format_options<wchar_t> opt = default_format_options<wchar_t>;
+    // format_options<wchar_t> opt = default_format_options<wchar_t>;
 
     // float
     assert_to_string(str, L"0"_cs,          1, 0.f);
