@@ -886,47 +886,24 @@ DEFINE_DECIMAL_BODY(float, to_float, strtof, wcstof);
 DEFINE_DECIMAL_BODY(double, to_double, strtod, wcstod);
 DEFINE_DECIMAL_BODY(long double, to_long_double, strtold, wcstold);
 
-// Windows:
-// we are assuming dst is always at least n / string_length(src) characters long.
-
 char *copy_string(const char *src, char *dst)
 {
-#if Windows
-    strcpy_s(dst, string_length(src), src);
-    return dst;
-#else
     return strcpy(dst, src);
-#endif
 }
 
 wchar_t *copy_string(const wchar_t *src, wchar_t *dst)
 {
-#if Windows
-    wcscpy_s(dst, string_length(src), src);
-    return dst;
-#else
     return wcscpy(dst, src);
-#endif
 }
 
 char *copy_string(const char *src, char *dst, u64 n)
 {
-#if Windows
-    strncpy_s(dst, n, src, n);
-    return dst;
-#else
     return strncpy(dst, src, n);
-#endif
 }
 
 wchar_t *copy_string(const wchar_t *src, wchar_t *dst, u64 n)
 {
-#if Windows
-    wcsncpy_s(dst, n, src, n);
-    return dst;
-#else
     return wcsncpy(dst, src, n);
-#endif
 }
 
 template<typename C>
