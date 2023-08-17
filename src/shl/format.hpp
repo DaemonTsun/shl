@@ -374,6 +374,24 @@ s64 format(string_base<C> *s, u64 offset, const_string_base<C> fmt, Ts &&...args
     return written;
 }
 
+template<typename C, typename... Ts>
+string_base<C> new_format(const C *fmt, Ts &&...args)
+{
+    string_base<C> _ret{};
+    format(&_ret, 0, fmt, forward<Ts>(args)...);
+
+    return _ret;
+}
+
+template<typename C, typename... Ts>
+string_base<C> new_format(const_string_base<C> fmt, Ts &&...args)
+{
+    string_base<C> _ret{};
+    format(&_ret, 0, fmt, forward<Ts>(args)...);
+
+    return _ret;
+}
+
 // tformat
 // this is not the max size that the temporary string can have, but
 // the size at which the next format will reset the temporary string.

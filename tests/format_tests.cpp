@@ -453,4 +453,12 @@ define_test(format_formats_int_padding)
     free(&str);
 }
 
+define_test(new_format_creates_string_from_format)
+{
+    string str = new_format("%s %d %1.f", "abc", 5, 16.5f);
+
+    assert_equal(str, "abc 5 16.5"_cs);
+    free(&str);
+}
+
 define_default_test_main();
