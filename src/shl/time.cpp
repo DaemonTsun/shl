@@ -6,26 +6,20 @@
 #if Windows
 #include <windows.h>
 #elif Linux
-#include <time.h>
 #include <unistd.h>
 #endif
 
+#include <time.h>
 #include "shl/time.hpp"
 
 #define NANOSECONDS_IN_A_SECOND 1000000000l
 
 void get_time(timespan *t)
 {
-#if Linux
     timespec _t;
-	clock_gettime(CLOCK_REALTIME, &_t);
+	timespec_get(&_t, TIME_UTC);
     t->seconds = _t.tv_sec;
     t->nanoseconds = _t.tv_nsec;
-#else
-#warning "Non-Linux systems not yet supported"
-    t->seconds = 0;
-    t->nanoseconds = 0;
-#endif 
 }
 
 void get_timespan_difference(const timespan *start, const timespan *end, timespan *out)
@@ -81,17 +75,17 @@ void sleep(double seconds)
 
 void sleep_ms(int milliseconds)
 {
-    #ifdef WIN32
-        Sleep(milliseconds);
+#if Linux
+    struct timespec ts;
+    ts.tv_sec = milliseconds / 1000;
+    ts.tv_nsec = (milliseconds % 1000) * 1000000;
+    nanosleep(&ts, NULL);
 
-    #elif _POSIX_C_SOURCE >= 199309L
-        struct timespec ts;
-        ts.tv_sec = milliseconds / 1000;
-        ts.tv_nsec = (milliseconds % 1000) * 1000000;
-        nanosleep(&ts, NULL);
+#elif Windows
+    Sleep(milliseconds);
 
-    #else
-        usleep(milliseconds * 1000);
+#else
+    usleep(milliseconds * 1000);
 
-    #endif
+#endif
 }
