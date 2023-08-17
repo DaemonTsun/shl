@@ -1,13 +1,23 @@
 
 #include <iostream>
 #include <string.h>
-#include <unistd.h>
-#include <linux/limits.h>
-#include <filesystem>
-
+#include <stdlib.h>
 #include <t1/t1.hpp>
 
+#include "shl/platform.hpp"
+
+#if Windows
+#include <windows.h>
+#else
+#include <unistd.h>
+#include <linux/limits.h>
+#endif
+
+#include <filesystem>
+
 #include "shl/number_types.hpp"
+#include "shl/defer.hpp"
+#include "shl/memory.hpp"
 #include "shl/file_stream.hpp"
 #include "shl/streams.hpp"
 
@@ -17,18 +27,53 @@
 
 std::filesystem::path get_executable_path()
 {
+#if Windows
+    char pth[4096] = {0};
+
+    auto length = GetModuleFileName(nullptr, pth, 4095);
+
+    if (length == 0)
+        return std::filesystem::path();
+
+    return std::filesystem::path(pth);
+#else
     char pth[PATH_MAX] = {0};
 
     if (readlink("/proc/self/exe", pth, PATH_MAX) < 0)
         return std::filesystem::path();
     
     return std::filesystem::path(pth);
+#endif
 }
 
-#define GET_FILEPATH(File, Name) \
-    std::filesystem::path p = get_executable_path();\
-    p = p.parent_path() / File;\
-    const char *Name = p.c_str();
+char *get_filepath(const char *file)
+{
+    char *ret = nullptr;
+
+    std::filesystem::path p = get_executable_path();
+    p = p.parent_path() / file;
+
+#if Windows
+    // thanks windows
+    const wchar_t *name = p.c_str();
+    size_t len = wcslen(name) * 4;
+    ret = (char*)malloc(len + 1);
+    memset(ret, 0, len + 1);
+
+    wcstombs(ret, name, len);
+
+#else
+    const char *name = p.c_str();
+    size_t len = strlen(name);
+    ret = (char*)malloc(len+1);
+    memset(ret, 0, len+1);
+
+    memcpy(ret, name, len);
+
+#endif
+
+    return ret;
+}
 
 define_test(file_stream_init_initializes)
 {
@@ -52,7 +97,8 @@ define_test(file_stream_close_on_unopened_file_returns_true)
 define_test(file_stream_open_opens_file)
 {
     file_stream fs;
-    GET_FILEPATH(BIN_FILE, filepath);
+    char *filepath = get_filepath(BIN_FILE);
+    defer { free_memory(filepath); };
 
     init(&fs);
     assert_equal(open(&fs, filepath), true);
@@ -62,7 +108,8 @@ define_test(file_stream_open_opens_file)
 define_test(file_stream_read_reads_file_contents)
 {
     file_stream fs;
-    GET_FILEPATH(BIN_FILE, filepath);
+    char *filepath = get_filepath(BIN_FILE);
+    defer { free_memory(filepath); };
 
     init(&fs);
     assert_equal(open(&fs, filepath), true);
@@ -84,7 +131,8 @@ define_test(file_stream_read_reads_file_contents)
 define_test(file_stream_read_at_reads_file_contents_at_position)
 {
     file_stream fs;
-    GET_FILEPATH(BIN_FILE, filepath);
+    char *filepath = get_filepath(BIN_FILE);
+    defer { free_memory(filepath); };
 
     init(&fs);
     assert_equal(open(&fs, filepath), true);
@@ -109,7 +157,8 @@ define_test(file_stream_read_at_reads_file_contents_at_position)
 define_test(file_stream_calculate_size_calculates_and_set_size)
 {
     file_stream fs;
-    GET_FILEPATH(BIN_FILE, filepath);
+    char *filepath = get_filepath(BIN_FILE);
+    defer { free_memory(filepath); };
 
     init(&fs);
     assert_equal(open(&fs, filepath), true);
@@ -122,7 +171,8 @@ define_test(file_stream_calculate_size_calculates_and_set_size)
 define_test(file_stream_read_entire_file_reads_entire_file)
 {
     file_stream fs;
-    GET_FILEPATH(BIN_FILE, filepath);
+    char *filepath = get_filepath(BIN_FILE);
+    defer { free_memory(filepath); };
 
     init(&fs);
     assert_equal(open(&fs, filepath), true);
@@ -137,7 +187,8 @@ define_test(file_stream_read_entire_file_reads_entire_file)
 
 define_test(streams_read_entire_file_reads_entire_file)
 {
-    GET_FILEPATH(BIN_FILE, filepath);
+    char *filepath = get_filepath(BIN_FILE);
+    defer { free_memory(filepath); };
 
     memory_stream ms;
     init(&ms);

@@ -35,7 +35,15 @@ bool open(file_stream *stream, const char *path, const char *mode, bool check_op
 
     assert(path != nullptr);
     assert(mode != nullptr);
+
+#if Windows
+    errno_t err = fopen_s(&stream->handle, path, mode);
+
+    if (err != 0)
+        return false;
+#else
     stream->handle = fopen(path, mode);
+#endif
 
     if (stream->handle == nullptr)
         return false;
