@@ -73,6 +73,27 @@ void sleep(double seconds)
     sleep_ms((int)(seconds * 1000));
 }
 
+#if Windows
+void windows_nanosleep(LONGLONG ns100)
+{
+	HANDLE timer = CreateWaitableTimer(NULL, TRUE, NULL);
+	LARGE_INTEGER li;
+    li.QuadPart = -ns100;
+
+	if (timer == nullptr)
+        return;
+
+	if (!SetWaitableTimer(timer, &li, 0, NULL, NULL, FALSE))
+    {
+		CloseHandle(timer);
+		return;
+	}
+
+	WaitForSingleObject(timer, INFINITE);
+	CloseHandle(timer);
+}
+#endif
+
 void sleep_ms(int milliseconds)
 {
 #if Linux
@@ -82,7 +103,9 @@ void sleep_ms(int milliseconds)
     nanosleep(&ts, NULL);
 
 #elif Windows
-    Sleep(milliseconds);
+    LONGLONG ns100 = milliseconds * 10000;
+    // Sleep(milliseconds);
+    windows_nanosleep(ns100);
 
 #else
     usleep(milliseconds * 1000);
