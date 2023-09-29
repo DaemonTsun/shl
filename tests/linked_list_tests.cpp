@@ -959,7 +959,7 @@ define_test(search_node_returns_nullptr_if_key_is_not_found)
     init(&list, 5);
 
     for_list(i, v, &list)
-        *v = i;
+        *v = (int)i;
     
     int val = 6;
 
@@ -975,7 +975,7 @@ define_test(search_node_returns_pointer_to_node_if_key_is_found)
     init(&list, 5);
 
     for_list(i, v, &list)
-        *v = i;
+        *v = (int)i;
     
     int val = 1;
     list_node<int> *ptr = search_node(&list, &val);
@@ -993,7 +993,7 @@ define_test(search_returns_nullptr_if_key_is_not_found)
     init(&list, 5);
 
     for_list(i, v, &list)
-        *v = i;
+        *v = (int)i;
     
     int val = 6;
 
@@ -1009,7 +1009,7 @@ define_test(search_returns_pointer_to_element_if_key_is_found)
     init(&list, 5);
 
     for_list(i, v, &list)
-        *v = i;
+        *v = (int)i;
     
     int val = 1;
     int *ptr = search(&list, &val);
@@ -1030,7 +1030,7 @@ define_test(index_of_returns_negative_one_if_key_is_not_found)
     init(&list, 5);
 
     for_list(i, v, &list)
-        *v = i;
+        *v = (int)i;
     
     int val = 6;
 
@@ -1046,7 +1046,7 @@ define_test(index_of_returns_index_of_key_if_key_is_found)
     init(&list, 5);
 
     for_list(i, v, &list)
-        *v = i;
+        *v = (int)i;
     
     int val = 1;
     assert_equal(index_of(&list, &val), 1);
@@ -1061,7 +1061,7 @@ define_test(contains_returns_false_if_key_is_not_found)
     init(&list, 5);
 
     for_list(i, v, &list)
-        *v = i;
+        *v = (int)i;
     
     int val = 6;
 
@@ -1077,7 +1077,7 @@ define_test(contains_returns_true_if_key_is_found)
     init(&list, 5);
 
     for_list(i, v, &list)
-        *v = i;
+        *v = (int)i;
     
     int val = 1;
     assert_equal(contains(&list, &val), true);

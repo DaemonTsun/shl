@@ -23,7 +23,7 @@ void init_slice(string_base<C> *out, const C *input, const parse_range *range)
 #define PARSE_TABLE_CLOSING_BRACKET PARSE_TABLE_BRACKETS[1]
 
 #define get_parse_error_(C, p, FMT, ...) \
-    parse_error<C>{format_error(FMT __VA_OPT__(,) __VA_ARGS__), __FILE__, __LINE__, p->it, p->input, p->input_size}
+    parse_error<C>{{format_error(FMT __VA_OPT__(,) __VA_ARGS__), __FILE__, __LINE__}, p->it, p->input, p->input_size}
 
 #define get_parse_error(C, ERR, p, FMT, ...) \
     if (ERR != nullptr) { *ERR = get_parse_error_(C, p, FMT, __VA_ARGS__); }
@@ -750,6 +750,10 @@ void _free(parsed_object_base<C> *obj)
     case parsed_object_type::Table:
         free<true, true>(&obj->data._table);
         break;
+    case parsed_object_type::Bool:
+    case parsed_object_type::Integer:
+    case parsed_object_type::Decimal:
+    case parsed_object_type::None:
     default:
         break;
     }
@@ -927,6 +931,8 @@ s64 _parsed_object_to_string(string_base<C> *s, const parsed_object_base<C> *x, 
 
         break;
     }
+
+    case parsed_object_type::None:
     default:
         break;
     }

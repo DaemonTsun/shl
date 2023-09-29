@@ -631,7 +631,7 @@ define_test(search_returns_nullptr_if_key_is_not_found)
     init(&arr, 5);
 
     for_array(i, v, &arr)
-        *v = i;
+        *v = (int)i;
     
     int val = 6;
 
@@ -647,7 +647,7 @@ define_test(search_returns_pointer_to_element_if_key_is_found)
     init(&arr, 5);
 
     for_array(i, v, &arr)
-        *v = i;
+        *v = (int)i;
     
     int *ptr = search(&arr, 1);
 
@@ -666,7 +666,7 @@ define_test(index_of_returns_negative_one_if_key_is_not_found)
     init(&arr, 5);
 
     for_array(i, v, &arr)
-        *v = i;
+        *v = (int)i;
     
     assert_equal(index_of(&arr, 6), -1ull);
 
@@ -680,7 +680,7 @@ define_test(index_of_returns_index_of_key_if_key_is_found)
     init(&arr, 5);
 
     for_array(i, v, &arr)
-        *v = i;
+        *v = (int)i;
     
     assert_equal(index_of(&arr, 1), 1);
 
@@ -694,7 +694,7 @@ define_test(contains_returns_false_if_key_is_not_found)
     init(&arr, 5);
 
     for_array(i, v, &arr)
-        *v = i;
+        *v = (int)i;
     
     int val = 6;
     assert_equal(contains(&arr, &val), false);
@@ -709,7 +709,7 @@ define_test(contains_returns_true_if_key_is_found)
     init(&arr, 5);
 
     for_array(i, v, &arr)
-        *v = i;
+        *v = (int)i;
     
     assert_equal(contains(&arr, 1), true);
 

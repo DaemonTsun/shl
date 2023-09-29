@@ -413,7 +413,7 @@ s64 _c_remainder_to_string_reverse(C *s, N x, int precision, bool ignore_trailin
     s64 i = 0;
     u64 cap = 1;
 
-	for (u64 i = 0; i < precision; i++)
+	for (u64 _pow10 = 0; _pow10 < precision; _pow10++)
 		cap *= 10;
 
 	double round = x * static_cast<double>(cap);

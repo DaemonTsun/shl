@@ -131,7 +131,7 @@ u64 block_count(const file_stream *stream)
     return stream->size / stream->block_size;
 }
 
-int seek(file_stream *stream, long offset, int whence)
+int seek(file_stream *stream, s64 offset, int whence)
 {
     assert(stream != nullptr);
     assert(stream->handle != nullptr);
@@ -139,7 +139,7 @@ int seek(file_stream *stream, long offset, int whence)
     return fseeko(stream->handle, offset, whence);
 }
 
-int seek_block(file_stream *stream, long nth_block, int whence)
+int seek_block(file_stream *stream, s64 nth_block, int whence)
 {
     assert(stream != nullptr);
     assert(stream->handle != nullptr);

@@ -11,9 +11,11 @@ define_test(line_hash_returns_line_hash)
 {
     assert_equal(__LINE_HASH__, __LINE_HASH__);
 
+    u32 hash1 = __LINE_HASH__;
+    u32 hash2 = __LINE_HASH__;
     // not same line
-    assert_not_equal(__LINE_HASH__,
-                     __LINE_HASH__);
+    assert_not_equal(hash1,
+                     hash2);
 }
 
 define_default_test_main();

@@ -28,7 +28,7 @@ void get_timespan_difference(const timespan *start, const timespan *end, timespa
     assert(end != nullptr);
     assert(out != nullptr);
 
-    long diff = end->nanoseconds - start->nanoseconds;
+    s64 diff = end->nanoseconds - start->nanoseconds;
 
 	if (diff < 0)
     {
@@ -44,7 +44,7 @@ void get_timespan_difference(const timespan *start, const timespan *end, timespa
 
 inline double timespan_to_seconds(const timespan *t)
 {
-    double ret = t->seconds;
+    double ret = static_cast<double>(t->seconds);
     ret += ((double)t->nanoseconds) / NANOSECONDS_IN_A_SECOND;
 
     return ret;

@@ -15,6 +15,11 @@ tprint("% world!\n", &a);
 // no need to free here since the free is deferred
  */
 
+#if defined(_WIN32) || defined(_WIN64)
+#pragma warning(push)
+#pragma warning(disable : 4623) // implicitly deleted constructor
+#pragma warning(disable : 4626) // implicitly deleted assignment operator
+#endif
 struct _defer {};
 template <class F> struct _deferrer
 {
@@ -24,6 +29,9 @@ template <class F> struct _deferrer
         f();
     }
 };
+#if defined(_WIN32) || defined(_WIN64)
+#pragma warning(pop) 
+#endif
 
 template <class F>
 _deferrer<F> operator*(_defer, F f)

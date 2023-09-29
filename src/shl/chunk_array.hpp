@@ -95,8 +95,8 @@ struct chunk
     bool used[N];
     T data[N];
 
-          T &operator[](u64 index)       { return data[index]; }
-    const T &operator[](u64 index) const { return data[index]; }
+          T &operator[](u64 i)       { return data[i]; }
+    const T &operator[](u64 i) const { return data[i]; }
 };
 
 template<typename T, u64 N = Default_chunk_size>
@@ -145,7 +145,7 @@ chunk<T, N> *add_chunk(chunk_array<T, N> *arr)
 
     add_at_end(&arr->nonfull_chunks, ret);
 
-    ret->index = arr->all_chunks.size - 1;
+    ret->index = (u32)(arr->all_chunks.size - 1);
     ret->used_count = 0;
 
     fill_memory(ret->used, N, 0x00);

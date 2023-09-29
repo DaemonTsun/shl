@@ -1,10 +1,12 @@
 
 #pragma once
 
+#include "shl/number_types.hpp"
+
 struct timespan
 {
-    long seconds;
-    long nanoseconds;
+    s64 seconds;
+    s64 nanoseconds;
 };
 
 void get_time(timespan *t);

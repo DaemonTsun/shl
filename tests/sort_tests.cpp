@@ -135,7 +135,7 @@ define_test(abc)
 
     // 0, 1, 2, ...
     for_array(i, v, &arr)
-        *v = i;
+        *v = (int)i;
 
     int searchfor = 0;
     assert_equal(sorted_index_of(&searchfor, arr.data, arr.size), searchfor);

@@ -15,9 +15,9 @@ define_test(wrap_number_wraps_a_number_within_range)
     assert_equal(wrap_number(0, 0, 0), 0);
     assert_equal(wrap_number(-10, 0, 360), 351);
     assert_equal(wrap_number(360,   0, 359), 0);
-    assert_equal(wrap_number(720.f, 0, 359.f), 0);
-    assert_equal(wrap_number(900.f, 0, 359.f), 180.f);
-    assert_equal(wrap_number(1080,  0, 359), 0);
+    assert_equal(wrap_number(720.f, 0.f, 359.f), 0.f);
+    assert_equal(wrap_number(900.f, 0.f, 359.f), 180.f);
+    assert_equal(wrap_number(1080.f,  0.f, 359.f), 0.f);
 }
 
 define_default_test_main();

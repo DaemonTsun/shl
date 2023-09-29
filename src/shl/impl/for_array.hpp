@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "shl/macros.hpp"
+
 template<typename T, u64 N>
 T *array_data(T (*arr)[N])
 {

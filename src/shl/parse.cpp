@@ -4,7 +4,7 @@
 #include "shl/parse.hpp"
 
 #define get_parse_error_(C, p, FMT, ...) \
-    parse_error<C>{format_error(FMT __VA_OPT__(,) __VA_ARGS__), __FILE__, __LINE__, p->it, p->input, p->input_size}
+    parse_error<C>{{format_error(FMT __VA_OPT__(,) __VA_ARGS__), __FILE__, __LINE__}, p->it, p->input, p->input_size}
 
 #define get_parse_error(C, ERR, p, FMT, ...) \
     if (ERR != nullptr) { *ERR = get_parse_error_(C, p, FMT, __VA_ARGS__); }
@@ -199,8 +199,8 @@ template<typename C>
 bool _parse_comment(parser_base<C> *p, parse_range *out)
 {
     parse_iterator start = p->it;
-    parse_iterator comment_start;
-    parse_iterator comment_end;
+    parse_iterator comment_start{};
+    parse_iterator comment_end{};
 
     bool has_comment = false;
 
@@ -901,9 +901,9 @@ bool parse_integer(parser_base<C> *p, OutT *out, parse_error<C> *err)\
         return false;\
     }\
 \
-    C buf[digit_size] = {0};\
+    C buf[digit_size] = {(C)0};\
     substring(p->input, digit_start.pos, len, buf);\
-    buf[len] = 0;\
+    buf[len] = (C)0;\
 \
     OutT ret = FUNC(buf, nullptr, base);\
 \
@@ -914,7 +914,6 @@ bool parse_integer(parser_base<C> *p, OutT *out, parse_error<C> *err)\
 \
     return true;\
 }
-
 
 DEFINE_PARSE_INTEGER(char, int, to_int);
 DEFINE_PARSE_INTEGER(wchar_t, int, to_int);

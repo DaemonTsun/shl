@@ -26,4 +26,4 @@ const char *format_error(const char *format, ...);
 #define MACRO_TO_STRING2(x) #x
 #define MACRO_TO_STRING(x) MACRO_TO_STRING2(x)
 #define throw_error(FMT, ...) \
-    throw error{format_error(FMT __VA_OPT__(,) __VA_ARGS__), __FILE__, __LINE__}
+    throw error{.what = format_error(FMT __VA_OPT__(,) __VA_ARGS__), .file = __FILE__, .line = __LINE__}

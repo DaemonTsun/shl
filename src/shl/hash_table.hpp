@@ -90,6 +90,7 @@ for_hash_table(*key, *value, *entry, *table)
 #include "shl/bits.hpp"
 #include "shl/hash.hpp"
 #include "shl/array.hpp"
+#include "shl/macros.hpp"
 
 #define TABLE_SIZE_FACTOR 75
 #define MIN_TABLE_SIZE 64
@@ -154,7 +155,7 @@ void init(hash_table<TKey, TValue> *table, u64 initial_size = MIN_TABLE_SIZE, ha
     if (hash_var < FIRST_HASH)\
         hash_var = hash_var + FIRST_HASH;\
 \
-    u32 mask = table_var->data.size - 1;\
+    u32 mask = (u32)(table_var->data.size - 1);\
     u32 _inc = 1;\
     u32 index = hash_var & mask;\
     while (table_var->data[index].hash != NULL_HASH)

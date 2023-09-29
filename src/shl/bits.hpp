@@ -17,13 +17,15 @@ constexpr inline T bit_log(T x)
 {
     if constexpr (N == 1)
         return const_log2(x);
+    else
+    {
+        T ret = 0;
 
-    T ret = 0;
+        while (x >>= N)
+            ret++;
 
-    while (x >>= N)
-        ret++;
-
-    return ret;
+        return ret;
+    }
 }
 
 template<typename T>
@@ -129,7 +131,7 @@ constexpr inline T bitmask_between_values(T from, T to)
     if (from == 0 && to == 0)
         return 0;
 
-    T max = -1; // must be unsigned
+    T max = (T)(-1); // must be unsigned
     T from_mask = from == 0 ? 0 : (floor_exp2(from) - 1);
     T to_mask   = to   == 0 ? 0 : (max ^ (ceil_exp2(to + 1) - 1));
     return (max - from_mask) - to_mask;

@@ -50,8 +50,8 @@ bool is_ok(file_stream *stream);
 u64 calculate_file_size(file_stream *stream);
 u64 block_count(const file_stream *stream);
 
-int seek(file_stream *stream, long offset, int whence = SEEK_SET);
-int seek_block(file_stream *stream, long nth_block, int whence = SEEK_SET);
+int seek(file_stream *stream, s64 offset, int whence = SEEK_SET);
+int seek_block(file_stream *stream, s64 nth_block, int whence = SEEK_SET);
 int seek_next_alignment(file_stream *stream, u64 alignment);
 u64 tell(file_stream *stream);
 bool getpos(file_stream *stream, fpos_t *pos);

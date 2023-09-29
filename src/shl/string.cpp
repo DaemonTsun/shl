@@ -228,12 +228,12 @@ void free(wstring *str)
 // string / char functions
 bool is_space(char c)
 {
-    return isspace(c);
+    return (bool)isspace(c);
 }
 
 bool is_space(wchar_t c)
 {
-    return iswspace(static_cast<wint_t>(c));
+    return (bool)iswspace(static_cast<wint_t>(c));
 }
 
 bool is_newline(char c)
@@ -248,22 +248,22 @@ bool is_newline(wchar_t c)
 
 bool is_alpha(char c)
 {
-    return isalpha(c);
+    return (bool)isalpha(c);
 }
 
 bool is_alpha(wchar_t c)
 {
-    return iswalpha(static_cast<wint_t>(c));
+    return (bool)iswalpha(static_cast<wint_t>(c));
 }
 
 bool is_digit(char c)
 {
-    return isdigit(c);
+    return (bool)isdigit(c);
 }
 
 bool is_digit(wchar_t c)
 {
-    return iswdigit(static_cast<wint_t>(c));
+    return (bool)iswdigit(static_cast<wint_t>(c));
 }
 
 bool is_bin_digit(char c)
@@ -288,42 +288,42 @@ bool is_oct_digit(wchar_t c)
 
 bool is_hex_digit(char c)
 {
-    return isxdigit(c);
+    return (bool)isxdigit(c);
 }
 
 bool is_hex_digit(wchar_t c)
 {
-    return iswxdigit(static_cast<wint_t>(c));
+    return (bool)iswxdigit(static_cast<wint_t>(c));
 }
 
 bool is_alphanum(char c)
 {
-    return isalnum(c);
+    return (bool)isalnum(c);
 }
 
 bool is_alphanum(wchar_t c)
 {
-    return iswalnum(static_cast<wint_t>(c));
+    return (bool)iswalnum(static_cast<wint_t>(c));
 }
 
 bool is_upper(char c)
 {
-    return isupper(static_cast<int>(c));
+    return (bool)isupper(static_cast<int>(c));
 }
 
 bool is_upper(wchar_t c)
 {
-    return iswupper(static_cast<wint_t>(c));
+    return (bool)iswupper(static_cast<wint_t>(c));
 }
 
 bool is_lower(char c)
 {
-    return islower(static_cast<int>(c));
+    return (bool)islower(static_cast<int>(c));
 }
 
 bool is_lower(wchar_t c)
 {
-    return iswlower(static_cast<wint_t>(c));
+    return (bool)iswlower(static_cast<wint_t>(c));
 }
 
 template<typename C>
@@ -558,47 +558,47 @@ int _compare_strings_cs(const_string_base<C> s1, const_string_base<C> s2, u64 n)
 
 int compare_strings(const char    *s1, const char    *s2)
 {
-    return _compare_strings_c(s1, s2, INT64_MAX);
+    return _compare_strings_c(s1, s2, UINT64_MAX);
 }
 
 int compare_strings(const char    *s1, const_string   s2)
 {
-    return _compare_strings_cs(to_const_string(s1), s2, -1);
+    return _compare_strings_cs(to_const_string(s1), s2, UINT64_MAX);
 }
 
 int compare_strings(const char    *s1, const string  *s2)
 {
-    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), -1);
+    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), UINT64_MAX);
 }
 
 int compare_strings(const_string   s1, const char    *s2)
 {
-    return _compare_strings_cs(s1, to_const_string(s2), -1);
+    return _compare_strings_cs(s1, to_const_string(s2), UINT64_MAX);
 }
 
 int compare_strings(const_string   s1, const_string   s2)
 {
-    return _compare_strings_cs(s1, s2, -1);
+    return _compare_strings_cs(s1, s2, UINT64_MAX);
 }
 
 int compare_strings(const_string   s1, const string  *s2)
 {
-    return _compare_strings_cs(s1, to_const_string(s2), -1);
+    return _compare_strings_cs(s1, to_const_string(s2), UINT64_MAX);
 }
 
 int compare_strings(const string  *s1, const char    *s2)
 {
-    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), -1);
+    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), UINT64_MAX);
 }
 
 int compare_strings(const string  *s1, const_string   s2)
 {
-    return _compare_strings_cs(to_const_string(s1), s2, -1);
+    return _compare_strings_cs(to_const_string(s1), s2, UINT64_MAX);
 }
 
 int compare_strings(const string  *s1, const string  *s2)
 {
-    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), -1);
+    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), UINT64_MAX);
 }
 
 int compare_strings(const char    *s1, const char    *s2, u64 n)
@@ -648,47 +648,47 @@ int compare_strings(const string  *s1, const string  *s2, u64 n)
 
 int compare_strings(const wchar_t *s1, const wchar_t *s2)
 {
-    return _compare_strings_c(s1, s2, -1);
+    return _compare_strings_c(s1, s2, UINT64_MAX);
 }
 
 int compare_strings(const wchar_t *s1, const_wstring  s2)
 {
-    return _compare_strings_cs(to_const_string(s1), s2, -1);
+    return _compare_strings_cs(to_const_string(s1), s2, UINT64_MAX);
 }
 
 int compare_strings(const wchar_t *s1, const wstring *s2)
 {
-    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), -1);
+    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), UINT64_MAX);
 }
 
 int compare_strings(const_wstring  s1, const wchar_t *s2)
 {
-    return _compare_strings_cs(s1, to_const_string(s2), -1);
+    return _compare_strings_cs(s1, to_const_string(s2), UINT64_MAX);
 }
 
 int compare_strings(const_wstring  s1, const_wstring  s2)
 {
-    return _compare_strings_cs(s1, s2, -1);
+    return _compare_strings_cs(s1, s2, UINT64_MAX);
 }
 
 int compare_strings(const_wstring  s1, const wstring *s2)
 {
-    return _compare_strings_cs(s1, to_const_string(s2), -1);
+    return _compare_strings_cs(s1, to_const_string(s2), UINT64_MAX);
 }
 
 int compare_strings(const wstring *s1, const wchar_t *s2)
 {
-    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), -1);
+    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), UINT64_MAX);
 }
 
 int compare_strings(const wstring *s1, const_wstring  s2)
 {
-    return _compare_strings_cs(to_const_string(s1), s2, -1);
+    return _compare_strings_cs(to_const_string(s1), s2, UINT64_MAX);
 }
 
 int compare_strings(const wstring *s1, const wstring *s2)
 {
-    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), -1);
+    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), UINT64_MAX);
 }
 
 int compare_strings(const wchar_t *s1, const wchar_t *s2, u64 n)
@@ -939,12 +939,12 @@ void _copy_string_cs_s(const_string_base<C> src, string_base<C> *dst, u64 n, u64
 
 void copy_string(const char *src, string *dst)
 {
-    _copy_string_cs_s(to_const_string(src), dst, -1, 0);
+    _copy_string_cs_s(to_const_string(src), dst, UINT64_MAX, 0);
 }
 
 void copy_string(const wchar_t *src, wstring *dst)
 {
-    _copy_string_cs_s(to_const_string(src), dst, -1, 0);
+    _copy_string_cs_s(to_const_string(src), dst, UINT64_MAX, 0);
 }
 
 void copy_string(const char *src, string *dst, u64 n)
@@ -969,12 +969,12 @@ void copy_string(const wchar_t *src, wstring *dst, u64 n, u64 dst_offset)
 
 void copy_string(const_string src, string *dst)
 {
-    _copy_string_cs_s(src, dst, -1, 0);
+    _copy_string_cs_s(src, dst, UINT64_MAX, 0);
 }
 
 void copy_string(const_wstring src, wstring *dst)
 {
-    _copy_string_cs_s(src, dst, -1, 0);
+    _copy_string_cs_s(src, dst, UINT64_MAX, 0);
 }
 
 void copy_string(const_string src, string *dst, u64 n)
@@ -999,12 +999,12 @@ void copy_string(const_wstring src, wstring *dst, u64 n, u64 dst_offset)
 
 void copy_string(const string *src, string *dst)
 {
-    _copy_string_cs_s(to_const_string(src), dst, -1, 0);
+    _copy_string_cs_s(to_const_string(src), dst, UINT64_MAX, 0);
 }
 
 void copy_string(const wstring *src, wstring *dst)
 {
-    _copy_string_cs_s(to_const_string(src), dst, -1, 0);
+    _copy_string_cs_s(to_const_string(src), dst, UINT64_MAX, 0);
 }
 
 void copy_string(const string *src, string *dst, u64 n)
@@ -1039,7 +1039,7 @@ string_base<C> _copy_new_string(T src, u64 n)
 
 string copy_string(const char   *src)
 {
-    return _copy_new_string<char>(src, -1);
+    return _copy_new_string<char>(src, UINT64_MAX);
 }
 
 string copy_string(const char   *src, u64 n)
@@ -1049,7 +1049,7 @@ string copy_string(const char   *src, u64 n)
 
 string copy_string(const_string  src)
 {
-    return _copy_new_string<char>(src, -1);
+    return _copy_new_string<char>(src, UINT64_MAX);
 }
 
 string copy_string(const_string  src, u64 n)
@@ -1059,7 +1059,7 @@ string copy_string(const_string  src, u64 n)
 
 string copy_string(const string *src)
 {
-    return _copy_new_string<char>(src, -1);
+    return _copy_new_string<char>(src, UINT64_MAX);
 }
 
 string copy_string(const string *src, u64 n)
@@ -1069,7 +1069,7 @@ string copy_string(const string *src, u64 n)
 
 wstring copy_string(const wchar_t *src)
 {
-    return _copy_new_string<wchar_t>(src, -1);
+    return _copy_new_string<wchar_t>(src, UINT64_MAX);
 }
 
 wstring copy_string(const wchar_t *src, u64 n)
@@ -1079,7 +1079,7 @@ wstring copy_string(const wchar_t *src, u64 n)
 
 wstring copy_string(const_wstring  src)
 {
-    return _copy_new_string<wchar_t>(src, -1);
+    return _copy_new_string<wchar_t>(src, UINT64_MAX);
 }
 
 wstring copy_string(const_wstring  src, u64 n)
@@ -1089,7 +1089,7 @@ wstring copy_string(const_wstring  src, u64 n)
 
 wstring copy_string(const wstring *src)
 {
-    return _copy_new_string<wchar_t>(src, -1);
+    return _copy_new_string<wchar_t>(src, UINT64_MAX);
 }
 
 wstring copy_string(const wstring *src, u64 n)
@@ -1514,7 +1514,7 @@ void trim(wstring *s)
 
 char to_upper(char c)
 {
-    return toupper(static_cast<int>(c));
+    return (char)toupper(static_cast<int>(c));
 }
 
 wchar_t to_upper(wchar_t c)
@@ -1563,7 +1563,7 @@ void to_upper(wstring *s)
 
 char to_lower(char c)
 {
-    return tolower(static_cast<int>(c));
+    return (char)tolower(static_cast<int>(c));
 }
 
 wchar_t to_lower(wchar_t c)
@@ -1778,7 +1778,7 @@ void _replace(string_base<C> *s, const_string_base<C> needle, const_string_base<
         s->data.data[s->data.size] = '\0';
     }
 
-    copy_string(replacement, s, -1, idx);
+    copy_string(replacement, s, UINT64_MAX, idx);
 }
 
 void replace(string *s, char needle, char replacement)
@@ -1905,7 +1905,7 @@ void _replace_all(string_base<C> *s, const_string_base<C> needle, const_string_b
             s->data.data[s->data.size] = '\0';
         }
 
-        copy_string(replacement, s, -1, idx);
+        copy_string(replacement, s, UINT64_MAX, idx);
 
         idx = index_of(s, needle, idx + 1);
     }

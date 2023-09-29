@@ -29,15 +29,13 @@ See individual header files for documentation.
 Run the following from the root of the repository:
 
 ```sh
-$ mkdir bin
-$ cd bin
-$ cmake ..
-$ make
+$ cmake <dir with CMakeLists.txt> -B <output dir>
+$ cmake --build <output dir>
 ```
 
 ## Installation
 
-`sudo make install` inside the build directory.
+`cmake --install <output dir>` inside the build directory.
 
 ## tests
-If [t1](https://github.com/DaemonTsun/t1) is installed, tests can be run as well using `make tests && make runtests`.
+If [t1](https://github.com/DaemonTsun/t1) is installed, tests can be run as well using `cmake --build <output dir> --target runtests` or `ctest --test-dir <output dir>`.
