@@ -397,7 +397,7 @@ chunk_item_index index_of(const chunk_array<T, N> *arr, const T *key, equality_f
         if (eq(v, key))
             return i;
 
-    return {.chunk_index = -1, .slot_index = -1};
+    return {.chunk_index = (u32)-1, .slot_index = (s32)-1};
 }
 
 template<typename T, u64 N>

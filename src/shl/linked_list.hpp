@@ -406,7 +406,7 @@ inline void remove_from_start(linked_list<T> *list)
 template<bool FreeValues = false, typename T>
 inline void remove_from_end(linked_list<T> *list)
 {
-    remove_elements<FreeValues>(list, list.size - 1, 1);
+    remove_elements<FreeValues>(list, list->size - 1, 1);
 }
 
 template<typename T>
