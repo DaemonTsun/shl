@@ -6,8 +6,11 @@
  * defines some type template functions because stl is bad.
  */
 
-template<typename T> struct _underlying_type { typedef __underlying_type(T) type; };
-#define underlying_type(T) __underlying_type(T)
+// update 01.10.2023: MSVC incorrectly handles __underlying_type, so we need
+// an explicit using type = __underlying_type (typedef doesn't work).
+
+template<typename T> struct _underlying_type { using type = __underlying_type(T); };
+#define underlying_type(T) _underlying_type<T>::type
 
 template<typename T> struct _remove_reference         { typedef T type; };
 template<typename T> struct _remove_reference<T&>     { typedef T type; };
