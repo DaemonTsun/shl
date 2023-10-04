@@ -83,7 +83,6 @@ define_test(file_stream_init_initializes)
 
     assert_equal(fs.handle, nullptr);
     assert_equal(fs.size, 0);
-    assert_equal(fs.block_size, 1);
 }
 
 define_test(file_stream_close_on_unopened_file_returns_true)

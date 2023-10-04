@@ -22,7 +22,6 @@ void init(memory_stream *stream)
 
     stream->data = nullptr;
     stream->size = 0;
-    stream->block_size = 1;
     stream->position = 0;
 }
 
@@ -106,10 +105,10 @@ bool is_ok(const memory_stream *stream)
         && (stream->position < stream->size);
 }
 
-u64 block_count(const memory_stream *stream)
+u64 block_count(const memory_stream *stream, u64 block_size)
 {
     assert(stream != nullptr);
-    return stream->size / stream->block_size;
+    return stream->size / block_size;
 }
 
 char *current(const memory_stream *stream)
@@ -120,29 +119,29 @@ char *current(const memory_stream *stream)
     return stream->data + stream->position;
 }
 
-char *current_block_start(const memory_stream *stream)
+char *current_block_start(const memory_stream *stream, u64 block_size)
 {
     assert(stream != nullptr);
     assert(stream->data != nullptr);
-    assert(stream->block_size > 0);
+    assert(block_size > 0);
 
-    return stream->data + ((stream->position / stream->block_size) * stream->block_size);
+    return stream->data + ((stream->position / block_size) * block_size);
 }
 
-u64 current_block_number(const memory_stream *stream)
+u64 current_block_number(const memory_stream *stream, u64 block_size)
 {
     assert(stream != nullptr);
-    assert(stream->block_size > 0);
+    assert(block_size > 0);
 
-    return stream->position / stream->block_size;
+    return stream->position / block_size;
 }
 
-u64 current_block_offset(const memory_stream *stream)
+u64 current_block_offset(const memory_stream *stream, u64 block_size)
 {
     assert(stream != nullptr);
-    assert(stream->block_size > 0);
+    assert(block_size > 0);
 
-    return (stream->position / stream->block_size) * stream->block_size;
+    return (stream->position / block_size) * block_size;
 }
 
 void seek(memory_stream *stream, u64 pos)
@@ -194,38 +193,38 @@ void seek_from_end(memory_stream *stream, s64 offset)
         stream->position = stream->size;
 }
 
-void seek_block(memory_stream *stream, u64 nth_block)
+void seek_block(memory_stream *stream, u64 nth_block, u64 block_size)
 {
     assert(stream != nullptr);
     
-    seek(stream, nth_block * stream->block_size);
+    seek(stream, nth_block * block_size);
 }
 
-int seek_block(memory_stream *stream, s64 nth_block, int whence)
+int seek_block(memory_stream *stream, s64 nth_block, u64 block_size, int whence)
 {
     assert(stream != nullptr);
 
     if (whence != SEEK_CUR)
-        return seek(stream, nth_block * stream->block_size, whence);
+        return seek(stream, nth_block * block_size, whence);
 
     // SEEK_CUR
-    u64 cur = (stream->position / stream->block_size) * stream->block_size;
-    return seek(stream, cur + nth_block * stream->block_size, SEEK_SET);
+    u64 cur = (stream->position / block_size) * block_size;
+    return seek(stream, cur + nth_block * block_size, SEEK_SET);
 }
 
-void seek_block_offset(memory_stream *stream, s64 nth_block)
+void seek_block_offset(memory_stream *stream, s64 nth_block, u64 block_size)
 {
     assert(stream != nullptr);
     
-    u64 cur = (stream->position / stream->block_size) * stream->block_size;
-    seek(stream, cur + nth_block * stream->block_size);
+    u64 cur = (stream->position / block_size) * block_size;
+    seek(stream, cur + nth_block * block_size);
 }
 
-void seek_block_from_end(memory_stream *stream, s64 nth_block)
+void seek_block_from_end(memory_stream *stream, s64 nth_block, u64 block_size)
 {
     assert(stream != nullptr);
     
-    seek_from_end(stream, nth_block * stream->block_size);
+    seek_from_end(stream, nth_block * block_size);
 }
 
 void seek_next_alignment(memory_stream *stream, u64 alignment)
@@ -315,45 +314,45 @@ u64 read_at(memory_stream *stream, void *out, u64 offset, u64 size, u64 nmemb)
     return read(stream, out, size, nmemb);
 }
 
-u64 read_block(memory_stream *stream, void *out)
+u64 read_block(memory_stream *stream, void *out, u64 block_size)
 {
     assert(stream != nullptr);
     assert(stream->data != nullptr);
     assert(out != nullptr);
     assert(stream->position < stream->size);
 
-    return read(stream, out, stream->block_size);
+    return read(stream, out, block_size);
 }
 
-u64 read_block(memory_stream *stream, void *out, u64 nth_block)
+u64 read_block(memory_stream *stream, void *out, u64 nth_block, u64 block_size)
 {
     assert(stream != nullptr);
     assert(stream->data != nullptr);
     assert(out != nullptr);
 
-    seek_block(stream, nth_block);
-    return read(stream, out, stream->block_size);
+    seek_block(stream, nth_block, block_size);
+    return read(stream, out, block_size);
 }
 
-u64 read_blocks(memory_stream *stream, void *out, u64 block_count)
-{
-    assert(stream != nullptr);
-    assert(stream->data != nullptr);
-    assert(out != nullptr);
-    assert(stream->position < stream->size);
-
-    return read(stream, out, stream->block_size, block_count);
-}
-
-u64 read_blocks(memory_stream *stream, void *out, u64 nth_block, u64 block_count)
+u64 read_blocks(memory_stream *stream, void *out, u64 block_count, u64 block_size)
 {
     assert(stream != nullptr);
     assert(stream->data != nullptr);
     assert(out != nullptr);
     assert(stream->position < stream->size);
 
-    seek_block(stream, nth_block);
-    return read(stream, out, stream->block_size, block_count);
+    return read(stream, out, block_size, block_count);
+}
+
+u64 read_blocks(memory_stream *stream, void *out, u64 nth_block, u64 block_count, u64 block_size)
+{
+    assert(stream != nullptr);
+    assert(stream->data != nullptr);
+    assert(out != nullptr);
+    assert(stream->position < stream->size);
+
+    seek_block(stream, nth_block, block_size);
+    return read(stream, out, block_size, block_count);
 }
 
 u64 copy_entire_stream(memory_stream *stream, void *out, u64 max_size)
@@ -456,44 +455,44 @@ u64 write_at(memory_stream *stream, const char *str, u64 offset)
     return write_at(stream, str, write_size, offset);
 }
 
-u64 write_block(memory_stream *stream, const void *in)
+u64 write_block(memory_stream *stream, const void *in, u64 block_size)
 {
     assert(stream != nullptr);
     assert(stream->data != nullptr);
     assert(in != nullptr);
     assert(stream->position < stream->size);
 
-    return write(stream, in, stream->block_size);
+    return write(stream, in, block_size);
 }
 
-u64 write_block(memory_stream *stream, const void *in, u64 nth_block)
+u64 write_block(memory_stream *stream, const void *in, u64 nth_block, u64 block_size)
 {
     assert(stream != nullptr);
     assert(stream->data != nullptr);
     assert(in != nullptr);
 
-    seek_block(stream, nth_block);
-    return write(stream, in, stream->block_size);
+    seek_block(stream, nth_block, block_size);
+    return write(stream, in, block_size);
 }
 
-u64 write_blocks(memory_stream *stream, const void *in, u64 block_count)
+u64 write_blocks(memory_stream *stream, const void *in, u64 block_count, u64 block_size)
 {
     assert(stream != nullptr);
     assert(stream->data != nullptr);
     assert(in != nullptr);
     assert(stream->position < stream->size);
 
-    return write(stream, in, stream->block_size, block_count);
+    return write(stream, in, block_size, block_count);
 }
 
-u64 write_blocks(memory_stream *stream, const void *in, u64 nth_block, u64 block_count)
+u64 write_blocks(memory_stream *stream, const void *in, u64 nth_block, u64 block_count, u64 block_size)
 {
     assert(stream != nullptr);
     assert(stream->data != nullptr);
     assert(in != nullptr);
 
-    seek_block(stream, nth_block);
-    return write(stream, in, stream->block_size, block_count);
+    seek_block(stream, nth_block, block_size);
+    return write(stream, in, block_size, block_count);
 }
 
 hash_t hash(const memory_stream *stream)

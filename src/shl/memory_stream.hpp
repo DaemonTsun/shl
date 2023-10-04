@@ -26,7 +26,6 @@ struct memory_stream
 {
     char *data;
     u64 size;
-    u64 block_size; // TODO: get rid of this
     u64 position;
 
     explicit operator char*() const;
@@ -43,21 +42,21 @@ bool is_at_end(const memory_stream *stream);
 // is_open && !is_at_end
 bool is_ok(const memory_stream *stream);
 
-u64 block_count(const memory_stream *stream);
+u64 block_count(const memory_stream *stream, u64 block_size);
 // returns a pointer in the data at the current position
 char *current(const memory_stream *stream);
-char *current_block_start(const memory_stream *stream);
-u64 current_block_number(const memory_stream *stream);
-u64 current_block_offset(const memory_stream *stream);
+char *current_block_start(const memory_stream *stream, u64 block_size);
+u64 current_block_number(const memory_stream *stream, u64 block_size);
+u64 current_block_offset(const memory_stream *stream, u64 block_size);
 
 void seek(memory_stream *stream, u64 position);
 int seek(memory_stream *stream, s64 offset, int whence);
 void seek_offset(memory_stream *stream, s64 offset);
 void seek_from_end(memory_stream *stream, s64 offset);
-void seek_block(memory_stream *stream, u64 nth_block);
-int seek_block(memory_stream *stream, s64 nth_block, int whence);
-void seek_block_offset(memory_stream *stream, s64 nth_block);
-void seek_block_from_end(memory_stream *stream, s64 nth_block);
+void seek_block(memory_stream *stream, u64 nth_block, u64 block_size);
+int seek_block(memory_stream *stream, s64 nth_block, u64 block_size, int whence);
+void seek_block_offset(memory_stream *stream, s64 nth_block, u64 block_size);
+void seek_block_from_end(memory_stream *stream, s64 nth_block, u64 block_size);
 // seeks to next alignment if unaligned or does nothing if aligned
 void seek_next_alignment(memory_stream *stream, u64 alignment);
 u64 tell(memory_stream *stream);
@@ -87,11 +86,11 @@ u64 read_at(memory_stream *stream, T *out, u64 offset)
 }
 
 // returns bytes read
-u64 read_block(memory_stream *stream, void *out);
-u64 read_block(memory_stream *stream, void *out, u64 nth_block);
+u64 read_block(memory_stream *stream, void *out, u64 block_size);
+u64 read_block(memory_stream *stream, void *out, u64 nth_block, u64 block_size);
 // returns number of items read
-u64 read_blocks(memory_stream *stream, void *out, u64 block_count);
-u64 read_blocks(memory_stream *stream, void *out, u64 nth_block, u64 block_count);
+u64 read_blocks(memory_stream *stream, void *out, u64 block_count, u64 block_size);
+u64 read_blocks(memory_stream *stream, void *out, u64 nth_block, u64 block_count, u64 block_size);
 
 u64 copy_entire_stream(memory_stream *stream, void *out, u64 max_size = -1u);
 
@@ -117,10 +116,10 @@ u64 write_at(memory_stream *stream, const T *in, u64 offset)
     return write_at(stream, in, offset, sizeof(T));
 }
 
-u64 write_block(memory_stream *stream, const void *in);
-u64 write_block(memory_stream *stream, const void *in, u64 nth_block);
-u64 write_blocks(memory_stream *stream, const void *in, u64 block_count);
-u64 write_blocks(memory_stream *stream, const void *in, u64 nth_block, u64 block_count);
+u64 write_block(memory_stream *stream, const void *in, u64 block_size);
+u64 write_block(memory_stream *stream, const void *in, u64 nth_block, u64 block_size);
+u64 write_blocks(memory_stream *stream, const void *in, u64 block_count, u64 block_size);
+u64 write_blocks(memory_stream *stream, const void *in, u64 nth_block, u64 block_count, u64 block_size);
 
 // get does not perform memcpy
 template<typename T>

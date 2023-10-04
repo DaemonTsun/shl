@@ -30,7 +30,6 @@ struct file_stream
 {
     FILE *handle;
     u64 size;
-    u64 block_size; // TODO: get rid of this
 
     explicit operator FILE*() const;
 };
@@ -49,10 +48,10 @@ bool is_ok(file_stream *stream);
 
 // this calculates and sets the size of the stream
 s64 calculate_file_size(file_stream *stream, error *err = nullptr);
-u64 block_count(const file_stream *stream);
+u64 block_count(const file_stream *stream, u64 block_size);
 
 int seek(file_stream *stream, s64 offset, int whence = SEEK_SET, error *err = nullptr);
-int seek_block(file_stream *stream, s64 nth_block, int whence = SEEK_SET, error *err = nullptr);
+int seek_block(file_stream *stream, s64 nth_block, u64 block_size, int whence = SEEK_SET, error *err = nullptr);
 int seek_next_alignment(file_stream *stream, u64 alignment, error *err = nullptr);
 s64 tell(file_stream *stream, error *err = nullptr);
 bool getpos(file_stream *stream, fpos_t *pos);
@@ -81,11 +80,11 @@ u64 read_at(file_stream *stream, T *out, u64 offset)
 }
 
 // returns bytes read
-u64 read_block(file_stream *stream, void *out);
-u64 read_block(file_stream *stream, void *out, u64 nth_block);
+u64 read_block(file_stream *stream, void *out, u64 block_size);
+u64 read_block(file_stream *stream, void *out, u64 nth_block, u64 block_size);
 // returns number of items read
-u64 read_blocks(file_stream *stream, void *out, u64 block_count);
-u64 read_blocks(file_stream *stream, void *out, u64 nth_block, u64 block_count);
+u64 read_blocks(file_stream *stream, void *out, u64 block_count, u64 block_size);
+u64 read_blocks(file_stream *stream, void *out, u64 nth_block, u64 block_count, u64 block_size);
 
 // uses stream->size, make sure its set and out has enough space
 u64 read_entire_file(file_stream *stream, void *out, u64 max_size = -1u, error *err = nullptr);
@@ -112,10 +111,10 @@ u64 write_at(file_stream *stream, const T *in, u64 offset)
     return write_at(stream, in, offset, sizeof(T));
 }
 
-u64 write_block(file_stream *stream, const void *in);
-u64 write_block(file_stream *stream, const void *in, u64 nth_block);
-u64 write_blocks(file_stream *stream, const void *in, u64 block_count);
-u64 write_blocks(file_stream *stream, const void *in, u64 nth_block, u64 block_count);
+u64 write_block(file_stream *stream, const void *in, u64 block_size);
+u64 write_block(file_stream *stream, const void *in, u64 nth_block, u64 block_size);
+u64 write_blocks(file_stream *stream, const void *in, u64 block_count, u64 block_size);
+u64 write_blocks(file_stream *stream, const void *in, u64 nth_block, u64 block_count, u64 block_size);
 
 // printf, not format.hpp
 // use tprint(stream->handle, fmt, ...) to use format.hpp format.

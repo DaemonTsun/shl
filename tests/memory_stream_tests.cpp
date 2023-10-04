@@ -14,7 +14,6 @@ define_test(memory_stream_initializes)
 
     assert_equal(mem.data, nullptr);
     assert_equal(mem.size, 0);
-    assert_equal(mem.block_size, 1);
     assert_equal(mem.position, 0);
 }
 
@@ -28,7 +27,6 @@ define_test(memory_stream_open_opens_new_stream)
 
     assert_not_equal(mem.data, nullptr);
     assert_equal(mem.size, 16);
-    assert_equal(mem.block_size, 1);
     assert_equal(mem.position, 0);
 
     close(&mem);
@@ -86,13 +84,10 @@ define_test(memory_stream_block_count_returns_block_count)
 
     init(&mem); // inits block_count to 1
     assert_equal(open(&mem, 16), true);
-    assert_equal(block_count(&mem), 16);
+    assert_equal(block_count(&mem, 1), 16);
 
-    mem.block_size = 2;
-    assert_equal(block_count(&mem), 8);
-
-    mem.block_size = 4;
-    assert_equal(block_count(&mem), 4);
+    assert_equal(block_count(&mem, 2), 8);
+    assert_equal(block_count(&mem, 4), 4);
 
     close(&mem);
 }
@@ -117,15 +112,14 @@ define_test(memory_stream_current_block_start_returns_start_of_current_block)
 
     init(&mem); // inits block_count to 1
     assert_equal(open(&mem, 16), true);
-    assert_equal(current_block_start(&mem), mem.data);
+    assert_equal(current_block_start(&mem, 1), mem.data);
 
-    mem.block_size = 4;
     seek(&mem, 2);
-    assert_equal(current_block_start(&mem), mem.data + 0);
+    assert_equal(current_block_start(&mem, 4), mem.data + 0);
     seek(&mem, 4);
-    assert_equal(current_block_start(&mem), mem.data + 4);
+    assert_equal(current_block_start(&mem, 4), mem.data + 4);
     seek(&mem, 6);
-    assert_equal(current_block_start(&mem), mem.data + 4);
+    assert_equal(current_block_start(&mem, 4), mem.data + 4);
 
     close(&mem);
 }
@@ -163,20 +157,19 @@ define_test(memory_stream_seek_block_seeks_block)
     init(&mem); // inits block_count to 1
     assert_equal(open(&mem, 16), true);
 
-    mem.block_size = 4;
-    seek_block(&mem, 0);
+    seek_block(&mem, 0, 4);
     assert_equal(mem.position, 0);
 
-    seek_block(&mem, 1);
+    seek_block(&mem, 1, 4);
     assert_equal(mem.position, 4);
 
-    seek_block(&mem, 1);
+    seek_block(&mem, 1, 4);
     assert_equal(mem.position, 4);
 
-    assert_equal(seek_block(&mem, 1, SEEK_CUR), 0);
+    assert_equal(seek_block(&mem, 1, 4, SEEK_CUR), 0);
     assert_equal(mem.position, 8);
 
-    seek_block(&mem, 20);
+    seek_block(&mem, 20, 4);
     assert_equal(mem.position, 16);
 
     close(&mem);
