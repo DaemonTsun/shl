@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "shl/number_types.hpp"
+
 template<typename T>
 constexpr inline T const_log2(T x)
 {
@@ -118,7 +120,9 @@ constexpr inline T1 rotr(const T1 &a, T2 places)
 template<typename T>
 constexpr inline T bitmask(T from, T to)
 {
-    return (((1 << (1 + to)) - 1) ^ ((1 << (from)) - 1));
+    T upper = (sizeof(T) * 8 - 1 <= to)   ? max_value(T) : ((1 << (1 + to)) - 1);
+    T lower = (sizeof(T) * 8 - 1 <= from) ? max_value(T) : ((1 << (from))   - 1);
+    return upper ^ lower;
 }
 
 // generates bitmask between binary values from and to.
@@ -141,6 +145,6 @@ constexpr inline T bitmask_between_values(T from, T to)
 template<typename T, typename TBit>
 constexpr inline T bitrange(const T &val, TBit from, TBit to)
 {
-    return static_cast<T>((val & bitmask(from, to)) >> from);
+    return static_cast<T>((val & bitmask((u32)from, (u32)to)) >> from);
 }
 
