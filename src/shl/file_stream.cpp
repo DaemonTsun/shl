@@ -1,8 +1,12 @@
 
+// v1.2
+// add error handling
 // v1.1
 // add seek_next_alignment
 
 #include <assert.h>
+#include <string.h>
+#include <errno.h>
 #include <stdarg.h>
 #include "shl/file_stream.hpp"
 #include "shl/platform.hpp"
@@ -26,35 +30,41 @@ void init(file_stream *stream)
     stream->block_size = 1;
 }
 
-bool open(file_stream *stream, const char *path, const char *mode, bool check_open, bool calc_size)
+bool open(file_stream *stream, const char *path, const char *mode, bool check_open_and_close, bool calc_size, error *err)
 {
     assert(stream != nullptr);
 
-    if (check_open && !close(stream))
+    if (check_open_and_close && !close(stream, err))
         return false;
 
     assert(path != nullptr);
     assert(mode != nullptr);
 
 #if Windows
-    errno_t err = fopen_s(&stream->handle, path, mode);
+    errno_t errcode = fopen_s(&stream->handle, path, mode);
 
     if (err != 0)
+    {
+        get_error(err, "could not open file '%s' (stream %p): %s", path, stream, strerror(errcode));
         return false;
+    }
 #else
     stream->handle = fopen(path, mode);
 #endif
 
     if (stream->handle == nullptr)
+    {
+        get_error(err, "could not open file '%s' (stream %p): %s", path, stream, strerror(errno));
         return false;
+    }
 
     if (calc_size)
-        calculate_file_size(stream);
+        calculate_file_size(stream, err);
 
     return true;
 }
 
-bool close(file_stream *stream)
+bool close(file_stream *stream, error *err)
 {
     assert(stream != nullptr);
 
@@ -64,7 +74,10 @@ bool close(file_stream *stream)
     bool ret = fclose(stream->handle) == 0;
 
     if (!ret)
+    {
+        get_error(err, "could not close file stream %p (FILE %p): %s", stream, stream->handle, strerror(errno));
         return ret;
+    }
 
     stream->handle = nullptr;
 
@@ -111,17 +124,28 @@ bool is_ok(file_stream *stream)
         && (ferror(stream->handle) == 0);
 }
 
-u64 calculate_file_size(file_stream *stream)
+s64 calculate_file_size(file_stream *stream, error *err)
 {
     assert(stream != nullptr);
     assert(stream->handle != nullptr);
 
-    u64 curpos = tell(stream);
-    seek(stream, 0, SEEK_END);
-    u64 sz = tell(stream);
+    s64 curpos = tell(stream, err);
+
+    if (curpos < 0)
+        return -1;
+
+    if (seek(stream, 0, SEEK_END, err) < 0)
+        return -1;
+
+    s64 sz = tell(stream, err);
+
+    if (sz < 0)
+        return sz;
+
+    // if this one fails we're just screwed
     seek(stream, curpos);
 
-    stream->size = sz;
+    stream->size = (u64)sz;
     return sz;
 }
 
@@ -131,15 +155,20 @@ u64 block_count(const file_stream *stream)
     return stream->size / stream->block_size;
 }
 
-int seek(file_stream *stream, s64 offset, int whence)
+int seek(file_stream *stream, s64 offset, int whence, error *err)
 {
     assert(stream != nullptr);
     assert(stream->handle != nullptr);
 
-    return fseeko(stream->handle, offset, whence);
+    int ret = fseeko(stream->handle, offset, whence);
+
+    if (ret < 0)
+        get_error(err, "could not seek file stream %p (FILE %p): %s", stream, stream->handle, strerror(errno));
+
+    return ret;
 }
 
-int seek_block(file_stream *stream, s64 nth_block, int whence)
+int seek_block(file_stream *stream, s64 nth_block, int whence, error *err)
 {
     assert(stream != nullptr);
     assert(stream->handle != nullptr);
@@ -148,31 +177,49 @@ int seek_block(file_stream *stream, s64 nth_block, int whence)
     u64 block_pos = nth_block * bs;
 
     if (whence != SEEK_CUR)
-        return fseeko(stream->handle, block_pos, whence);
+        return seek(stream, block_pos, whence, err);
 
     // SEEK_CUR
-    u64 cur = (ftello(stream->handle) / bs) * bs;
-    return fseeko(stream->handle, cur + block_pos, SEEK_SET);
+    s64 cur = tell(stream, err);
+
+    if (cur < 0)
+        return -1;
+
+    s64 cur_block = (cur / bs) * bs;
+
+    return seek(stream, cur_block + block_pos, SEEK_SET, err);
 }
 
-int seek_next_alignment(file_stream *stream, u64 alignment)
+int seek_next_alignment(file_stream *stream, u64 alignment, error *err)
 {
     assert(stream != nullptr);
     assert(stream->handle != nullptr);
     assert(alignment > 0);
 
-    u64 npos = tell(stream);
+    s64 npos = tell(stream, err);
+
+    if (npos < 0)
+        return -1;
+
     npos = (npos + alignment - 1) / alignment * alignment;
 
-    return fseeko(stream->handle, npos, SEEK_SET);
+    return seek(stream, npos, SEEK_SET, err);
 }
 
-u64 tell(file_stream *stream)
+s64 tell(file_stream *stream, error *err)
 {
     assert(stream != nullptr);
     assert(stream->handle != nullptr);
 
-    return ftello(stream->handle);
+    s64 ret = ftello(stream->handle);
+
+    if (ret < 0)
+    {
+        get_error(err, "could not seek file stream %p (FILE %p): %s", stream, stream->handle, strerror(errno));
+        return -1;
+    }
+
+    return ret;
 }
 
 bool getpos(file_stream *stream, fpos_t *pos)
@@ -184,12 +231,12 @@ bool getpos(file_stream *stream, fpos_t *pos)
     return fgetpos(stream->handle, pos) == 0;
 }
 
-bool rewind(file_stream *stream)
+bool rewind(file_stream *stream, error *err)
 {
     assert(stream != nullptr);
     assert(stream->handle != nullptr);
     
-    return fseeko(stream->handle, 0L, SEEK_SET) == 0;
+    return seek(stream, 0L, SEEK_SET, err) == 0;
 }
 
 u64 read(file_stream *stream, void *out, u64 size)
@@ -247,7 +294,9 @@ u64 read_block(file_stream *stream, void *out, u64 nth_block)
 {
     assert(out != nullptr);
     
-    seek_block(stream, nth_block, SEEK_SET);
+    if (seek_block(stream, nth_block, SEEK_SET) < 0)
+        return 0;
+
     return fread(out, 1, stream->block_size, stream->handle);
 }
 
@@ -264,26 +313,41 @@ u64 read_blocks(file_stream *stream, void *out, u64 nth_block, u64 block_count)
 {
     assert(out != nullptr);
 
-    seek_block(stream, nth_block, SEEK_SET);
+    if (seek_block(stream, nth_block, SEEK_SET) < 0)
+        return 0;
+
     return fread(out, stream->block_size, block_count, stream->handle);
 }
 
-u64 read_entire_file(file_stream *stream, void *out, u64 max_size)
+u64 read_entire_file(file_stream *stream, void *out, u64 max_size, error *err)
 {
     assert(stream != nullptr);
     assert(stream->handle != nullptr);
     assert(out != nullptr);
-    
-    u64 old_pos = ftello(stream->handle);
-    fseeko(stream->handle, 0, SEEK_SET);
 
     u64 sz = stream->size;
 
     if (sz > max_size)
         sz = max_size;
 
+    if (sz == 0)
+    {
+        err->what = nullptr;
+        return 0;
+    }
+    
+    s64 old_pos = tell(stream, err);
+
+    if (old_pos < 0)
+        return 0;
+
+    if (seek(stream, 0, SEEK_SET, err) < 0) 
+        return 0;
+
     u64 ret = fread(out, 1, sz, stream->handle);
-    fseeko(stream->handle, old_pos, SEEK_SET);
+
+    if (seek(stream, old_pos, SEEK_SET, err))
+        return 0;
 
     return ret;
 }
@@ -409,7 +473,18 @@ int format(file_stream *stream, const char *format_string, ...)
     return ret;
 }
 
-int flush(file_stream *stream)
+int flush(file_stream *stream, error *err)
 {
-    return fflush(stream->handle);
+    assert(stream != nullptr);
+    assert(stream->handle != nullptr);
+
+    int ret = fflush(stream->handle);
+    
+    if (ret != 0)
+    {
+        get_error(err, "could not flush file stream %p (FILE %p): %s", stream, stream->handle, strerror(errno));
+        return -1;
+    }
+
+    return ret;
 }

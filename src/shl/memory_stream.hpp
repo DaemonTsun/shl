@@ -20,12 +20,13 @@
 
 #include "shl/hash.hpp"
 #include "shl/number_types.hpp"
+#include "shl/error.hpp"
 
 struct memory_stream
 {
     char *data;
     u64 size;
-    u64 block_size;
+    u64 block_size; // TODO: get rid of this
     u64 position;
 
     explicit operator char*() const;
@@ -33,8 +34,8 @@ struct memory_stream
 
 void init(memory_stream *stream);
 
-bool open(memory_stream *stream, u64 size, bool check_open = false, bool free_on_close = true);
-bool open(memory_stream *stream, char *in, u64 size, bool check_open = false, bool free_on_close = true);
+bool open(memory_stream *stream, u64 size, bool check_open_and_close = false, bool free_on_close = true, error *err = nullptr);
+bool open(memory_stream *stream, char *in, u64 size, bool check_open_and_close = false, bool free_on_close = true, error *err = nullptr);
 bool close(memory_stream *stream, bool free = true);
 bool is_open(const memory_stream *stream);
 bool is_at_end(const memory_stream *stream);

@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #include "shl/memory_stream.hpp"
 
@@ -25,17 +26,20 @@ void init(memory_stream *stream)
     stream->position = 0;
 }
 
-bool open(memory_stream *stream, u64 size, bool check_open, bool free_on_close)
+bool open(memory_stream *stream, u64 size, bool check_open_and_close, bool free_on_close, error *err)
 {
     assert(stream != nullptr);
     
-    if (check_open && !close(stream, free_on_close))
+    if (check_open_and_close && !close(stream, free_on_close))
         return false;
 
     stream->data = reinterpret_cast<char*>(malloc(size));
 
     if (stream->data == nullptr)
+    {
+        get_error(err, "could not open memory stream %p (data %p): %s", stream, stream->data, strerror(errno));
         return false;
+    }
 
     stream->size = size;
     stream->position = 0;
@@ -43,13 +47,16 @@ bool open(memory_stream *stream, u64 size, bool check_open, bool free_on_close)
     return true;
 }
 
-bool open(memory_stream *stream, char *in, u64 size, bool check_open, bool free_on_close)
+bool open(memory_stream *stream, char *in, u64 size, bool check_open_and_close, bool free_on_close, error *err)
 {
     assert(stream != nullptr);
     assert(in != nullptr);
     
-    if (check_open && !close(stream, free_on_close))
+    if (check_open_and_close && !close(stream, free_on_close))
+    {
+        get_error(err, "could not close memory stream %p (data %p)", stream, stream->data);
         return false;
+    }
 
     stream->data = in;
 
