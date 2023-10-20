@@ -34,7 +34,7 @@ void free_memory(void *ptr)
     ::free(ptr);
 }
 
-void fill_memory(void *ptr, u64 size, u8 byte)
+void fill_memory(void *ptr, u8 byte, u64 size)
 {
     ::memset(ptr, (int)byte, size);
 }

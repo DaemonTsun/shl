@@ -42,17 +42,17 @@ void free_memory(T *ptr)
     free_memory(reinterpret_cast<void*>(ptr));
 }
 
-void fill_memory(void *ptr, u64 size, u8 byte);
+void fill_memory(void *ptr, u8 byte, u64 size);
 
 template<typename T>
 void fill_memory(T *ptr, u8 byte)
 {
-    fill_memory(reinterpret_cast<void*>(ptr), sizeof(T), byte);
+    fill_memory(reinterpret_cast<void*>(ptr), byte, sizeof(T));
 }
 
 template<typename T>
-void fill_memory(T *ptr, u64 count, u8 byte)
+void fill_memory(T *ptr, u8 byte, u64 count)
 {
-    fill_memory(reinterpret_cast<void*>(ptr), count * sizeof(T), byte);
+    fill_memory(reinterpret_cast<void*>(ptr), byte, count * sizeof(T));
 }
 

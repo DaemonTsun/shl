@@ -148,7 +148,7 @@ chunk<T, N> *add_chunk(chunk_array<T, N> *arr)
     ret->index = (u32)(arr->all_chunks.size - 1);
     ret->used_count = 0;
 
-    fill_memory(ret->used, N, 0x00);
+    fill_memory(ret->used, 0x00, N);
 
     return ret;
 }
