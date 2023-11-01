@@ -35,6 +35,26 @@ insert_elements(*arr, pos, N) inserts N elements at position pos in the array.
                               then returns a pointer to where the elements
                               were inserted.
 
+add_range(*arr, *Elems, N) adds N elements from Elems at the end of arr.
+                           if Elems is nullptr, returns nullptr,
+                           if N is 0, returns nullptr,
+                           otherwise, returns pointer to the inserted elements
+                           within arr.
+
+add_range(*arr, *arr2) overload of add_range that adds all elements of arr2 to the
+                       end of arr.
+
+insert_range(*arr, pos, *Elems, N) adds N elements from Elems into arr at position pos.
+                                   if pos == arr.size, behaves like add_range(arr, Elems, N).
+                                   if pos > arr.size, does nothing and returns nullptr.
+                                   if Elems is nullptr, returns nullptr,
+                                   if N is 0, returns nullptr,
+                                   otherwise, returns pointer to the inserted elements
+                                   within arr.
+
+insert_range(*arr, pos, *arr2) overload of insert_range that inserts all elements of arr2
+                               into arr at position pos.
+
 remove_from_start(*arr) removes the first element from the start of the array,
                         shifting all others back. probably a heavy operation if
                         the array contains many elements. does nothing if the
@@ -243,6 +263,56 @@ T *insert_elements(array<T> *arr, u64 index, u64 n_elements)
     ::move_memory(start, new_start, elem_count * sizeof(T));
 
     return arr->data + index;
+}
+
+template<typename T>
+T *add_range(array<T> *arr, const T *elements, u64 n_elements)
+{
+    assert(arr != nullptr);
+
+    if (elements == nullptr || n_elements == 0)
+        return nullptr;
+
+    T *ret = add_elements(arr, n_elements);
+
+    ::copy_memory((const void*)elements, (void*)ret, n_elements * sizeof(T));
+
+    return ret;
+}
+
+template<typename T>
+T *add_range(array<T> *arr, const array<T> *other)
+{
+    assert(arr != nullptr);
+    assert(other != nullptr);
+    return add_range(arr, other->data, other->size);
+}
+
+template<typename T>
+T *insert_range(array<T> *arr, u64 index, const T *elements, u64 n_elements)
+{
+    assert(arr != nullptr);
+
+    if (elements == nullptr || n_elements == 0)
+        return nullptr;
+
+    T *ret = insert_elements(arr, index, n_elements);
+
+    if (ret == nullptr)
+        return ret;
+
+    ::copy_memory((const void*)elements, (void*)ret, n_elements * sizeof(T));
+
+    return ret;
+}
+
+template<typename T>
+T *insert_range(array<T> *arr, u64 index, const array<T> *other)
+{
+    assert(arr != nullptr);
+    assert(other != nullptr);
+
+    return insert_range(arr, index, other->data, other->size);
 }
 
 template<typename T>

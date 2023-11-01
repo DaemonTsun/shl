@@ -343,6 +343,232 @@ define_test(insert_elements_adds_elements_and_moves_next_elements_back2)
     free(&arr);
 }
 
+define_test(add_range_does_nothing_when_adding_nullptr)
+{
+    array<int> arr{};
+
+    add_range(&arr, (const int*)nullptr, 3);
+
+    assert_equal(arr.size, 0);
+
+    free(&arr);
+}
+
+define_test(add_range_does_nothing_when_adding_zero_elements)
+{
+    array<int> arr{};
+
+    int elems[3] = {1, 2, 3};
+
+    add_range(&arr, elems, 0);
+
+    assert_equal(arr.size, 0);
+
+    free(&arr);
+}
+
+define_test(add_range_initializes_empty_array)
+{
+    array<int> arr{};
+
+    int elems[3] = {1, 2, 3};
+
+    add_range(&arr, elems, 3);
+
+    assert_equal(arr.size, 3);
+
+    assert_equal(arr[0], 1);
+    assert_equal(arr[1], 2);
+    assert_equal(arr[2], 3);
+
+    free(&arr);
+}
+
+define_test(add_range_adds_elements_at_end)
+{
+    array<int> arr{};
+    init(&arr, 3);
+
+    arr[0] = 1;
+    arr[1] = 2;
+    arr[2] = 3;
+
+    int elems[3] = {1, 2, 3};
+
+    add_range(&arr, elems, 3);
+
+    assert_equal(arr.size, 6);
+
+    assert_equal(arr[0], 1);
+    assert_equal(arr[1], 2);
+    assert_equal(arr[2], 3);
+    assert_equal(arr[3], 1);
+    assert_equal(arr[4], 2);
+    assert_equal(arr[5], 3);
+
+    free(&arr);
+}
+
+define_test(add_range_adds_array_at_end)
+{
+    array<int> arr{};
+    init(&arr, 3);
+
+    arr[0] = 1;
+    arr[1] = 2;
+    arr[2] = 3;
+
+    array<int> arr2{};
+    init(&arr2, 2);
+
+    arr2[0] = 5;
+    arr2[1] = 6;
+
+    add_range(&arr, &arr2);
+
+    assert_equal(arr.size, 5);
+
+    assert_equal(arr[0], 1);
+    assert_equal(arr[1], 2);
+    assert_equal(arr[2], 3);
+    assert_equal(arr[3], 5);
+    assert_equal(arr[4], 6);
+
+    free(&arr2);
+    free(&arr);
+}
+
+define_test(insert_range_initializes_empty_array)
+{
+    array<int> arr{};
+
+    int elems[3] = {1, 2, 3};
+
+    insert_range(&arr, 0, elems, 3);
+
+    assert_equal(arr.size, 3);
+
+    assert_equal(arr[0], 1);
+    assert_equal(arr[1], 2);
+    assert_equal(arr[2], 3);
+
+    free(&arr);
+}
+
+define_test(insert_range_does_nothing_when_index_is_outside_array_range)
+{
+    array<int> arr{};
+
+    int elems[3] = {1, 2, 3};
+
+    insert_range(&arr, 5, elems, 3);
+
+    assert_equal(arr.size, 0);
+
+    free(&arr);
+}
+
+define_test(insert_range_inserts_range_at_end)
+{
+    array<int> arr{};
+    init(&arr, 3);
+
+    arr[0] = 1;
+    arr[1] = 2;
+    arr[2] = 3;
+
+    int elems[3] = {5, 6};
+
+    insert_range(&arr, 3, elems, 2);
+
+    assert_equal(arr.size, 5);
+
+    assert_equal(arr[0], 1);
+    assert_equal(arr[1], 2);
+    assert_equal(arr[2], 3);
+    assert_equal(arr[3], 5);
+    assert_equal(arr[4], 6);
+
+    free(&arr);
+}
+
+define_test(insert_range_inserts_range_at_start)
+{
+    array<int> arr{};
+    init(&arr, 3);
+
+    arr[0] = 1;
+    arr[1] = 2;
+    arr[2] = 3;
+
+    int elems[3] = {5, 6};
+
+    insert_range(&arr, 0, elems, 2);
+
+    assert_equal(arr.size, 5);
+
+    assert_equal(arr[0], 5);
+    assert_equal(arr[1], 6);
+    assert_equal(arr[2], 1);
+    assert_equal(arr[3], 2);
+    assert_equal(arr[4], 3);
+
+    free(&arr);
+}
+
+define_test(insert_range_inserts_range_into_array)
+{
+    array<int> arr{};
+    init(&arr, 3);
+
+    arr[0] = 1;
+    arr[1] = 2;
+    arr[2] = 3;
+
+    int elems[3] = {5, 6};
+
+    insert_range(&arr, 1, elems, 2);
+
+    assert_equal(arr.size, 5);
+
+    assert_equal(arr[0], 1);
+    assert_equal(arr[1], 5);
+    assert_equal(arr[2], 6);
+    assert_equal(arr[3], 2);
+    assert_equal(arr[4], 3);
+
+    free(&arr);
+}
+
+define_test(insert_range_inserts_array_into_array)
+{
+    array<int> arr{};
+    init(&arr, 3);
+
+    arr[0] = 1;
+    arr[1] = 2;
+    arr[2] = 3;
+
+    array<int> arr2{};
+    init(&arr2, 2);
+    
+    arr2[0] = 5;
+    arr2[1] = 6;
+
+    insert_range(&arr, 1, &arr2);
+
+    assert_equal(arr.size, 5);
+
+    assert_equal(arr[0], 1);
+    assert_equal(arr[1], 5);
+    assert_equal(arr[2], 6);
+    assert_equal(arr[3], 2);
+    assert_equal(arr[4], 3);
+
+    free(&arr2);
+    free(&arr);
+}
+
 define_test(remove_elements_does_nothing_on_empty_array)
 {
     array<int> arr;
