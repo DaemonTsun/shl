@@ -347,9 +347,10 @@ define_test(add_range_does_nothing_when_adding_nullptr)
 {
     array<int> arr{};
 
-    add_range(&arr, (const int*)nullptr, 3);
+    int *ret = add_range(&arr, (const int*)nullptr, 3);
 
     assert_equal(arr.size, 0);
+    assert_equal(ret, nullptr);
 
     free(&arr);
 }
@@ -360,9 +361,10 @@ define_test(add_range_does_nothing_when_adding_zero_elements)
 
     int elems[3] = {1, 2, 3};
 
-    add_range(&arr, elems, 0);
+    int *ret = add_range(&arr, elems, 0);
 
     assert_equal(arr.size, 0);
+    assert_equal(ret, nullptr);
 
     free(&arr);
 }
@@ -373,9 +375,10 @@ define_test(add_range_initializes_empty_array)
 
     int elems[3] = {1, 2, 3};
 
-    add_range(&arr, elems, 3);
+    int *ret = add_range(&arr, elems, 3);
 
     assert_equal(arr.size, 3);
+    assert_equal(ret, arr.data);
 
     assert_equal(arr[0], 1);
     assert_equal(arr[1], 2);
@@ -395,9 +398,10 @@ define_test(add_range_adds_elements_at_end)
 
     int elems[3] = {1, 2, 3};
 
-    add_range(&arr, elems, 3);
+    int *ret = add_range(&arr, elems, 3);
 
     assert_equal(arr.size, 6);
+    assert_equal(ret, arr.data + 3);
 
     assert_equal(arr[0], 1);
     assert_equal(arr[1], 2);
@@ -438,15 +442,50 @@ define_test(add_range_adds_array_at_end)
     free(&arr);
 }
 
+define_test(add_range_adds_slice_of_other_array)
+{
+    array<int> arr{};
+    init(&arr, 3);
+
+    arr[0] = 1;
+    arr[1] = 2;
+    arr[2] = 3;
+
+    array<int> arr2{};
+    init(&arr2, 5);
+
+    arr2[0] = 5;
+    arr2[1] = 6;
+    arr2[2] = 7;
+    arr2[3] = 8;
+    arr2[4] = 9;
+
+    // starting from index 1, 3 elements
+    add_range(&arr, &arr2, 1, 3);
+
+    assert_equal(arr.size, 6);
+
+    assert_equal(arr[0], 1);
+    assert_equal(arr[1], 2);
+    assert_equal(arr[2], 3);
+    assert_equal(arr[3], 6);
+    assert_equal(arr[4], 7);
+    assert_equal(arr[5], 8);
+
+    free(&arr2);
+    free(&arr);
+}
+
 define_test(insert_range_initializes_empty_array)
 {
     array<int> arr{};
 
     int elems[3] = {1, 2, 3};
 
-    insert_range(&arr, 0, elems, 3);
+    int *ret = insert_range(&arr, 0, elems, 3);
 
     assert_equal(arr.size, 3);
+    assert_equal(ret, arr.data);
 
     assert_equal(arr[0], 1);
     assert_equal(arr[1], 2);
@@ -461,9 +500,10 @@ define_test(insert_range_does_nothing_when_index_is_outside_array_range)
 
     int elems[3] = {1, 2, 3};
 
-    insert_range(&arr, 5, elems, 3);
+    int *ret = insert_range(&arr, 5, elems, 3);
 
     assert_equal(arr.size, 0);
+    assert_equal(ret, nullptr);
 
     free(&arr);
 }
@@ -479,9 +519,10 @@ define_test(insert_range_inserts_range_at_end)
 
     int elems[3] = {5, 6};
 
-    insert_range(&arr, 3, elems, 2);
+    int *ret = insert_range(&arr, 3, elems, 2);
 
     assert_equal(arr.size, 5);
+    assert_equal(ret, arr.data + 3);
 
     assert_equal(arr[0], 1);
     assert_equal(arr[1], 2);
@@ -503,9 +544,10 @@ define_test(insert_range_inserts_range_at_start)
 
     int elems[3] = {5, 6};
 
-    insert_range(&arr, 0, elems, 2);
+    int *ret = insert_range(&arr, 0, elems, 2);
 
     assert_equal(arr.size, 5);
+    assert_equal(ret, arr.data);
 
     assert_equal(arr[0], 5);
     assert_equal(arr[1], 6);
@@ -527,9 +569,10 @@ define_test(insert_range_inserts_range_into_array)
 
     int elems[3] = {5, 6};
 
-    insert_range(&arr, 1, elems, 2);
+    int *ret = insert_range(&arr, 1, elems, 2);
 
     assert_equal(arr.size, 5);
+    assert_equal(ret, arr.data + 1);
 
     assert_equal(arr[0], 1);
     assert_equal(arr[1], 5);
@@ -564,6 +607,40 @@ define_test(insert_range_inserts_array_into_array)
     assert_equal(arr[2], 6);
     assert_equal(arr[3], 2);
     assert_equal(arr[4], 3);
+
+    free(&arr2);
+    free(&arr);
+}
+
+define_test(insert_range_inserts_array_slice_into_array)
+{
+    array<int> arr{};
+    init(&arr, 3);
+
+    arr[0] = 1;
+    arr[1] = 2;
+    arr[2] = 3;
+
+    array<int> arr2{};
+    init(&arr2, 5);
+
+    arr2[0] = 5;
+    arr2[1] = 6;
+    arr2[2] = 7;
+    arr2[3] = 8;
+    arr2[4] = 9;
+
+    // insert at index 1, starting at index 2 in other array, 3 elements
+    insert_range(&arr, 1, &arr2, 2, 3);
+
+    assert_equal(arr.size, 6);
+
+    assert_equal(arr[0], 1);
+    assert_equal(arr[1], 7);
+    assert_equal(arr[2], 8);
+    assert_equal(arr[3], 9);
+    assert_equal(arr[4], 2);
+    assert_equal(arr[5], 3);
 
     free(&arr2);
     free(&arr);

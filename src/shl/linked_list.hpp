@@ -33,6 +33,34 @@ insert_elements(*list, pos, N) inserts N elements at position pos in the list.
                                if pos == list.size, sets list.last accordingly.
                                returns a pointer to the first node inserted.
 
+add_range(*list, *Elems, N) adds N elements from Elems at the end of the list.
+                            if Elems is nullptr, returns nullptr,
+                            if N is 0, returns nullptr,
+                            otherwise, returns pointer to the first node of the
+                            inserted elements within the list.
+
+add_range(*list, *list2) overload of add_range that adds all elements of list2 to the
+                         end of list.
+
+add_range(*list, *list2, Start, Count) adds Count elements from list2, starting at index
+                                       Start to the end of list.
+
+insert_range(*list, pos, *Elems, N) adds N elements from Elems into list at position pos.
+                                   if pos == list.size, behaves like add_range(list, Elems, N).
+                                   if pos > list.size, does nothing and returns nullptr.
+                                   if Elems is nullptr, returns nullptr,
+                                   if N is 0, returns nullptr,
+                                   otherwise, returns pointer to the first node of the
+                                   inserted elements within list.
+
+insert_range(*list, pos, *list2) overload of insert_range that inserts all elements of list2
+                                 into list at position pos.
+
+insert_range(*list, pos, *list2, Start, Count) adds Count elements from list2, starting at
+                                               index Start, to list at index pos and returns
+                                               a pointer to the node of the first inserted
+                                               element.
+
 remove_from_start(*list) removes the first element of the list, deallocating the
                          node, and sets list->first accordingly.
                          does nothing if the list is empty.
@@ -300,6 +328,124 @@ list_node<T> *insert_elements(linked_list<T> *list, u64 index, u64 n_elements)
 
     after->previous = n;
     list->size = list->size + n_elements;
+
+    return ret;
+}
+
+template<typename T>
+list_node<T> *add_range(linked_list<T> *list, const T *elements, u64 n_elements)
+{
+    assert(list != nullptr);
+
+    if (elements == nullptr || n_elements == 0)
+        return nullptr;
+
+    list_node<T> *ret = add_elements(list, n_elements);
+    list_node<T> *tmp = ret;
+
+    for (u64 i = 0; i < n_elements; ++i)
+    {
+        tmp->value = elements[i];
+        tmp = tmp->next;
+    }
+
+    return ret;
+}
+
+template<typename T>
+list_node<T> *add_range(linked_list<T> *list, const linked_list<T> *other)
+{
+    assert(list != nullptr);
+    assert(other != nullptr);
+
+    return add_range(list, other, 0, other->size);
+}
+
+template<typename T>
+list_node<T> *add_range(linked_list<T> *list, const linked_list<T> *other, u64 other_start, u64 count)
+{
+    assert(list != nullptr);
+    assert(other != nullptr);
+
+    if (other->size == 0)
+        return nullptr;
+
+    assert(other_start <= other->size);
+    assert(count <= (other->size - other_start));
+
+    list_node<T> *ret = add_elements(list, count);
+    list_node<T> *tmp = ret;
+    list_node<T> *other_tmp = nth_node(other, other_start);
+
+    for (u64 i = 0; i < count; ++i)
+    {
+        tmp->value = other_tmp->value;
+        tmp = tmp->next;
+        other_tmp = other_tmp->next;
+    }
+
+    return ret;
+}
+
+template<typename T>
+list_node<T> *insert_range(linked_list<T> *list, u64 index, const T *elements, u64 n_elements)
+{
+    assert(list != nullptr);
+
+    if (elements == nullptr || n_elements == 0)
+        return nullptr;
+
+    list_node<T> *ret = insert_elements(list, index, n_elements);
+
+    if (ret == nullptr)
+        return nullptr;
+
+    list_node<T> *tmp = ret;
+
+    for (u64 i = 0; i < n_elements; ++i)
+    {
+        tmp->value = elements[i];
+        tmp = tmp->next;
+    }
+
+    return ret;
+}
+
+template<typename T>
+list_node<T> *insert_range(linked_list<T> *list, u64 index, linked_list<T> *other)
+{
+    assert(list != nullptr);
+    assert(other != nullptr);
+
+    return insert_range(list, index, other, 0, other->size);
+}
+
+template<typename T>
+list_node<T> *insert_range(linked_list<T> *list, u64 index, linked_list<T> *other, u64 other_start, u64 count)
+{
+    assert(list != nullptr);
+    assert(other != nullptr);
+
+    if (other->size == 0)
+        return nullptr;
+
+    assert(other_start <= other->size);
+    assert(count <= (other->size - other_start));
+
+    list_node<T> *ret = insert_elements(list, index, count);
+
+    if (ret == nullptr)
+        return nullptr;
+
+    list_node<T> *tmp = ret;
+    list_node<T> *other_tmp = nth_node(other, other_start);
+
+    for (u64 i = 0; i < count; ++i)
+    {
+        tmp->value = other_tmp->value;
+        tmp = tmp->next;
+        other_tmp = other_tmp->next;
+    }
 
     return ret;
 }

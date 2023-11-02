@@ -44,6 +44,8 @@ add_range(*arr, *Elems, N) adds N elements from Elems at the end of arr.
 add_range(*arr, *arr2) overload of add_range that adds all elements of arr2 to the
                        end of arr.
 
+add_range(*arr, *arr2, Start, Count) add_range(arr, arr2->data + Start, Count)
+
 insert_range(*arr, pos, *Elems, N) adds N elements from Elems into arr at position pos.
                                    if pos == arr.size, behaves like add_range(arr, Elems, N).
                                    if pos > arr.size, does nothing and returns nullptr.
@@ -54,6 +56,8 @@ insert_range(*arr, pos, *Elems, N) adds N elements from Elems into arr at positi
 
 insert_range(*arr, pos, *arr2) overload of insert_range that inserts all elements of arr2
                                into arr at position pos.
+
+insert_range(*arr, pos, *arr2, Start, Count) insert_range(arr, pos, arr2->data + Start, Count)
 
 remove_from_start(*arr) removes the first element from the start of the array,
                         shifting all others back. probably a heavy operation if
@@ -289,6 +293,17 @@ T *add_range(array<T> *arr, const array<T> *other)
 }
 
 template<typename T>
+T *add_range(array<T> *arr, const array<T> *other, u64 other_start, u64 count)
+{
+    assert(arr != nullptr);
+    assert(other != nullptr);
+
+    assert(other_start <= other->size);
+    assert(count <= (other->size - other_start));
+    return add_range(arr, other->data + other_start, count);
+}
+
+template<typename T>
 T *insert_range(array<T> *arr, u64 index, const T *elements, u64 n_elements)
 {
     assert(arr != nullptr);
@@ -313,6 +328,17 @@ T *insert_range(array<T> *arr, u64 index, const array<T> *other)
     assert(other != nullptr);
 
     return insert_range(arr, index, other->data, other->size);
+}
+
+template<typename T>
+T *insert_range(array<T> *arr, u64 index, const array<T> *other, u64 other_start, u64 count)
+{
+    assert(arr != nullptr);
+    assert(other != nullptr);
+
+    assert(other_start <= other->size);
+    assert(count <= (other->size - other_start));
+    return insert_range(arr, index, other->data + other_start, count);
 }
 
 template<typename T>

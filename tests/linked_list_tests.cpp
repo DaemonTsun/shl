@@ -218,6 +218,324 @@ define_test(add_elements_adds_elements_to_empty_list)
     free(&list);
 }
 
+define_test(add_range_does_nothing_when_adding_nullptr)
+{
+    linked_list<int> list{};
+
+    list_node<int> *ret = add_range(&list, (const int*)nullptr, 3);
+
+    assert_equal(list.size, 0);
+    assert_equal(ret, nullptr);
+    assert_list_integrity(&list);
+
+    free(&list);
+}
+
+define_test(add_range_does_nothing_when_adding_zero_elements)
+{
+    linked_list<int> list{};
+
+    int elems[3] = {1, 2, 3};
+
+    list_node<int> *ret = add_range(&list, elems, 0);
+
+    assert_equal(list.size, 0);
+    assert_equal(ret, nullptr);
+    assert_list_integrity(&list);
+
+    free(&list);
+}
+
+define_test(add_range_initializes_empty_linked_list)
+{
+    linked_list<int> list{};
+
+    int elems[3] = {1, 2, 3};
+
+    list_node<int> *ret = add_range(&list, elems, 3);
+
+    assert_equal(list.size, 3);
+    assert_equal(ret, list.first);
+    assert_list_integrity(&list);
+
+    assert_equal(list[0], 1);
+    assert_equal(list[1], 2);
+    assert_equal(list[2], 3);
+
+    free(&list);
+}
+
+define_test(add_range_adds_elements_at_end)
+{
+    linked_list<int> list{};
+    init(&list, 3);
+
+    list[0] = 1;
+    list[1] = 2;
+    list[2] = 3;
+
+    int elems[3] = {1, 2, 3};
+
+    list_node<int> *ret = add_range(&list, elems, 3);
+
+    assert_equal(list.size, 6);
+    assert_equal(ret, nth_node(&list, 3));
+
+    assert_equal(list[0], 1);
+    assert_equal(list[1], 2);
+    assert_equal(list[2], 3);
+    assert_equal(list[3], 1);
+    assert_equal(list[4], 2);
+    assert_equal(list[5], 3);
+    assert_list_integrity(&list);
+
+    free(&list);
+}
+
+define_test(add_range_adds_linked_list_at_end)
+{
+    linked_list<int> list{};
+    init(&list, 3);
+
+    list[0] = 1;
+    list[1] = 2;
+    list[2] = 3;
+
+    linked_list<int> list2{};
+    init(&list2, 2);
+
+    list2[0] = 5;
+    list2[1] = 6;
+
+    list_node<int> *ret = add_range(&list, &list2);
+
+    assert_equal(list.size, 5);
+    assert_equal(ret, nth_node(&list, 3));
+
+    assert_equal(list[0], 1);
+    assert_equal(list[1], 2);
+    assert_equal(list[2], 3);
+    assert_equal(list[3], 5);
+    assert_equal(list[4], 6);
+    assert_list_integrity(&list);
+
+    free(&list2);
+    free(&list);
+}
+
+define_test(add_range_adds_slice_of_other_linked_list)
+{
+    linked_list<int> list{};
+    init(&list, 3);
+
+    list[0] = 1;
+    list[1] = 2;
+    list[2] = 3;
+
+    linked_list<int> list2{};
+    init(&list2, 5);
+
+    list2[0] = 5;
+    list2[1] = 6;
+    list2[2] = 7;
+    list2[3] = 8;
+    list2[4] = 9;
+
+    // starting from index 1, 3 elements
+    add_range(&list, &list2, 1, 3);
+
+    assert_equal(list.size, 6);
+
+    assert_equal(list[0], 1);
+    assert_equal(list[1], 2);
+    assert_equal(list[2], 3);
+    assert_equal(list[3], 6);
+    assert_equal(list[4], 7);
+    assert_equal(list[5], 8);
+    assert_list_integrity(&list);
+
+    free(&list2);
+    free(&list);
+}
+
+define_test(insert_range_initializes_empty_linked_list)
+{
+    linked_list<int> list{};
+
+    int elems[3] = {1, 2, 3};
+
+    list_node<int> *ret = insert_range(&list, 0, elems, 3);
+
+    assert_equal(list.size, 3);
+    assert_equal(ret, list.first);
+
+    assert_equal(list[0], 1);
+    assert_equal(list[1], 2);
+    assert_equal(list[2], 3);
+    assert_list_integrity(&list);
+
+    free(&list);
+}
+
+define_test(insert_range_does_nothing_when_index_is_outside_linked_list_range)
+{
+    linked_list<int> list{};
+
+    int elems[3] = {1, 2, 3};
+
+    list_node<int> *ret = insert_range(&list, 5, elems, 3);
+
+    assert_equal(list.size, 0);
+    assert_equal(ret, nullptr);
+    assert_list_integrity(&list);
+
+    free(&list);
+}
+
+define_test(insert_range_inserts_range_at_end)
+{
+    linked_list<int> list{};
+    init(&list, 3);
+
+    list[0] = 1;
+    list[1] = 2;
+    list[2] = 3;
+
+    int elems[3] = {5, 6};
+
+    list_node<int> *ret = insert_range(&list, 3, elems, 2);
+
+    assert_equal(list.size, 5);
+    assert_equal(ret, nth_node(&list, 3));
+
+    assert_equal(list[0], 1);
+    assert_equal(list[1], 2);
+    assert_equal(list[2], 3);
+    assert_equal(list[3], 5);
+    assert_equal(list[4], 6);
+    assert_list_integrity(&list);
+
+    free(&list);
+}
+
+define_test(insert_range_inserts_range_at_start)
+{
+    linked_list<int> list{};
+    init(&list, 3);
+
+    list[0] = 1;
+    list[1] = 2;
+    list[2] = 3;
+
+    int elems[3] = {5, 6};
+
+    list_node<int> *ret = insert_range(&list, 0, elems, 2);
+
+    assert_equal(list.size, 5);
+    assert_equal(ret, nth_node(&list, 0));
+
+    assert_equal(list[0], 5);
+    assert_equal(list[1], 6);
+    assert_equal(list[2], 1);
+    assert_equal(list[3], 2);
+    assert_equal(list[4], 3);
+    assert_list_integrity(&list);
+
+    free(&list);
+}
+
+define_test(insert_range_inserts_range_into_linked_list)
+{
+    linked_list<int> list{};
+    init(&list, 3);
+
+    list[0] = 1;
+    list[1] = 2;
+    list[2] = 3;
+
+    int elems[3] = {5, 6};
+
+    list_node<int> *ret = insert_range(&list, 1, elems, 2);
+
+    assert_equal(list.size, 5);
+    assert_equal(ret, nth_node(&list, 1));
+
+    assert_equal(list[0], 1);
+    assert_equal(list[1], 5);
+    assert_equal(list[2], 6);
+    assert_equal(list[3], 2);
+    assert_equal(list[4], 3);
+    assert_list_integrity(&list);
+
+    free(&list);
+}
+
+define_test(insert_range_inserts_linked_list_into_linked_list)
+{
+    linked_list<int> list{};
+    init(&list, 3);
+
+    list[0] = 1;
+    list[1] = 2;
+    list[2] = 3;
+
+    linked_list<int> list2{};
+    init(&list2, 2);
+    
+    list2[0] = 5;
+    list2[1] = 6;
+
+    insert_range(&list, 1, &list2);
+
+    assert_equal(list.size, 5);
+
+    assert_equal(list[0], 1);
+    assert_equal(list[1], 5);
+    assert_equal(list[2], 6);
+    assert_equal(list[3], 2);
+    assert_equal(list[4], 3);
+    assert_list_integrity(&list);
+
+    free(&list2);
+    free(&list);
+}
+
+define_test(insert_range_inserts_linked_list_slice_into_linked_list)
+{
+    linked_list<int> list{};
+    init(&list, 3);
+
+    list[0] = 1;
+    list[1] = 2;
+    list[2] = 3;
+
+    linked_list<int> list2{};
+    init(&list2, 5);
+
+    list2[0] = 5;
+    list2[1] = 6;
+    list2[2] = 7;
+    list2[3] = 8;
+    list2[4] = 9;
+
+    // insert at index 1, starting at index 2 in other linked_list, 3 elements
+    insert_range(&list, 1, &list2, 2, 3);
+
+    assert_equal(list.size, 6);
+
+    assert_equal(list[0], 1);
+    assert_equal(list[1], 7);
+    assert_equal(list[2], 8);
+    assert_equal(list[3], 9);
+    assert_equal(list[4], 2);
+    assert_equal(list[5], 3);
+    assert_list_integrity(&list);
+
+    free(&list2);
+    free(&list);
+}
+
+
 define_test(remove_elements_does_nothing_when_removing_no_elements)
 {
     linked_list<int> list;
