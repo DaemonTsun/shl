@@ -384,6 +384,49 @@ define_test(to_double_converts_to_double)
     assert_equal(to_double("500"), 500.0);
 }
 
+define_test(set_string_empty_string)
+{
+    string dst{};
+
+    assert_equal(dst.data, nullptr);
+    assert_equal(dst.size, 0);
+
+    set_string(&dst, "");
+
+    assert_equal(compare_strings(dst.data, ""), 0);
+    assert_equal(dst.size, 0);
+
+    free(&dst);
+}
+
+define_test(set_string_overwrites_string)
+{
+    string dst = "hello"_s;
+
+    assert_equal(dst.size, 5);
+
+    set_string(&dst, "bye"_cs);
+
+    assert_equal(compare_strings(dst.data, "bye"), 0);
+    assert_equal(dst.size, 3);
+
+    free(&dst);
+}
+
+define_test(set_string_overwrites_string2)
+{
+    string dst = "abc"_s;
+
+    assert_equal(dst.size, 3);
+
+    set_string(&dst, "lorem ipsum abc def"_cs);
+
+    assert_equal(compare_strings(dst.data, "lorem ipsum abc def"), 0);
+    assert_equal(dst.size, 19);
+
+    free(&dst);
+}
+
 define_test(copy_string_copies_string)
 {
     const char *str1 = "abc";

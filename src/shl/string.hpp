@@ -77,6 +77,7 @@ to_long_long(s)     you get the idea
 to_float(s)         converts the string to a float
 ...
 
+set_string(dest, src)      sets dest to a copy of src
 
 copy_string(src, dest)           copies one string to another
 copy_string(src, dest, n)        copies one string to another, up to n characters
@@ -340,6 +341,17 @@ DEFINE_DECIMAL_SIGNATURE(long double, to_long_double);
 #undef DEFINE_DECIMAL_SIGNATURE
 
 // string manipulation
+
+// sets dst to src, discarding all previous data in dst
+void set_string(string  *dst, const char    *src);
+void set_string(wstring *dst, const wchar_t *src);
+void set_string(string  *dst, const char    *src, u64 n);
+void set_string(wstring *dst, const wchar_t *src, u64 n);
+void set_string(string  *dst, const_string   src);
+void set_string(wstring *dst, const_wstring  src);
+void set_string(string  *dst, const string  *src);
+void set_string(wstring *dst, const wstring *src);
+
 char    *copy_string(const char    *src, char    *dst);
 wchar_t *copy_string(const wchar_t *src, wchar_t *dst);
 char    *copy_string(const char    *src, char    *dst, u64 n);
@@ -559,6 +571,12 @@ template<typename C>
 inline const_string_base<C> to_const_string(const C *s)
 {
     return const_string_base<C>{s, string_length(s)};
+}
+
+template<typename C>
+inline const_string_base<C> to_const_string(const C *s, u64 n)
+{
+    return const_string_base<C>{s, n};
 }
 
 template<typename C>
