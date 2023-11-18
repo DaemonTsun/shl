@@ -68,7 +68,7 @@ bool read_entire_file(file_stream *stream, string *out, error *err)
 
     init(out, sz);
 
-    if (read_entire_file(stream, out->data.data, sz, err) == 0)
+    if (read_entire_file(stream, out->data, sz, err) == 0)
         return false;
 
     return true;

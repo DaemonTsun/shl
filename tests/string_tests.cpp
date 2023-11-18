@@ -5,7 +5,7 @@
 // operators necessary for test formatting... unfortunately
 std::ostream& operator<<(std::ostream &lhs, const string &rhs)
 {
-    return lhs << rhs.data.data;
+    return lhs << rhs.data;
 }
 
 std::ostream& operator<<(std::ostream &lhs, const_string rhs)
@@ -425,7 +425,7 @@ define_test(copy_string_copies_up_to_n_characters)
 
     assert_equal(compare_strings(str, "lorem world"_cs), 0);
 
-    str.data.size = 5;
+    str.size = 5;
 
     assert_equal(compare_strings(str, "lorem"_cs), 0);
 

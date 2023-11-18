@@ -33,7 +33,7 @@ to construct a string, either use init(&str, ...) or use the _s suffix for
 string literals, such as:
 
      string mystr = "hello world!"_s;                    // copy of string literal
-     const char *cstr = static_cast<const char*>(mystr); // or mystr.data.data;
+     const char *cstr = static_cast<const char*>(mystr); // or mystr.data;
      u64 size = string_length(&mystr);
      free(&mystr);                                       // every string must be freed.
 
@@ -160,18 +160,20 @@ struct string_base
 {
     typedef C value_type;
 
-    array<C> data;
+    C *data;
+    u64 size;
+    u64 reserved_size;
 
-    operator bool() const { return data.data != nullptr; }
-    explicit operator const C *() const { return data.data; }
+    operator bool() const { return data != nullptr; }
+    explicit operator const C *() const { return data; }
 
     operator const_string_base<C>() const
     {
-        return const_string_base<C>{data.data, data.size};
+        return const_string_base<C>{data, size};
     }
 
-    C &operator[](u64 i)       { return data.data[i]; }
-    C  operator[](u64 i) const { return data.data[i]; }
+    C &operator[](u64 i)       { return data[i]; }
+    C  operator[](u64 i) const { return data[i]; }
 };
 
 typedef string_base<char>    string;
@@ -562,5 +564,5 @@ inline const_string_base<C> to_const_string(const C *s)
 template<typename C>
 inline const_string_base<C> to_const_string(const string_base<C> *s)
 {
-    return const_string_base<C>{s->data.data, s->data.size};
+    return const_string_base<C>{s->data, s->size};
 }

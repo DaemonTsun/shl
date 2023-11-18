@@ -5,11 +5,13 @@
 #define LIT(C, Literal)\
     inline_const_if(is_same(C, char), Literal##_cs, L##Literal##_cs)
 
+#define as_array_ptr(C, str) (array<C>*)(str)
+
 static const char *hex_letters      = "0123456789abcdef";
 static const char *hex_letters_caps = "0123456789ABCDEF";
 
 template<typename C>
-s64 copy_string_reverse(const C* src, C *dst, u64 size)
+s64 copy_string_reverse(const C *src, C *dst, u64 size)
 {
     u64 i = size;
 	while (i > 0)
@@ -31,7 +33,7 @@ s64 _pad_string(string_base<C> *s, C chr, s64 count, u64 offset)
     string_reserve(s, count + offset);
 
     for (s64 i = 0; i < count; ++i)
-        s->data.data[i + offset] = chr;
+        s->data[i + offset] = chr;
 
     return count;
 }
@@ -79,7 +81,7 @@ s64 _bool_to_string(string_base<C> *s, bool x, u64 offset, format_options<C> opt
     else
     {
         written += pad_string(s, opt.pad_char, opt.pad_length - 1, offset);
-        s->data.data[written + offset] = x ? '1' : '0';
+        s->data[written + offset] = x ? '1' : '0';
         written += 1;
     }
 
@@ -94,10 +96,10 @@ s64 _bool_to_string(string_base<C> *s, bool x, u64 offset, format_options<C> opt
 \
     if (Options.pad_length < 0) written += pad_string(String, Options.pad_char, -Options.pad_length - written, written + Offset);\
 \
-    if (written + Offset >= String->data.size)\
+    if (written + Offset >= String->size)\
     {\
-        String->data.size = written + Offset;\
-        String->data.data[String->data.size] = '\0';\
+        String->size = written + Offset;\
+        String->data[String->size] = '\0';\
     }\
 \
     return written;\
@@ -126,7 +128,7 @@ s64 _char_to_string(string_base<C> *s, C x, u64 offset, format_options<C> opt)
     string_reserve(s, sz);
 
     written += pad_string(s, opt.pad_char, opt.pad_length - 1, offset);
-    s->data.data[offset + written] = x;
+    s->data[offset + written] = x;
     written += 1;
 
     return written;
@@ -307,7 +309,7 @@ s64 _integer_to_string(string_base<C> *s, N x, u64 offset, format_options<C> opt
 
     i += pad_string(s, (C)'0', opt.precision - buf_size, i);
 
-    copy_string_reverse(buf, s->data.data + i, buf_size);
+    copy_string_reverse(buf, s->data + i, buf_size);
 
     i += buf_size;
 
@@ -510,7 +512,7 @@ s64 _float_to_string(string_base<C> *s, N x, u64 offset, format_options<C> opt, 
     else if (x < 0.0)
         s->data[i++] = '-';
 
-    copy_string_reverse(buf + copy_start, s->data.data + i, buf_size - copy_start);
+    copy_string_reverse(buf + copy_start, s->data + i, buf_size - copy_start);
     i += (buf_size - copy_start);
 
     return i - offset;
@@ -558,7 +560,7 @@ s64 _format(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base
 
             }
 
-            s->data.data[offset++] = fmt[i];
+            s->data[offset++] = fmt[i];
         }
         else
         {
@@ -608,7 +610,7 @@ s64 _format_skip_until_placeholder(u64 *_i, internal::_placeholder_info<C> *pl, 
         else if (c == '%')
             break;
 
-        s->data.data[offset++] = c;
+        s->data[offset++] = c;
         i++;
         written++;
     }
@@ -716,12 +718,13 @@ s64 internal::_format_skip_until_placeholder(u64 *i, _placeholder_info<wchar_t> 
 
 void internal::_get_temp_format_string(string  **s, u64 **offset)
 {
+    // TODO: implement as ring buffer
     static thread_local string _temp_string = ""_s;
     static thread_local u64    _temp_string_offset = TEMP_STRING_MAX_SIZE;
 
     if (_temp_string_offset >= TEMP_STRING_MAX_SIZE)
     {
-        resize(&_temp_string.data, TEMP_STRING_MAX_SIZE);
+        resize(as_array_ptr(string::value_type, &_temp_string), TEMP_STRING_MAX_SIZE);
         _temp_string_offset = 0;
     }
 
@@ -736,7 +739,7 @@ void internal::_get_temp_format_string(wstring **s, u64 **offset)
 
     if (_temp_string_offset >= TEMP_STRING_MAX_SIZE)
     {
-        resize(&_temp_string.data, TEMP_STRING_MAX_SIZE);
+        resize(as_array_ptr(string::value_type, &_temp_string), TEMP_STRING_MAX_SIZE);
         _temp_string_offset = 0;
     }
 

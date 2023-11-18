@@ -464,7 +464,7 @@ define_test(parsed_object_equality_test2)
     string objstr;
     init(&objstr);
     to_string(&objstr, &obj1);
-    p.input = objstr.data.data;
+    p.input = objstr.data;
     p.input_size = string_length(&objstr);
     init(&p.it);
 

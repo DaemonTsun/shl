@@ -73,12 +73,12 @@ void init(wparser *p, const_wstring  input)
 
 void init(parser    *p, const string  *input)
 {
-    _init(p, input->data.data, string_length(input));
+    _init(p, input->data, string_length(input));
 }
 
 void init(wparser *p, const wstring *input)
 {
-    _init(p, input->data.data, string_length(input));
+    _init(p, input->data, string_length(input));
 }
 
 template<typename C>

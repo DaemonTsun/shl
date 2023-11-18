@@ -7,12 +7,15 @@
 #include <wchar.h>
 
 #include "shl/memory.hpp"
+#include "shl/type_functions.hpp"
 #include "shl/compare.hpp"
 #include "shl/string.hpp"
 #include "shl/platform.hpp"
 
 #define LIT(C, Literal)\
     inline_const_if(is_same(C, char), Literal, L##Literal)
+
+#define as_array_ptr(C, str) (array<C>*)(str)
 
 #if Windows
 // https://stackoverflow.com/a/52989329
@@ -84,7 +87,7 @@ void _init(string_base<C> *str)
 {
     assert(str != nullptr);
 
-    init(&str->data);
+    init(as_array_ptr(C, str));
 }
 
 template<typename C>
@@ -92,8 +95,8 @@ void _init(string_base<C> *str, u64 size)
 {
     assert(str != nullptr);
 
-    init(&str->data, size + 1);
-    str->data.size -= 1;
+    init(as_array_ptr(C, str), size + 1);
+    str->size -= 1;
     str->data[size] = '\0';
 }
 
@@ -116,8 +119,8 @@ void _init(string_base<C> *str, const_string_base<C> cs)
 {
     assert(str != nullptr);
 
-    init(&str->data, cs.size + 1);
-    str->data.size -= 1;
+    init(as_array_ptr(C, str), cs.size + 1);
+    str->size -= 1;
     copy_string(cs, str);
     str->data[cs.size] = '\0';
 }
@@ -176,9 +179,9 @@ template<typename C>
 bool _string_reserve(string_base<C> *s, u64 total_size)
 {
     // +1 for \0
-    if (s->data.reserved_size < total_size + 1)
+    if (s->reserved_size < total_size + 1)
     {
-        reserve_exp2(&s->data, total_size + 1);
+        reserve_exp2(as_array_ptr(C, s), total_size + 1);
         return true;
     }
 
@@ -199,30 +202,30 @@ void clear(string  *str)
 {
     assert(str != nullptr);
 
-    clear(&str->data);
-    str->data.data[0] = '\0';
+    clear(as_array_ptr(string::value_type, str));
+    str->data[0] = '\0';
 }
 
 void clear(wstring *str)
 {
     assert(str != nullptr);
 
-    clear(&str->data);
-    str->data.data[0] = '\0';
+    clear(as_array_ptr(wstring::value_type, str));
+    str->data[0] = L'\0';
 }
 
 void free(string  *str)
 {
     assert(str != nullptr);
 
-    free(&str->data);
+    free(as_array_ptr(string::value_type, str));
 }
 
 void free(wstring *str)
 {
     assert(str != nullptr);
 
-    free(&str->data);
+    free(as_array_ptr(wstring::value_type, str));
 }
 
 // string / char functions
@@ -508,7 +511,7 @@ u64 string_length(const string *s)
     if (s == nullptr)
         return 0;
 
-    return s->data.size;
+    return s->size;
 }
 
 u64 string_length(const wstring *s)
@@ -516,7 +519,7 @@ u64 string_length(const wstring *s)
     if (s == nullptr)
         return 0;
 
-    return s->data.size;
+    return s->size;
 }
 
 template<typename C>
@@ -865,16 +868,16 @@ bool ends_with(const wstring *s, const wstring *suffix)
     T NAME(const wchar_t *s, wchar_t **pos, int base) { return WIDEFUNC(s, pos, base); }\
     T NAME(const_string   s, char    **pos, int base) { return FUNC(s.c_str, pos, base); }\
     T NAME(const_wstring  s, wchar_t **pos, int base) { return WIDEFUNC(s.c_str, pos, base); }\
-    T NAME(const string  *s, char    **pos, int base) { assert(s != nullptr); return FUNC(s->data.data, pos, base); }\
-    T NAME(const wstring *s, wchar_t **pos, int base) { assert(s != nullptr); return WIDEFUNC(s->data.data, pos, base); }
+    T NAME(const string  *s, char    **pos, int base) { assert(s != nullptr); return FUNC(s->data, pos, base); }\
+    T NAME(const wstring *s, wchar_t **pos, int base) { assert(s != nullptr); return WIDEFUNC(s->data, pos, base); }
 
 #define DEFINE_DECIMAL_BODY(T, NAME, FUNC, WIDEFUNC) \
     T NAME(const char    *s, char    **pos) { return FUNC(s, pos); }\
     T NAME(const wchar_t *s, wchar_t **pos) { return WIDEFUNC(s, pos); }\
     T NAME(const_string   s, char    **pos) { return FUNC(s.c_str, pos); }\
     T NAME(const_wstring  s, wchar_t **pos) { return WIDEFUNC(s.c_str, pos); }\
-    T NAME(const string  *s, char    **pos) { assert(s != nullptr); return FUNC(s->data.data, pos); }\
-    T NAME(const wstring *s, wchar_t **pos) { assert(s != nullptr); return WIDEFUNC(s->data.data, pos); }
+    T NAME(const string  *s, char    **pos) { assert(s != nullptr); return FUNC(s->data, pos); }\
+    T NAME(const wstring *s, wchar_t **pos) { assert(s != nullptr); return WIDEFUNC(s->data, pos); }
 
 DEFINE_INTEGER_BODY(int, to_int, strtol, wcstol);
 DEFINE_INTEGER_BODY(long, to_long, strtol, wcstol);
@@ -922,19 +925,19 @@ void _copy_string_cs_s(const_string_base<C> src, string_base<C> *dst, u64 n, u64
     u64 prev_size = string_length(dst);
     u64 size_needed = n + dst_offset;
 
-    if (dst->data.reserved_size < size_needed + 1)
+    if (dst->reserved_size < size_needed + 1)
         string_reserve(dst, size_needed);
 
     if (prev_size < size_needed)
     {
-        dst->data.size = size_needed;
+        dst->size = size_needed;
         append_null = true;
     }
 
-    copy_memory(src.c_str, dst->data.data + dst_offset, sizeof(C) * n);
+    copy_memory(src.c_str, dst->data + dst_offset, sizeof(C) * n);
 
     if (append_null)
-        dst->data.data[dst->data.size] = '\0';
+        dst->data[dst->size] = '\0';
 }
 
 void copy_string(const char *src, string *dst)
@@ -1105,18 +1108,18 @@ void _append_string(string_base<C> *dst, const_string_base<C> other)
     if (other.size == 0)
         return;
 
-    u64 size_left = dst->data.reserved_size - dst->data.size;
+    u64 size_left = dst->reserved_size - dst->size;
 
     if (size_left < other.size + 1)
     {
-        u64 required_space = dst->data.reserved_size + ((other.size + 1) - size_left);
+        u64 required_space = dst->reserved_size + ((other.size + 1) - size_left);
         string_reserve(dst, required_space);
     }
 
-    copy_memory(other.c_str, dst->data.data + dst->data.size, sizeof(C) * other.size);
+    copy_memory(other.c_str, dst->data + dst->size, sizeof(C) * other.size);
 
-    dst->data.size += other.size;
-    dst->data.data[dst->data.size] = '\0';
+    dst->size += other.size;
+    dst->data[dst->size] = '\0';
 }
 
 void append_string(string *dst, const char *other)
@@ -1157,19 +1160,19 @@ void _prepend_string(string_base<C> *dst, const_string_base<C> other)
     if (other.size == 0)
         return;
 
-    u64 size_left = dst->data.reserved_size - dst->data.size;
+    u64 size_left = dst->reserved_size - dst->size;
 
     if (size_left < other.size + 1)
     {
-        u64 required_space = dst->data.reserved_size + ((other.size + 1) - size_left);
+        u64 required_space = dst->reserved_size + ((other.size + 1) - size_left);
         string_reserve(dst, required_space);
     }
 
-    move_memory(dst->data.data, dst->data.data + other.size, sizeof(C) * dst->data.size);
-    copy_memory(other.c_str, dst->data.data, sizeof(C) * other.size);
+    move_memory(dst->data, dst->data + other.size, sizeof(C) * dst->size);
+    copy_memory(other.c_str, dst->data, sizeof(C) * other.size);
 
-    dst->data.size += other.size;
-    dst->data.data[dst->data.size] = '\0';
+    dst->size += other.size;
+    dst->data[dst->size] = '\0';
 }
 
 void prepend_string(string *dst, const char *other)
@@ -1432,7 +1435,7 @@ void _trim_left(string_base<C> *s)
     C c;
     while (i < len)
     {
-        c = s->data.data[i];
+        c = s->data[i];
 
         if (!(is_space(c) || c == '\0'))
             break;
@@ -1442,8 +1445,8 @@ void _trim_left(string_base<C> *s)
 
     if (i > 0)
     {
-        remove_elements(&s->data, 0, i);
-        s->data.data[s->data.size] = '\0';
+        remove_elements(as_array_ptr(C, s), 0, i);
+        s->data[s->size] = '\0';
     }
 }
 
@@ -1469,7 +1472,7 @@ void _trim_right(string_base<C> *s)
     C c;
     while (i >= 0)
     {
-        c = s->data.data[i];
+        c = s->data[i];
 
         if (!(is_space(c) || c == '\0'))
             break;
@@ -1480,8 +1483,8 @@ void _trim_right(string_base<C> *s)
     i++;
     if (i >= 0)
     {
-        remove_elements(&s->data, i, len - i);
-        s->data.data[s->data.size] = '\0';
+        remove_elements(as_array_ptr(C, s), i, len - i);
+        s->data[s->size] = '\0';
     }
 }
 
@@ -1547,8 +1550,8 @@ inline void _to_upper_s(string_base<C> *s)
 {
     assert(s != nullptr);
 
-    for (u64 i = 0; i < s->data.size; ++i)
-        s->data.data[i] = to_upper(s->data.data[i]);
+    for (u64 i = 0; i < s->size; ++i)
+        s->data[i] = to_upper(s->data[i]);
 }
 
 void to_upper(string *s)
@@ -1599,7 +1602,7 @@ inline void _to_lower_s(string_base<C> *s)
     u64 len = string_length(s);
 
     for (u64 i = 0; i < len; ++i)
-        s->data.data[i] = to_lower(s->data.data[i]);
+        s->data[i] = to_lower(s->data[i]);
 }
 
 void to_lower(string *s)
@@ -1652,7 +1655,7 @@ void _substring_cs_s(const_string_base<C> s, u64 start, u64 length, string_base<
     if (start >= s.size)
         return;
 
-    u64 outlen = out->data.reserved_size;
+    u64 outlen = out->reserved_size;
     bool append_null = false;
 
     if (out_start + length >= outlen)
@@ -1661,13 +1664,13 @@ void _substring_cs_s(const_string_base<C> s, u64 start, u64 length, string_base<
         append_null = true;
     }
 
-    copy_memory(s.c_str + start, out->data.data + out_start, sizeof(C) * length);
+    copy_memory(s.c_str + start, out->data + out_start, sizeof(C) * length);
 
-    if (out->data.size < out_start + length)
-        out->data.size = out_start + length;
+    if (out->size < out_start + length)
+        out->size = out_start + length;
 
     if (append_null)
-        out->data.data[out->data.size] = '\0';
+        out->data[out->size] = '\0';
 }
 
 void substring(const char    *s, u64 start, u64 length, string  *out)
@@ -1742,7 +1745,7 @@ void _replace_c(string_base<C> *s, C needle, C replacement, s64 offset)
     if (idx < 0)
         return;
 
-    s->data.data[idx] = replacement;
+    s->data[idx] = replacement;
 }
 
 template<typename C>
@@ -1761,10 +1764,10 @@ void _replace(string_base<C> *s, const_string_base<C> needle, const_string_base<
         u64 size_diff = needle.size - replacement.size;
         u64 remaining_size = string_length(s) - idx - needle.size;
 
-        s->data.size -= size_diff;
+        s->size -= size_diff;
 
-        move_memory(s->data.data + idx + needle.size, s->data.data + idx + replacement.size, sizeof(C) * remaining_size);
-        s->data.data[s->data.size] = '\0';
+        move_memory(s->data + idx + needle.size, s->data + idx + replacement.size, sizeof(C) * remaining_size);
+        s->data[s->size] = '\0';
     }
     else if (needle.size < replacement.size)
     {
@@ -1772,10 +1775,10 @@ void _replace(string_base<C> *s, const_string_base<C> needle, const_string_base<
         u64 remaining_size = string_length(s) - idx - needle.size;
 
         string_reserve(s, string_length(s) + size_diff);
-        s->data.size += size_diff;
+        s->size += size_diff;
 
-        move_memory(s->data.data + idx + needle.size, s->data.data + idx + replacement.size, sizeof(C) * remaining_size);
-        s->data.data[s->data.size] = '\0';
+        move_memory(s->data + idx + needle.size, s->data + idx + replacement.size, sizeof(C) * remaining_size);
+        s->data[s->size] = '\0';
     }
 
     copy_string(replacement, s, UINT64_MAX, idx);
@@ -1868,7 +1871,7 @@ void _replace_all_c(string_base<C> *s, C needle, C replacement, s64 offset)
 
     while (idx >= 0)
     {
-        s->data.data[idx] = replacement;
+        s->data[idx] = replacement;
         idx = index_of(s, needle, idx + 1);
     }
 }
@@ -1888,10 +1891,10 @@ void _replace_all(string_base<C> *s, const_string_base<C> needle, const_string_b
             u64 size_diff = needle.size - replacement.size;
             u64 remaining_size = string_length(s) - idx - needle.size;
 
-            s->data.size -= size_diff;
+            s->size -= size_diff;
 
-            move_memory(s->data.data + idx + needle.size, s->data.data + idx + replacement.size, sizeof(C) * remaining_size);
-            s->data.data[s->data.size] = '\0';
+            move_memory(s->data + idx + needle.size, s->data + idx + replacement.size, sizeof(C) * remaining_size);
+            s->data[s->size] = '\0';
         }
         else if (needle.size < replacement.size)
         {
@@ -1899,10 +1902,10 @@ void _replace_all(string_base<C> *s, const_string_base<C> needle, const_string_b
             u64 remaining_size = string_length(s) - idx - needle.size;
 
             string_reserve(s, string_length(s) + size_diff);
-            s->data.size += size_diff;
+            s->size += size_diff;
 
-            move_memory(s->data.data + idx + needle.size, s->data.data + idx + replacement.size, sizeof(C) * remaining_size);
-            s->data.data[s->data.size] = '\0';
+            move_memory(s->data + idx + needle.size, s->data + idx + replacement.size, sizeof(C) * remaining_size);
+            s->data[s->size] = '\0';
         }
 
         copy_string(replacement, s, UINT64_MAX, idx);
@@ -2209,27 +2212,27 @@ void _join_c(Str *strings, u64 count, C delim, string_base<C> *out)
     const_string_base<C> s = _to_const_string(strings + i);
     
     if (s.size > 0)
-        copy_memory(s.c_str, out->data.data + offset, sizeof(C) * s.size);
+        copy_memory(s.c_str, out->data + offset, sizeof(C) * s.size);
 
     offset += s.size;
     i++;
 
     while (i < count)
     {
-        out->data.data[offset] = delim;
+        out->data[offset] = delim;
         offset++;
 
         s = _to_const_string(strings + i);
 
         if (s.size > 0)
-            copy_memory(s.c_str, out->data.data + offset, sizeof(C) * s.size);
+            copy_memory(s.c_str, out->data + offset, sizeof(C) * s.size);
 
         offset += s.size;
         i++;
     }
 
-    out->data.size = total_size;
-    out->data.data[total_size] = 0;
+    out->size = total_size;
+    out->data[total_size] = 0;
 }
 
 template<typename Str, typename C>
@@ -2254,7 +2257,7 @@ void _join(Str *strings, u64 count, const_string_base<C> delim, string_base<C> *
     const_string_base<C> s = _to_const_string(strings + i);
     
     if (s.size > 0)
-        copy_memory(s.c_str, out->data.data + offset, sizeof(C) * s.size);
+        copy_memory(s.c_str, out->data + offset, sizeof(C) * s.size);
 
     offset += s.size;
     i++;
@@ -2262,20 +2265,20 @@ void _join(Str *strings, u64 count, const_string_base<C> delim, string_base<C> *
     while (i < count)
     {
         if (delim.size > 0)
-            copy_memory(delim.c_str, out->data.data + offset, sizeof(C) * delim.size);
+            copy_memory(delim.c_str, out->data + offset, sizeof(C) * delim.size);
 
         offset += delim.size;
         s = _to_const_string(strings + i);
 
         if (s.size > 0)
-            copy_memory(s.c_str, out->data.data + offset, sizeof(C) * s.size);
+            copy_memory(s.c_str, out->data + offset, sizeof(C) * s.size);
 
         offset += s.size;
         i++;
     }
 
-    out->data.size = total_size;
-    out->data.data[total_size] = 0;
+    out->size = total_size;
+    out->data[total_size] = 0;
 }
 
 void join(const char  **strings, u64 count, char          delim, string *out)

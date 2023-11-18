@@ -402,7 +402,7 @@ bool _parse_object_table(parser_base<C> *p, typename parsed_object_base<C>::tabl
 
     if (contains(out, &ident.value))
     {
-        get_parse_error(C, err, p, "duplicate key '%s' at " IT_FMT ", in table at " IT_FMT, ident.value.data.data, format_it(p->it), format_it(start));
+        get_parse_error(C, err, p, "duplicate key '%s' at " IT_FMT ", in table at " IT_FMT, ident.value.data, format_it(p->it), format_it(start));
         p->it = start;
         return false;
     }
@@ -468,7 +468,7 @@ bool _parse_object_table(parser_base<C> *p, typename parsed_object_base<C>::tabl
 
         if (contains(out, &ident.value))
         {
-            get_parse_error(C, err, p, "duplicate key '%s' at " IT_FMT ", in table at " IT_FMT, ident.value.data.data, format_it(p->it), format_it(start));
+            get_parse_error(C, err, p, "duplicate key '%s' at " IT_FMT ", in table at " IT_FMT, ident.value.data, format_it(p->it), format_it(start));
             p->it = start;
             return false;
         }
@@ -795,13 +795,13 @@ s64 _parsed_object_to_string(string_base<C> *s, const parsed_object_base<C> *x, 
         u64 len = string_length(&x->data._string);
         string_reserve(s, offset + 2 + len);
 
-        s->data.data[offset] = PARSE_STRING_DELIM;
+        s->data[offset] = PARSE_STRING_DELIM;
         written++;
 
         copy_string(&x->data._string, s, len, written + offset);
         written += len;
 
-        s->data.data[offset + written] = PARSE_STRING_DELIM;
+        s->data[offset + written] = PARSE_STRING_DELIM;
         written++;
         break;
     }
@@ -819,7 +819,7 @@ s64 _parsed_object_to_string(string_base<C> *s, const parsed_object_base<C> *x, 
     case parsed_object_type::List:
     {
         string_reserve(s, offset + 1);
-        s->data.data[offset] = PARSE_LIST_OPENING_BRACKET;
+        s->data[offset] = PARSE_LIST_OPENING_BRACKET;
         written++;
 
         auto *list = &x->data._list;
@@ -835,9 +835,9 @@ s64 _parsed_object_to_string(string_base<C> *s, const parsed_object_base<C> *x, 
             {
                 string_reserve(s, offset + written + 2);
 
-                s->data.data[offset + written] = PARSE_LIST_ITEM_DELIM;
+                s->data[offset + written] = PARSE_LIST_ITEM_DELIM;
                 written++;
-                s->data.data[offset + written] = ' ';
+                s->data[offset + written] = ' ';
                 written++;
 
                 written += to_string(s, &node->value, offset + written);
@@ -846,7 +846,7 @@ s64 _parsed_object_to_string(string_base<C> *s, const parsed_object_base<C> *x, 
         }
 
         string_reserve(s, offset + written + 1);
-        s->data.data[offset + written] = PARSE_LIST_CLOSING_BRACKET;
+        s->data[offset + written] = PARSE_LIST_CLOSING_BRACKET;
         written++;
 
         break;
@@ -855,7 +855,7 @@ s64 _parsed_object_to_string(string_base<C> *s, const parsed_object_base<C> *x, 
     case parsed_object_type::Table:
     {
         string_reserve(s, offset + 1);
-        s->data.data[offset] = PARSE_TABLE_OPENING_BRACKET;
+        s->data[offset] = PARSE_TABLE_OPENING_BRACKET;
         written++;
 
         auto *table = &x->data._table;
@@ -880,11 +880,11 @@ s64 _parsed_object_to_string(string_base<C> *s, const parsed_object_base<C> *x, 
                 written += to_string(s, &node->key, offset + written);
                 string_reserve(s, offset + written + 3);
 
-                s->data.data[offset + written] = ' ';
+                s->data[offset + written] = ' ';
                 written++;
-                s->data.data[offset + written] = PARSE_TABLE_KEY_VALUE_DELIM;
+                s->data[offset + written] = PARSE_TABLE_KEY_VALUE_DELIM;
                 written++;
-                s->data.data[offset + written] = ' ';
+                s->data[offset + written] = ' ';
                 written++;
 
                 written += to_string(s, &node->value, offset + written);
@@ -903,19 +903,19 @@ s64 _parsed_object_to_string(string_base<C> *s, const parsed_object_base<C> *x, 
 
                     string_reserve(s, offset + written + 2);
 
-                    s->data.data[offset + written] = PARSE_TABLE_ITEM_DELIM;
+                    s->data[offset + written] = PARSE_TABLE_ITEM_DELIM;
                     written++;
-                    s->data.data[offset + written] = ' ';
+                    s->data[offset + written] = ' ';
                     written++;
 
                     written += to_string(s, &node->key, offset + written);
                     string_reserve(s, offset + written + 3);
 
-                    s->data.data[offset + written] = ' ';
+                    s->data[offset + written] = ' ';
                     written++;
-                    s->data.data[offset + written] = PARSE_TABLE_KEY_VALUE_DELIM;
+                    s->data[offset + written] = PARSE_TABLE_KEY_VALUE_DELIM;
                     written++;
-                    s->data.data[offset + written] = ' ';
+                    s->data[offset + written] = ' ';
                     written++;
 
                     written += to_string(s, &node->value, offset + written);
@@ -926,7 +926,7 @@ s64 _parsed_object_to_string(string_base<C> *s, const parsed_object_base<C> *x, 
         }
 
         string_reserve(s, offset + written + 1);
-        s->data.data[offset + written] = PARSE_TABLE_CLOSING_BRACKET;
+        s->data[offset + written] = PARSE_TABLE_CLOSING_BRACKET;
         written++;
 
         break;
@@ -946,10 +946,10 @@ s64 _parsed_object_to_string(string_base<C> *s, const parsed_object_base<C> *x, 
 \
     if (Options.pad_length < 0) written += pad_string(String, Options.pad_char, -Options.pad_length - written, written + Offset);\
 \
-    if (written + Offset >= String->data.size)\
+    if (written + Offset >= String->size)\
     {\
-        String->data.size = written + Offset;\
-        String->data.data[String->data.size] = '\0';\
+        String->size = written + Offset;\
+        String->data[String->size] = '\0';\
     }\
 \
     return written;\

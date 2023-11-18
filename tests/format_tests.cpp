@@ -4,7 +4,7 @@
 
 std::ostream& operator<<(std::ostream &lhs, const string &rhs)
 {
-    return lhs << '"' << rhs.data.data << '"';
+    return lhs << '"' << rhs.data << '"';
 }
 
 std::ostream& operator<<(std::ostream &lhs, const_string rhs)

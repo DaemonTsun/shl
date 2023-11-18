@@ -365,10 +365,10 @@ s64 format(string_base<C> *s, u64 offset, const_string_base<C> fmt, Ts &&...args
     if (written < 0)
         return written;
 
-    if (offset + written > s->data.size)
+    if (offset + written > s->size)
     {
-        s->data.size = offset + written;
-        s->data.data[s->data.size] = '\0';
+        s->size = offset + written;
+        s->data[s->size] = '\0';
     }
 
     return written;
@@ -415,7 +415,7 @@ const_string_base<C> tformat(const_string_base<C> fmt, Ts &&...args)
     if (written < 0)
         return const_string_base<C>{nullptr, 0};
 
-    const_string_base<C> ret{s->data.data + *offset, static_cast<u64>(written)};
+    const_string_base<C> ret{s->data + *offset, static_cast<u64>(written)};
     *offset += written;
     return ret;
 }
