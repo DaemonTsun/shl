@@ -7,7 +7,8 @@
 
 #define MESSAGE_SIZE 2048
 
-const char *vformat_error(const char *format, va_list args)
+// TODO: ring buffer
+const char *vformat_error_message(const char *format, va_list args)
 {
     static char *_error = nullptr;
 
@@ -18,11 +19,11 @@ const char *vformat_error(const char *format, va_list args)
     return _error;
 }
 
-const char *format_error(const char *format, ...)
+const char *format_error_message(const char *format, ...)
 {
     va_list argptr;
     va_start(argptr, format);
-    const char *ret = vformat_error(format, argptr);
+    const char *ret = vformat_error_message(format, argptr);
     va_end(argptr);
 
     return ret;

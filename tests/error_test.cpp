@@ -4,9 +4,9 @@
 
 #include "shl/error.hpp"
 
-define_test(format_error_formats_error)
+define_test(format_error_message_formats_error_message)
 {
-    const char *err = format_error("abc %d def", 123);
+    const char *err = format_error_message("abc %d def", 123);
 
     assert_equal(strcmp(err, "abc 123 def"), 0);
 }
@@ -24,22 +24,35 @@ define_test(throw_error_throws_error)
     }
 }
 
-define_test(get_error_gets_error)
+define_test(set_error_sets_error_message)
+{
+    error err;
+    const char *msg = "hello world";
+
+    set_error(&err, msg);
+
+    assert_equal(strcmp(err.what, "hello world"), 0);
+    // directly sets the message to the pointer
+    assert_equal(err.what, msg);
+    assert_equal(err.line, 32);
+}
+
+define_test(format_error_formats_error)
 {
     error err;
 
-    get_error(&err, "xyz %d uvw", 789);
+    format_error(&err, "xyz %d uvw", 789);
 
     assert_equal(strcmp(err.what, "xyz 789 uvw"), 0);
-    assert_equal(err.line, 31);
+    assert_equal(err.line, 44);
 }
 
-define_test(get_error_does_nothing_on_nullptr)
+define_test(format_error_does_nothing_on_nullptr)
 {
     error *err = nullptr;
-    get_error(err, "xyz %d uvw", 789);
-    get_error(err, "xyz %d uvw", 789);
-    get_error(err, "xyz %d uvw", 789);
+    format_error(err, "xyz %d uvw", 789);
+    format_error(err, "xyz %d uvw", 789);
+    format_error(err, "xyz %d uvw", 789);
 
     assert_equal(err, nullptr);
 }

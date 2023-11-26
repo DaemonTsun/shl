@@ -96,12 +96,30 @@ u64 range_length(const parse_range *range);
 
 // parse error
 template<typename CharT>
-struct parse_error : public error
+struct parse_error
 {
+    const char *what;
+
+#ifndef NDEBUG
+    const char *file;
+    unsigned long line;
+#endif
+
     parse_iterator it;
     const CharT *input;
     u64 input_size;
 };
+
+#ifndef NDEBUG
+#define set_parse_error(C, ERR, Parser, MSG) \
+    do { if ((ERR) != nullptr) { *(ERR) = parse_error<C>{.what = MSG, .file = __FILE__, .line = __LINE__, .it = Parser->it, .input = Parser->input, .input_size = Parser->input_size}; } } while (0)
+#else
+#define set_parse_error(C, ERR, Parser, MSG) \
+    do { if ((ERR) != nullptr) { *(ERR) = parse_error<C>{.what = MSG, .it = Parser->it, .input = Parser->input, .input_size = Parser->input_size}; } } while (0)
+#endif
+
+#define format_parse_error(C, ERR, Parser, FMT, ...) \
+    set_parse_error(C, ERR, Parser, format_error_message(FMT __VA_OPT__(,) __VA_ARGS__))
 
 // returns true if at least one whitespace was skipped
 bool skip_whitespace(parser  *p);

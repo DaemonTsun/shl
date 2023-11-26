@@ -44,7 +44,7 @@ bool open(file_stream *stream, const char *path, const char *mode, bool check_op
 
     if (err != 0)
     {
-        get_error(err, "could not open file '%s' (stream %p): %s", path, stream, strerror(errcode));
+        format_error(err, "could not open file '%s' (stream %p): %s", path, stream, strerror(errcode));
         return false;
     }
 #else
@@ -53,7 +53,7 @@ bool open(file_stream *stream, const char *path, const char *mode, bool check_op
 
     if (stream->handle == nullptr)
     {
-        get_error(err, "could not open file '%s' (stream %p): %s", path, stream, strerror(errno));
+        format_error(err, "could not open file '%s' (stream %p): %s", path, stream, strerror(errno));
         return false;
     }
 
@@ -74,7 +74,7 @@ bool close(file_stream *stream, error *err)
 
     if (!ret)
     {
-        get_error(err, "could not close file stream %p (FILE %p): %s", stream, stream->handle, strerror(errno));
+        format_error(err, "could not close file stream %p (FILE %p): %s", stream, stream->handle, strerror(errno));
         return ret;
     }
 
@@ -162,7 +162,7 @@ int seek(file_stream *stream, s64 offset, int whence, error *err)
     int ret = fseeko(stream->handle, offset, whence);
 
     if (ret < 0)
-        get_error(err, "could not seek file stream %p (FILE %p): %s", stream, stream->handle, strerror(errno));
+        format_error(err, "could not seek file stream %p (FILE %p): %s", stream, stream->handle, strerror(errno));
 
     return ret;
 }
@@ -214,7 +214,7 @@ s64 tell(file_stream *stream, error *err)
 
     if (ret < 0)
     {
-        get_error(err, "could not seek file stream %p (FILE %p): %s", stream, stream->handle, strerror(errno));
+        format_error(err, "could not seek file stream %p (FILE %p): %s", stream, stream->handle, strerror(errno));
         return -1;
     }
 
@@ -481,7 +481,7 @@ int flush(file_stream *stream, error *err)
     
     if (ret != 0)
     {
-        get_error(err, "could not flush file stream %p (FILE %p): %s", stream, stream->handle, strerror(errno));
+        format_error(err, "could not flush file stream %p (FILE %p): %s", stream, stream->handle, strerror(errno));
         return -1;
     }
 
