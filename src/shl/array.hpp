@@ -12,7 +12,7 @@ init(*arr, N) initializes an array with N elements. the elements will be uniniti
 
 add_at_start(*arr) returns a pointer to a new element at the start of the array.
                    may allocate more memory if necessary.
-add_at_start(*arr, V) adds the value V at the end of the array, allocating more memory
+add_at_start(*arr, V) adds the value V at the start of the array, allocating more memory
                       if necessary.
                       returns a pointer to the inserted value, which is always start.
 

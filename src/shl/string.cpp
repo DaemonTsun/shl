@@ -503,19 +503,6 @@ u64 string_length(const wstring *s)
 }
 
 template<typename C>
-int _compare_strings_c(const C *s1, const C *s2, u64 n)
-{
-    if constexpr (is_same(C, char))
-    {
-        return strncmp(s1, s2, n);
-    }
-    else
-    {
-        return wcsncmp(s1, s2, n);
-    }
-}
-
-template<typename C>
 int _compare_strings_cs(const_string_base<C> s1, const_string_base<C> s2, u64 n)
 {
     int res = 0;
@@ -539,186 +526,15 @@ int _compare_strings_cs(const_string_base<C> s1, const_string_base<C> s2, u64 n)
     return res;
 }
 
-int compare_strings(const char    *s1, const char    *s2)
-{
-    return _compare_strings_c(s1, s2, UINT64_MAX);
-}
-
-int compare_strings(const char    *s1, const_string   s2)
-{
-    return _compare_strings_cs(to_const_string(s1), s2, UINT64_MAX);
-}
-
-int compare_strings(const char    *s1, const string  *s2)
-{
-    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), UINT64_MAX);
-}
-
-int compare_strings(const_string   s1, const char    *s2)
-{
-    return _compare_strings_cs(s1, to_const_string(s2), UINT64_MAX);
-}
-
-int compare_strings(const_string   s1, const_string   s2)
-{
-    return _compare_strings_cs(s1, s2, UINT64_MAX);
-}
-
-int compare_strings(const_string   s1, const string  *s2)
-{
-    return _compare_strings_cs(s1, to_const_string(s2), UINT64_MAX);
-}
-
-int compare_strings(const string  *s1, const char    *s2)
-{
-    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), UINT64_MAX);
-}
-
-int compare_strings(const string  *s1, const_string   s2)
-{
-    return _compare_strings_cs(to_const_string(s1), s2, UINT64_MAX);
-}
-
-int compare_strings(const string  *s1, const string  *s2)
-{
-    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), UINT64_MAX);
-}
-
-int compare_strings(const char    *s1, const char    *s2, u64 n)
-{
-    return _compare_strings_c(s1, s2, n);
-}
-
-int compare_strings(const char    *s1, const_string   s2, u64 n)
-{
-    return _compare_strings_cs(to_const_string(s1), s2, n);
-}
-
-int compare_strings(const char    *s1, const string  *s2, u64 n)
-{
-    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), n);
-}
-
-int compare_strings(const_string   s1, const char    *s2, u64 n)
-{
-    return _compare_strings_cs(s1, to_const_string(s2), n);
-}
-
-int compare_strings(const_string   s1, const_string   s2, u64 n)
+int _compare_strings(const_string   s1, const_string   s2, u64 n)
 {
     return _compare_strings_cs(s1, s2, n);
 }
 
-int compare_strings(const_string   s1, const string  *s2, u64 n)
-{
-    return _compare_strings_cs(s1, to_const_string(s2), n);
-}
-
-int compare_strings(const string  *s1, const char    *s2, u64 n)
-{
-    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), n);
-}
-
-int compare_strings(const string  *s1, const_string   s2, u64 n)
-{
-    return _compare_strings_cs(to_const_string(s1), s2, n);
-}
-
-int compare_strings(const string  *s1, const string  *s2, u64 n)
-{
-    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), n);
-}
-
-int compare_strings(const wchar_t *s1, const wchar_t *s2)
-{
-    return _compare_strings_c(s1, s2, UINT64_MAX);
-}
-
-int compare_strings(const wchar_t *s1, const_wstring  s2)
-{
-    return _compare_strings_cs(to_const_string(s1), s2, UINT64_MAX);
-}
-
-int compare_strings(const wchar_t *s1, const wstring *s2)
-{
-    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), UINT64_MAX);
-}
-
-int compare_strings(const_wstring  s1, const wchar_t *s2)
-{
-    return _compare_strings_cs(s1, to_const_string(s2), UINT64_MAX);
-}
-
-int compare_strings(const_wstring  s1, const_wstring  s2)
-{
-    return _compare_strings_cs(s1, s2, UINT64_MAX);
-}
-
-int compare_strings(const_wstring  s1, const wstring *s2)
-{
-    return _compare_strings_cs(s1, to_const_string(s2), UINT64_MAX);
-}
-
-int compare_strings(const wstring *s1, const wchar_t *s2)
-{
-    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), UINT64_MAX);
-}
-
-int compare_strings(const wstring *s1, const_wstring  s2)
-{
-    return _compare_strings_cs(to_const_string(s1), s2, UINT64_MAX);
-}
-
-int compare_strings(const wstring *s1, const wstring *s2)
-{
-    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), UINT64_MAX);
-}
-
-int compare_strings(const wchar_t *s1, const wchar_t *s2, u64 n)
-{
-    return _compare_strings_c(s1, s2, n);
-}
-
-int compare_strings(const wchar_t *s1, const_wstring  s2, u64 n)
-{
-    return _compare_strings_cs(to_const_string(s1), s2, n);
-}
-
-int compare_strings(const wchar_t *s1, const wstring *s2, u64 n)
-{
-    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), n);
-}
-
-int compare_strings(const_wstring  s1, const wchar_t *s2, u64 n)
-{
-    return _compare_strings_cs(s1, to_const_string(s2), n);
-}
-
-int compare_strings(const_wstring  s1, const_wstring  s2, u64 n)
+int _compare_strings(const_wstring   s1, const_wstring   s2, u64 n)
 {
     return _compare_strings_cs(s1, s2, n);
 }
-
-int compare_strings(const_wstring  s1, const wstring *s2, u64 n)
-{
-    return _compare_strings_cs(s1, to_const_string(s2), n);
-}
-
-int compare_strings(const wstring *s1, const wchar_t *s2, u64 n)
-{
-    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), n);
-}
-
-int compare_strings(const wstring *s1, const_wstring  s2, u64 n)
-{
-    return _compare_strings_cs(to_const_string(s1), s2, n);
-}
-
-int compare_strings(const wstring *s1, const wstring *s2, u64 n)
-{
-    return _compare_strings_cs(to_const_string(s1), to_const_string(s2), n);
-}
-
 
 template<> bool equals(string  s1, string  s2)
 {
@@ -740,73 +556,20 @@ template<> bool equals_p(const wstring *s1, const wstring *s2)
     return compare_strings(s1, s2) == 0;
 }
 
-
-template<typename C>
-bool _begins_with(const C *s, const C *prefix)
-{
-    return compare_strings(prefix, s, string_length(prefix)) == 0;
-}
-
-bool begins_with(const char *s, const char *prefix)
-{
-    return _begins_with(s, prefix);
-}
-
-bool begins_with(const wchar_t *s, const wchar_t *prefix)
-{
-    return _begins_with(s, prefix);
-}
-
 template<typename C>
 bool _begins_with_cs(const_string_base<C> s, const_string_base<C> prefix)
 {
     return compare_strings(prefix, s, string_length(prefix)) == 0;
 }
 
-bool begins_with(const_string s, const_string prefix)
+bool _begins_with(const_string s, const_string prefix)
 {
     return _begins_with_cs(s, prefix);
 }
 
-bool begins_with(const_wstring s, const_wstring prefix)
+bool _begins_with(const_wstring s, const_wstring prefix)
 {
     return _begins_with_cs(s, prefix);
-}
-
-template<typename C>
-bool _begins_with_s(const string_base<C> *s, const string_base<C> *prefix)
-{
-    return compare_strings(prefix, s, string_length(prefix)) == 0;
-}
-
-bool begins_with(const string *s, const string *prefix)
-{
-    return _begins_with_s(s, prefix);
-}
-
-bool begins_with(const wstring *s, const wstring *prefix)
-{
-    return _begins_with_s(s, prefix);
-}
-
-template<typename C>
-bool _ends_with(const C *s, const C *suffix)
-{
-    u64 str_length = string_length(s);
-    u64 suffix_length = string_length(suffix);
-
-    return (str_length >= suffix_length) &&
-           (compare_strings(s + str_length - suffix_length, suffix, suffix_length) == 0);
-}
-
-bool ends_with(const char *s, const char *prefix)
-{
-    return _ends_with(s, prefix);
-}
-
-bool ends_with(const wchar_t *s, const wchar_t *prefix)
-{
-    return _ends_with(s, prefix);
 }
 
 template<typename C>
@@ -823,24 +586,14 @@ bool _ends_with_cs(const_string_base<C> s, const_string_base<C> suffix)
     return compare_strings(s2, suffix, suffix_length) == 0;
 }
 
-bool ends_with(const_string s, const_string prefix)
+bool _ends_with(const_string s, const_string prefix)
 {
     return _ends_with_cs(s, prefix);
 }
 
-bool ends_with(const_wstring s, const_wstring prefix)
+bool _ends_with(const_wstring s, const_wstring prefix)
 {
     return _ends_with_cs(s, prefix);
-}
-
-bool ends_with(const string *s, const string *suffix)
-{
-    return _ends_with_cs(to_const_string(s), to_const_string(suffix));
-}
-
-bool ends_with(const wstring *s, const wstring *suffix)
-{
-    return _ends_with_cs(to_const_string(s), to_const_string(suffix));
 }
 
 #define DEFINE_INTEGER_BODY(T, NAME, FUNC, WIDEFUNC) \
@@ -977,168 +730,38 @@ void _copy_string_cs_s(const_string_base<C> src, string_base<C> *dst, u64 n, u64
         dst->data[dst->size] = '\0';
 }
 
-void copy_string(const char *src, string *dst)
-{
-    _copy_string_cs_s(to_const_string(src), dst, UINT64_MAX, 0);
-}
-
-void copy_string(const wchar_t *src, wstring *dst)
-{
-    _copy_string_cs_s(to_const_string(src), dst, UINT64_MAX, 0);
-}
-
-void copy_string(const char *src, string *dst, u64 n)
-{
-    _copy_string_cs_s(to_const_string(src), dst, n, 0);
-}
-
-void copy_string(const wchar_t *src, wstring *dst, u64 n)
-{
-    _copy_string_cs_s(to_const_string(src), dst, n, 0);
-}
-
-void copy_string(const char *src, string *dst, u64 n, u64 dst_offset)
-{
-    _copy_string_cs_s(to_const_string(src), dst, n, dst_offset);
-}
-
-void copy_string(const wchar_t *src, wstring *dst, u64 n, u64 dst_offset)
-{
-    _copy_string_cs_s(to_const_string(src), dst, n, dst_offset);
-}
-
-void copy_string(const_string src, string *dst)
-{
-    _copy_string_cs_s(src, dst, UINT64_MAX, 0);
-}
-
-void copy_string(const_wstring src, wstring *dst)
-{
-    _copy_string_cs_s(src, dst, UINT64_MAX, 0);
-}
-
-void copy_string(const_string src, string *dst, u64 n)
-{
-    _copy_string_cs_s(src, dst, n, 0);
-}
-
-void copy_string(const_wstring src, wstring *dst, u64 n)
-{
-    _copy_string_cs_s(src, dst, n, 0);
-}
-
-void copy_string(const_string src, string *dst, u64 n, u64 dst_offset)
+void _copy_string(const_string src, string *dst, u64 n, u64 dst_offset)
 {
     _copy_string_cs_s(src, dst, n, dst_offset);
 }
 
-void copy_string(const_wstring src, wstring *dst, u64 n, u64 dst_offset)
+void _copy_string(const_wstring src, wstring *dst, u64 n, u64 dst_offset)
 {
     _copy_string_cs_s(src, dst, n, dst_offset);
 }
 
-void copy_string(const string *src, string *dst)
-{
-    _copy_string_cs_s(to_const_string(src), dst, UINT64_MAX, 0);
-}
-
-void copy_string(const wstring *src, wstring *dst)
-{
-    _copy_string_cs_s(to_const_string(src), dst, UINT64_MAX, 0);
-}
-
-void copy_string(const string *src, string *dst, u64 n)
-{
-    _copy_string_cs_s(to_const_string(src), dst, n, 0);
-}
-
-void copy_string(const wstring *src, wstring *dst, u64 n)
-{
-    _copy_string_cs_s(to_const_string(src), dst, n, 0);
-}
-
-void copy_string(const string *src, string *dst, u64 n, u64 dst_offset)
-{
-    _copy_string_cs_s(to_const_string(src), dst, n, dst_offset);
-}
-
-void copy_string(const wstring *src, wstring *dst, u64 n, u64 dst_offset)
-{
-    _copy_string_cs_s(to_const_string(src), dst, n, dst_offset);
-}
-
-template<typename C, typename T>
-string_base<C> _copy_new_string(T src, u64 n)
+template<typename C>
+string_base<C> _copy_new_string(const_string_base<C> src, u64 n)
 {
     string_base<C> ret;
     init(&ret);
-    copy_string(src, &ret, n);
+    _copy_string(src, &ret, n, 0);
 
     return ret;
 }
 
-string copy_string(const char   *src)
-{
-    return _copy_new_string<char>(src, UINT64_MAX);
-}
-
-string copy_string(const char   *src, u64 n)
+string _copy_string(const_string  src, u64 n)
 {
     return _copy_new_string<char>(src, n);
 }
 
-string copy_string(const_string  src)
-{
-    return _copy_new_string<char>(src, UINT64_MAX);
-}
-
-string copy_string(const_string  src, u64 n)
-{
-    return _copy_new_string<char>(src, n);
-}
-
-string copy_string(const string *src)
-{
-    return _copy_new_string<char>(src, UINT64_MAX);
-}
-
-string copy_string(const string *src, u64 n)
-{
-    return _copy_new_string<char>(src, n);
-}
-
-wstring copy_string(const wchar_t *src)
-{
-    return _copy_new_string<wchar_t>(src, UINT64_MAX);
-}
-
-wstring copy_string(const wchar_t *src, u64 n)
-{
-    return _copy_new_string<wchar_t>(src, n);
-}
-
-wstring copy_string(const_wstring  src)
-{
-    return _copy_new_string<wchar_t>(src, UINT64_MAX);
-}
-
-wstring copy_string(const_wstring  src, u64 n)
-{
-    return _copy_new_string<wchar_t>(src, n);
-}
-
-wstring copy_string(const wstring *src)
-{
-    return _copy_new_string<wchar_t>(src, UINT64_MAX);
-}
-
-wstring copy_string(const wstring *src, u64 n)
+wstring _copy_string(const_wstring  src, u64 n)
 {
     return _copy_new_string<wchar_t>(src, n);
 }
 
 template<typename C>
-void _append_string(string_base<C> *dst, const_string_base<C> other)
+void _append_string_cs(string_base<C> *dst, const_string_base<C> other)
 {
     assert(dst != nullptr);
 
@@ -1159,38 +782,18 @@ void _append_string(string_base<C> *dst, const_string_base<C> other)
     dst->data[dst->size] = '\0';
 }
 
-void append_string(string *dst, const char *other)
+void _append_string(string  *dst, const_string  other)
 {
-    _append_string(dst, to_const_string(other));
+    _append_string_cs(dst, other);
 }
 
-void append_string(wstring *dst, const wchar_t *other)
+void _append_string(wstring *dst, const_wstring other)
 {
-    _append_string(dst, to_const_string(other));
-}
-
-void append_string(string  *dst, const_string  other)
-{
-    _append_string(dst, other);
-}
-
-void append_string(wstring *dst, const_wstring other)
-{
-    _append_string(dst, other);
-}
-
-void append_string(string  *dst, const string  *other)
-{
-    _append_string(dst, to_const_string(other));
-}
-
-void append_string(wstring *dst, const wstring *other)
-{
-    _append_string(dst, to_const_string(other));
+    _append_string_cs(dst, other);
 }
 
 template<typename C>
-void _prepend_string(string_base<C> *dst, const_string_base<C> other)
+void _prepend_string_cs(string_base<C> *dst, const_string_base<C> other)
 {
     assert(dst != nullptr);
 
@@ -1212,34 +815,14 @@ void _prepend_string(string_base<C> *dst, const_string_base<C> other)
     dst->data[dst->size] = '\0';
 }
 
-void prepend_string(string *dst, const char *other)
+void _prepend_string(string  *dst, const_string  other)
 {
-    _prepend_string(dst, to_const_string(other));
+    _prepend_string_cs(dst, other);
 }
 
-void prepend_string(wstring *dst, const wchar_t *other)
+void _prepend_string(wstring *dst, const_wstring other)
 {
-    _prepend_string(dst, to_const_string(other));
-}
-
-void prepend_string(string  *dst, const_string  other)
-{
-    _prepend_string(dst, other);
-}
-
-void prepend_string(wstring *dst, const_wstring other)
-{
-    _prepend_string(dst, other);
-}
-
-void prepend_string(string  *dst, const string  *other)
-{
-    _prepend_string(dst, to_const_string(other));
-}
-
-void prepend_string(wstring *dst, const wstring *other)
-{
-    _prepend_string(dst, to_const_string(other));
+    _prepend_string_cs(dst, other);
 }
 
 template<typename C>
@@ -1258,89 +841,18 @@ s64 _index_of_c(const_string_base<C> str, C needle, s64 offset)
     return -1;
 }
 
-s64 index_of(const_string str, char    needle)
+s64 _index_of(const_string str, char    needle, s64 offset)
 {
-    return _index_of_c(str, needle, 0);
+    return _index_of_c(str, needle, offset);
 }
 
-s64 index_of(const_wstring str, wchar_t needle)
+s64 _index_of(const_wstring str, wchar_t needle, s64 offset)
 {
-    return _index_of_c(str, needle, 0);
+    return _index_of_c(str, needle, offset);
 }
-
-s64 index_of(const_string  str, const char    *needle)
-{
-    return index_of(str, to_const_string(needle), 0);
-}
-
-s64 index_of(const_wstring str, const wchar_t *needle)
-{
-    return index_of(str, to_const_string(needle), 0);
-}
-
-s64 index_of(const_string  str, const_string  needle)
-{
-    return index_of(str, needle, 0);
-}
-
-s64 index_of(const_wstring str, const_wstring needle)
-{
-    return index_of(str, needle, 0);
-}
-
-s64 index_of(const_string  str, const string  *needle)
-{
-    return index_of(str, to_const_string(needle), 0);
-}
-
-s64 index_of(const_wstring str, const wstring *needle)
-{
-    return index_of(str, to_const_string(needle), 0);
-}
-
-s64 index_of(const string  *str, char needle)
-{
-    return _index_of_c(to_const_string(str), needle, 0);
-}
-
-s64 index_of(const wstring *str, wchar_t needle)
-{
-    return _index_of_c(to_const_string(str), needle, 0);
-}
-
-s64 index_of(const string  *str, const char    *needle)
-{
-    return index_of(to_const_string(str), to_const_string(needle), 0);
-}
-
-s64 index_of(const wstring *str, const wchar_t *needle)
-{
-    return index_of(to_const_string(str), to_const_string(needle), 0);
-}
-
-s64 index_of(const string  *str, const_string  needle)
-{
-    return index_of(to_const_string(str), needle, 0);
-}
-
-s64 index_of(const wstring *str, const_wstring needle)
-{
-    return index_of(to_const_string(str), needle, 0);
-}
-
-s64 index_of(const string  *str, const string  *needle)
-{
-    return index_of(to_const_string(str), to_const_string(needle), 0);
-}
-
-s64 index_of(const wstring *str, const wstring *needle)
-{
-    return index_of(to_const_string(str), to_const_string(needle), 0);
-}
-
 
 template<typename C>
-s64 _index_of(const_string_base<C> str, const_string_base<C> needle, s64 offset)
+s64 _index_of_s(const_string_base<C> str, const_string_base<C> needle, s64 offset)
 {
     if (offset < 0)
         return -1;
@@ -1381,84 +893,14 @@ s64 _index_of(const_string_base<C> str, const_string_base<C> needle, s64 offset)
     }
 }
 
-s64 index_of(const_string  str, char needle, s64 offset)
+s64 _index_of(const_string  str, const_string  needle, s64 offset)
 {
-    return _index_of_c(str, needle, offset);
+    return _index_of_s(str, needle, offset);
 }
 
-s64 index_of(const_wstring str, wchar_t needle, s64 offset)
+s64 _index_of(const_wstring str, const_wstring needle, s64 offset)
 {
-    return _index_of_c(str, needle, offset);
-}
-
-s64 index_of(const_string  str, const char    *needle, s64 offset)
-{
-    return index_of(str, to_const_string(needle), offset);
-}
-
-s64 index_of(const_wstring str, const wchar_t *needle, s64 offset)
-{
-    return index_of(str, to_const_string(needle), offset);
-}
-
-s64 index_of(const_string  str, const_string  needle, s64 offset)
-{
-    return _index_of(str, needle, offset);
-}
-
-s64 index_of(const_wstring str, const_wstring needle, s64 offset)
-{
-    return _index_of(str, needle, offset);
-}
-
-s64 index_of(const_string  str, const string  *needle, s64 offset)
-{
-    return index_of(str, to_const_string(needle), offset);
-}
-
-s64 index_of(const_wstring str, const wstring *needle, s64 offset)
-{
-    return index_of(str, to_const_string(needle), offset);
-}
-
-s64 index_of(const string  *str, char needle, s64 offset)
-{
-    return _index_of_c(to_const_string(str), needle, offset);
-}
-
-s64 index_of(const wstring *str, wchar_t needle, s64 offset)
-{
-    return _index_of_c(to_const_string(str), needle, offset);
-}
-
-s64 index_of(const string  *str, const char    *needle, s64 offset)
-{
-    return index_of(to_const_string(str), to_const_string(needle), offset);
-}
-
-s64 index_of(const wstring *str, const wchar_t *needle, s64 offset)
-{
-    return index_of(to_const_string(str), to_const_string(needle), offset);
-}
-
-s64 index_of(const string  *str, const_string  needle, s64 offset)
-{
-    return index_of(to_const_string(str), needle, offset);
-}
-
-s64 index_of(const wstring *str, const_wstring needle, s64 offset)
-{
-    return index_of(to_const_string(str), needle, offset);
-}
-
-s64 index_of(const string  *str, const string  *needle, s64 offset)
-{
-    return index_of(to_const_string(str), to_const_string(needle), offset);
-}
-
-s64 index_of(const wstring *str, const wstring *needle, s64 offset)
-{
-    return index_of(to_const_string(str), to_const_string(needle), offset);
+    return _index_of_s(str, needle, offset);
 }
 
 template<typename C>
