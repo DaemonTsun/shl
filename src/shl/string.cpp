@@ -48,16 +48,6 @@ const_wstring operator ""_cs(const wchar_t *str, u64 n)
     return const_wstring{str, n};
 }
 
-bool operator==(const_string a, const_string b)
-{
-    return compare_strings(a, b) == 0;
-}
-
-bool operator==(const_wstring a, const_wstring b)
-{
-    return compare_strings(a, b) == 0;
-}
-
 string  operator ""_s(const char *str, u64 n)
 {
     string ret;
@@ -70,16 +60,6 @@ wstring operator ""_s(const wchar_t *str, u64 n)
     wstring ret;
     init(&ret, str, n);
     return ret;
-}
-
-bool operator==(const string &a, const string &b)
-{
-    return compare_strings(a, b) == 0;
-}
-
-bool operator==(const wstring &a, const wstring &b)
-{
-    return compare_strings(a, b) == 0;
 }
 
 template<typename C>

@@ -153,8 +153,17 @@ typedef const_string_base<wchar_t> const_wstring;
 const_string  operator ""_cs(const char    *, u64);
 const_wstring operator ""_cs(const wchar_t *, u64);
 
-bool operator==(const_string a, const_string b);
-bool operator==(const_wstring a, const_wstring b);
+template<typename C>
+inline bool operator==(const_string_base<C> a, const_string_base<C> b)
+{
+    return compare_strings(a, b) == 0;
+}
+
+template<typename C>
+inline bool operator!=(const_string_base<C> a, const_string_base<C> b)
+{
+    return compare_strings(a, b) != 0;
+}
 
 template<typename C>
 struct string_base
@@ -184,8 +193,17 @@ typedef string_base<wchar_t> wstring;
 string  operator ""_s(const char    *, u64);
 wstring operator ""_s(const wchar_t *, u64);
 
-bool operator==(const string &a, const string &b);
-bool operator==(const wstring &a, const wstring &b);
+template<typename C>
+inline bool operator==(const string_base<C> &a, const string_base<C> &b)
+{
+    return compare_strings(a, b) == 0;
+}
+
+template<typename C>
+inline bool operator!=(const string_base<C> &a, const string_base<C> &b)
+{
+    return compare_strings(a, b) != 0;
+}
 
 void init(string *str);
 void init(string *str, u64 size);
