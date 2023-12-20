@@ -1,4 +1,6 @@
 
+#include <stdlib.h>
+
 #include "shl/bits.hpp"
 #include "shl/format.hpp"
 
@@ -716,33 +718,74 @@ s64 internal::_format_skip_until_placeholder(u64 *i, _placeholder_info<wchar_t> 
     return ::_format_skip_until_placeholder(i, pl, s, offset, fmt);
 }
 
+void _register_format_buffer_cleanup();
+void _format_buffer_cleanup();
+
+template<typename C>
+string_base<C> *_get_static_format_buffer(bool free_buffer = false)
+{
+    static string_base<C> *_temp_string = nullptr;
+
+    if (free_buffer && _temp_string != nullptr)
+    {
+        free(_temp_string);
+        free_memory(_temp_string);
+        _temp_string = nullptr;
+    }
+    else if (!free_buffer && _temp_string == nullptr)
+    {
+        _temp_string = allocate_memory<string_base<C>>();
+        init(_temp_string);
+        _register_format_buffer_cleanup();
+    }
+
+    return _temp_string;
+}
+
+void _register_format_buffer_cleanup()
+{
+    static bool _registered = false;
+
+    if (!_registered)
+    {
+        ::atexit(_format_buffer_cleanup);
+        _registered = true;
+    }
+}
+
+void _format_buffer_cleanup()
+{
+    _get_static_format_buffer<char>(true);
+    _get_static_format_buffer<wchar_t>(true);
+}
+
 void internal::_get_temp_format_string(string  **s, u64 **offset)
 {
     // TODO: implement as ring buffer
-    static thread_local string _temp_string = ""_s;
-    static thread_local u64    _temp_string_offset = TEMP_STRING_MAX_SIZE;
+    static u64 _temp_string_offset = TEMP_STRING_MAX_SIZE;
+    string *_temp_string = _get_static_format_buffer<char>();
 
     if (_temp_string_offset >= TEMP_STRING_MAX_SIZE)
     {
-        resize(as_array_ptr(string::value_type, &_temp_string), TEMP_STRING_MAX_SIZE);
+        resize(as_array_ptr(string::value_type, _temp_string), TEMP_STRING_MAX_SIZE);
         _temp_string_offset = 0;
     }
 
-    *s = &_temp_string;
+    *s = _temp_string;
     *offset = &_temp_string_offset;
 }
 
 void internal::_get_temp_format_string(wstring **s, u64 **offset)
 {
-    static thread_local wstring _temp_string = L""_s;
-    static thread_local u64     _temp_string_offset = TEMP_STRING_MAX_SIZE;
+    static u64     _temp_string_offset = TEMP_STRING_MAX_SIZE;
+    wstring *_temp_string = _get_static_format_buffer<wchar_t>();
 
     if (_temp_string_offset >= TEMP_STRING_MAX_SIZE)
     {
-        resize(as_array_ptr(string::value_type, &_temp_string), TEMP_STRING_MAX_SIZE);
+        resize(as_array_ptr(wstring::value_type, _temp_string), TEMP_STRING_MAX_SIZE);
         _temp_string_offset = 0;
     }
 
-    *s = &_temp_string;
+    *s = _temp_string;
     *offset = &_temp_string_offset;
 }
