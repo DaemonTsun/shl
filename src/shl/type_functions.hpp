@@ -22,6 +22,10 @@ template<typename T> struct _remove_pointer<T*>       { typedef T type; };
 template<typename T> struct _remove_pointer<T* const> { typedef T type; };
 #define remove_pointer(T) _remove_pointer<T>::type
 
+template<typename T> struct _remove_const          { typedef T type; };
+template<typename T> struct _remove_const<const T> { typedef T type; };
+#define remove_const(T) _remove_const<T>::type
+
 template<typename T1, typename T2> struct _is_same { static constexpr bool value = false; };
 template<typename T>               struct _is_same<T, T> { static constexpr bool value = true;  };
 #define is_same(T1, T2) _is_same<T1, T2>::value
@@ -41,7 +45,7 @@ inline T&& forward(typename remove_reference(T)&& t)
     return static_cast<T&&>(t);
 }
 
-template <bool Cond, typename T1, typename T2>
+template<bool Cond, typename T1, typename T2>
 inline constexpr decltype(auto) _inline_const_if(T1 &&a, T2 &&b)
 {
     if constexpr (Cond)
