@@ -67,7 +67,7 @@ void free(scratch_buffer<N> *buf)
     if (buf == nullptr)
         return;
 
-    if (buf->data != buf->stack_buffer)
+    if (buf->data != buf->stack_buffer && buf->data != nullptr)
         free_memory(buf->data);
 
     buf->data = nullptr;
