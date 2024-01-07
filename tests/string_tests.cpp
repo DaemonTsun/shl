@@ -685,7 +685,57 @@ define_test(index_of_returns_index_of_first_needle_occurence_in_haystack_startin
     assert_equal(index_of("hello"_cs, 'l', 4), -1);
 }
 
-// TODO: last_index_of tests
+define_test(last_index_of_returns_negative_one_on_negative_offset)
+{
+    assert_equal(last_index_of("hello"_cs, "hell"_cs, -1), -1);
+    assert_equal(last_index_of("hello"_cs, "hell"_cs, -500), -1);
+}
+
+define_test(last_index_of_returns_offset_on_empty_needle)
+{
+    assert_equal(last_index_of("hello", "", 0), 0);
+    assert_equal(last_index_of("hello", "", 1), 1);
+    assert_equal(last_index_of("hello", "", 2), 2);
+    assert_equal(last_index_of("hello", "", 3), 3);
+    assert_equal(last_index_of("hello", "", 4), 4);
+}
+
+define_test(last_index_of_returns_index_of_last_needle_occurence_in_haystack_starting_in_reverse_at_offset)
+{
+    assert_equal(last_index_of("hello", "hell"), 0);
+    assert_equal(last_index_of("hello", "hell", 0), 0);
+    assert_equal(last_index_of("hello", "hell", 1), 0);
+
+    assert_equal(last_index_of("hello hello hello hello"_cs, "hell"_cs), 18);
+    assert_equal(last_index_of("hello hello hello hello"_cs, "hell"_cs, 500), 18);
+    assert_equal(last_index_of("hello hello hello hello"_cs, "hell"_cs, 19), 18);
+    assert_equal(last_index_of("hello hello hello hello"_cs, "hell"_cs, 18), 18);
+    assert_equal(last_index_of("hello hello hello hello"_cs, "hell"_cs, 17), 12);
+    assert_equal(last_index_of("hello hello hello hello"_cs, "hell"_cs, 13), 12);
+    assert_equal(last_index_of("hello hello hello hello"_cs, "hell"_cs, 12), 12);
+    assert_equal(last_index_of("hello hello hello hello"_cs, "hell"_cs, 11), 6);
+    assert_equal(last_index_of("hello hello hello hello"_cs, "hell"_cs, 6), 6);
+    assert_equal(last_index_of("hello hello hello hello"_cs, "hell"_cs, 1), 0);
+
+    assert_equal(last_index_of("w\0rld w\0rld w\0rld"_cs, "w\0rld"_cs), 12);
+    assert_equal(last_index_of("w\0rld w\0rld w\0rld"_cs, "w\0rld"_cs, 1), 0);
+
+    assert_equal(last_index_of(L"hello hello hello hello", L"hell"), 18);
+    assert_equal(last_index_of(L"hello hello hello hello", L"hell", 500), 18);
+    assert_equal(last_index_of(L"hello hello hello hello", L"hell", 19), 18);
+    assert_equal(last_index_of(L"hello hello hello hello", L"hell", 18), 18);
+    assert_equal(last_index_of(L"hello hello hello hello", L"hell", 17), 12);
+    assert_equal(last_index_of(L"hello hello hello hello", L"hell", 13), 12);
+    assert_equal(last_index_of(L"hello hello hello hello", L"hell", 12), 12);
+    assert_equal(last_index_of(L"hello hello hello hello", L"hell", 11), 6);
+    assert_equal(last_index_of(L"hello hello hello hello", L"hell", 6), 6);
+    assert_equal(last_index_of(L"hello hello hello hello", L"hell", 1), 0);
+
+    assert_equal(last_index_of("hello", 'e'), 1);
+    assert_equal(last_index_of("hello", 'l'), 3);
+    assert_equal(last_index_of("hello", 'l', 2), 2);
+    assert_equal(last_index_of("hello", 'l', 1), -1);
+}
 
 define_test(contains_returns_true_when_string_contains_other_string)
 {

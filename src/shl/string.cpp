@@ -912,8 +912,8 @@ s64 _last_index_of_c(const_string_base<C> str, C needle, s64 offset)
     if (offset < 0)
         return -1;
 
-    if (offset >= str.size)
-        return -1;
+    if (offset + 1 >= str.size)
+        offset = str.size - 1;
 
     for (s64 i = offset; i > 0; --i)
         if (str.c_str[i] == needle)
@@ -947,12 +947,12 @@ s64 _last_index_of_s(const_string_base<C> str, const_string_base<C> needle, s64 
     if (offset + needle.size > str.size)
         offset = str.size - needle.size;
 
-    u64 i = offset;
-    u64 matching_count = 0;
+    s64 i = offset;
+    s64 matching_count = 0;
 
-    while (i > 0)
+    while (i >= 0)
     {
-        while (str[n + matching_count] == needle[matching_count])
+        while (str[i + matching_count] == needle[matching_count])
         {
             matching_count += 1;
 
