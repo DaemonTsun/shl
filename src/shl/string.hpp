@@ -98,17 +98,21 @@ index_of(haystack, needle[, offset]) returns the index of the first occurrence o
                                      [starting at offset] within the string haystack, or
                                      -1 if needle was not found.
 
-reverse_index_of(haystack, needle[, offset]) returns the index of the last occurrence of needle
+last_index_of(haystack, needle[, offset]) returns the index of the last occurrence of needle
                                              [ending at offset, moving towards the beginning]
                                              within the string haystack, or
                                              -1 if needle was not found.
 
+contains(haystack, needle) returns true if haystack contains needle, false if not.
 
 trim_left(s)                 trims whitespaces from the left of string s, in-place
 trim_right(s)                trims whitespaces from the right of string s, in-place
 trim(s)                      trims whitespaces from the left and right of string s, in-place
 to_upper(c/s)                converts the given character or string to upper case
 to_lower(c/s)                converts the given character or string to upper case
+
+substring(src, start[, length]) returns a slice (not a copy) of the substring of src
+                                starting at start, up to length characters.
 
 substring(const_string src, u64 start, u64 length, string out, u64 out_start)
          copies src, starting at start, for up to length characters, into out,
@@ -444,6 +448,39 @@ auto index_of(T haystack, wchar_t needle, s64 offset = 0)
     -> decltype(_index_of(to_const_string(haystack), needle, offset))
 {
     return _index_of(to_const_string(haystack), needle, offset);
+}
+
+s64 _last_index_of(const_string   haystack, char           needle, s64 offset);
+s64 _last_index_of(const_wstring  haystack, wchar_t        needle, s64 offset);
+s64 _last_index_of(const_string   haystack, const_string   needle, s64 offset);
+s64 _last_index_of(const_wstring  haystack, const_wstring  needle, s64 offset);
+
+template<typename T1, typename T2>
+auto last_index_of(T1 haystack, T2 needle, s64 offset = max_value(s64))
+    -> decltype(_last_index_of(to_const_string(haystack), to_const_string(needle), offset))
+{
+    return _last_index_of(to_const_string(haystack), to_const_string(needle), offset);
+}
+
+template<typename T>
+auto last_index_of(T haystack, char needle, s64 offset = max_value(s64))
+    -> decltype(_last_index_of(to_const_string(haystack), needle, offset))
+{
+    return _last_index_of(to_const_string(haystack), needle, offset);
+}
+
+template<typename T>
+auto last_index_of(T haystack, wchar_t needle, s64 offset = max_value(s64))
+    -> decltype(_last_index_of(to_const_string(haystack), needle, offset))
+{
+    return _last_index_of(to_const_string(haystack), needle, offset);
+}
+
+template<typename T1, typename T2>
+auto contains(T1 haystack, T2 needle)
+    -> decltype(index_of(to_const_string(haystack), needle) != -1)
+{
+    return index_of(to_const_string(haystack), needle) != -1;
 }
 
 void trim_left(string  *s);

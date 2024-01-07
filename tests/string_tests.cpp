@@ -685,6 +685,27 @@ define_test(index_of_returns_index_of_first_needle_occurence_in_haystack_startin
     assert_equal(index_of("hello"_cs, 'l', 4), -1);
 }
 
+// TODO: last_index_of tests
+
+define_test(contains_returns_true_when_string_contains_other_string)
+{
+    assert_equal(contains("hello"_cs, "hell"_cs), true);
+    assert_equal(contains("hello"_cs, "ello"_cs), true);
+    assert_equal(contains("hello"_cs, "hello"_cs), true);
+    assert_equal(contains("hello"_cs, "l"_cs), true);
+    assert_equal(contains("hello"_cs, 'l'), true);
+    assert_equal(contains("hello"_cs, ""_cs), true);
+}
+
+define_test(contains_returns_false_when_string_doesnt_contain_other_string)
+{
+    assert_equal(contains("hello"_cs, "world"_cs), false);
+    assert_equal(contains("hello"_cs, "hello123"_cs), false);
+    assert_equal(contains("hello"_cs, "123hello"_cs), false);
+    assert_equal(contains("hello"_cs, "a"_cs), false);
+    assert_equal(contains("hello"_cs, 'a'), false);
+}
+
 define_test(to_upper_converts_to_upper)
 {
     assert_equal(to_upper('a'), 'A');

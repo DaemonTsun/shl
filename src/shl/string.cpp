@@ -863,6 +863,9 @@ s64 _index_of_s(const_string_base<C> str, const_string_base<C> needle, s64 offse
     if (offset >= str.size)
         return -1;
 
+    if (needle.size > str.size)
+        return -1;
+
     if constexpr (sizeof(C) == 1)
     {
         // char
@@ -901,6 +904,77 @@ s64 _index_of(const_string  str, const_string  needle, s64 offset)
 s64 _index_of(const_wstring str, const_wstring needle, s64 offset)
 {
     return _index_of_s(str, needle, offset);
+}
+
+template<typename C>
+s64 _last_index_of_c(const_string_base<C> str, C needle, s64 offset)
+{
+    if (offset < 0)
+        return -1;
+
+    if (offset >= str.size)
+        return -1;
+
+    for (s64 i = offset; i > 0; --i)
+        if (str.c_str[i] == needle)
+            return i;
+
+    return -1;
+}
+
+s64 _last_index_of(const_string str, char    needle, s64 offset)
+{
+    return _last_index_of_c(str, needle, offset);
+}
+
+s64 _last_index_of(const_wstring str, wchar_t needle, s64 offset)
+{
+    return _last_index_of_c(str, needle, offset);
+}
+
+template<typename C>
+s64 _last_index_of_s(const_string_base<C> str, const_string_base<C> needle, s64 offset)
+{
+    if (offset < 0)
+        return -1;
+
+    if (needle.size == 0)
+        return offset;
+
+    if (needle.size > str.size)
+        return -1;
+
+    if (offset + needle.size > str.size)
+        offset = str.size - needle.size;
+
+    u64 i = offset;
+    u64 matching_count = 0;
+
+    while (i > 0)
+    {
+        while (str[n + matching_count] == needle[matching_count])
+        {
+            matching_count += 1;
+
+            if (matching_count == needle.size)
+                return i;
+        }
+        
+        matching_count = 0;
+        i -= 1;
+    }
+
+    return -1;
+}
+
+s64 _last_index_of(const_string  str, const_string  needle, s64 offset)
+{
+    return _last_index_of_s(str, needle, offset);
+}
+
+s64 _last_index_of(const_wstring str, const_wstring needle, s64 offset)
+{
+    return _last_index_of_s(str, needle, offset);
 }
 
 template<typename C>
