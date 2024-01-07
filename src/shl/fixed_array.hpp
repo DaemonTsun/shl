@@ -2,50 +2,50 @@
 #pragma once
 
 /* fixed_array.hpp
- * 
- * contiguous fixed memory structure.
- * 
- * functions:
- *
- * at(*arr, N) returns a pointer to the Nth element in the array.
- *
- * array_data(*arr) returns a pointer to the first element in the array
- * array_size(*arr) returns the size of the array
- *
- * other functions:
- *
- * search(*arr, *key, eq) returns a pointer to an element that eq(elem, key)
- *                        returns true to, otherwise returns nullptr if key
- *                        was not found. does not assume anything about the
- *                        array and will do a full scan in the worst case.
- *
- * index_of(*arr, *key, eq) returns the index of an element that eq(elem, key)
- *                          returns true to, otherwise returns -1 if key
- *                          was not found. does not assume anything about the
- *                          array and will do a full scan in the worst case.
- *
- * contains(*arr, *key, eq) returns true if key is in the array, false
- *                          otherwise. does not assume anything about the
- *                          array and will do a full scan in the worst case.
- *
- * hash(*arr) returns the default hash of the _memory_ of the elements
- *            of the array.
- *
- * supports index operator: arr[0] == arr.data[0].
- *
- * for_array(v, *arr) iterate an array. v will be a pointer to an element in the array.
- *                    example, setting all values to 5:
- *
- *                    array<int> arr;
- *                    init(&arr, 3)
- *                    
- *                    for_array(v, &arr)
- *                    {
- *                        *v = 5;
- *                    }
- *
- * for_array(i, v, *arr) iterate an array. i will be the index of an element and
- *                       v will be a pointer to an element in the array.
+
+contiguous fixed memory structure, equivalent of the std::array class.
+
+functions:
+
+at(*arr, N) returns a pointer to the Nth element in the array.
+
+array_data(*arr) returns a pointer to the first element in the array
+array_size(*arr) returns the size of the array
+
+other functions:
+
+search(*arr, *key, eq) returns a pointer to an element that eq(elem, key)
+                       returns true to, otherwise returns nullptr if key
+                       was not found. does not assume anything about the
+                       array and will do a full scan in the worst case.
+
+index_of(*arr, *key, eq) returns the index of an element that eq(elem, key)
+                         returns true to, otherwise returns -1 if key
+                         was not found. does not assume anything about the
+                         array and will do a full scan in the worst case.
+
+contains(*arr, *key, eq) returns true if key is in the array, false
+                         otherwise. does not assume anything about the
+                         array and will do a full scan in the worst case.
+
+hash(*arr) returns the default hash of the _memory_ of the elements
+           of the array.
+
+supports index operator: arr[0] == arr.data[0].
+
+for_array(v, *arr) iterate an array. v will be a pointer to an element in the array.
+                   example, setting all values to 5:
+
+                   array<int> arr;
+                   init(&arr, 3)
+                   
+                   for_array(v, &arr)
+                   {
+                       *v = 5;
+                   }
+
+for_array(i, v, *arr) iterate an array. i will be the index of an element and
+                      v will be a pointer to an element in the array.
  */
 
 #include <assert.h>
@@ -64,7 +64,7 @@ struct fixed_array
 
     T data[N];
 
-    constexpr T &operator[](u64 index) { return data[index]; }
+    constexpr       T &operator[](u64 index)       { return data[index]; }
     constexpr const T &operator[](u64 index) const { return data[index]; }
 };
 

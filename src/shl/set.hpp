@@ -95,15 +95,19 @@ supports index operator: st[0] == st.data[0].
 
 for_array works on sets, too. examples from array.hpp:
 for_array(v, *st) iterate a set. v will be a pointer to an element in the set.
-                  example, setting all values to 5:
+                  example, printing all values
 
                   set<int> st;
-                  init(&st, 3)
+                  insert_element(&st, 5);
+                  insert_element(&st, 10);
+                  insert_element(&st, 3);
                   
                   for_array(v, &st)
                   {
-                      *v = 5;
+                      printf("%d\n", *v);
                   }
+
+                  -> 3 5 10
 
 for_array(i, v, *st) iterate a set. i will be the index of an element and
                      v will be a pointer to an element in the set.

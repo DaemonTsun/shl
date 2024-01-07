@@ -578,20 +578,20 @@ const T *at(const linked_list<T> *list, u64 n)
 }
 
 #define _for_list_vars(V_Var, N_Var, LIST)\
-    typename remove_pointer(decltype(LIST))::node_type  *N_Var = (LIST)->first;\
-    typename remove_pointer(decltype(LIST))::value_type *V_Var = N_Var ? &(N_Var->value) : nullptr;
+    if constexpr (auto *N_Var = (LIST)->first; true)\
+    if constexpr (auto *V_Var = N_Var ? &(N_Var->value) : nullptr; true)
 
 #define for_list_V(V_Var, LIST)\
     _for_list_vars(V_Var, V_Var##_node, LIST)\
     for (; V_Var##_node != nullptr; V_Var##_node = V_Var##_node->next, V_Var = &V_Var##_node->value)
 
 #define for_list_IV(I_Var, V_Var, LIST)\
-    u64 I_Var = 0;\
+    if constexpr (u64 I_Var = 0; true)\
     _for_list_vars(V_Var, I_Var##V_Var##_node, LIST)\
     for (; I_Var##V_Var##_node != nullptr; I_Var##V_Var##_node = I_Var##V_Var##_node->next, ++I_Var, V_Var = &I_Var##V_Var##_node->value)
 
 #define for_list_IVN(I_Var, V_Var, N_Var, LIST)\
-    u64 I_Var = 0;\
+    if constexpr (u64 I_Var = 0; true)\
     _for_list_vars(V_Var, N_Var, LIST)\
     for (; N_Var != nullptr; N_Var = N_Var->next, ++I_Var, V_Var = &N_Var->value)
 

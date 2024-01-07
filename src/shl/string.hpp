@@ -98,6 +98,11 @@ index_of(haystack, needle[, offset]) returns the index of the first occurrence o
                                      [starting at offset] within the string haystack, or
                                      -1 if needle was not found.
 
+reverse_index_of(haystack, needle[, offset]) returns the index of the last occurrence of needle
+                                             [ending at offset, moving towards the beginning]
+                                             within the string haystack, or
+                                             -1 if needle was not found.
+
 
 trim_left(s)                 trims whitespaces from the left of string s, in-place
 trim_right(s)                trims whitespaces from the right of string s, in-place

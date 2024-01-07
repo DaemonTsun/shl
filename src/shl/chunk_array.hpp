@@ -320,9 +320,9 @@ u64 chunk_count(const chunk_array<T, N> *arr)
 }
 
 #define for_chunk_array_IVC(I_Var, V_Var, Chunk_Var, ARRAY)\
-    chunk_item_index I_Var{};\
-    auto *Chunk_Var = array_data(&((ARRAY)->all_chunks));\
-    auto *V_Var = array_data(&(*Chunk_Var)->data);\
+    if constexpr (chunk_item_index I_Var{}; true)\
+    if constexpr (auto *Chunk_Var = array_data(&((ARRAY)->all_chunks)); true)\
+    if constexpr (auto *V_Var = array_data(&(*Chunk_Var)->data); true)\
     for (I_Var.chunk_index = 0;\
         I_Var.chunk_index < chunk_count(ARRAY);\
         ++I_Var.chunk_index, ++Chunk_Var, V_Var = (I_Var.chunk_index < chunk_count(ARRAY) ? (*Chunk_Var)->data : nullptr))\

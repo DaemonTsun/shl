@@ -16,7 +16,7 @@ u64 array_size(T (*arr)[N])
 }
 
 #define for_array_IV(I_Var, V_Var, ARRAY)\
-    auto *V_Var = array_data(ARRAY);\
+    if constexpr (auto *V_Var = array_data(ARRAY); true)\
     for (u64 I_Var = 0; I_Var < array_size(ARRAY); ++I_Var, ++V_Var)
 
 #define for_array_V(V_Var, ARRAY)\
