@@ -36,7 +36,7 @@ bool open(memory_stream *stream, u64 size, bool check_open_and_close, bool free_
 
     if (stream->data == nullptr)
     {
-        format_error(err, "could not open memory stream %p (data %p): %s", stream, stream->data, strerror(errno));
+        format_error(err, -1, "could not open memory stream %p (data %p): %s", stream, stream->data, strerror(errno));
         return false;
     }
 
@@ -53,7 +53,7 @@ bool open(memory_stream *stream, char *in, u64 size, bool check_open_and_close, 
     
     if (check_open_and_close && !close(stream, free_on_close))
     {
-        format_error(err, "could not close memory stream %p (data %p)", stream, stream->data);
+        format_error(err, -1, "could not close memory stream %p (data %p)", stream, stream->data);
         return false;
     }
 

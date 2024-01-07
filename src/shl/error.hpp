@@ -9,9 +9,6 @@ format_error_message(fmt, ...) is similar to snprintf, but returns a pointer to 
 formatted string. The pointer points to static memory and only one message
 can be formatted at a time.
 
-The throw_error(fmt, ...) macro throws error with the given format message
-and the __FILE__ and __LINE__ information.
-
 The set_error(*err, message) macro writes the given error message to *err.
 In debug, file and line information is also set in *err.
 Does nothing if *err is nullptr.
@@ -36,6 +33,7 @@ bool do_thing(int x, int y, error *err)
 
 struct error
 {
+    int error_code;
     const char *what;
 
 #ifndef NDEBUG
@@ -47,22 +45,21 @@ struct error
 const char *format_error_message(const char *format, ...);
 
 #ifndef NDEBUG
-#define throw_error(FMT, ...) \
-    throw error{.what = format_error_message(FMT __VA_OPT__(,) __VA_ARGS__), .file = __FILE__, .line = __LINE__}
+#define set_error(Err, Code, Msg) \
+    do { if ((Err) != nullptr) { *(Err) = ::error{.error_code = Code, .what = Msg, .file = __FILE__, .line = __LINE__}; } } while (0)
 
-#define set_error(ERR, MSG) \
-    do { if ((ERR) != nullptr) { *(ERR) = error{.what = MSG, .file = __FILE__, .line = __LINE__}; } } while (0)
+#define set_errno_error(Err) \
+    do { if ((Err) != nullptr) { int _errcode = errno; *(Err) = ::error{.error_code = _errcode, .what = ::strerror(_errcode), .file = __FILE__, .line = __LINE__}; } } while (0)
 
 #else
 // release
+#define set_error(Err, Code, Msg) \
+    do { if ((Err) != nullptr) { *(Err) = ::error{.error_code = Code, .what = Msg }; } while (0)
 
-#define throw_error(FMT, ...) \
-    throw error{.what = format_error_message(FMT __VA_OPT__(,) __VA_ARGS__)}
-
-#define set_error(ERR, MSG) \
-    do { if ((ERR) != nullptr) { ERR->what = MSG; } } while (0)
+#define set_errno_error(Err) \
+    do { if ((Err) != nullptr) { int _errcode = errno; *(Err) = ::error{.error_code = _errcode, .what = ::strerror(_errcode) }; } } while (0)
 
 #endif
 
-#define format_error(ERR, FMT, ...) \
-    set_error(ERR, format_error_message(FMT __VA_OPT__(,) __VA_ARGS__))
+#define format_error(Err, Code, FMT, ...) \
+    set_error(Err, Code, format_error_message(FMT __VA_OPT__(,) __VA_ARGS__))

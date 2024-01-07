@@ -44,7 +44,7 @@ bool open(file_stream *stream, const char *path, const char *mode, bool check_op
 
     if (err != 0)
     {
-        format_error(err, "could not open file '%s' (stream %p): %s", path, stream, strerror(errcode));
+        set_error(err, errcode, strerror(errcode));
         return false;
     }
 #else
@@ -53,7 +53,7 @@ bool open(file_stream *stream, const char *path, const char *mode, bool check_op
 
     if (stream->handle == nullptr)
     {
-        format_error(err, "could not open file '%s' (stream %p): %s", path, stream, strerror(errno));
+        set_errno_error(err);
         return false;
     }
 
@@ -74,7 +74,7 @@ bool close(file_stream *stream, error *err)
 
     if (!ret)
     {
-        format_error(err, "could not close file stream %p (FILE %p): %s", stream, stream->handle, strerror(errno));
+        set_errno_error(err);
         return ret;
     }
 
@@ -162,7 +162,7 @@ int seek(file_stream *stream, s64 offset, int whence, error *err)
     int ret = fseeko(stream->handle, offset, whence);
 
     if (ret < 0)
-        format_error(err, "could not seek file stream %p (FILE %p): %s", stream, stream->handle, strerror(errno));
+        set_errno_error(err);
 
     return ret;
 }
@@ -213,10 +213,7 @@ s64 tell(file_stream *stream, error *err)
     s64 ret = ftello(stream->handle);
 
     if (ret < 0)
-    {
-        format_error(err, "could not seek file stream %p (FILE %p): %s", stream, stream->handle, strerror(errno));
-        return -1;
-    }
+        set_errno_error(err);
 
     return ret;
 }
@@ -480,10 +477,7 @@ int flush(file_stream *stream, error *err)
     int ret = fflush(stream->handle);
     
     if (ret != 0)
-    {
-        format_error(err, "could not flush file stream %p (FILE %p): %s", stream, stream->handle, strerror(errno));
-        return -1;
-    }
+        set_errno_error(err);
 
     return ret;
 }
