@@ -907,6 +907,49 @@ define_test(substring_allocates_memory_in_target_when_target_is_not_large_enough
     free(&out);
 }
 
+define_test(substring_with_no_out_parameter_returns_slice_to_data)
+{
+    const_string input = "hello"_cs;
+    const_string output;
+
+    output = substring(input, 0);
+    assert_equal(compare_strings(input, output), 0);
+    assert_equal(input.c_str, output.c_str);
+
+    output = substring(input, 0, 5);
+    assert_equal(compare_strings(input, output), 0);
+    assert_equal(input.c_str, output.c_str);
+
+    output = substring(input, 0, 5000);
+    assert_equal(compare_strings(input, output), 0);
+    assert_equal(input.c_str, output.c_str);
+
+    output = substring(input, 0, max_value(u64));
+    assert_equal(compare_strings(input, output), 0);
+    assert_equal(input.c_str, output.c_str);
+
+    output = substring(input, 1);
+    assert_equal(compare_strings(output, "ello"), 0);
+    assert_equal(output.c_str, input.c_str + 1);
+    assert_equal(output.size, 4);
+
+    output = substring(input, 1, 3);
+    assert_equal(compare_strings(output, "ell"), 0);
+    assert_equal(output.c_str, input.c_str + 1);
+    assert_equal(output.size, 3);
+
+    output = substring(input, 5, 3);
+    assert_equal(compare_strings(output, ""), 0);
+    assert_equal(output.c_str, input.c_str + input.size);
+    assert_equal(output.size, 0);
+
+    output = substring(input, 20, 3);
+    assert_equal(compare_strings(output, ""), 0);
+    assert_equal(output.c_str, input.c_str + input.size);
+    assert_equal(output.size, 0);
+}
+
+
 define_test(hash_hashes_string)
 {
     string str = "hello world"_s;

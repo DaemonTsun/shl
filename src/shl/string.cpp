@@ -1095,125 +1095,77 @@ void to_lower(wstring *s)
 }
 
 template<typename C>
-void _substring(const C *s, u64 start, u64 length, C *out, u64 out_offset)
+const_string_base<C> _substring_nocopy(const_string_base<C> str, u64 start, u64 length)
+{
+    if (start >= str.size)
+    {
+        start = str.size;
+        length = 0;
+    }
+    else if (length > str.size + start)
+        length = str.size - start;
+
+    return const_string_base<C>{.c_str = str.c_str + start, .size = length};
+}
+
+const_string  _substring(const_string  s, u64 start, u64 length)
+{
+    return _substring_nocopy(s, start, length);
+}
+
+const_wstring _substring(const_wstring s, u64 start, u64 length)
+{
+    return _substring_nocopy(s, start, length);
+}
+
+template<typename C>
+void _substring_c_str(const C *s, u64 start, u64 length, C *out, u64 out_offset)
 {
     copy_string(s + start, out + out_offset, length);
 }
 
-void substring(const char    *s, u64 start, u64 length, char    *out)
-{
-    _substring(s, start, length, out, 0);
-}
-
-void substring(const wchar_t *s, u64 start, u64 length, wchar_t *out)
-{
-    _substring(s, start, length, out, 0);
-}
-
 void substring(const char    *s, u64 start, u64 length, char    *out, u64 out_offset)
 {
-    _substring(s, start, length, out, out_offset);
+    _substring_c_str(s, start, length, out, out_offset);
 }
 
 void substring(const wchar_t *s, u64 start, u64 length, wchar_t *out, u64 out_offset)
 {
-    _substring(s, start, length, out, out_offset);
+    _substring_c_str(s, start, length, out, out_offset);
 }
 
 template<typename C>
-void _substring_cs_s(const_string_base<C> s, u64 start, u64 length, string_base<C> *out, u64 out_start)
+void _substring_copy(const_string_base<C> s, u64 start, u64 length, string_base<C> *out, u64 out_offset)
 {
     assert(out != nullptr);
 
-    if (length > s.size)
-        length = s.size;
-
-    if (length == 0)
-        return;
-
-    if (start >= s.size)
-        return;
-
-    u64 outlen = out->reserved_size;
+    const_string_base<C> subs = _substring_nocopy(s, start, length);
+    u64 offsize = out_offset + subs.size;
     bool append_null = false;
 
-    if (out_start + length >= outlen)
+    if (offsize >= out->size)
     {
-        string_reserve(out, out_start + length);
+        string_reserve(out, offsize);
         append_null = true;
     }
 
-    copy_memory(s.c_str + start, out->data + out_start, sizeof(C) * length);
+    copy_memory(subs.c_str, out->data + out_offset, sizeof(C) * subs.size);
 
-    if (out->size < out_start + length)
-        out->size = out_start + length;
+    if (out->size < offsize)
+        out->size = offsize;
 
     if (append_null)
         out->data[out->size] = '\0';
 }
 
-void substring(const char    *s, u64 start, u64 length, string  *out)
+void _substring(const_string  s, u64 start, u64 length, string *out,  u64 out_offset)
 {
-    substring(s, start, length, out, 0);
+    _substring_copy(s, start, length, out, out_offset);
 }
 
-void substring(const wchar_t *s, u64 start, u64 length, wstring *out)
+void _substring(const_wstring s, u64 start, u64 length, wstring *out, u64 out_offset)
 {
-    substring(s, start, length, out, 0);
-}
-
-void substring(const_string   s, u64 start, u64 length, string  *out)
-{
-    substring(s, start, length, out, 0);
-}
-
-void substring(const_wstring  s, u64 start, u64 length, wstring *out)
-{
-    substring(s, start, length, out, 0);
-}
-
-void substring(const string  *s, u64 start, u64 length, string  *out)
-{
-    substring(s, start, length, out, 0);
-}
-
-void substring(const wstring *s, u64 start, u64 length, wstring *out)
-{
-    substring(s, start, length, out, 0);
-}
-
-void substring(const char    *s, u64 start, u64 length, string  *out, u64 out_offset)
-{
-    substring(to_const_string(s), start, length, out, out_offset);
-}
-
-void substring(const wchar_t *s, u64 start, u64 length, wstring *out, u64 out_offset)
-{
-    substring(to_const_string(s), start, length, out, out_offset);
-}
-
-void substring(const_string   s, u64 start, u64 length, string  *out, u64 out_offset)
-{
-    _substring_cs_s(s, start, length, out, out_offset);
-}
-
-void substring(const_wstring  s, u64 start, u64 length, wstring *out, u64 out_offset)
-{
-    _substring_cs_s(s, start, length, out, out_offset);
-}
-
-void substring(const string  *s, u64 start, u64 length, string  *out, u64 out_offset)
-{
-    assert(s != nullptr);
-
-    substring(to_const_string(s), start, length, out, out_offset);
-}
-
-void substring(const wstring *s, u64 start, u64 length, wstring *out, u64 out_offset)
-{
-    assert(s != nullptr);
-
-    substring(to_const_string(s), start, length, out, out_offset);
+    _substring_copy(s, start, length, out, out_offset);
 }
 
 template<typename C>
@@ -1228,7 +1180,7 @@ void _replace_c(string_base<C> *s, C needle, C replacement, s64 offset)
 }
 
 template<typename C>
-void _replace(string_base<C> *s, const_string_base<C> needle, const_string_base<C> replacement, s64 offset)
+void _replace_s(string_base<C> *s, const_string_base<C> needle, const_string_base<C> replacement, s64 offset)
 {
     if (needle.size == 0)
         return;
@@ -1263,64 +1215,9 @@ void _replace(string_base<C> *s, const_string_base<C> needle, const_string_base<
     copy_string(replacement, s, UINT64_MAX, idx);
 }
 
-void replace(string *s, char needle, char replacement)
-{
-    _replace_c(s, needle, replacement, 0);
-}
-
-void replace(string *s, const char   *needle, const_string replacement)
-{
-    _replace(s, to_const_string(needle), replacement, 0);
-}
-
-void replace(string *s, const_string needle, const_string replacement)
-{
-    _replace(s, needle, replacement, 0);
-}
-
-void replace(string *s, const string *needle, const_string replacement)
-{
-    _replace(s, to_const_string(needle), replacement, 0);
-}
-
 void replace(string *s, char needle, char replacement, s64 offset)
 {
     _replace_c(s, needle, replacement, offset);
-}
-
-void replace(string *s, const char   *needle, const_string replacement, s64 offset)
-{
-    _replace(s, to_const_string(needle), replacement, offset);
-}
-
-void replace(string *s, const_string needle, const_string replacement, s64 offset)
-{
-    _replace(s, needle, replacement, offset);
-}
-
-void replace(string *s, const string *needle, const_string replacement, s64 offset)
-{
-    _replace(s, to_const_string(needle), replacement, offset);
-}
-
-void replace(wstring *s, wchar_t needle, wchar_t replacement)
-{
-    _replace_c(s, needle, replacement, 0);
-}
-
-void replace(wstring *s, const wchar_t   *needle, const_wstring replacement)
-{
-    _replace(s, to_const_string(needle), replacement, 0);
-}
-
-void replace(wstring *s, const_wstring needle, const_wstring replacement)
-{
-    _replace(s, needle, replacement, 0);
-}
-
-void replace(wstring *s, const wstring *needle, const_wstring replacement)
-{
-    _replace(s, to_const_string(needle), replacement, 0);
 }
 
 void replace(wstring *s, wchar_t needle, wchar_t replacement, s64 offset)
@@ -1328,19 +1225,14 @@ void replace(wstring *s, wchar_t needle, wchar_t replacement, s64 offset)
     _replace_c(s, needle, replacement, offset);
 }
 
-void replace(wstring *s, const wchar_t   *needle, const_wstring replacement, s64 offset)
+void _replace(string  *s, const_string  needle, const_string  replacement, s64 offset)
 {
-    _replace(s, to_const_string(needle), replacement, offset);
+    _replace_s(s, needle, replacement, offset);
 }
 
-void replace(wstring *s, const_wstring needle, const_wstring replacement, s64 offset)
+void _replace(wstring *s, const_wstring needle, const_wstring replacement, s64 offset)
 {
-    _replace(s, needle, replacement, offset);
-}
-
-void replace(wstring *s, const wstring *needle, const_wstring replacement, s64 offset)
-{
-    _replace(s, to_const_string(needle), replacement, offset);
+    _replace_s(s, needle, replacement, offset);
 }
 
 template<typename C>
@@ -1356,7 +1248,7 @@ void _replace_all_c(string_base<C> *s, C needle, C replacement, s64 offset)
 }
 
 template<typename C>
-void _replace_all(string_base<C> *s, const_string_base<C> needle, const_string_base<C> replacement, s64 offset)
+void _replace_all_s(string_base<C> *s, const_string_base<C> needle, const_string_base<C> replacement, s64 offset)
 {
     if (needle.size == 0)
         return;
@@ -1393,64 +1285,9 @@ void _replace_all(string_base<C> *s, const_string_base<C> needle, const_string_b
     }
 }
 
-void replace_all(string *s, char needle, char replacement)
-{
-    _replace_all_c(s, needle, replacement, 0);
-}
-
-void replace_all(string *s, const char   *needle, const_string replacement)
-{
-    _replace_all(s, to_const_string(needle), replacement, 0);
-}
-
-void replace_all(string *s, const_string needle, const_string replacement)
-{
-    _replace_all(s, needle, replacement, 0);
-}
-
-void replace_all(string *s, const string *needle, const_string replacement)
-{
-    _replace_all(s, to_const_string(needle), replacement, 0);
-}
-
 void replace_all(string *s, char needle, char replacement, s64 offset)
 {
     _replace_all_c(s, needle, replacement, offset);
-}
-
-void replace_all(string *s, const char   *needle, const_string replacement, s64 offset)
-{
-    _replace_all(s, to_const_string(needle), replacement, offset);
-}
-
-void replace_all(string *s, const_string needle, const_string replacement, s64 offset)
-{
-    _replace_all(s, needle, replacement, offset);
-}
-
-void replace_all(string *s, const string *needle, const_string replacement, s64 offset)
-{
-    _replace_all(s, to_const_string(needle), replacement, offset);
-}
-
-void replace_all(wstring *s, wchar_t needle, wchar_t replacement)
-{
-    _replace_all_c(s, needle, replacement, 0);
-}
-
-void replace_all(wstring *s, const wchar_t   *needle, const_wstring replacement)
-{
-    _replace_all(s, to_const_string(needle), replacement, 0);
-}
-
-void replace_all(wstring *s, const_wstring needle, const_wstring replacement)
-{
-    _replace_all(s, needle, replacement, 0);
-}
-
-void replace_all(wstring *s, const wstring *needle, const_wstring replacement)
-{
-    _replace_all(s, to_const_string(needle), replacement, 0);
 }
 
 void replace_all(wstring *s, wchar_t needle, wchar_t replacement, s64 offset)
@@ -1458,19 +1295,14 @@ void replace_all(wstring *s, wchar_t needle, wchar_t replacement, s64 offset)
     _replace_all_c(s, needle, replacement, offset);
 }
 
-void replace_all(wstring *s, const wchar_t   *needle, const_wstring replacement, s64 offset)
+void _replace_all(string  *s, const_string  needle, const_string  replacement, s64 offset)
 {
-    _replace_all(s, to_const_string(needle), replacement, offset);
+    _replace_all_s(s, needle, replacement, offset);
 }
 
-void replace_all(wstring *s, const_wstring needle, const_wstring replacement, s64 offset)
+void _replace_all(wstring *s, const_wstring needle, const_wstring replacement, s64 offset)
 {
-    _replace_all(s, needle, replacement, offset);
-}
-
-void replace_all(wstring *s, const wstring *needle, const_wstring replacement, s64 offset)
-{
-    _replace_all(s, to_const_string(needle), replacement, offset);
+    _replace_all_s(s, needle, replacement, offset);
 }
 
 template<typename C>
@@ -1527,7 +1359,7 @@ s64 _split_c(const_string_base<C> s, C delim, array<const_string_base<C>> *out)
 }
 
 template<typename C>
-s64 _split(const_string_base<C> s, const_string_base<C> delim, array<const_string_base<C>> *out)
+s64 _split_s(const_string_base<C> s, const_string_base<C> delim, array<const_string_base<C>> *out)
 {
     if (delim.size == 0)
         return 0;
@@ -1582,84 +1414,24 @@ s64 _split(const_string_base<C> s, const_string_base<C> delim, array<const_strin
     return split_count;
 }
 
-s64 split(const_string   s, char           delim, array<const_string>  *out)
+s64 _split(const_string  s, char          delim, array<const_string>  *out)
 {
     return _split_c(s, delim, out);
 }
 
-s64 split(const_string   s, const char    *delim, array<const_string>  *out)
-{
-    return _split(s, to_const_string(delim), out);
-}
-
-s64 split(const_string   s, const_string   delim, array<const_string>  *out)
-{
-    return _split(s, delim, out);
-}
-
-s64 split(const_string   s, const string  *delim, array<const_string>  *out)
-{
-    return _split(s, to_const_string(delim), out);
-}
-
-s64 split(const string  *s, char           delim, array<const_string>  *out)
-{
-    return _split_c(to_const_string(s), delim, out);
-}
-
-s64 split(const string  *s, const char    *delim, array<const_string>  *out)
-{
-    return _split(to_const_string(s), to_const_string(delim), out);
-}
-
-s64 split(const string  *s, const_string   delim, array<const_string>  *out)
-{
-    return _split(to_const_string(s), delim, out);
-}
-
-s64 split(const string  *s, const string  *delim, array<const_string>  *out)
-{
-    return _split(to_const_string(s), to_const_string(delim), out);
-}
-
-s64 split(const_wstring  s, wchar_t           delim, array<const_wstring> *out)
+s64 _split(const_wstring s, wchar_t       delim, array<const_wstring> *out)
 {
     return _split_c(s, delim, out);
 }
 
-s64 split(const_wstring  s, const wchar_t    *delim, array<const_wstring> *out)
+s64 _split(const_string  s, const_string  delim, array<const_string>  *out)
 {
-    return _split(s, to_const_string(delim), out);
+    return _split_s(s, delim, out);
 }
 
-s64 split(const_wstring  s, const_wstring  delim, array<const_wstring> *out)
+s64 _split(const_wstring s, const_wstring delim, array<const_wstring> *out)
 {
-    return _split(s, delim, out);
-}
-
-s64 split(const_wstring  s, const wstring *delim, array<const_wstring> *out)
-{
-    return _split(s, to_const_string(delim), out);
-}
-
-s64 split(const wstring *s, wchar_t           delim, array<const_wstring> *out)
-{
-    return _split_c(to_const_string(s), delim, out);
-}
-
-s64 split(const wstring *s, const wchar_t    *delim, array<const_wstring> *out)
-{
-    return _split(to_const_string(s), to_const_string(delim), out);
-}
-
-s64 split(const wstring *s, const_wstring  delim, array<const_wstring> *out)
-{
-    return _split(to_const_string(s), delim, out);
-}
-
-s64 split(const wstring *s, const wstring *delim, array<const_wstring> *out)
-{
-    return _split(to_const_string(s), to_const_string(delim), out);
+    return _split_s(s, delim, out);
 }
 
 template<typename C> inline const_string_base<C> _to_const_string(const C **s) { return to_const_string(*s); }

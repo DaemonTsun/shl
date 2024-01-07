@@ -432,15 +432,15 @@ auto index_of(T1 haystack, T2 needle, s64 offset = 0)
     return _index_of(to_const_string(haystack), to_const_string(needle), offset);
 }
 
-template<typename T1>
-auto index_of(T1 haystack, char needle, s64 offset = 0)
+template<typename T>
+auto index_of(T haystack, char needle, s64 offset = 0)
     -> decltype(_index_of(to_const_string(haystack), needle, offset))
 {
     return _index_of(to_const_string(haystack), needle, offset);
 }
 
-template<typename T1>
-auto index_of(T1 haystack, wchar_t needle, s64 offset = 0)
+template<typename T>
+auto index_of(T haystack, wchar_t needle, s64 offset = 0)
     -> decltype(_index_of(to_const_string(haystack), needle, offset))
 {
     return _index_of(to_const_string(haystack), needle, offset);
@@ -467,73 +467,71 @@ void    to_lower(wchar_t *s);
 void    to_lower(string  *s);
 void    to_lower(wstring *s);
 
-void substring(const char    *s, u64 start, u64 length, char    *out);
-void substring(const wchar_t *s, u64 start, u64 length, wchar_t *out);
-void substring(const char    *s, u64 start, u64 length, string  *out);
-void substring(const wchar_t *s, u64 start, u64 length, wstring *out);
-void substring(const_string   s, u64 start, u64 length, string  *out);
-void substring(const_wstring  s, u64 start, u64 length, wstring *out);
-void substring(const string  *s, u64 start, u64 length, string  *out);
-void substring(const wstring *s, u64 start, u64 length, wstring *out);
-void substring(const char    *s, u64 start, u64 length, char    *out, u64 out_offset);
-void substring(const char    *s, u64 start, u64 length, string  *out, u64 out_offset);
-void substring(const wchar_t *s, u64 start, u64 length, wchar_t *out, u64 out_offset);
-void substring(const wchar_t *s, u64 start, u64 length, wstring *out, u64 out_offset);
-void substring(const_string   s, u64 start, u64 length, string  *out, u64 out_offset);
-void substring(const_wstring  s, u64 start, u64 length, wstring *out, u64 out_offset);
-void substring(const string  *s, u64 start, u64 length, string  *out, u64 out_offset);
-void substring(const wstring *s, u64 start, u64 length, wstring *out, u64 out_offset);
+const_string  _substring(const_string  s, u64 start, u64 length);
+const_wstring _substring(const_wstring s, u64 start, u64 length);
 
-void replace(string  *s, char           needle, char          replacement);
-void replace(string  *s, const char    *needle, const_string  replacement);
-void replace(string  *s, const_string   needle, const_string  replacement);
-void replace(string  *s, const string  *needle, const_string  replacement);
-void replace(string  *s, char           needle, char          replacement, s64 offset);
-void replace(string  *s, const char    *needle, const_string  replacement, s64 offset);
-void replace(string  *s, const_string   needle, const_string  replacement, s64 offset);
-void replace(string  *s, const string  *needle, const_string  replacement, s64 offset);
-void replace(wstring *s, wchar_t        needle, wchar_t       replacement);
-void replace(wstring *s, const wchar_t *needle, const_wstring replacement);
-void replace(wstring *s, const_wstring  needle, const_wstring replacement);
-void replace(wstring *s, const wstring *needle, const_wstring replacement);
-void replace(wstring *s, wchar_t        needle, wchar_t       replacement, s64 offset);
-void replace(wstring *s, const wchar_t *needle, const_wstring replacement, s64 offset);
-void replace(wstring *s, const_wstring  needle, const_wstring replacement, s64 offset);
-void replace(wstring *s, const wstring *needle, const_wstring replacement, s64 offset);
+template<typename T>
+auto substring(T str, u64 start, u64 length = max_value(u64))
+    -> decltype(_substring(to_const_string(str), start, length))
+{
+    return _substring(to_const_string(str), start, length);
+}
 
-void replace_all(string  *s, char           needle, char          replacement);
-void replace_all(string  *s, const char    *needle, const_string  replacement);
-void replace_all(string  *s, const_string   needle, const_string  replacement);
-void replace_all(string  *s, const string  *needle, const_string  replacement);
-void replace_all(string  *s, char           needle, char          replacement, s64 offset);
-void replace_all(string  *s, const char    *needle, const_string  replacement, s64 offset);
-void replace_all(string  *s, const_string   needle, const_string  replacement, s64 offset);
-void replace_all(string  *s, const string  *needle, const_string  replacement, s64 offset);
-void replace_all(wstring *s, wchar_t        needle, wchar_t       replacement);
-void replace_all(wstring *s, const wchar_t *needle, const_wstring replacement);
-void replace_all(wstring *s, const_wstring  needle, const_wstring replacement);
-void replace_all(wstring *s, const wstring *needle, const_wstring replacement);
-void replace_all(wstring *s, wchar_t        needle, wchar_t       replacement, s64 offset);
-void replace_all(wstring *s, const wchar_t *needle, const_wstring replacement, s64 offset);
-void replace_all(wstring *s, const_wstring  needle, const_wstring replacement, s64 offset);
-void replace_all(wstring *s, const wstring *needle, const_wstring replacement, s64 offset);
+void substring(const char    *s, u64 start, u64 length, char    *out, u64 out_offset = 0);
+void substring(const wchar_t *s, u64 start, u64 length, wchar_t *out, u64 out_offset = 0);
 
-s64 split(const_string   s, char           delim, array<const_string>  *out);
-s64 split(const_string   s, const char    *delim, array<const_string>  *out);
-s64 split(const_string   s, const_string   delim, array<const_string>  *out);
-s64 split(const_string   s, const string  *delim, array<const_string>  *out);
-s64 split(const string  *s, char           delim, array<const_string>  *out);
-s64 split(const string  *s, const char    *delim, array<const_string>  *out);
-s64 split(const string  *s, const_string   delim, array<const_string>  *out);
-s64 split(const string  *s, const string  *delim, array<const_string>  *out);
-s64 split(const_wstring  s, wchar_t        delim, array<const_wstring> *out);
-s64 split(const_wstring  s, const wchar_t *delim, array<const_wstring> *out);
-s64 split(const_wstring  s, const_wstring  delim, array<const_wstring> *out);
-s64 split(const_wstring  s, const wstring *delim, array<const_wstring> *out);
-s64 split(const wstring *s, wchar_t        delim, array<const_wstring> *out);
-s64 split(const wstring *s, const wchar_t *delim, array<const_wstring> *out);
-s64 split(const wstring *s, const_wstring  delim, array<const_wstring> *out);
-s64 split(const wstring *s, const wstring *delim, array<const_wstring> *out);
+void _substring(const_string  s, u64 start, u64 length, string *out,  u64 out_offset);
+void _substring(const_wstring s, u64 start, u64 length, wstring *out, u64 out_offset);
+
+template<typename C, typename T>
+auto substring(T str, u64 start, u64 length, string_base<C> *out, u64 out_offset = 0)
+    -> decltype(_substring(to_const_string(str), start, length, out, out_offset))
+{
+    _substring(to_const_string(str), start, length, out, out_offset);
+}
+
+void replace(string  *s, char    needle, char    replacement, s64 offset = 0);
+void replace(wstring *s, wchar_t needle, wchar_t replacement, s64 offset = 0);
+void _replace(string  *s, const_string  needle, const_string  replacement, s64 offset);
+void _replace(wstring *s, const_wstring needle, const_wstring replacement, s64 offset);
+
+template<typename C, typename TNeedle, typename TReplacement>
+auto replace(string_base<C> *s, TNeedle needle, TReplacement replacement, s64 offset = 0)
+    -> decltype(_replace(s, to_const_string(needle), to_const_string(replacement), offset))
+{
+    _replace(s, to_const_string(needle), to_const_string(replacement), offset);
+}
+
+void replace_all(string  *s, char    needle, char    replacement, s64 offset = 0);
+void replace_all(wstring *s, wchar_t needle, wchar_t replacement, s64 offset = 0);
+void _replace_all(string  *s, const_string  needle, const_string  replacement, s64 offset);
+void _replace_all(wstring *s, const_wstring needle, const_wstring replacement, s64 offset);
+
+template<typename C, typename TNeedle, typename TReplacement>
+auto replace_all(string_base<C> *s, TNeedle needle, TReplacement replacement, s64 offset = 0)
+    -> decltype(_replace_all(s, to_const_string(needle), to_const_string(replacement), offset))
+{
+    _replace_all(s, to_const_string(needle), to_const_string(replacement), offset);
+}
+
+s64 _split(const_string  s, char          delim, array<const_string>  *out);
+s64 _split(const_wstring s, wchar_t       delim, array<const_wstring> *out);
+s64 _split(const_string  s, const_string  delim, array<const_string>  *out);
+s64 _split(const_wstring s, const_wstring delim, array<const_wstring> *out);
+
+template<typename C, typename TStr, typename TDelim>
+auto split(TStr s, TDelim delim, array<const_string_base<C>> *out)
+    -> decltype(_split(to_const_string(s), to_const_string(delim), out))
+{
+    return _split(to_const_string(s), to_const_string(delim), out);
+}
+
+template<typename C, typename T>
+auto split(T s, C delim, array<const_string_base<C>> *out)
+    -> decltype(_split(to_const_string(s), delim, out))
+{
+    return _split(to_const_string(s), delim, out);
+}
 
 void join(const char  **strings, u64 count, char          delim, string *out);
 void join(const char  **strings, u64 count, const char   *delim, string *out);
