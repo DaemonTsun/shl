@@ -42,7 +42,7 @@ constexpr inline T floor_exp2(T x)
     return x - (x >> 1);
 }
 
-template<unsigned N, typename T>
+template<u32 N, typename T>
 constexpr inline T floor_exp(T x)
 {
     if constexpr (N == 2)
@@ -50,6 +50,21 @@ constexpr inline T floor_exp(T x)
 
     constexpr T Shift = bit_log<1>(N);
 
+    T ret = 1;
+
+    while (x >>= Shift)
+        ret <<= Shift;
+
+    return ret;
+}
+
+template<typename T>
+constexpr inline T floor_exp(T x, u32 n)
+{
+    if (n == 2)
+        return floor_exp2(x);
+
+    T Shift = bit_log<1>(n);
     T ret = 1;
 
     while (x >>= Shift)
@@ -73,7 +88,7 @@ constexpr inline T ceil_exp2(T x)
     return x;
 }
 
-template<unsigned N, typename T>
+template<u32 N, typename T>
 constexpr inline T ceil_exp(T x)
 {
     if constexpr (N == 2)
@@ -81,6 +96,29 @@ constexpr inline T ceil_exp(T x)
 
     constexpr T Shift = bit_log<1>(N);
 
+    T ret = 1;
+    T prev = 0;
+
+    while (ret < x)
+    {
+        ret <<= Shift;
+
+        if (ret < prev)
+            break;
+
+        prev = ret;
+    }
+
+    return ret;
+}
+
+template<typename T>
+constexpr inline T ceil_exp(T x, u32 n)
+{
+    if (n == 2)
+        return ceil_exp2(x);
+
+    T Shift = bit_log<1>(n);
     T ret = 1;
     T prev = 0;
 

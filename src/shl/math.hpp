@@ -23,3 +23,27 @@ auto wrap_number(TVal val, TMin min, TMax max)
     auto range = (max - min) + (TVal)1;
     return modulo(modulo((val - min), range) + range, range) + min;
 }
+
+template<typename T1, typename T2>
+auto ceil_multiple(T1 x, T2 multiple)
+{
+    if (multiple == 0)
+        return x;
+
+    auto rest = modulo(x, multiple);
+
+    if (rest == 0)
+        return x;
+
+    return (x + multiple) - rest;
+}
+
+// if multiple is power of 2
+template<typename T1, typename T2>
+auto ceil_multiple2(T1 x, T2 multiple)
+{
+    if (multiple == 0)
+        return x;
+
+    return (x + (multiple - 1)) & (-multiple);
+}

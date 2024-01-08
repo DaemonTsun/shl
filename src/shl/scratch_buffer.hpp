@@ -35,6 +35,14 @@ grow_by(*buf, Factor) grows the scratch_buffer by a factor Factor
                       allocates heap memory and sets data to a pointer to the
                       heap memory.
 grow(*buf)  grows the scratch_buffer by a factor of 2.
+
+------
+NOTES:
+
+When moving scratch_buffers, the data member _may be invalidated_ if the scratch
+buffer uses the stack buffer. If that is the case make sure to regenerate the
+data member by setting it to the pointer of the stack buffer, or always use
+the scratch_buffer_data() function to obtain the correct pointer.
  */
 
 #include <assert.h>
@@ -113,3 +121,13 @@ u64 grow(scratch_buffer<N> *buf)
 {
     return grow_by(buf, 2);
 }
+
+template<u64 N>
+char *scratch_buffer_data(const scratch_buffer<N> *buf)
+{
+    if (buf->size > N)
+        return buf->data;
+
+    return (char*)buf->stack_buffer;
+}
+

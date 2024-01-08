@@ -109,6 +109,14 @@ define_test(ceil_exp_gets_next_power_of_N)
     assert_equal(ceil_exp<8>(7), 8);
     assert_equal(ceil_exp<8>(8), 8);
     assert_equal(ceil_exp<8>(9), 64);
+
+    assert_equal(ceil_exp(0, 8), 1);
+    assert_equal(ceil_exp(1, 8), 1);
+    assert_equal(ceil_exp(2, 8), 8);
+    assert_equal(ceil_exp(6, 8), 8);
+    assert_equal(ceil_exp(7, 8), 8);
+    assert_equal(ceil_exp(8, 8), 8);
+    assert_equal(ceil_exp(9, 8), 64);
 }
 
 define_test(bit_log_gets_integer_log)
