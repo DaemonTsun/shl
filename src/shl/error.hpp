@@ -9,11 +9,11 @@ format_error_message(fmt, ...) is similar to snprintf, but returns a pointer to 
 formatted string. The pointer points to static memory and only one message
 can be formatted at a time.
 
-The set_error(*err, message) macro writes the given error message to *err.
+The set_error(*err, errcode, message) macro writes the given error message to *err.
 In debug, file and line information is also set in *err.
 Does nothing if *err is nullptr.
 
-format_error(*err, fmt, ...) is the same as set_error, but formats the error
+format_error(*err, errcode, fmt, ...) is the same as set_error, but formats the error
 message using format_error_message.
 
 A typical use-case for this is to have an optional *error parameter in a function
