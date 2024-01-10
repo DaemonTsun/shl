@@ -64,8 +64,10 @@ inline constexpr format_options<C> default_format_options
     .precision = -1
 };
 
-s64 pad_string(string  *s, char    chr, s64 count, u64 offset);
-s64 pad_string(wstring *s, wchar_t chr, s64 count, u64 offset);
+s64 pad_string(char    *s, u64 ssize, char    chr, s64 count, u64 offset = 0);
+s64 pad_string(wchar_t *s, u64 ssize, wchar_t chr, s64 count, u64 offset = 0);
+s64 pad_string(string  *s, char    chr, s64 count, u64 offset = 0);
+s64 pad_string(wstring *s, wchar_t chr, s64 count, u64 offset = 0);
 
 s64 to_string(string  *s, bool x, u64 offset = 0, format_options<char> opt = default_format_options<char>, bool as_text = false);
 s64 to_string(wstring *s, bool x, u64 offset = 0, format_options<wchar_t> opt = default_format_options<wchar_t>, bool as_text = false);

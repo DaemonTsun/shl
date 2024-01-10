@@ -681,22 +681,22 @@ void set_string(wstring *dst, const wstring *src)
 
 char *copy_string(const char *src, char *dst)
 {
-    return strcpy(dst, src);
+    return stpcpy(dst, src);
 }
 
 wchar_t *copy_string(const wchar_t *src, wchar_t *dst)
 {
-    return wcscpy(dst, src);
+    return wcpcpy(dst, src);
 }
 
 char *copy_string(const char *src, char *dst, u64 n)
 {
-    return strncpy(dst, src, n);
+    return stpncpy(dst, src, n);
 }
 
 wchar_t *copy_string(const wchar_t *src, wchar_t *dst, u64 n)
 {
-    return wcsncpy(dst, src, n);
+    return wcpncpy(dst, src, n);
 }
 
 template<typename C>

@@ -12,6 +12,69 @@ std::ostream& operator<<(std::ostream &lhs, const_string rhs)
     return lhs << '"' << rhs.c_str << '"';
 }
 
+#define assert_equal_str(Str1, Str2) assert_equal(to_const_string(Str1), to_const_string(Str2))
+
+define_test(pad_string_pads_string)
+{
+    string str = "abc"_s;
+
+    // inserts a repeated character 'd' 5 times at index 0
+    pad_string(&str, 'd', 5, 0);
+
+    assert_equal_str(str, "ddddd"_cs);
+    assert_equal(str.size, 5);
+    assert_equal(str[5], '\0');
+
+    pad_string(&str, 'e', 0);
+
+    assert_equal_str(str, "ddddd"_cs);
+    assert_equal(str.size, 5);
+    assert_equal(str[5], '\0');
+
+    pad_string(&str, 'e', 1);
+
+    assert_equal_str(str, "edddd"_cs);
+    assert_equal(str.size, 5);
+    assert_equal(str[5], '\0');
+    
+    pad_string(&str, 'f', 1, 5);
+
+    assert_equal_str(str, "eddddf"_cs);
+    assert_equal(str.size, 6);
+    assert_equal(str[6], '\0');
+
+    free(&str);
+}
+
+define_test(pad_string_pads_c_string)
+{
+    char buf[6] = "xxxxx";
+
+    assert_equal(pad_string(buf, 5, 'a', 0, 0), 0);
+    assert_equal_str(buf, "xxxxx");
+
+    assert_equal(pad_string(buf, 5, 'a', 1, 0), 1);
+    assert_equal_str(buf, "axxxx");
+
+    assert_equal(pad_string(buf, 5, 'a', 3, 0), 3);
+    assert_equal_str(buf, "aaaxx");
+
+    assert_equal(pad_string(buf, 5, 'b', 5, 0), 5);
+    assert_equal_str(buf, "bbbbb");
+
+    assert_equal(pad_string(buf, 5, 'c', 10, 0), 5);
+    assert_equal_str(buf, "ccccc");
+
+    assert_equal(pad_string(buf, 5, 'd', 100, 3), 2);
+    assert_equal_str(buf, "cccdd");
+
+    assert_equal(pad_string(buf, 5, 'd', 3, 5), 0);
+    assert_equal_str(buf, "cccdd");
+
+    assert_equal(pad_string(buf, 5, 'd', 3, 100), 0);
+    assert_equal_str(buf, "cccdd");
+}
+
 define_test(to_string_converts_bool_to_string)
 {
     string str;
@@ -20,26 +83,26 @@ define_test(to_string_converts_bool_to_string)
     format_options<char> opt = default_format_options<char>;
 
     assert_equal(to_string(&str, true), 1);
-    assert_equal(str, "1"_cs);
+    assert_equal_str(str, "1"_cs);
     assert_equal(to_string(&str, false), 1);
-    assert_equal(str, "0"_cs);
+    assert_equal_str(str, "0"_cs);
     assert_equal(to_string(&str, true, 1 /*offset*/), 1);
-    assert_equal(str, "01"_cs);
+    assert_equal_str(str, "01"_cs);
     assert_equal(to_string(&str, true, 0 /*offset*/, opt, true /* as text */), 4);
-    assert_equal(str, "true"_cs);
+    assert_equal_str(str, "true"_cs);
     assert_equal(to_string(&str, false, 0 /*offset*/, opt, true /* as text */), 5);
-    assert_equal(str, "false"_cs);
+    assert_equal_str(str, "false"_cs);
     clear(&str);
 
     assert_equal(to_string(&str, true, 0, format_options<char>{.pad_length = 8, .pad_char = ' '}, false), 8);
-    assert_equal(str, "       1"_cs);
+    assert_equal_str(str, "       1"_cs);
     assert_equal(to_string(&str, true, 0, format_options<char>{.pad_length = 8, .pad_char = ' '}, true), 8);
-    assert_equal(str, "    true"_cs);
+    assert_equal_str(str, "    true"_cs);
 
     assert_equal(to_string(&str, false, 0, format_options<char>{.pad_length = -8, .pad_char = ' '}, false), 8);
-    assert_equal(str, "0       "_cs);
+    assert_equal_str(str, "0       "_cs);
     assert_equal(to_string(&str, false, 0, format_options<char>{.pad_length = -8, .pad_char = ' '}, true), 8);
-    assert_equal(str, "false   "_cs);
+    assert_equal_str(str, "false   "_cs);
 
     free(&str);
 }
@@ -50,17 +113,17 @@ define_test(to_string_converts_char_to_string)
     init(&str);
 
     assert_equal(to_string(&str, 'a'), 1);
-    assert_equal(str, "a"_cs);
+    assert_equal_str(str, "a"_cs);
     assert_equal(to_string(&str, 'b'), 1);
-    assert_equal(str, "b"_cs);
+    assert_equal_str(str, "b"_cs);
     assert_equal(to_string(&str, 'c', 1 /*offset*/), 1);
-    assert_equal(str, "bc"_cs);
+    assert_equal_str(str, "bc"_cs);
     clear(&str);
 
     assert_equal(to_string(&str, 'd', 0, format_options<char>{.pad_length = 6, .pad_char = ' '}), 6);
-    assert_equal(str, "     d"_cs);
+    assert_equal_str(str, "     d"_cs);
     assert_equal(to_string(&str, 'e', 0, format_options<char>{.pad_length = -6, .pad_char = ' '}), 6);
-    assert_equal(str, "e     "_cs);
+    assert_equal_str(str, "e     "_cs);
 
     free(&str);
 }
@@ -71,21 +134,21 @@ define_test(to_string_converts_string_to_string)
     init(&str);
 
     assert_equal(to_string(&str, "hello"_cs), 5);
-    assert_equal(str, "hello"_cs);
+    assert_equal_str(str, "hello"_cs);
     assert_equal(to_string(&str, "world"_cs), 5);
-    assert_equal(str, "world"_cs);
+    assert_equal_str(str, "world"_cs);
     assert_equal(to_string(&str, "hello"_cs, 5 /*offset*/), 5);
-    assert_equal(str, "worldhello"_cs);
+    assert_equal_str(str, "worldhello"_cs);
 
     clear(&str);
     assert_equal(to_string(&str, "hello"_cs, 0), 5);
-    assert_equal(str, "hello"_cs);
+    assert_equal_str(str, "hello"_cs);
     clear(&str);
 
     assert_equal(to_string(&str, "hello"_cs, 0, format_options<char>{.pad_length = 10, .pad_char = ' '}), 10);
-    assert_equal(str, "     hello"_cs);
+    assert_equal_str(str, "     hello"_cs);
     assert_equal(to_string(&str, "hello"_cs, 0, format_options<char>{.pad_length = -10, .pad_char = ' '}), 10);
-    assert_equal(str, "hello     "_cs);
+    assert_equal_str(str, "hello     "_cs);
 
     free(&str);
 }
@@ -93,7 +156,7 @@ define_test(to_string_converts_string_to_string)
 #define assert_to_string(Str, Result, Length, ...)\
     assert_equal(to_string(&Str, __VA_ARGS__), Length);\
     assert_equal(string_length(&Str), Length);\
-    assert_equal(Str, Result);\
+    assert_equal_str(Str, Result);\
     clear(&Str);
 
 define_test(to_string_converts_integer_to_string)
@@ -320,7 +383,7 @@ define_test(to_string_converts_pointer_to_wstring)
     assert_equal(format(&Str, Fmt, __VA_ARGS__), Length);\
     assert_equal(string_length(&Str), Length);\
     assert_equal(Str[string_length(&Str)], (C)'\0');\
-    assert_equal(Str, Result);\
+    assert_equal_str(Str, Result);\
     clear(&Str);
 
 define_test(format_formats_string)
@@ -457,7 +520,7 @@ define_test(new_format_creates_string_from_format)
 {
     string str = new_format("%s %d %1.f", "abc", 5, 16.5f);
 
-    assert_equal(str, "abc 5 16.5"_cs);
+    assert_equal_str(str, "abc 5 16.5"_cs);
     free(&str);
 }
 

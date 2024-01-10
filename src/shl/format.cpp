@@ -35,6 +35,64 @@ s64 _copy_string_reverse_checked(const C *src, u64 src_size, C *dst, u64 dst_siz
 }
 
 template<typename C>
+s64 _copy_string_reverse_checked(const C *src, u64 src_size, C *dst, u64 dst_size, u64 dst_offset)
+{
+    if (dst_offset >= dst_size)
+        return 0;
+
+    return _copy_string_reverse_checked(src, src_size, dst + dst_offset, dst_size - dst_offset);
+}
+
+template<typename C>
+s64 _copy_string_checked(const C *src, u64 src_size, C *dst, u64 dst_size)
+{
+    u64 ssize = Min(src_size, dst_size);
+    C *ptr = copy_string(src, dst, ssize);
+
+    if (ptr == nullptr)
+        return 0;
+
+    return ptr - dst;
+}
+
+template<typename C>
+s64 _copy_string_checked(const C *src, u64 src_size, C *dst, u64 dst_size, u64 dst_offset)
+{
+    if (dst_offset >= dst_size)
+        return 0;
+
+    return _copy_string_checked(src, src_size, dst + dst_offset, dst_size - dst_offset);
+}
+
+template<typename C>
+s64 _pad_string_pc(C *s, u64 ssize, C chr, s64 count, u64 offset)
+{
+    if (count <= 0)
+        return 0;
+
+    if (count + offset > ssize)
+        count = (s64)ssize - (s64)offset;
+
+    if (count <= 0)
+        return 0;
+
+    for (s64 i = 0; i < count; ++i)
+        s[i + offset] = chr;
+
+    return count;
+}
+
+s64 pad_string(char    *s, u64 ssize, char    chr, s64 count, u64 offset)
+{
+    return _pad_string_pc(s, ssize, chr, count, offset);
+}
+
+s64 pad_string(wchar_t *s, u64 ssize, wchar_t chr, s64 count, u64 offset)
+{
+    return _pad_string_pc(s, ssize, chr, count, offset);
+}
+
+template<typename C>
 s64 _pad_string_s(string_base<C> *s, C chr, s64 count, u64 offset)
 {
     if (count <= 0)
@@ -44,6 +102,12 @@ s64 _pad_string_s(string_base<C> *s, C chr, s64 count, u64 offset)
 
     for (s64 i = 0; i < count; ++i)
         s->data[i + offset] = chr;
+
+    if (offset + count > s->size)
+    {
+        s->size = offset + count;
+        s->data[s->size] = '\0';
+    }
 
     return count;
 }
@@ -59,9 +123,35 @@ s64 pad_string(wstring *s, wchar_t chr, s64 count, u64 offset)
 }
 
 template<typename C>
-s64 _bool_to_string(string_base<C> *s, bool x, u64 offset, format_options<C> opt, bool as_text)
+s64 _bool_to_c_str(C *s, s64 ssize, bool value, u64 offset, format_options<C> opt, bool as_text)
 {
     s64 written = 0;
+
+    if (as_text)
+    {
+        const_string_base<C> lit_to_write{};
+
+        if (value)
+            lit_to_write = LIT(C, "true");
+        else
+            lit_to_write = LIT(C, "false");
+
+        written += pad_string(s, ssize, opt.pad_char, opt.pad_length - lit_to_write.size, offset);
+        written += _copy_string_checked(lit_to_write.c_str, lit_to_write.size, s, ssize, written + offset);
+    }
+    else
+    {
+        written += pad_string(s, ssize, opt.pad_char, opt.pad_length - 1, offset);
+        s[written + offset] = value ? '1' : '0';
+        written += 1;
+    }
+
+    return written;
+}
+
+template<typename C>
+s64 _bool_to_string(string_base<C> *s, bool value, u64 offset, format_options<C> opt, bool as_text)
+{
     u64 sz = as_text ? 5 : 1;
 
     if (opt.pad_length > 0 && sz < opt.pad_length)
@@ -71,31 +161,7 @@ s64 _bool_to_string(string_base<C> *s, bool x, u64 offset, format_options<C> opt
 
     string_reserve(s, sz);
 
-    if (as_text)
-    {
-        if (x)
-        {
-            written += pad_string(s, opt.pad_char, opt.pad_length - 4, offset);
-            copy_string(LIT(C, "true"), s, 4, written + offset);
-
-            written += 4;
-        }
-        else
-        {
-            written += pad_string(s, opt.pad_char, opt.pad_length - 5, offset);
-            copy_string(LIT(C, "false"), s, 5, written + offset);
-
-            written += 5;
-        }
-    }
-    else
-    {
-        written += pad_string(s, opt.pad_char, opt.pad_length - 1, offset);
-        s->data[written + offset] = x ? '1' : '0';
-        written += 1;
-    }
-
-    return written;
+    return _bool_to_c_str(s->data, s->reserved_size, value, offset, opt, as_text);
 }
 
 // this basically just calls F and sets the size and null terminating
