@@ -69,15 +69,28 @@ s64 pad_string(wchar_t *s, u64 ssize, wchar_t chr, s64 count, u64 offset = 0);
 s64 pad_string(string  *s, char    chr, s64 count, u64 offset = 0);
 s64 pad_string(wstring *s, wchar_t chr, s64 count, u64 offset = 0);
 
+s64 to_string(char    *s, u64 ssize, bool x, u64 offset = 0, format_options<char> opt = default_format_options<char>, bool as_text = false);
+s64 to_string(wchar_t *s, u64 ssize, bool x, u64 offset = 0, format_options<wchar_t> opt = default_format_options<wchar_t>, bool as_text = false);
 s64 to_string(string  *s, bool x, u64 offset = 0, format_options<char> opt = default_format_options<char>, bool as_text = false);
 s64 to_string(wstring *s, bool x, u64 offset = 0, format_options<wchar_t> opt = default_format_options<wchar_t>, bool as_text = false);
 
+s64 to_string(char    *s, u64 ssize, char    x, u64 offset = 0, format_options<char> opt = default_format_options<char>);
+s64 to_string(wchar_t *s, u64 ssize, wchar_t x, u64 offset = 0, format_options<wchar_t> opt = default_format_options<wchar_t>);
 s64 to_string(string  *s, char    x, u64 offset = 0, format_options<char> opt = default_format_options<char>);
 s64 to_string(wstring *s, wchar_t x, u64 offset = 0, format_options<wchar_t> opt = default_format_options<wchar_t>);
 
 // kind of redundant
+s64 _to_string(char    *s, u64 ssize, const_string   x, u64 offset, format_options<char>    opt);
+s64 _to_string(wchar_t *s, u64 ssize, const_wstring  x, u64 offset, format_options<wchar_t> opt);
 s64 _to_string(string  *s, const_string   x, u64 offset, format_options<char>    opt);
 s64 _to_string(wstring *s, const_wstring  x, u64 offset, format_options<wchar_t> opt);
+
+template<typename C, typename T>
+auto to_string(C *out, u64 ssize, T other, u64 offset = 0, format_options<C> opt = default_format_options<C>)
+    -> decltype(_to_string(out, ssize, to_const_string(other), offset, opt))
+{
+    return _to_string(out, ssize, to_const_string(other), offset, opt);
+}
 
 template<typename C, typename T>
 auto to_string(string_base<C> *out, T other, u64 offset = 0, format_options<C> opt = default_format_options<C>)
@@ -167,6 +180,12 @@ void *best_type_match(T &&arg)
     return (void*)(&arg);
 }
 
+// ok this function gets a bunch of types, ideally in decreasing size, 
+// as template arguments and one argument of a type as regular argument,
+// and it returns a pointer to the regular argument of the type that is
+// either the same as the regular argument, or the first type in the template
+// argument list that is smaller or equal in size to the regular argument.
+// If no type matches, returns a void* to the argument.
 template<typename T, typename T2, typename...Ts>
 auto best_type_match(T &&arg)
 {
@@ -178,6 +197,7 @@ auto best_type_match(T &&arg)
         return best_type_match<T, Ts...>(forward<T>(arg));
 }
 
+// this is probably reall bad for the stack but idk
 template<typename C, typename T, typename... Ts>
 s64 _format(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base<C> fmt, T &&arg, Ts &&...args)
 {

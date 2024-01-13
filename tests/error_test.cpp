@@ -37,7 +37,9 @@ define_test(set_error_sets_error_message)
     // directly sets the message to the pointer
     assert_equal(err.what, msg);
     assert_equal(err.error_code, 123);
+#if Debug
     assert_equal(err.line, 34);
+#endif
 }
 
 define_test(format_error_formats_error)
@@ -48,7 +50,9 @@ define_test(format_error_formats_error)
 
     assert_equal(strcmp(err.what, "xyz 789 uvw"), 0);
     assert_equal(err.error_code, 123);
+#if Debug
     assert_equal(err.line, 47);
+#endif
 }
 
 define_test(format_error_does_nothing_on_nullptr)

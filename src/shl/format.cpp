@@ -122,46 +122,13 @@ s64 pad_string(wstring *s, wchar_t chr, s64 count, u64 offset)
     return _pad_string_s(s, chr, count, offset);
 }
 
-template<typename C>
-s64 _bool_to_c_str(C *s, s64 ssize, bool value, u64 offset, format_options<C> opt, bool as_text)
-{
-    s64 written = 0;
-
-    if (as_text)
-    {
-        const_string_base<C> lit_to_write{};
-
-        if (value)
-            lit_to_write = LIT(C, "true");
-        else
-            lit_to_write = LIT(C, "false");
-
-        written += pad_string(s, ssize, opt.pad_char, opt.pad_length - lit_to_write.size, offset);
-        written += _copy_string_checked(lit_to_write.c_str, lit_to_write.size, s, ssize, written + offset);
-    }
-    else
-    {
-        written += pad_string(s, ssize, opt.pad_char, opt.pad_length - 1, offset);
-        s[written + offset] = value ? '1' : '0';
-        written += 1;
-    }
-
-    return written;
-}
-
-template<typename C>
-s64 _bool_to_string(string_base<C> *s, bool value, u64 offset, format_options<C> opt, bool as_text)
-{
-    u64 sz = as_text ? 5 : 1;
-
-    if (opt.pad_length > 0 && sz < opt.pad_length)
-        sz = opt.pad_length;
-
-    sz += offset;
-
-    string_reserve(s, sz);
-
-    return _bool_to_c_str(s->data, s->reserved_size, value, offset, opt, as_text);
+#define _to_string_c_s_body(F, String, SSize, Value, Offset, Options, ...)\
+{\
+    s64 written = F(String, SSize, Value, Offset, Options __VA_OPT__(,) __VA_ARGS__);\
+\
+    if (Options.pad_length < 0) written += pad_string(String, SSize, Options.pad_char, -Options.pad_length - written, written + Offset);\
+\
+    return written;\
 }
 
 // this basically just calls F and sets the size and null terminating
@@ -181,13 +148,80 @@ s64 _bool_to_string(string_base<C> *s, bool value, u64 offset, format_options<C>
     return written;\
 }
 
+template<typename C>
+s64 _bool_to_c_string(C *s, s64 ssize, bool value, u64 offset, format_options<C> opt, bool as_text)
+{
+    s64 written = 0;
+
+    if (as_text)
+    {
+        const_string_base<C> lit_to_write{};
+
+        if (value)
+            lit_to_write = LIT(C, "true");
+        else
+            lit_to_write = LIT(C, "false");
+
+        written += pad_string(s, ssize, opt.pad_char, opt.pad_length - lit_to_write.size, offset);
+        written += _copy_string_checked(lit_to_write.c_str, lit_to_write.size, s, ssize, written + offset);
+    }
+    else
+    {
+        written += pad_string(s, ssize, opt.pad_char, opt.pad_length - 1, offset);
+
+        if (written + offset < ssize)
+        {
+            s[written + offset] = value ? '1' : '0';
+            written += 1;
+        }
+    }
+
+    return written;
+}
+
+s64 to_string(char    *s, u64 ssize, bool x, u64 offset, format_options<char>    opt, bool as_text) _to_string_c_s_body(_bool_to_c_string, s, ssize, x, offset, opt, as_text)
+s64 to_string(wchar_t *s, u64 ssize, bool x, u64 offset, format_options<wchar_t> opt, bool as_text) _to_string_c_s_body(_bool_to_c_string, s, ssize, x, offset, opt, as_text)
+
+template<typename C>
+s64 _bool_to_string(string_base<C> *s, bool value, u64 offset, format_options<C> opt, bool as_text)
+{
+    u64 sz = as_text ? 5 : 1;
+
+    if (opt.pad_length > 0 && sz < opt.pad_length)
+        sz = opt.pad_length;
+
+    sz += offset;
+
+    string_reserve(s, sz);
+
+    return _bool_to_c_string(s->data, s->reserved_size, value, offset, opt, as_text);
+}
+
 s64 to_string(string  *s, bool x, u64 offset, format_options<char>    opt, bool as_text) _to_string_s_body(_bool_to_string, s, x, offset, opt, as_text)
 s64 to_string(wstring *s, bool x, u64 offset, format_options<wchar_t> opt, bool as_text) _to_string_s_body(_bool_to_string, s, x, offset, opt, as_text)
 
 template<typename C>
-s64 _char_to_string(string_base<C> *s, C x, u64 offset, format_options<C> opt)
+s64 _char_to_c_string(C *s, u64 ssize, C value, u64 offset, format_options<C> opt)
 {
     s64 written = 0;
+
+    written += pad_string(s, ssize, opt.pad_char, opt.pad_length - 1, offset);
+
+    if (offset + written < ssize)
+    {
+        s[offset + written] = value;
+        written += 1;
+    }
+
+    return written;
+}
+
+s64 to_string(char    *s, u64 ssize, char    value, u64 offset, format_options<char>    opt) _to_string_c_s_body(_char_to_c_string, s, ssize, value, offset, opt)
+s64 to_string(wchar_t *s, u64 ssize, wchar_t value, u64 offset, format_options<wchar_t> opt) _to_string_c_s_body(_char_to_c_string, s, ssize, value, offset, opt)
+
+template<typename C>
+s64 _char_to_string(string_base<C> *s, C value, u64 offset, format_options<C> opt)
+{
     u64 sz = 1;
 
     if (opt.pad_length > 0 && sz < opt.pad_length)
@@ -197,20 +231,29 @@ s64 _char_to_string(string_base<C> *s, C x, u64 offset, format_options<C> opt)
 
     string_reserve(s, sz);
 
-    written += pad_string(s, opt.pad_char, opt.pad_length - 1, offset);
-    s->data[offset + written] = x;
-    written += 1;
-
-    return written;
+    return _char_to_c_string(s->data, s->reserved_size, value, offset, opt);
 }
 
 s64 to_string(string  *s, char    x, u64 offset, format_options<char>    opt) _to_string_s_body(_char_to_string, s, x, offset, opt)
 s64 to_string(wstring *s, wchar_t x, u64 offset, format_options<wchar_t> opt) _to_string_s_body(_char_to_string, s, x, offset, opt)
 
 template<typename C>
-s64 _string_to_string(string_base<C> *s, const_string_base<C> x, u64 offset, format_options<C> opt)
+s64 _string_to_c_string(C *s, u64 ssize, const_string_base<C> x, u64 offset, format_options<C> opt)
 {
     s64 written = 0;
+
+    written += pad_string(s, ssize, opt.pad_char, opt.pad_length - x.size, offset);
+    written += _copy_string_checked(x.c_str, x.size, s, ssize, written + offset);
+
+    return written;
+}
+
+s64 _to_string(char    *s, u64 ssize, const_string   x, u64 offset, format_options<char>    opt) _to_string_c_s_body(_string_to_c_string, s, ssize, x, offset, opt)
+s64 _to_string(wchar_t *s, u64 ssize, const_wstring  x, u64 offset, format_options<wchar_t> opt) _to_string_c_s_body(_string_to_c_string, s, ssize, x, offset, opt)
+
+template<typename C>
+s64 _string_to_string(string_base<C> *s, const_string_base<C> x, u64 offset, format_options<C> opt)
+{
     u64 sz = x.size;
 
     if (opt.pad_length > 0 && sz < opt.pad_length)
@@ -220,17 +263,11 @@ s64 _string_to_string(string_base<C> *s, const_string_base<C> x, u64 offset, for
 
     string_reserve(s, sz);
 
-    written += pad_string(s, opt.pad_char, opt.pad_length - x.size, offset);
-    copy_string(x, s, x.size, offset + written);
-    written += x.size;
-
-    return written;
+    return _string_to_c_string(s->data, s->reserved_size, x, offset, opt);
 }
 
-s64 _to_string(string  *s, const_string   x, u64 offset, format_options<char> opt)
-    _to_string_s_body(_string_to_string, s, x, offset, opt)
-s64 _to_string(wstring *s, const_wstring  x, u64 offset, format_options<wchar_t> opt)
-    _to_string_s_body(_string_to_string, s, x, offset, opt)
+s64 _to_string(string  *s, const_string   x, u64 offset, format_options<char> opt)    _to_string_s_body(_string_to_string, s, x, offset, opt)
+s64 _to_string(wstring *s, const_wstring  x, u64 offset, format_options<wchar_t> opt) _to_string_s_body(_string_to_string, s, x, offset, opt)
 
 template<u8 Pow, typename C, typename N>
 s64 _c_unsigned_pow2_to_string_reverse(C *s, N x, bool caps_letters = false)
@@ -287,7 +324,6 @@ s64 _integer_to_string(string_base<C> *s, N x, u64 offset, format_options<C> opt
 
     C buf[64];
     s64 buf_size = -1;
-
     u64 no_sign_x = x < 0 ? -x : x;
 
     switch (iopt.base)

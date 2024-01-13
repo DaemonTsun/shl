@@ -156,26 +156,26 @@ void init(wstring *str, const_wstring s)
 }
 
 template<typename C>
-bool _string_reserve(string_base<C> *s, u64 total_size)
+bool _string_reserve(string_base<C> *s, u64 size)
 {
     // +1 for \0
-    if (s->reserved_size < total_size + 1)
+    if (s->reserved_size < size + 1)
     {
-        reserve_exp2(as_array_ptr(C, s), total_size + 1);
+        reserve_exp2(as_array_ptr(C, s), size + 1);
         return true;
     }
 
     return false;
 }
 
-bool string_reserve(string *s, u64 total_size)
+bool string_reserve(string *s, u64 size)
 {
-    return _string_reserve(s, total_size);
+    return _string_reserve(s, size);
 }
 
-bool string_reserve(wstring *s, u64 total_size)
+bool string_reserve(wstring *s, u64 size)
 {
-    return _string_reserve(s, total_size);
+    return _string_reserve(s, size);
 }
 
 void clear(string  *str)

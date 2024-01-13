@@ -54,7 +54,7 @@ const char *format_error_message(const char *format, ...);
 #else
 // release
 #define set_error(Err, Code, Msg) \
-    do { if ((Err) != nullptr) { *(Err) = ::error{.error_code = Code, .what = Msg }; } while (0)
+    do { if ((Err) != nullptr) { *(Err) = ::error{.error_code = Code, .what = Msg }; }} while (0)
 
 #define set_errno_error(Err) \
     do { if ((Err) != nullptr) { int _errcode = errno; *(Err) = ::error{.error_code = _errcode, .what = ::strerror(_errcode) }; } } while (0)
