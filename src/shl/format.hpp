@@ -116,6 +116,24 @@ inline constexpr integer_format_options default_integer_options =
     .caps_prefix = false
 };
 
+s64 to_string(char    *s, u64 ssize, u8  x, u64 offset = 0, format_options<char>    opt = default_format_options<char>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(char    *s, u64 ssize, u16 x, u64 offset = 0, format_options<char>    opt = default_format_options<char>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(char    *s, u64 ssize, u32 x, u64 offset = 0, format_options<char>    opt = default_format_options<char>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(char    *s, u64 ssize, u64 x, u64 offset = 0, format_options<char>    opt = default_format_options<char>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(wchar_t *s, u64 ssize, u8  x, u64 offset = 0, format_options<wchar_t> opt = default_format_options<wchar_t>, integer_format_options ioptions = default_integer_options);
+s64 to_string(wchar_t *s, u64 ssize, u16 x, u64 offset = 0, format_options<wchar_t> opt = default_format_options<wchar_t>, integer_format_options ioptions = default_integer_options);
+s64 to_string(wchar_t *s, u64 ssize, u32 x, u64 offset = 0, format_options<wchar_t> opt = default_format_options<wchar_t>, integer_format_options ioptions = default_integer_options);
+s64 to_string(wchar_t *s, u64 ssize, u64 x, u64 offset = 0, format_options<wchar_t> opt = default_format_options<wchar_t>, integer_format_options ioptions = default_integer_options);
+
+s64 to_string(char    *s, u64 ssize, s8  x, u64 offset = 0, format_options<char>    opt = default_format_options<char>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(char    *s, u64 ssize, s16 x, u64 offset = 0, format_options<char>    opt = default_format_options<char>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(char    *s, u64 ssize, s32 x, u64 offset = 0, format_options<char>    opt = default_format_options<char>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(char    *s, u64 ssize, s64 x, u64 offset = 0, format_options<char>    opt = default_format_options<char>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(wchar_t *s, u64 ssize, s8  x, u64 offset = 0, format_options<wchar_t> opt = default_format_options<wchar_t>, integer_format_options ioptions = default_integer_options);
+s64 to_string(wchar_t *s, u64 ssize, s16 x, u64 offset = 0, format_options<wchar_t> opt = default_format_options<wchar_t>, integer_format_options ioptions = default_integer_options);
+s64 to_string(wchar_t *s, u64 ssize, s32 x, u64 offset = 0, format_options<wchar_t> opt = default_format_options<wchar_t>, integer_format_options ioptions = default_integer_options);
+s64 to_string(wchar_t *s, u64 ssize, s64 x, u64 offset = 0, format_options<wchar_t> opt = default_format_options<wchar_t>, integer_format_options ioptions = default_integer_options);
+
 s64 to_string(string  *s, u8  x, u64 offset = 0, format_options<char>    opt = default_format_options<char>,    integer_format_options ioptions = default_integer_options);
 s64 to_string(string  *s, u16 x, u64 offset = 0, format_options<char>    opt = default_format_options<char>,    integer_format_options ioptions = default_integer_options);
 s64 to_string(string  *s, u32 x, u64 offset = 0, format_options<char>    opt = default_format_options<char>,    integer_format_options ioptions = default_integer_options);
