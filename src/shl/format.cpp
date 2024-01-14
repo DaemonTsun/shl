@@ -641,6 +641,84 @@ s64 _c_remainder_to_string_reverse(C *s, N x, int precision, bool ignore_trailin
 #define FLOAT_BUFFER_SIZE 64
 
 template<typename C, typename N>
+s64 _float_to_c_string(C *s, u64 ssize, N x, u64 offset, format_options<C> opt, float_format_options fopt)
+{
+    if (opt.precision < 0)
+        opt.precision = DEFAULT_FLOAT_PRECISION;
+
+    C buf[FLOAT_BUFFER_SIZE];
+    s64 buf_size = -1;
+
+    double no_sign_x = x < 0 ? -x : x;
+
+    u64 whole = static_cast<u64>(no_sign_x);
+    double remainder = no_sign_x - static_cast<double>(whole);
+
+    s64 remainder_size = _c_remainder_to_string_reverse(buf, remainder, opt.precision, fopt.ignore_trailing_zeroes);
+    s64 whole_size = _c_unsigned_decimal_to_string_reverse(buf + remainder_size, whole);
+
+    buf_size = remainder_size + whole_size;
+
+    if (buf_size < 0)
+        return -1;
+
+    if (buf_size == 0)
+        return 0;
+
+    u64 buf_write_size = 0;
+
+    if (opt.sign == '+' || x < 0)
+        buf_write_size += 1;
+
+    buf_write_size += whole_size;
+    buf_write_size += remainder_size;
+
+    u64 copy_start = 0;
+
+    if (fopt.ignore_trailing_zeroes)
+        while (copy_start < FLOAT_BUFFER_SIZE)
+        {
+            C c = buf[copy_start];
+
+            if (c == '0')
+            {
+                copy_start++;
+                continue;
+            }
+
+            if (c == '.')
+            {
+                copy_start++;
+                break;
+            }
+
+            break;
+        }
+
+    buf_write_size -= copy_start;
+
+    u64 i = offset;
+
+    i += pad_string(s, ssize, opt.pad_char, opt.pad_length - buf_write_size, offset);
+
+    if (i >= ssize) return i - offset;
+
+    if (opt.sign == '+') s[i++] = (x < 0.0) ? '-' : '+';
+    else if (x < 0.0)    s[i++] = '-';
+
+    if (i >= ssize) return i - offset;
+
+    i += _copy_string_reverse_checked(buf + copy_start, buf_size - copy_start, s + i, ssize - i);
+
+    return i - offset;
+}
+
+s64 to_string(char    *s, u64 ssize, float  x, u64 offset, format_options<char>    opt, float_format_options fopt) _to_string_c_s_body(_float_to_c_string, s, ssize, x, offset, opt, fopt)
+s64 to_string(char    *s, u64 ssize, double x, u64 offset, format_options<char>    opt, float_format_options fopt) _to_string_c_s_body(_float_to_c_string, s, ssize, x, offset, opt, fopt)
+s64 to_string(wchar_t *s, u64 ssize, float  x, u64 offset, format_options<wchar_t> opt, float_format_options fopt) _to_string_c_s_body(_float_to_c_string, s, ssize, x, offset, opt, fopt)
+s64 to_string(wchar_t *s, u64 ssize, double x, u64 offset, format_options<wchar_t> opt, float_format_options fopt) _to_string_c_s_body(_float_to_c_string, s, ssize, x, offset, opt, fopt)
+
+template<typename C, typename N>
 s64 _float_to_string(string_base<C> *s, N x, u64 offset, format_options<C> opt, float_format_options fopt)
 {
     if (opt.precision < 0)
@@ -724,7 +802,43 @@ s64 to_string(wstring *s, double x, u64 offset, format_options<wchar_t> opt, flo
 
 // format
 template<typename C>
-s64 _format(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base<C> fmt)
+s64 _format_c_s(u64 i, s64 written, C *s, u64 ssize, u64 offset, const_string_base<C> fmt)
+{
+    C c;
+
+    while (i < fmt.size && offset < ssize)
+    {
+        c = fmt[i];
+
+        if (c != '%')
+        {
+            if (c == '\\')
+            {
+                i++;
+
+                if (i >= fmt.size)
+                    break;
+
+            }
+
+            s[offset++] = fmt[i];
+        }
+        else
+        {
+            // %
+            // ERROR
+            return -1;
+        }
+
+        written++;
+        i++;
+    }
+
+    return written;
+}
+
+template<typename C>
+s64 _format_s(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base<C> fmt)
 {
     C c;
 
@@ -761,26 +875,35 @@ s64 _format(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base
     return written;
 }
 
+s64 internal::_format(u64 i, s64 written, char *s, u64 ssize, u64 offset, const_string fmt)
+{
+    return ::_format_c_s(i, written, s, ssize, offset, fmt);
+}
+
+s64 internal::_format(u64 i, s64 written, wchar_t *s, u64 ssize, u64 offset, const_wstring fmt)
+{
+    return ::_format_c_s(i, written, s, ssize, offset, fmt);
+}
+
 s64 internal::_format(u64 i, s64 written, string *s, u64 offset, const_string fmt)
 {
-    return ::_format(i, written, s, offset, fmt);
+    return ::_format_s(i, written, s, offset, fmt);
 }
 
 s64 internal::_format(u64 i, s64 written, wstring *s, u64 offset, const_wstring fmt)
 {
-    return ::_format(i, written, s, offset, fmt);
+    return ::_format_s(i, written, s, offset, fmt);
 }
 
 template<typename C>
-s64 _format_skip_until_placeholder(u64 *_i, internal::_placeholder_info<C> *pl, string_base<C> *s, u64 offset, const_string_base<C> fmt)
+s64 _format_skip_until_placeholder_c_s(u64 *_i, internal::_placeholder_info<C> *pl, C *s, u64 ssize, u64 offset, const_string_base<C> fmt)
 {
     C c;
     u64 i = *_i;
     s64 written = 0;
 
-    while (i < fmt.size)
+    while (i < fmt.size && offset < ssize)
     {
-        string_reserve(s, offset + (offset % FORMAT_BUFFER_INCREMENT));
         c = fmt[i];
 
         if (c == '\\')
@@ -795,12 +918,12 @@ s64 _format_skip_until_placeholder(u64 *_i, internal::_placeholder_info<C> *pl, 
         else if (c == '%')
             break;
 
-        s->data[offset++] = c;
+        s[offset++] = c;
         i++;
         written++;
     }
 
-    if (i >= fmt.size)
+    if (i >= fmt.size || offset >= ssize)
     {
         *_i = i;
         return written;
@@ -882,7 +1005,6 @@ s64 _format_skip_until_placeholder(u64 *_i, internal::_placeholder_info<C> *pl, 
 
     i = j - 1;
 
-#undef read_decimal
 #undef if_at_end_goto
     
 fmt_end:
@@ -891,14 +1013,57 @@ fmt_end:
     return written;
 }
 
+template<typename C>
+s64 _format_skip_until_placeholder_s(u64 *_i, internal::_placeholder_info<C> *pl, string_base<C> *s, u64 offset, const_string_base<C> fmt)
+{
+    C c;
+    u64 i = *_i;
+    s64 written = 0;
+
+    while (i < fmt.size)
+    {
+        string_reserve(s, offset + (offset % FORMAT_BUFFER_INCREMENT));
+        c = fmt[i];
+
+        if (c == '\\')
+        {
+            i++;
+
+            if (i >= fmt.size)
+                break;
+
+            c = fmt[i];
+        }
+        else if (c == '%')
+            break;
+
+        s->data[offset++] = c;
+        i++;
+        written++;
+    }
+
+    *_i = i;
+    return written + _format_skip_until_placeholder_c_s(_i, pl, s->data, s->reserved_size, offset, fmt);
+}
+
+s64 internal::_format_skip_until_placeholder(u64 *i, _placeholder_info<char>    *pl, char  *s, u64 ssize, u64 offset, const_string  fmt)
+{
+    return ::_format_skip_until_placeholder_c_s(i, pl, s, ssize, offset, fmt);
+}
+
+s64 internal::_format_skip_until_placeholder(u64 *i, _placeholder_info<wchar_t> *pl, wchar_t *s, u64 ssize, u64 offset, const_wstring fmt)
+{
+    return ::_format_skip_until_placeholder_c_s(i, pl, s, ssize, offset, fmt);
+}
+
 s64 internal::_format_skip_until_placeholder(u64 *i, _placeholder_info<char>    *pl, string  *s, u64 offset, const_string  fmt)
 {
-    return ::_format_skip_until_placeholder(i, pl, s, offset, fmt);
+    return ::_format_skip_until_placeholder_s(i, pl, s, offset, fmt);
 }
 
 s64 internal::_format_skip_until_placeholder(u64 *i, _placeholder_info<wchar_t> *pl, wstring *s, u64 offset, const_wstring fmt)
 {
-    return ::_format_skip_until_placeholder(i, pl, s, offset, fmt);
+    return ::_format_skip_until_placeholder_s(i, pl, s, offset, fmt);
 }
 
 void _register_format_buffer_cleanup();

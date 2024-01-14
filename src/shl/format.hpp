@@ -171,6 +171,10 @@ inline constexpr float_format_options default_float_options =
     .ignore_trailing_zeroes = true
 };
 
+s64 to_string(char    *s, u64 ssize, float  x, u64 offset = 0, format_options<char>    opt = default_format_options<char>,    float_format_options foptions = default_float_options);
+s64 to_string(char    *s, u64 ssize, double x, u64 offset = 0, format_options<char>    opt = default_format_options<char>,    float_format_options foptions = default_float_options);
+s64 to_string(wchar_t *s, u64 ssize, float  x, u64 offset = 0, format_options<wchar_t> opt = default_format_options<wchar_t>, float_format_options foptions = default_float_options);
+s64 to_string(wchar_t *s, u64 ssize, double x, u64 offset = 0, format_options<wchar_t> opt = default_format_options<wchar_t>, float_format_options foptions = default_float_options);
 s64 to_string(string  *s, float  x, u64 offset = 0, format_options<char>    opt = default_format_options<char>,    float_format_options foptions = default_float_options);
 s64 to_string(string  *s, double x, u64 offset = 0, format_options<char>    opt = default_format_options<char>,    float_format_options foptions = default_float_options);
 s64 to_string(wstring *s, float  x, u64 offset = 0, format_options<wchar_t> opt = default_format_options<wchar_t>, float_format_options foptions = default_float_options);
@@ -182,6 +186,8 @@ s64 to_string(wstring *s, double x, u64 offset = 0, format_options<wchar_t> opt 
 
 namespace internal
 {
+s64 _format(u64 i, s64 written, char    *s, u64 ssize, u64 offset, const_string  fmt);
+s64 _format(u64 i, s64 written, wchar_t *s, u64 ssize, u64 offset, const_wstring fmt);
 s64 _format(u64 i, s64 written, string  *s, u64 offset, const_string  fmt);
 s64 _format(u64 i, s64 written, wstring *s, u64 offset, const_wstring fmt);
 
@@ -193,6 +199,8 @@ struct _placeholder_info
     bool alternative; // #
 };
 
+s64 _format_skip_until_placeholder(u64 *i, _placeholder_info<char>    *pl, char    *s, u64 ssize, u64 offset, const_string  fmt);
+s64 _format_skip_until_placeholder(u64 *i, _placeholder_info<wchar_t> *pl, wchar_t *s, u64 ssize, u64 offset, const_wstring fmt);
 s64 _format_skip_until_placeholder(u64 *i, _placeholder_info<char>    *pl, string  *s, u64 offset, const_string  fmt);
 s64 _format_skip_until_placeholder(u64 *i, _placeholder_info<wchar_t> *pl, wstring *s, u64 offset, const_wstring fmt);
 
@@ -219,7 +227,87 @@ auto best_type_match(T &&arg)
         return best_type_match<T, Ts...>(forward<T>(arg));
 }
 
-// this is probably reall bad for the stack but idk
+// this is probably really bad for the stack but idk
+template<typename C, typename T, typename... Ts>
+s64 _format(u64 i, s64 written, C *s, u64 ssize, u64 offset, const_string_base<C> fmt, T &&arg, Ts &&...args)
+{
+    if (i >= fmt.size || offset >= ssize)
+        return written;
+
+    _placeholder_info<C> pl;
+    pl.options = default_format_options<C>;
+    pl.has_placeholder = false;
+    pl.alternative = false;
+
+    u64 pl_written = _format_skip_until_placeholder(&i, &pl, s, ssize, offset, fmt);
+    written += pl_written;
+    offset += pl_written;
+
+    if (offset >= ssize)
+        return written;
+
+    u64 tostring_written = 0;
+
+    if (i < fmt.size)
+    {
+        // skiped all non-placeholder characters and we're not at the end
+        C c = fmt[i];
+
+        switch (c)
+        {
+        case 'f':
+        {
+            float_format_options fopt = default_float_options;
+            fopt.ignore_trailing_zeroes = !pl.alternative;
+
+            auto ptr = best_type_match<T, double, float>(forward<T>(arg));
+
+            if constexpr (!is_same(decltype(ptr), void*))
+            {
+                tostring_written = to_string(s, ssize, *ptr, offset, pl.options, fopt);
+                return _format(++i, written + tostring_written, s, ssize, offset + tostring_written, fmt, forward<Ts>(args)...);
+            }
+            else
+                return -1;
+        }
+#define case_int_base(Lower, Upper, Base)\
+        case Lower:\
+        case Upper:\
+        {\
+            integer_format_options iopt = default_integer_options;\
+            iopt.base = Base;\
+            iopt.caps_letters = (c == Upper);\
+            iopt.include_prefix = pl.alternative;\
+\
+            auto ptr = best_type_match<T, u64, u32, u16, u8>(forward<T>(arg));\
+\
+            if constexpr (!is_same(decltype(ptr), void*))\
+            {\
+                tostring_written = to_string(s, ssize, *ptr, offset, pl.options, iopt);\
+                return _format(++i, written + tostring_written, s, ssize, offset + tostring_written, fmt, forward<Ts>(args)...);\
+            }\
+            else\
+                return -1;\
+        }
+        case_int_base('b', 'B', 2);
+        case_int_base('o', 'O', 8);
+        case_int_base('x', 'X', 16);
+#undef case_int_base
+        case 'c':
+        case 's':
+        case 'd':
+        case 'p':
+            i++;
+            break;
+        }
+    }
+    else if (!pl.has_placeholder)
+        return written;
+
+    tostring_written = to_string(s, ssize, forward<T>(arg), offset, pl.options);
+    return _format(i, written + tostring_written, s, ssize, offset + tostring_written, fmt, forward<Ts>(args)...);
+}
+
 template<typename C, typename T, typename... Ts>
 s64 _format(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base<C> fmt, T &&arg, Ts &&...args)
 {
@@ -298,6 +386,32 @@ s64 _format(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base
 }
 }
 
+// c string format
+template<typename C, typename... Ts>
+s64 format(C *s, u64 ssize, const C *fmt, Ts &&...args)
+{
+    return format(s, ssize, 0, to_const_string(fmt), forward<Ts>(args)...);
+}
+
+template<typename C, typename... Ts>
+s64 format(C *s, u64 ssize, u64 offset, const C *fmt, Ts &&...args)
+{
+    return format(s, ssize, offset, to_const_string(fmt), forward<Ts>(args)...);
+}
+
+template<typename C, typename... Ts>
+s64 format(C *s, u64 ssize, const_string_base<C> fmt, Ts &&...args)
+{
+    return format(s, ssize, 0, fmt, forward<Ts>(args)...);
+}
+
+template<typename C, typename... Ts>
+s64 format(C *s, u64 ssize, u64 offset, const_string_base<C> fmt, Ts &&...args)
+{
+    return internal::_format(0, 0, s, ssize, offset, fmt, forward<Ts>(args)...);
+}
+
+// string format
 template<typename C, typename... Ts>
 s64 format(string_base<C> *s, const C *fmt, Ts &&...args)
 {
@@ -323,7 +437,7 @@ s64 format(string_base<C> *s, u64 offset, const_string_base<C> fmt, Ts &&...args
     s64 written = internal::_format(0, 0, s, offset, fmt, forward<Ts>(args)...);
 
     if (written < 0)
-        return written;
+        return -1;
 
     if (offset + written > s->size)
     {
