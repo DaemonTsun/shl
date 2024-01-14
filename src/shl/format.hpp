@@ -152,9 +152,13 @@ s64 to_string(wstring *s, s16 x, u64 offset = 0, format_options<wchar_t> opt = d
 s64 to_string(wstring *s, s32 x, u64 offset = 0, format_options<wchar_t> opt = default_format_options<wchar_t>, integer_format_options ioptions = default_integer_options);
 s64 to_string(wstring *s, s64 x, u64 offset = 0, format_options<wchar_t> opt = default_format_options<wchar_t>, integer_format_options ioptions = default_integer_options);
 
+// pointer
+s64 to_string(char    *s, u64 ssize, const void *x, u64 offset = 0, format_options<char>    opt = default_format_options<char>);
+s64 to_string(wchar_t *s, u64 ssize, const void *x, u64 offset = 0, format_options<wchar_t> opt = default_format_options<wchar_t>);
 s64 to_string(string  *s, const void *x, u64 offset = 0, format_options<char>    opt = default_format_options<char>);
 s64 to_string(wstring *s, const void *x, u64 offset = 0, format_options<wchar_t> opt = default_format_options<wchar_t>);
 
+// float
 struct float_format_options
 {
     bool ignore_trailing_zeroes;    // if true, e.g. 0.1000 becomes 0.1

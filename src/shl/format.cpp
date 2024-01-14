@@ -29,7 +29,17 @@ s64 _copy_string_reverse(const C *src, C *dst, u64 size)
 template<typename C>
 s64 _copy_string_reverse_checked(const C *src, u64 src_size, C *dst, u64 dst_size)
 {
-    u64 ssize = Min(src_size, dst_size);
+    u64 ssize = 0;
+
+    if (dst_size < src_size)
+    {
+        // we advance src here because src is in reverse.
+        // if dst_size is smaller, we would be copying src from the wrong end.
+        src += (src_size - dst_size);
+        ssize = dst_size;
+    }
+    else
+        ssize = src_size;
 
     return _copy_string_reverse(src, dst, ssize);
 }
@@ -557,6 +567,23 @@ s64 to_string(wstring *s, s8  x, u64 offset, format_options<wchar_t> opt, intege
 s64 to_string(wstring *s, s16 x, u64 offset, format_options<wchar_t> opt, integer_format_options iopt) _to_string_s_body(_integer_to_string_conv, s, x, offset, opt, iopt);
 s64 to_string(wstring *s, s32 x, u64 offset, format_options<wchar_t> opt, integer_format_options iopt) _to_string_s_body(_integer_to_string_conv, s, x, offset, opt, iopt);
 s64 to_string(wstring *s, s64 x, u64 offset, format_options<wchar_t> opt, integer_format_options iopt) _to_string_s_body(_integer_to_string_conv, s, x, offset, opt, iopt);
+
+template<typename C>
+s64 _pointer_to_c_string(C *s, u64 ssize, const void *x, u64 offset, format_options<C> opt)
+{
+    if (opt.precision < 0)
+        opt.precision = 8;
+
+    return _integer_to_c_string(s, ssize, reinterpret_cast<u64>(x), offset, opt, integer_format_options{
+                .base = 16,
+                .include_prefix = true,
+                .caps_letters = false,
+                .caps_prefix = false
+            });
+}
+
+s64 to_string(char    *s, u64 ssize, const void *x, u64 offset, format_options<char>    opt) _to_string_c_s_body(_pointer_to_c_string, s, ssize, x, offset, opt);
+s64 to_string(wchar_t *s, u64 ssize, const void *x, u64 offset, format_options<wchar_t> opt) _to_string_c_s_body(_pointer_to_c_string, s, ssize, x, offset, opt);
 
 template<typename C>
 s64 _pointer_to_string(string_base<C> *s, const void *x, u64 offset, format_options<C> opt)

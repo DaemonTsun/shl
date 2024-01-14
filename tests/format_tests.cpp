@@ -342,6 +342,85 @@ define_test(to_string_converts_integer_to_wstring)
     free(&str);
 }
 
+define_test(to_string_converts_integer_to_c_string)
+{
+    char buf[11] = "xxxxxxxxxx";
+
+    assert_equal(to_string(buf, 10, 5, 0), 1);
+    assert_equal_str(buf, "5xxxxxxxxx");
+
+    assert_equal(to_string(buf, 10, 5, 9), 1);
+    assert_equal_str(buf, "5xxxxxxxx5");
+
+    assert_equal(to_string(buf, 10, 123, 0), 3);
+    assert_equal_str(buf, "123xxxxxx5");
+
+    assert_equal(to_string(buf, 10, 456, 8), 2);
+    assert_equal_str(buf, "123xxxxx45");
+
+    assert_equal(to_string(buf, 10, 789, 500), 0);
+    assert_equal_str(buf, "123xxxxx45");
+
+    assert_equal(to_string(buf, 10, 0x1337, 0, format_options<char>{.precision = 8}, integer_format_options{.base = 16, .include_prefix = true}), 10);
+    assert_equal_str(buf, "0x00001337");
+
+    copy_string("          ", buf);
+    assert_equal(to_string(buf, 10, 0x1337, 5, format_options<char>{.precision = 8}, integer_format_options{.base = 16, .include_prefix = true}), 5);
+    assert_equal_str(buf, "     0x000");
+    assert_equal(to_string(buf, 10, 0x1337, 9999, format_options<char>{.precision = 8}, integer_format_options{.base = 16, .include_prefix = true}), 0);
+    assert_equal_str(buf, "     0x000");
+}
+
+define_test(to_string_converts_pointer_to_string)
+{
+    string str;
+    init(&str);
+
+    void *voidptr = nullptr;
+    int *intptr = reinterpret_cast<int*>(0x13379001);
+    const char *charptr = "hello";
+
+    assert_to_string(str, "0x00000000"_cs,  10, voidptr);
+    assert_to_string(str, "0x13379001"_cs,  10, intptr);
+    assert_to_string(str, "hello"_cs,        5, charptr);
+
+    free(&str);
+}
+
+define_test(to_string_converts_pointer_to_wstring)
+{
+    wstring str;
+    init(&str);
+
+    void *voidptr = nullptr;
+    int *intptr = reinterpret_cast<int*>(0x13379001);
+    const wchar_t *charptr = L"hello";
+
+    assert_to_string(str, L"0x00000000"_cs,  10, voidptr);
+    assert_to_string(str, L"0x13379001"_cs,  10, intptr);
+    assert_to_string(str, L"hello"_cs,        5, charptr);
+
+    free(&str);
+}
+
+define_test(to_string_converts_pointer_to_c_string)
+{
+    char buf[11] = "xxxxxxxxxx";
+
+    void *voidptr = nullptr;
+    int *intptr = reinterpret_cast<int*>(0x13379001);
+    const char *charptr = "hello";
+
+    assert_equal(to_string(buf, 10, voidptr, 0), 10);
+    assert_equal_str(buf, "0x00000000");
+
+    assert_equal(to_string(buf, 10, intptr, 0), 10);
+    assert_equal_str(buf, "0x13379001");
+
+    assert_equal(to_string(buf, 10, intptr, 5), 5);
+    assert_equal_str(buf, "0x1330x133");
+}
+
 define_test(to_string_converts_float_to_string)
 {
     string str;
@@ -422,38 +501,6 @@ define_test(to_string_converts_float_to_wstring)
     assert_to_string(str, L"0.10"_cs,   4, 0.1, 0, format_options<wchar_t>{.precision = 2}, float_format_options{.ignore_trailing_zeroes = false});
     assert_to_string(str, L"0.1337"_cs, 6, 0.1337, 0);
     assert_to_string(str, L"0.133791"_cs, 8, 0.13379123, 0); // default precision is 6
-
-    free(&str);
-}
-
-define_test(to_string_converts_pointer_to_string)
-{
-    string str;
-    init(&str);
-
-    void *voidptr = nullptr;
-    int *intptr = reinterpret_cast<int*>(0x13379001);
-    const char *charptr = "hello";
-
-    assert_to_string(str, "0x00000000"_cs,  10, voidptr);
-    assert_to_string(str, "0x13379001"_cs,  10, intptr);
-    assert_to_string(str, "hello"_cs,        5, charptr);
-
-    free(&str);
-}
-
-define_test(to_string_converts_pointer_to_wstring)
-{
-    wstring str;
-    init(&str);
-
-    void *voidptr = nullptr;
-    int *intptr = reinterpret_cast<int*>(0x13379001);
-    const wchar_t *charptr = L"hello";
-
-    assert_to_string(str, L"0x00000000"_cs,  10, voidptr);
-    assert_to_string(str, L"0x13379001"_cs,  10, intptr);
-    assert_to_string(str, L"hello"_cs,        5, charptr);
 
     free(&str);
 }
