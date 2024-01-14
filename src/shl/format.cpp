@@ -1,6 +1,5 @@
 
-#include <stdlib.h>
-
+#include "shl/at_exit.hpp"
 #include "shl/bits.hpp"
 #include "shl/format.hpp"
 
@@ -1066,7 +1065,6 @@ s64 internal::_format_skip_until_placeholder(u64 *i, _placeholder_info<wchar_t> 
     return ::_format_skip_until_placeholder_s(i, pl, s, offset, fmt);
 }
 
-void _register_format_buffer_cleanup();
 void _format_buffer_cleanup();
 
 #define TFORMAT_RING_BUFFER_MIN_SIZE 4096
@@ -1086,21 +1084,10 @@ internal::tformat_buffer *_get_static_format_buffer(bool free_buffer = false)
         if (!init(&_buf.buffer, TFORMAT_RING_BUFFER_MIN_SIZE, 2))
             return nullptr;
 
-        _register_format_buffer_cleanup();
+        ::register_exit_function(_format_buffer_cleanup);
     }
 
     return &_buf;
-}
-
-void _register_format_buffer_cleanup()
-{
-    static bool _registered = false;
-
-    if (!_registered)
-    {
-        ::atexit(_format_buffer_cleanup);
-        _registered = true;
-    }
 }
 
 void _format_buffer_cleanup()
