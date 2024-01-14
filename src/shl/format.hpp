@@ -1,44 +1,67 @@
 
-// format.hpp
-// 
-// string formatting library
-//
-// provides the to_string(...) functions with overloads for basic types,
-// e.g. int, char, bool, float, string (const char*, string* and const_string),
-// pointers, etc.
-//
-// also provides the format(string, fmt, ...) function to format a string object
-// using the format string and the rest of the arguments.
-// format() is not (sn)printf compliant, but provides similar functionality.
-//
-// the formatting is generally type-safe, as every argument of a type T
-// in the variable argument list must have the following function signature
-// declared:
-//
-//      to_string(string_base<C> *s, T x, u64 offset, format_options<C> opt)
-//
-// this to_string overload is called with the argument when the placeholder
-// character '%' is encountered in the format string.
-// This also means that you can define your own to_string overload for other
-// types and use them with the format() function (be aware that you need to
-// reserve enough memory from within to_string on the string s to be able
-// to store the formatted value).
-//
-// Basic format() example:
-// 
-//      string str = ""_s;
-//      format(&str, "hello %!\n"_cs, "world");
-//
-// str will contain the string "hello world!" afterwards (don't forget to free(&str)).
-// format() (and the to_string functions) will allocate more memory in str as needed.
-//
-// format() also accepts options for placeholders, similar to (sn)printf, although
-// more limited.
-// See tests/format.tests for examples.
+/* format.hpp
+
+string formatting library
+
+provides the to_string(...) functions with overloads for basic types,
+e.g. int, char, bool, float, string (const char*, string* and const_string),
+pointers, etc.
+
+also provides the format(string, fmt, ...) function to format a string object
+using the format string and the rest of the arguments.
+format() is not (sn)printf compliant, but provides similar functionality.
+
+the formatting is generally type-safe, as every argument of a type T
+in the variable argument list must have the following function signature
+declared:
+
+     to_string(string_base<C> *s, T x, u64 offset, format_options<C> opt)
+
+this to_string overload is called with the argument when the placeholder
+character '%' is encountered in the format string.
+This also means that you can define your own to_string overload for other
+types and use them with the format() function (be aware that you need to
+reserve enough memory from within to_string on the string s to be able
+to store the formatted value).
+
+Basic format() example:
+
+     string str = ""_s;
+     format(&str, "hello %!\n"_cs, "world");
+
+str will contain the string "hello world!" afterwards (don't forget to free(&str)).
+format() (and the to_string functions) will allocate more memory in str as needed.
+
+2024.01.14: to_string (and format) now has overloads that look like this:
+
+     to_string(C *s, u64 ssize, T x, u64 offset, format_options<C> opt)
+
+these overloads take a pointer to a char (or wchar_t) buffer of size ssize and
+work similar to the overloads that take a string parameter, except these
+overloads never allocate more memory.
+These functions will only write up to ssize characters, which means that if the
+buffers don't have enough memory to format the value / format string, the
+return value will be ssize (or rather, ssize - offset if offset is not 0).
+
+format() also accepts options for placeholders, similar to (sn)printf, although
+more limited.
+See tests/format.tests for examples.
+
+tformat(fmt, ...) is a function that returns a const_string to a formatted
+string using the arguments. The first time this function is called, a ring buffer
+is allocated which has at least 4096 bytes of space, or more depending on the
+page size of the system. When the program exits, the buffer is free'd.
+Because the buffer is a ring buffer, it will continuously write to the same
+buffer, then wrap back to the start, overwriting old formatted strings, hence
+the name tformat (temporary format).
+If you need the string for longer than the immediate use, copy the string.
+All tformatted strings are null terminated.
+*/
 
 #pragma once
 
 #include "shl/type_functions.hpp"
+#include "shl/ring_buffer.hpp"
 #include "shl/string.hpp"
 
 #define DEFAULT_INT_PRECISION 0
@@ -467,30 +490,77 @@ string_base<C> new_format(const_string_base<C> fmt, Ts &&...args)
 }
 
 // tformat
-// this is not the max size that the temporary string can have, but
-// the size at which the next format will reset the temporary string.
-#define TEMP_STRING_MAX_SIZE 4096
-
 namespace internal
 {
-void _get_temp_format_string(string  **s, u64 **offset);
-void _get_temp_format_string(wstring **s, u64 **offset);
+struct tformat_buffer
+{
+    ring_buffer buffer;
+    u64 offset;
+};
+
+template<typename C>
+C *_buffer_data(const tformat_buffer *buf)
+{
+    return (C*)(buf->buffer.data);
+}
+
+template<typename C>
+u64 _buffer_character_count(const tformat_buffer *buf)
+{
+    return (buf->buffer.size / sizeof(C)) - 1;
+}
+
+template<typename C>
+u64 _buffer_offset(const tformat_buffer *buf)
+{
+    return buf->offset / sizeof(C);
+}
+
+template<typename C>
+void _buffer_advance(tformat_buffer *buf, u64 count)
+{
+    buf->offset += (count * sizeof(C));
+
+    while (buf->offset > buf->buffer.size)
+        buf->offset -= buf->buffer.size;
+}
+
+tformat_buffer *_get_tformat_buffer_char();
+tformat_buffer *_get_tformat_buffer_wchar();
+
+template<typename C>
+tformat_buffer *_get_tformat_buffer()
+{
+    if constexpr (is_same(C, char))
+        return _get_tformat_buffer_char();
+    else
+        return _get_tformat_buffer_wchar();
+}
 }
 
 template<typename C, typename... Ts>
 const_string_base<C> tformat(const_string_base<C> fmt, Ts &&...args)
 {
-    string_base<C> *s;
-    u64 *offset;
-    internal::_get_temp_format_string(&s, &offset);
+    internal::tformat_buffer *buf = internal::_get_tformat_buffer<C>();
 
-    s64 written = format(s, *offset, fmt, forward<Ts>(args)...);
+    if (buf == nullptr)
+        return const_string_base<C>{nullptr, 0};
+
+    C *data = internal::_buffer_data<C>(buf);
+    u64 size = internal::_buffer_character_count<C>(buf);
+    u64 offset = internal::_buffer_offset<C>(buf);
+
+    s64 written = format(data + offset, size, 0, fmt, forward<Ts>(args)...);
 
     if (written < 0)
         return const_string_base<C>{nullptr, 0};
 
-    const_string_base<C> ret{s->data + *offset, static_cast<u64>(written)};
-    *offset += written;
+    data[offset + written] = '\0';
+
+    const_string_base<C> ret{data + offset, (u64)(written)};
+
+    internal::_buffer_advance<C>(buf, (u64)(written) + 1);
+
     return ret;
 }
 
@@ -499,3 +569,5 @@ const_string_base<C> tformat(const C *fmt, Ts &&...args)
 {
     return tformat(to_const_string(fmt), forward<Ts>(args)...);
 }
+
+u64 get_tformat_buffer_size();

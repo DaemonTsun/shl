@@ -669,15 +669,28 @@ define_test(format_formats_c_string)
 
 define_test(tformat_formats_to_temporary_string)
 {
-    assert_equal(tformat("abc"_cs), "abc"_cs)
-    assert_equal(tformat("% %"_cs, "hello", "world"), "hello world"_cs)
+    u64 bufsize = get_tformat_buffer_size();
 
-    /*
-    for (int i = 0; i < TEMP_STRING_MAX_SIZE * 2; ++i)
-        tformat("% %"_cs, "hello", "world");
+    assert_greater_or_equal(bufsize, 4096);
+    assert_equal(tformat("abc"_cs), "abc"_cs);
+
+    const_string prev = tformat("% %"_cs, "hello", "world");
+    assert_equal_str(prev, "hello world"_cs);
+    assert_equal(prev.c_str[prev.size], '\0');
+
+    for (int i = 0; i < bufsize * 10; ++i)
+    {
+        const_string next = tformat("% %"_cs, "hello", "world");
+
+        // we do these ifs to not flood the test count
+        if (compare_strings(prev, "hello world"_cs) != 0) assert_equal_str(prev, "hello world"_cs);
+        if (prev.c_str[prev.size] != '\0')                assert_equal(prev.c_str[prev.size], '\0');
+        if (compare_strings(next, "hello world"_cs) != 0) assert_equal_str(next, "hello world"_cs);
+        if (next.c_str[next.size] != '\0')                assert_equal(next.c_str[next.size], '\0');
+        prev = next;
+    }
 
     assert_equal(tformat("% %"_cs, "abc", "def"), "abc def"_cs)
-    */
 }
 
 define_test(format_formats_int_padding)
