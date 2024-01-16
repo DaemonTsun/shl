@@ -36,6 +36,31 @@ void* memmem(const void* haystack, size_t haystack_len,
     }
     return NULL;
 }
+
+template<typename T>
+T *stpncpy(T *dst, const T *src, u64 len)
+{
+    if (memcpy(dst, src, len * sizeof(T)) == nullptr)
+        return nullptr;
+
+    return dst + len;
+}
+
+wchar_t *wcpncpy(wchar_t *dst, const wchar_t *src, u64 len)
+{
+    return stpncpy<wchar_t>(dst, src, len);
+}
+
+template<typename T>
+T *stpcpy(T *dst, const T *src)
+{
+    return stpncpy(dst, src, string_length(src));
+}
+
+wchar_t *wcpcpy(wchar_t *dst, const wchar_t *src)
+{
+    return stpcpy<wchar_t>(dst, src);
+}
 #endif
 
 const_string  operator ""_cs(const char *str, u64 n)
