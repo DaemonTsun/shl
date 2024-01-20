@@ -46,3 +46,37 @@ bool set_handle_inheritance(io_handle handle, bool inherit, error *err)
 
     return true;
 }
+
+s64 read(io_handle h, char *buf, u64 size, error *err)
+{
+    s64 ret = 0;
+
+#if Windows
+
+    if (!ReadFile(h, buf, (DWORD)size, (LPDWORD)&ret, nullptr))
+    {
+        set_GetLastError_error(err);
+        return -1;
+    }
+
+#endif
+
+    return ret;
+}
+
+s64 write(io_handle h, const char *buf, u64 size, error *err)
+{
+    s64 ret = 0;
+
+#if Windows
+
+    if (!WriteFile(h, buf, (DWORD)size, (LPDWORD)&ret, nullptr))
+    {
+        set_GetLastError_error(err);
+        return -1;
+    }
+
+#endif
+
+    return ret;
+}

@@ -55,7 +55,7 @@ define_test(process_pipe_test)
 
     char buf[64] = {};
 
-    s64 bytes_read = read(&out_pip, (char*)buf, 63, &err);
+    s64 bytes_read = read(out_pip.read, (char*)buf, 63, &err);
 
     assert_equal(err.error_code, 0);
     assert_equal(bytes_read, 8);

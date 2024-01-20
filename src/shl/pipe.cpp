@@ -65,37 +65,3 @@ bool free(pipe *p, error *err)
 
     return true;
 }
-
-s64 read(pipe *p, char *buf, u64 size, error *err)
-{
-    s64 ret = 0;
-
-#if Windows
-
-    if (!ReadFile(p->read, buf, (DWORD)size, (LPDWORD)&ret, nullptr))
-    {
-        set_GetLastError_error(err);
-        return -1;
-    }
-
-#endif
-
-    return ret;
-}
-
-s64 write(pipe *p, const char *buf, u64 size, error *err)
-{
-    s64 ret = 0;
-
-#if Windows
-
-    if (!WriteFile(p->write, buf, (DWORD)size, (LPDWORD)&ret, nullptr))
-    {
-        set_GetLastError_error(err);
-        return -1;
-    }
-
-#endif
-
-    return ret;
-}
