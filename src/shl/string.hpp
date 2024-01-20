@@ -405,6 +405,8 @@ auto copy_string(T src, u64 n = max_value(u64))
     return _copy_string(to_const_string(src), n);
 }
 
+void append_string(string  *dst, char c);
+void append_string(wstring *dst, wchar_t c);
 void _append_string(string  *dst, const_string  other);
 void _append_string(wstring *dst, const_wstring other);
 

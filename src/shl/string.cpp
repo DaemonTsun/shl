@@ -807,6 +807,16 @@ void _append_string_cs(string_base<C> *dst, const_string_base<C> other)
     dst->data[dst->size] = '\0';
 }
 
+void append_string(string  *dst, char c)
+{
+    _append_string_cs(dst, const_string{.c_str = (const char *)&c, .size = 1});
+}
+
+void append_string(wstring *dst, wchar_t c)
+{
+    _append_string_cs(dst, const_wstring{.c_str = (const wchar_t *)&c, .size = 1});
+}
+
 void _append_string(string  *dst, const_string  other)
 {
     _append_string_cs(dst, other);

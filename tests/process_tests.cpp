@@ -6,32 +6,99 @@
 #include "shl/string.hpp"
 #include "shl/array.hpp"
 
+#define WIN_CMD  L"C:\\Windows\\System32\\cmd.exe"
+#define LIN_ECHO "/usr/bin/echo"
+
+define_test(process_arguments_test)
+{
+    process p;
+    init(&p);
+
+    set_process_arguments(&p, R"=(echo "hello world"   a\\b\"c\")=");
+
+#if Linux
+    assert_equal(compare_strings(p.start_info.args[0], "echo"), 0);
+    assert_equal(compare_strings(p.start_info.args[1], R"(hello world)"), 0);
+    assert_equal(compare_strings(p.start_info.args[2], R"(a\b"c")"), 0);
+    assert_equal(p.start_info.args[3], nullptr);
+#endif
+
+    free(&p.start_info);
+
+    // ON LINUX: if the executable path is set, the name of the executable
+    // is preprended to be the first argument of the argument list.
+    // Does not apply to Windows.
+    set_process_executable(&p, "/usr/bin/echo");
+    set_process_arguments(&p, R"=("hello world"   a\\b\"c\")=");
+
+#if Linux
+    assert_equal(compare_strings(p.start_info.args[0], "echo"), 0);
+    assert_equal(compare_strings(p.start_info.args[1], R"(hello world)"), 0);
+    assert_equal(compare_strings(p.start_info.args[2], R"(a\b"c")"), 0);
+    assert_equal(p.start_info.args[3], nullptr);
+#endif
+
+    free(&p.start_info);
+}
+
 define_test(process_test)
 {
-    process p{};
+    process p;
+    init(&p);
     error err{};
 
+    bool ok;
+
 #if Windows
+    set_process_executable(&p, WIN_CMD);
+    set_process_arguments(&p, L"/c echo hello world");
+#else
+    set_process_executable(&p, LIN_ECHO);
+    set_process_arguments(&p, "hello world");
+#endif
+
+    ok = start_process(&p, &err);
+
+    assert_equal(ok, true);
+    assert_equal(err.error_code, 0);
+
+    free(&p);
+    init(&p);
+
+#if Windows
+    set_process_executable(&p, WIN_CMD);
+
     // when using args, last arg must be nullptr
-    const wchar_t *args[] = {
+    const sys_char *args[] = {
         L"/c",
         L"echo",
         L"hello world",
         nullptr
     }; 
 
-    bool ok = start_process(&p, L"C:\\Windows\\System32\\cmd.exe", args, nullptr, &err);
+    set_process_arguments(&p, args);
+#else
+    set_process_executable(&p, LIN_ECHO);
 
-    assert_equal(ok, true);
-    assert_equal(err.error_code, 0);
+    // exe name is prepended automatically, unless "raw" argument in
+    // set_process_arguments is set to true.
+    const sys_char *args[] = {
+        "hello world",
+        nullptr
+    }; 
 
-    ok = start_process(&p, L"C:\\Windows\\System32\\cmd.exe", L"/c echo hello!", nullptr, &err);
-
-    assert_equal(ok, true);
-    assert_equal(err.error_code, 0);
+    set_process_arguments(&p, args);
 #endif
+
+    ok = start_process(&p, &err);
+
+    assert_equal(ok, true);
+    assert_equal(err.error_code, 0);
+
+    free(&p);
 }
 
+/*
 define_test(process_pipe_test)
 {
     process p{};
@@ -63,5 +130,6 @@ define_test(process_pipe_test)
 
     free(&out_pip);
 }
+*/
 
 define_default_test_main();

@@ -1,9 +1,9 @@
 
+#include "shl/io.hpp"
+
 #if Linux
 #include <unistd.h>
 #endif
-
-#include "shl/io.hpp"
 
 io_handle stdin_handle()
 {
