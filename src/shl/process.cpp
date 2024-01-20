@@ -58,7 +58,7 @@ bool start_process(process *p, const process_start_info *info, error *err)
                        info->args,
                        nullptr,
                        nullptr,
-                       false,
+                       info->inherit_handles,
                        0,
                        info->environment,
                        nullptr,
@@ -75,18 +75,80 @@ bool start_process(process *p, const process_start_info *info, error *err)
     return true;
 }
 
+#if Windows
+#define _set_args_from_array(Info, Args)\
+    sys_string cmdline{};\
+    _args_to_cmdline(Args, &cmdline);\
+    defer { free(&cmdline); };\
+    Info.args = cmdline.data;
+#else
+#define _set_args_from_array(Info, Args)\
+    Info.args = Args;
+#endif
+
+#if Windows
+#define _set_args_from_string(Info, Args)\
+    sys_string cmdline = copy_string(Args);\
+    defer { free(&cmdline); };\
+    Info.args = cmdline.data;
+#else
+#define _set_args_from_string(Info, Args)\
+    array<sys_char*> _args{};\
+    _cmdline_to_args(Args, &_args);\
+\
+    defer\
+    {\
+        for_array(sstr, &_args)\
+            free_memory(*sstr);\
+\
+        free(&_args);\
+    };\
+\
+    Info.args = _args.data;
+#endif
+
+#if Windows
+#define _set_io_handles(Info, In, Out, ErrOut)\
+    info.detail.dwFlags |= STARTF_USESTDHANDLES;\
+    info.detail.hStdInput = in;\
+    info.detail.hStdOutput = out;\
+    info.detail.hStdError = err_out;
+#else
+#define _set_io_handles(Info, In, Out, ErrOut)
+// TODO: define
+#endif
+
+bool start_process(process *p, const sys_char *path, const sys_char *args[], const sys_char *environment[], io_handle in, io_handle out, io_handle err_out, error *err)
+{
+    process_start_info info{};
+    info.path = path;
+    _set_args_from_array(info, args);
+    info.environment = environment;
+    info.inherit_handles = true;
+
+    _set_io_handles(info, in, out, err_out);
+
+    return start_process(p, &info, err);
+}
+
+bool start_process(process *p, const sys_char *path, const sys_char *args, const sys_char *environment[], io_handle in, io_handle out, io_handle err_out, error *err)
+{
+    process_start_info info{};
+    info.path = path;
+    _set_args_from_string(info, args);
+    info.environment = environment;
+    info.inherit_handles = true;
+
+    _set_io_handles(info, in, out, err_out);
+
+    return start_process(p, &info, err);
+}
+
 bool start_process(process *p, const sys_char *path, const sys_char *args[], const sys_char *environment[], error *err)
 {
     process_start_info info{};
     info.path = path;
-#if Windows
-    sys_string cmdline{};
-    _args_to_cmdline(args, &cmdline);
-    defer { free(&cmdline); };
-    info.args = cmdline.data;
-#else
-    info.args = args;
-#endif
+    _set_args_from_array(info, args);
     info.environment = environment;
 
     return start_process(p, &info, err);
@@ -96,25 +158,7 @@ bool start_process(process *p, const sys_char *path, const sys_char *args, const
 {
     process_start_info info{};
     info.path = path;
-
-#if Windows
-    sys_string cmdline = copy_string(args);
-    defer { free(&cmdline); };
-    info.args = cmdline.data;
-#else
-    array<sys_char*> _args{};
-    _cmdline_to_args(args, &_args);
-
-    defer
-    {
-        for_array(sstr, &_args)
-            free_memory(*sstr);
-
-        free(&_args);
-    };
-
-    info.args = _args.data;
-#endif
+    _set_args_from_string(info, args);
     info.environment = environment;
 
     return start_process(p, &info, err);

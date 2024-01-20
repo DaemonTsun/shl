@@ -2,6 +2,7 @@
 #pragma once
 
 #include "shl/platform.hpp"
+#include "shl/pipe.hpp"
 #include "shl/error.hpp"
 
 #if Windows
@@ -38,6 +39,8 @@ struct process_start_info
 
     const sys_char **environment;
 
+    bool inherit_handles;
+
     process_start_detail detail;
 };
 
@@ -50,5 +53,7 @@ struct process
 };
 
 bool start_process(process *p, const process_start_info *info, error *err = nullptr);
+bool start_process(process *p, const sys_char *path, const sys_char *args[], const sys_char *environment[], io_handle in, io_handle out, io_handle err_out, error *err = nullptr);
+bool start_process(process *p, const sys_char *path, const sys_char *args, const sys_char *environment[], io_handle in, io_handle out, io_handle err_out, error *err = nullptr);
 bool start_process(process *p, const sys_char *path, const sys_char *args[], const sys_char *environment[] = nullptr, error *err = nullptr);
 bool start_process(process *p, const sys_char *path, const sys_char *args = nullptr, const sys_char *environment[] = nullptr, error *err = nullptr);

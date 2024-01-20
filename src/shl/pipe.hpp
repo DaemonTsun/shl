@@ -2,21 +2,13 @@
 #pragma once
 
 #include "shl/error.hpp"
-#include "shl/platform.hpp"
+#include "shl/io.hpp"
 #include "shl/number_types.hpp"
-
-#if Windows
-#include <windows.h> // HANDLE
-
-typedef HANDLE pipe_descriptor;
-#else
-typedef int pipe_descriptor;
-#endif
 
 struct pipe
 {
-    pipe_descriptor read;
-    pipe_descriptor write;
+    io_handle read;
+    io_handle write;
 };
 
 bool init(pipe *p, error *err = nullptr);
