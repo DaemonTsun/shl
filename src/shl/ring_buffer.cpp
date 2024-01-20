@@ -118,7 +118,7 @@ bool init(ring_buffer *buf, u64 min_size, u32 mapping_count, error *err)
 
     if (fd == INVALID_HANDLE_VALUE)
     {
-        set_error(err, (int)GetLastError(), "");
+        set_GetLastError_error(err);
         return false;
     }
 

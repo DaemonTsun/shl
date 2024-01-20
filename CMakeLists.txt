@@ -19,6 +19,10 @@ add_lib(shl STATIC
     TESTS "${ROOT}/tests"
     )
 
+if (Windows)
+    target_compile_definitions(${shl_TARGET} PUBLIC -DUNICODE=1)
+endif()
+
 exit_if_included()
 
 find_package(t1 QUIET)

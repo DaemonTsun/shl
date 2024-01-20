@@ -51,6 +51,9 @@ const char *format_error_message(const char *format, ...);
 #define set_errno_error(Err) \
     do { if ((Err) != nullptr) { int _errcode = errno; *(Err) = ::error{.error_code = _errcode, .what = ::strerror(_errcode), .file = __FILE__, .line = __LINE__}; } } while (0)
 
+#define set_GetLastError_error(Err) \
+    do { if ((Err) != nullptr) { int _errcode = (int)GetLastError(); *(Err) = ::error{.error_code = _errcode, .what = "ERROR", .file = __FILE__, .line = __LINE__}; } } while (0)
+
 #else
 // release
 #define set_error(Err, Code, Msg) \
@@ -58,6 +61,9 @@ const char *format_error_message(const char *format, ...);
 
 #define set_errno_error(Err) \
     do { if ((Err) != nullptr) { int _errcode = errno; *(Err) = ::error{.error_code = _errcode, .what = ::strerror(_errcode) }; } } while (0)
+
+#define set_GetLastError_error(Err) \
+    do { if ((Err) != nullptr) { int _errcode = (int)GetLastError(); *(Err) = ::error{.error_code = _errcode, .what = "ERROR" }; } } while (0)
 
 #endif
 

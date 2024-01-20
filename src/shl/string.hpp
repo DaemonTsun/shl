@@ -595,7 +595,30 @@ void join(const array<string>         *arr, const char   *delim, string *out);
 void join(const array<string>         *arr, const_string  delim, string *out);
 void join(const array<string>         *arr, const string *delim, string *out);
 
-// TODO: join wstring
+void join(const wchar_t **strings, u64 count, wchar_t        delim, wstring *out);
+void join(const wchar_t **strings, u64 count, const wchar_t *delim, wstring *out);
+void join(const wchar_t **strings, u64 count, const_wstring  delim, wstring *out);
+void join(const wchar_t **strings, u64 count, const wstring *delim, wstring *out);
+void join(const_wstring *strings,  u64 count, wchar_t        delim, wstring *out);
+void join(const_wstring *strings,  u64 count, const wchar_t *delim, wstring *out);
+void join(const_wstring *strings,  u64 count, const_wstring  delim, wstring *out);
+void join(const_wstring *strings,  u64 count, const wstring *delim, wstring *out);
+void join(const wstring *strings,  u64 count, wchar_t        delim, wstring *out);
+void join(const wstring *strings,  u64 count, const wchar_t *delim, wstring *out);
+void join(const wstring *strings,  u64 count, const_wstring  delim, wstring *out);
+void join(const wstring *strings,  u64 count, const wstring *delim, wstring *out);
+void join(const array<const wchar_t*>   *arr, wchar_t        delim, wstring *out);
+void join(const array<const wchar_t*>   *arr, const wchar_t *delim, wstring *out);
+void join(const array<const wchar_t*>   *arr, const_wstring  delim, wstring *out);
+void join(const array<const wchar_t*>   *arr, const wstring *delim, wstring *out);
+void join(const array<const_wstring>    *arr, wchar_t        delim, wstring *out);
+void join(const array<const_wstring>    *arr, const wchar_t *delim, wstring *out);
+void join(const array<const_wstring>    *arr, const_wstring  delim, wstring *out);
+void join(const array<const_wstring>    *arr, const wstring *delim, wstring *out);
+void join(const array<wstring>          *arr, wchar_t        delim, wstring *out);
+void join(const array<wstring>          *arr, const wchar_t *delim, wstring *out);
+void join(const array<wstring>          *arr, const_wstring  delim, wstring *out);
+void join(const array<wstring>          *arr, const wstring *delim, wstring *out);
 
 /*
 these are not the same as hash(const char *c) because hash(const char *c)
