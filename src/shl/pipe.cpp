@@ -5,9 +5,22 @@
 
 #if Windows
 #include <namedpipeapi.h>
+#else
+#include <errno.h>
+#include <string.h>
+
+// beautiful
+#define pipe __default_pipe
+#include <unistd.h> // pipe2
+#undef pipe
 #endif
 
-bool init(pipe *p, u64 preferred_size, bool inherit, error *err)
+bool init(pipe *p, error *err)
+{
+    return init(p, 0, true, err);
+}
+
+bool init(pipe *p, int flags, bool inherit, error *err)
 {
     assert(p != nullptr);
 
@@ -21,21 +34,20 @@ bool init(pipe *p, u64 preferred_size, bool inherit, error *err)
     if (!CreatePipe(&p->read,
                     &p->write,
                     &attr,
-                    (DWORD)preferred_size))
+                    (DWORD)flags))
     {
         set_GetLastError_error(err);
         return false;
     }
 #else
-    // TODO
+    if (pipe2((int*)p, flags) == -1)
+    {
+        set_errno_error(err);
+        return false;
+    }
 #endif
 
     return true;
-}
-
-bool init(pipe *p, error *err)
-{
-    return init(p, 0, true, err);
 }
 
 bool free(pipe *p, error *err)
@@ -43,7 +55,7 @@ bool free(pipe *p, error *err)
     assert(p != nullptr);
 
 #if Windows
-    if (!CloseHandle(p->read))
+    if (p->read != nullptr && !CloseHandle(p->read))
     {
         set_GetLastError_error(err);
         return false;
@@ -51,7 +63,7 @@ bool free(pipe *p, error *err)
 
     p->read = nullptr;
 
-    if (!CloseHandle(p->write))
+    if (p->write != nullptr && !CloseHandle(p->write))
     {
         set_GetLastError_error(err);
         return false;
@@ -60,7 +72,21 @@ bool free(pipe *p, error *err)
     p->write = nullptr;
 
 #else
-    // TODO
+    if (p->read != -1 && close(p->read) == -1)
+    {
+        set_errno_error(err);
+        return false;
+    }
+
+    p->read = -1;
+
+    if (p->write != -1 && close(p->write) == -1)
+    {
+        set_errno_error(err);
+        return false;
+    }
+
+    p->write = -1;
 #endif
 
     return true;

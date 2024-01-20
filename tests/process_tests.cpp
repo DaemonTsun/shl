@@ -7,7 +7,7 @@
 #include "shl/array.hpp"
 
 #define WIN_CMD  L"C:\\Windows\\System32\\cmd.exe"
-#define LIN_ECHO "/usr/bin/echo"
+#define UNIX_ECHO "/usr/bin/echo"
 
 define_test(process_arguments_test)
 {
@@ -53,7 +53,7 @@ define_test(process_test)
     set_process_executable(&p, WIN_CMD);
     set_process_arguments(&p, L"/c echo hello world");
 #else
-    set_process_executable(&p, LIN_ECHO);
+    set_process_executable(&p, UNIX_ECHO);
     set_process_arguments(&p, "hello world");
 #endif
 
@@ -78,7 +78,7 @@ define_test(process_test)
 
     set_process_arguments(&p, args);
 #else
-    set_process_executable(&p, LIN_ECHO);
+    set_process_executable(&p, UNIX_ECHO);
 
     // exe name is prepended automatically, unless "raw" argument in
     // set_process_arguments is set to true.
@@ -98,38 +98,48 @@ define_test(process_test)
     free(&p);
 }
 
-/*
 define_test(process_pipe_test)
 {
     process p{};
     error err{};
 
-    pipe out_pip{};
-    init(&out_pip);
+    pipe out_pipe{};
+    init(&out_pipe);
 
-    set_handle_inheritance(out_pip.read, false);
+    set_handle_inheritance(out_pipe.read, false);
 
 #if Windows
-    const sys_char *cmd = L"C:\\Windows\\System32\\cmd.exe";
+    const sys_char *cmd = WIN_CMD;
     const sys_char *args = L"/c echo world!";
 #else
-    const sys_char *cmd = "/usr/bin/echo";
+    const sys_char *cmd = UNIX_ECHO;
     const sys_char *args[] = {"world!", nullptr};
 #endif
 
-    bool ok = start_process(&p, cmd, args, nullptr, nullptr, out_pip.write, out_pip.write, &err);
+    set_process_executable(&p, cmd);
+    set_process_arguments(&p, args);
+
+    set_process_io(&p, stdin_handle(), out_pipe.write, out_pipe.write);
+
+    bool ok = start_process(&p, &err);
     assert_equal(ok, true);
 
     char buf[64] = {};
 
-    s64 bytes_read = read(out_pip.read, (char*)buf, 63, &err);
+    s64 bytes_read = read(out_pipe.read, (char*)buf, 63, &err);
 
     assert_equal(err.error_code, 0);
+
+#if Windows
     assert_equal(bytes_read, 8);
     assert_equal(compare_strings(buf, "world!\r\n"), 0);
+#else
+    assert_equal(bytes_read, 7);
+    assert_equal(compare_strings(buf, "world!\n"), 0);
+#endif
 
-    free(&out_pip);
+    free(&out_pipe);
+    free(&p);
 }
-*/
 
 define_default_test_main();

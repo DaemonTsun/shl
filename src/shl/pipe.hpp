@@ -12,6 +12,9 @@ struct pipe
 };
 
 bool init(pipe *p, error *err = nullptr);
-bool init(pipe *p, u64 preferred_size, bool inherit, error *err = nullptr);
+
+// on Windows, flags is the "preferred size" for the pipe
+// on Linux, it's the flags for pipe2
+bool init(pipe *p, int flags, bool inherit, error *err = nullptr);
 
 bool free(pipe *p, error *err = nullptr);

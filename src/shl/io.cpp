@@ -3,6 +3,8 @@
 
 #if Linux
 #include <unistd.h>
+#include <errno.h>
+#include <string.h>
 #endif
 
 io_handle stdin_handle()
@@ -58,7 +60,14 @@ s64 read(io_handle h, char *buf, u64 size, error *err)
         set_GetLastError_error(err);
         return -1;
     }
+#else
+    ret = read(h, buf, size);
 
+    if (ret == -1)
+    {
+        set_errno_error(err);
+        return -1;
+    }
 #endif
 
     return ret;
@@ -69,13 +78,19 @@ s64 write(io_handle h, const char *buf, u64 size, error *err)
     s64 ret = 0;
 
 #if Windows
-
     if (!WriteFile(h, buf, (DWORD)size, (LPDWORD)&ret, nullptr))
     {
         set_GetLastError_error(err);
         return -1;
     }
+#else
+    ret = write(h, buf, size);
 
+    if (ret == -1)
+    {
+        set_errno_error(err);
+        return -1;
+    }
 #endif
 
     return ret;
