@@ -103,6 +103,8 @@ define_test(process_pipe_test)
     process p{};
     error err{};
 
+    init(&p);
+
     pipe out_pipe{};
     init(&out_pipe);
 
@@ -123,6 +125,8 @@ define_test(process_pipe_test)
 
     bool ok = start_process(&p, &err);
     assert_equal(ok, true);
+    assert_not_equal(get_pid(&p), 0);
+    assert_not_equal(get_pid(&p), get_pid());
 
     char buf[64] = {};
 
@@ -139,6 +143,37 @@ define_test(process_pipe_test)
 #endif
 
     free(&out_pipe);
+    free(&p);
+}
+
+define_test(stop_process_stops_process)
+{
+    process p{};
+    error err{};
+    init(&p);
+
+#if Windows
+    const sys_char *cmd = WIN_CMD;
+    const sys_char *args = nullptr;
+#else
+    const sys_char *cmd = "/usr/bin/cat";
+    const sys_char *args[] = {"-", nullptr};
+#endif
+
+    pipe pip{};
+    init(&pip);
+    set_process_io(&p, pip.read, stdout_handle(), stderr_handle());
+
+    set_process_executable(&p, cmd);
+    set_process_arguments(&p, args);
+
+    assert_equal(start_process(&p, &err), true);
+    assert_equal(stop_process(&p, &err), true);
+    assert_equal(err.error_code, 0);
+    assert_equal(stop_process(&p, &err), false);
+    assert_not_equal(err.error_code, 0);
+
+    free(&pip);
     free(&p);
 }
 

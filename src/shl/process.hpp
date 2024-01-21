@@ -8,7 +8,9 @@
 #if Windows
 #include <windows.h>
 #elif Linux
-
+#define pipe __original_pipe
+#include <signal.h>
+#undef pipe
 #endif
 
 // platform-specific structs
@@ -71,4 +73,13 @@ void set_process_io(process *p, io_handle in, io_handle out, io_handle err_out);
 void get_process_io(process *p, io_handle *in, io_handle *out, io_handle *err_out);
 
 bool start_process(process *p, error *err);
+bool stop_process(process *p, error *err);
+bool stop_process(int pid, error *err);
+
+// current process
+int get_pid();
+int get_parent_pid();
+// given process
+int get_pid(const process *p);
+
 

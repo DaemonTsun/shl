@@ -16,12 +16,16 @@ const char *_get_exe_name(const char *path)
     const char *lastsep = strrchr(path, '/');
 
     if (lastsep == nullptr)
+    {
         return nullptr;
+    }
+    else
+    {
+        if (lastsep[1] == '\0')
+            return nullptr;
 
-    if (lastsep[1] == '\0')
-        return nullptr;
-
-    return lastsep + 1;
+        return lastsep + 1;
+    }
 }
 #endif
 
@@ -337,10 +341,127 @@ bool start_process(process *p, error *err)
     default:
     {
         // parent process
+        p->detail.pid = id;
+        break;
     }
     }
 
 #endif
 
     return true;
+}
+
+bool stop_process(process *p, error *err)
+{
+    assert(p != nullptr);
+
+#if Windows
+    if (!TerminateProcess(p->detail.hProcess, 0))
+    {
+        set_GetLastError_error(err);
+        return false;
+    }
+#else
+    if (!stop_process(p->detail.pid, err))
+        return false;
+#endif
+
+    p->detail = {};
+
+    return true;
+}
+
+bool stop_process(int pid, error *err)
+{
+#if Windows
+    HANDLE h = OpenProcess(PROCESS_TERMINATE, true, pid);
+
+    if (h == nullptr || h == INVALID_HANDLE_VALUE)
+    {
+        set_GetLastError_error(err);
+        return false;
+    }
+
+    if (!TerminateProcess(h, 0))
+    {
+        set_GetLastError_error(err);
+        CloseHandle(h);
+        return false;
+    }
+
+    CloseHandle(h);
+
+#else
+    // let's not kill ourselves
+    if (pid == 0)
+    {
+        if (err) err->error_code = EINVAL;
+        return false;
+    }
+
+    if (::kill(pid, SIGKILL) == -1)
+    {
+        set_errno_error(err);
+        return false;
+    }
+#endif
+
+    return true;
+}
+
+int get_pid()
+{
+#if Windows
+    return GetCurrentProcessId();
+#else
+    return getpid();
+#endif
+}
+
+int get_parent_pid()
+{
+#if Windows
+    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    PROCESSENTRY32 entry{};
+
+    int current_pid = get_pid();
+    
+    if (!Process32First(snapshot, &entry))
+    {
+        CloseHandle(snapshot);
+        return -1;
+    }
+
+    int tries = 0;
+
+    while (entry.th32ProcessId != current_pid && tries < 100)
+    {
+        if (!Process32Next(snapshot, &entry) || entry.th32ProcessId == INVALID_HANDLE_VALUE)
+        {
+            CloseHandle(snapshot);
+            return -1;
+        }
+
+        tries++;
+    }
+
+    CloseHandle(snapshot);
+
+    if (entry.th32ProcessId == INVALID_HANDLE_VALUE || entry.th32ProcessId != current_pid)
+        return -1;
+
+    return entry.th32ParentProcessID;
+#else
+    return getppid();
+#endif
+}
+
+// given process
+int get_pid(const process *p)
+{
+#if Windows
+    return GetProcessId((HANDLE)p->detail.hProcess);
+#else
+    return p->detail.pid;
+#endif
 }
