@@ -65,7 +65,7 @@ define_test(read_entire_pipe_reads_everything_in_pipe)
     init(&p);
 
     const char *str = "hello world! this is a long string";
-    assert_equal(io_write(p.write, str, 34, &err), 34);
+    assert_equal(write(&p, str), 34);
 
     assert_equal(read_entire_pipe(&p, &contents, &err), true);
     assert_equal(contents.size, 34);

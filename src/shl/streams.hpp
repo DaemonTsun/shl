@@ -29,3 +29,22 @@ bool read_entire_io(io_handle h, string *out, error *err = nullptr);
 bool read_entire_pipe(pipe *p, memory_stream *out, error *err = nullptr);
 bool read_entire_pipe(pipe *p, string *out, error *err = nullptr);
 
+#define _io_const_string_body(Func, Handle, Str, Err)\
+    -> decltype(Func(Handle, to_const_string(Str), Err))\
+{\
+    return Func(Handle, to_const_string(Str), Err);\
+}
+
+s64 _write(file_stream *stream, const_string  s, error *err);
+s64 _write(file_stream *stream, const_wstring s, error *err);
+s64 _write(memory_stream *stream, const_string  s, error *err);
+s64 _write(memory_stream *stream, const_wstring s, error *err);
+s64 _write(io_handle h, const_string  s, error *err);
+s64 _write(io_handle h, const_wstring s, error *err);
+s64 _write(pipe *p, const_string  s, error *err);
+s64 _write(pipe *p, const_wstring s, error *err);
+
+template<typename T> auto write(file_stream *stream, T str, error *err = nullptr)    _io_const_string_body(_write, stream, str, err)
+template<typename T> auto write(memory_stream *stream, T str, error *err = nullptr)  _io_const_string_body(_write, stream, str, err)
+template<typename T> auto write(io_handle h, T str, error *err = nullptr)            _io_const_string_body(_write, h, str, err)
+template<typename T> auto write(pipe *p, T str, error *err = nullptr)                _io_const_string_body(_write, p, str, err)

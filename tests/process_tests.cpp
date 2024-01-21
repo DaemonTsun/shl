@@ -126,7 +126,7 @@ define_test(process_pipe_test)
 
     char buf[64] = {};
 
-    s64 bytes_read = read(out_pipe.read, (char*)buf, 63, &err);
+    s64 bytes_read = io_read(out_pipe.read, (char*)buf, 63, &err);
 
     assert_equal(err.error_code, 0);
 

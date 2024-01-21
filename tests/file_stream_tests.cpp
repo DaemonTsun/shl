@@ -9,7 +9,9 @@
 #if Windows
 #include <windows.h>
 #else
+#define pipe __original_pipe
 #include <unistd.h>
+#undef pipe
 #include <linux/limits.h>
 #endif
 

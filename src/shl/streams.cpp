@@ -148,3 +148,69 @@ bool read_entire_pipe(pipe *p, string *out, error *err)
 
     return read_entire_io(p->read, out, err);
 }
+
+template<typename C>
+s64 _write_fs(file_stream *stream, const_string_base<C> cs, error *err)
+{
+    assert(stream != nullptr);
+
+    s64 ret = write(stream, (const void*)cs.c_str, cs.size * sizeof(C));
+
+    if (!is_ok(stream))
+        return -1;
+
+    return ret;
+}
+
+s64 _write(file_stream *stream, const_string  s, error *err)
+{
+    return _write_fs(stream, s, err);
+}
+
+s64 _write(file_stream *stream, const_wstring s, error *err)
+{
+    return _write_fs(stream, s, err);
+}
+
+template<typename C>
+s64 _write_ms(memory_stream *stream, const_string_base<C> cs, error *err)
+{
+    assert(stream != nullptr);
+
+    s64 ret = write(stream, (const void*)cs.c_str, cs.size * sizeof(C));
+
+    if (!is_ok(stream))
+        return -1;
+
+    return ret;
+}
+
+s64 _write(memory_stream *stream, const_string  s, error *err)
+{
+    return _write_ms(stream, s, err);
+}
+
+s64 _write(memory_stream *stream, const_wstring s, error *err)
+{
+    return _write_ms(stream, s, err);
+}
+
+s64 _write(io_handle h, const_string  s, error *err)
+{
+    return io_write(h, s.c_str, s.size, err);
+}
+
+s64 _write(io_handle h, const_wstring s, error *err)
+{
+    return io_write(h, (const char*)s.c_str, s.size * sizeof(wchar_t), err);
+}
+
+s64 _write(pipe *p, const_string  s, error *err)
+{
+    return _write(p->write, s, err);
+}
+
+s64 _write(pipe *p, const_wstring s, error *err)
+{
+    return _write(p->write, s, err);
+}
