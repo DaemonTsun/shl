@@ -1,7 +1,9 @@
 
 #include <assert.h>
-#include "shl/streams.hpp"
+
+#include "shl/chunk_array.hpp"
 #include "shl/defer.hpp"
+#include "shl/streams.hpp"
 
 bool read_entire_file(const char *path, memory_stream *out, error *err)
 {
@@ -72,4 +74,77 @@ bool read_entire_file(file_stream *stream, string *out, error *err)
         return false;
 
     return true;
+}
+
+bool read_entire_io(io_handle h, memory_stream *out, error *err)
+{
+    assert(out != nullptr);
+
+    s64 sz = io_size(h, err);
+
+    if (sz < 0)
+        return false;
+
+    if (!open(out, sz, true, true, err))
+        return false;
+
+    if (sz == 0)
+        return true;
+
+    if (io_is_pipe(h) && !io_poll_read(h, 0, err))
+        return false;
+
+    if (io_read(h, out->data, sz, err) < 0)
+        return false;
+
+    return true;
+}
+
+bool read_entire_io(io_handle h, string *out, error *err)
+{
+    assert(out != nullptr);
+
+    s64 sz = io_size(h, err);
+
+    if (sz < 0)
+        return false;
+
+    reserve((array<char>*)out, sz + 1);
+    out->data[sz] = '\0';
+    out->size = sz;
+
+    if (sz == 0)
+        return true;
+
+    if (io_is_pipe(h) && !io_poll_read(h, 0, err))
+        return false;
+
+    s64 read_size = io_read(h, out->data, sz, err);
+
+    if (read_size < 0)
+        return false;
+
+    assert(read_size <= sz);
+
+    if (read_size != sz)
+    {
+        out->size = read_size;
+        out->data[read_size] = '\0';
+    }
+
+    return true;
+}
+
+bool read_entire_pipe(pipe *p, memory_stream *out, error *err)
+{
+    assert(p != nullptr);
+
+    return read_entire_io(p->read, out, err);
+}
+
+bool read_entire_pipe(pipe *p, string *out, error *err)
+{
+    assert(p != nullptr);
+
+    return read_entire_io(p->read, out, err);
 }
