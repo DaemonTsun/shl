@@ -181,6 +181,8 @@ bool io_poll_read(io_handle h, u32 timeout_ms, error *err)
         set_errno_error(err);
         return false;
     }
+
+    return true;
 #endif
 }
 
