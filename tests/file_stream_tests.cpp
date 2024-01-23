@@ -30,7 +30,7 @@
 std::filesystem::path get_executable_path()
 {
 #if Windows
-    char pth[4096] = {0};
+    sys_char pth[4096] = {0};
 
     auto length = GetModuleFileName(nullptr, pth, 4095);
 

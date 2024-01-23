@@ -1,9 +1,16 @@
+#include <stdlib.h> // wcstombs
 
-#include "shl/defer.hpp"
 #include "shl/string.hpp"
+#include "shl/memory.hpp"
+#include "shl/type_functions.hpp"
 #include "shl/process.hpp"
 
-#if Linux
+#define LIT(C, Literal)\
+    inline_const_if(is_same(C, char), Literal, L##Literal)
+
+#if Windows
+#include <tlhelp32.h> // CreateToolhelp32Snapshot
+#else
 #include <unistd.h> // fork, pid_t, _exit, ...
 #include <string.h>
 #include <errno.h>
@@ -25,34 +32,6 @@ const char *_get_exe_name(const char *path)
             return nullptr;
 
         return lastsep + 1;
-    }
-}
-#endif
-
-typedef string_base<sys_char> sys_string;
-
-u64 _get_argument_count(const sys_char **args)
-{
-    u64 arg_count = 0;
-
-    while (*args != nullptr)
-    {
-        args++;
-        arg_count += 1;
-    }
-
-    return arg_count;
-}
-
-void _args_to_cmdline(const sys_char **args, sys_string *cmdline)
-{
-    u64 arg_count = _get_argument_count(args);
-
-    if (arg_count > 0)
-    {
-        append_string(cmdline, SYS_CHAR('"'));
-        join(args, arg_count, SYS_CHAR("\" \""), cmdline);
-        append_string(cmdline, SYS_CHAR('"'));
     }
 }
 
@@ -120,6 +99,67 @@ void _cmdline_to_args(const sys_char *cmd, const sys_char *exe, array<sys_char*>
 
     add_at_end(args, (sys_char*)nullptr);
 }
+#endif
+
+typedef string_base<sys_char> sys_string;
+
+// conversion helpers
+#if Linux
+string _convert_string(const wchar_t *wcstring, u64 wchar_count)
+{
+    string ret{};
+    u64 sz = (wchar_count + 1) * sizeof(char);
+    ret.data = (char*)::allocate_memory(sz);
+
+    ::fill_memory((void*)ret.data, 0, sz);
+
+    ret.size = ::wcstombs(ret.data, wcstring, wchar_count * sizeof(wchar_t));
+
+    return ret;
+}
+#elif Windows
+wstring _convert_string(const char *cstring, u64 char_count)
+{
+    wstring ret{};
+    u64 sz = (char_count + 1) * sizeof(wchar_t);
+    ret.data = (wchar_t*)::allocate_memory(sz);
+    ::fill_memory((void*)ret.data, 0, sz);
+
+    ::mbstowcs_s(&ret.size, ret.data, sz, cstring, char_count * sizeof(char));
+
+    return ret;
+}
+#endif
+
+template<typename C>
+u64 _get_argument_count(const C **args)
+{
+    if (args == nullptr)
+        return 0;
+
+    u64 arg_count = 0;
+
+    while (*args != nullptr)
+    {
+        args++;
+        arg_count += 1;
+    }
+
+    return arg_count;
+}
+
+template<typename C>
+void _args_to_cmdline(const C **args, string_base<C> *cmdline)
+{
+    u64 arg_count = _get_argument_count(args);
+
+    if (arg_count > 0)
+    {
+        append_string(cmdline, LIT(C, '"'));
+        join(args, arg_count, LIT(C, "\" \""), cmdline);
+        append_string(cmdline, LIT(C, '"'));
+    }
+}
 
 void init(process_start_info *info)
 {
@@ -136,14 +176,21 @@ void init(process_start_info *info)
 #endif
 }
 
+void _free_process_start_info_path(process_start_info *info)
+{
+    if (info->_free_exe_path && info->path != nullptr)
+    {
+        free_memory((void*)info->path);
+        info->path = nullptr;
+    }
+}
+
 void _free_process_start_info_arguments(process_start_info *info)
 {
     if (info->_free_args && info->args != nullptr)
     {
 #if Windows
-        u64 len = string_length(info->args);
-        sys_string _cmdline{.data = info->args, .size = len, .reserved_size = len};
-        free(&_cmdline);
+        free_memory((void*)info->args);
 #else
         u64 arg_count = _get_argument_count(info->args);
         array<sys_char*> _args{.data = (sys_char**)info->args, .size = arg_count, .reserved_size = arg_count};
@@ -162,6 +209,7 @@ void free(process_start_info *info)
 {
     assert(info != nullptr);
 
+    _free_process_start_info_path(info);
     _free_process_start_info_arguments(info);
 }
 
@@ -192,21 +240,51 @@ void free(process *p)
 #endif
 }
 
-void set_process_executable(process *p, const sys_char *exe)
+void set_process_executable(process *p, const char *exe)
 {
     assert(p != nullptr);
 
+    _free_process_start_info_path(&p->start_info);
+
+#if Windows
+    p->start_info.path = _convert_string(exe, string_length(exe)).data;
+    p->start_info._free_exe_path = true;
+#else
     p->start_info.path = exe;
+    p->start_info._free_exe_path = false;
+#endif
 }
 
-void set_process_arguments(process *p, const sys_char *args)
+void set_process_executable(process *p, const wchar_t *exe)
+{
+    assert(p != nullptr);
+
+    _free_process_start_info_path(&p->start_info);
+
+#if Windows
+    p->start_info.path = exe;
+    p->start_info._free_exe_path = false;
+#else
+    p->start_info.path = _convert_string(exe, string_length(exe)).data;
+    p->start_info._free_exe_path = true;
+#endif
+}
+
+void set_process_arguments(process *p, const char *args)
 {
     assert(p != nullptr);
 
     _free_process_start_info_arguments(&p->start_info);
 
+    if (args == nullptr)
+    {
+        p->start_info.args = nullptr;
+        p->start_info._free_args = false;
+        return;
+    }
+
 #if Windows
-    sys_string cmdline = copy_string(args);
+    sys_string cmdline = _convert_string(args, string_length(args));
     p->start_info.args = cmdline.data;
     p->start_info._free_args = true;
 #else
@@ -218,15 +296,55 @@ void set_process_arguments(process *p, const sys_char *args)
 #endif
 }
 
-void set_process_arguments(process *p, const sys_char **args, bool raw)
+void set_process_arguments(process *p, const wchar_t *args)
+{
+    assert(p != nullptr);
+
+    _free_process_start_info_arguments(&p->start_info);
+
+    if (args == nullptr)
+    {
+        p->start_info.args = nullptr;
+        p->start_info._free_args = false;
+        return;
+    }
+
+#if Windows
+    // we need to copy this because args must be modifiable. thanks windows.
+    sys_string cmdline = copy_string(args);
+    p->start_info.args = cmdline.data;
+    p->start_info._free_args = true;
+#else
+    sys_string sargs = _convert_string(args, string_length(args));
+    array<sys_char*> _args{};
+    _cmdline_to_args(sargs.data, p->start_info.path, &_args);
+
+    p->start_info.args = (const sys_char**)_args.data;
+    p->start_info._free_args = true;
+    free_memory(sargs.data);
+#endif
+}
+
+void set_process_arguments(process *p, const char **args, bool raw)
 {
     assert(p != nullptr);
 
 #if Windows
-    sys_string cmdline{};
-    _args_to_cmdline(Args, &cmdline);
+    if (args == nullptr)
+    {
+        p->start_info.args = nullptr;
+        p->start_info._free_args = false;
+        return;
+    }
+
+    string _cmdline{};
+    _args_to_cmdline(args, &_cmdline);
+
+    sys_string cmdline = _convert_string(_cmdline.data, _cmdline.size);
     p->start_info.args = cmdline.data;
     p->start_info._free_args = true;
+
+    free(&_cmdline);
 #else
     if (raw)
     {
@@ -265,11 +383,55 @@ void set_process_arguments(process *p, const sys_char **args, bool raw)
 #endif
 }
 
+void set_process_arguments(process *p, const wchar_t **args)
+{
+    assert(p != nullptr);
+
+#if Windows
+    if (args == nullptr)
+    {
+        p->start_info.args = nullptr;
+        p->start_info._free_args = false;
+        return;
+    }
+
+    sys_string cmdline{};
+    _args_to_cmdline(args, &cmdline);
+    p->start_info.args = cmdline.data;
+    p->start_info._free_args = true;
+#else
+    array<sys_char*> _args{};
+    u64 arg_count = _get_argument_count(args);
+
+    const char *exe_name = _get_exe_name(p->start_info.path);
+
+    if (exe_name != nullptr)
+        add_at_end(&_args, strdup(exe_name));
+
+    for (u64 i = 0; i < arg_count; ++i)
+        add_at_end(&_args, _convert_string(args[i], string_length(args[i])).data);
+
+    if (_args.data != nullptr)
+    {
+        add_at_end(&_args, (char *)nullptr);
+
+        p->start_info.args = (const sys_char**)_args.data;
+        p->start_info._free_args = true;
+    }
+    else
+    {
+        p->start_info.args = nullptr;
+        p->start_info._free_args = false;
+    }
+#endif
+}
+
 void set_process_io(process *p, io_handle in, io_handle out, io_handle err_out)
 {
     assert(p != nullptr);
 
 #if Windows
+    p->start_info.inherit_handles = true;
     p->start_info.detail.dwFlags |= STARTF_USESTDHANDLES;
     p->start_info.detail.hStdInput = in;
     p->start_info.detail.hStdOutput = out;
@@ -434,9 +596,9 @@ int get_parent_pid()
 
     int tries = 0;
 
-    while (entry.th32ProcessId != current_pid && tries < 100)
+    while (entry.th32ProcessID != current_pid && tries < 100)
     {
-        if (!Process32Next(snapshot, &entry) || entry.th32ProcessId == INVALID_HANDLE_VALUE)
+        if (!Process32Next(snapshot, &entry))
         {
             CloseHandle(snapshot);
             return -1;
@@ -447,7 +609,7 @@ int get_parent_pid()
 
     CloseHandle(snapshot);
 
-    if (entry.th32ProcessId == INVALID_HANDLE_VALUE || entry.th32ProcessId != current_pid)
+    if (entry.th32ProcessID != current_pid)
         return -1;
 
     return entry.th32ParentProcessID;

@@ -21,7 +21,8 @@ define_test(init_initializes_new_pipe)
     assert_equal(io_is_pipe(p.read), true);
     assert_equal(io_is_pipe(p.write), true);
     assert_equal(io_size(p.read, &err), 0);
-    assert_equal(io_size(p.write, &err), 0);
+    // should not be able to do that
+    // assert_equal(io_size(p.write, &err), 0);
 
     assert_equal(free(&p, &err), true);
 }
@@ -46,8 +47,8 @@ define_test(io_read_reads_from_pipe)
 
     bytes = io_read(p.read, buf, 63, &err);
 
-    assert_equal(io_size(p.read, &err), 0);
     assert_equal(bytes, 5);
+    assert_equal(io_size(p.read, &err), 0);
     assert_equal(compare_strings(buf, "hello"), 0);
 
     assert_equal(io_poll_read(p.read), false);

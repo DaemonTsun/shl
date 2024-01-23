@@ -2,9 +2,14 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#include "shl/platform.hpp"
 #include "shl/error.hpp"
 #include "shl/ring_buffer.hpp"
 #include "shl/at_exit.hpp"
+
+#if Windows
+#include <windows.h>
+#endif
 
 #define ERROR_RING_BUFFER_MIN_SIZE 4096
 
@@ -39,6 +44,35 @@ error_buffer *_get_error_buffer(bool free_buffer = false)
 void _error_buffer_cleanup()
 {
     _get_error_buffer(true);
+}
+
+const char *_windows_error_message(int error_code)
+{
+#if Windows
+    error_buffer *_buf = _get_error_buffer(false);
+
+    if (_buf == nullptr)
+        return nullptr;
+
+    int count = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                               NULL,
+                               error_code,
+                               MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                               _buf->buffer.data + _buf->offset,
+                               (u32)_buf->buffer.size - 1, NULL);
+
+    char *ret = _buf->buffer.data + _buf->offset;
+
+    _buf->offset += count;
+    _buf->buffer.data[_buf->offset] = '\0';
+
+    while (_buf->offset >= _buf->buffer.size)
+        _buf->offset -= _buf->buffer.size;
+
+    return ret;
+#else
+    return nullptr;
+#endif
 }
 
 const char *vformat_error_message(const char *format, va_list args)

@@ -129,7 +129,7 @@ s64 io_seek(io_handle h, s64 offset, int whence, error *err)
 
 s64 io_tell(io_handle h, error *err)
 {
-    return io_seek(h, 0, SEEK_CUR, err);
+    return io_seek(h, 0, IO_SEEK_CUR, err);
 }
 
 #if Linux
@@ -153,7 +153,15 @@ void _set_timeval(u32 ms, struct timeval *t)
 bool io_poll_read(io_handle h, u32 timeout_ms, error *err)
 {
 #if Windows
-    // TODO: implement. something with OVERLAPPED or something
+    DWORD ret;
+
+    if (!PeekNamedPipe(h, nullptr, 0, nullptr, &ret, nullptr))
+    {
+        set_GetLastError_error(err);
+        return false;
+    }
+
+    return ret > 0;
 #else
     struct timeval t;
     _set_timeval(timeout_ms, &t);
@@ -174,14 +182,12 @@ bool io_poll_read(io_handle h, u32 timeout_ms, error *err)
         return false;
     }
 #endif
-
-    return true;
 }
 
 bool io_poll_write(io_handle h, u32 timeout_ms, error *err)
 {
 #if Windows
-    // TODO: implement
+    // is there such a thing?
 #else
     struct timeval t;
     _set_timeval(timeout_ms, &t);
@@ -263,7 +269,7 @@ s64 io_size(io_handle h, error *err)
         if (curpos < 0)
             return -1;
 
-        if (io_seek(h, 0, SEEK_END, err) < 0)
+        if (io_seek(h, 0, IO_SEEK_END, err) < 0)
             return -1;
 
         s64 sz = io_tell(h, err);

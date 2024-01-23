@@ -44,6 +44,8 @@ struct error
 
 const char *format_error_message(const char *format, ...);
 
+const char *_windows_error_message(int errcode);
+
 #ifndef NDEBUG
 #define set_error(Err, Code, Msg) \
     do { if ((Err) != nullptr) { *(Err) = ::error{.error_code = Code, .what = Msg, .file = __FILE__, .line = __LINE__}; } } while (0)
@@ -52,7 +54,7 @@ const char *format_error_message(const char *format, ...);
     do { if ((Err) != nullptr) { int _errcode = errno; *(Err) = ::error{.error_code = _errcode, .what = ::strerror(_errcode), .file = __FILE__, .line = __LINE__}; } } while (0)
 
 #define set_GetLastError_error(Err) \
-    do { if ((Err) != nullptr) { int _errcode = (int)GetLastError(); *(Err) = ::error{.error_code = _errcode, .what = "ERROR", .file = __FILE__, .line = __LINE__}; } } while (0)
+    do { if ((Err) != nullptr) { int _errcode = (int)GetLastError(); *(Err) = ::error{.error_code = _errcode, .what = _windows_error_message(_errcode), .file = __FILE__, .line = __LINE__}; } } while (0)
 
 #else
 // release
@@ -63,7 +65,7 @@ const char *format_error_message(const char *format, ...);
     do { if ((Err) != nullptr) { int _errcode = errno; *(Err) = ::error{.error_code = _errcode, .what = ::strerror(_errcode) }; } } while (0)
 
 #define set_GetLastError_error(Err) \
-    do { if ((Err) != nullptr) { int _errcode = (int)GetLastError(); *(Err) = ::error{.error_code = _errcode, .what = "ERROR" }; } } while (0)
+    do { if ((Err) != nullptr) { int _errcode = (int)GetLastError(); *(Err) = ::error{.error_code = _errcode, .what = _windows_error_message(_errcode) }; } } while (0)
 
 #endif
 

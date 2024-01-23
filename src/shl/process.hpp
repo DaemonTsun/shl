@@ -36,6 +36,7 @@ struct process_detail
 
 struct process_start_info
 {
+    // executable path
     const sys_char *path;
     
 #if Windows
@@ -47,7 +48,8 @@ struct process_start_info
     const sys_char **environment;
     bool inherit_handles; // used only on windows
 
-    bool _free_args; // if allocated by set_process_arguments
+    bool _free_exe_path; // if converted
+    bool _free_args; // if allocated by set_process_arguments or converted
     process_start_detail detail;
 };
 
@@ -65,9 +67,12 @@ struct process
 void init(process *p);
 void free(process *p);
 
-void set_process_executable(process *p, const sys_char *exe);
-void set_process_arguments(process *p, const sys_char *args);
-void set_process_arguments(process *p, const sys_char **args, bool raw = false);
+void set_process_executable(process *p, const char    *exe);
+void set_process_executable(process *p, const wchar_t *exe);
+void set_process_arguments(process *p, const char    *args);
+void set_process_arguments(process *p, const wchar_t *args);
+void set_process_arguments(process *p, const char    **args, bool raw = false);
+void set_process_arguments(process *p, const wchar_t **args);
 
 void set_process_io(process *p, io_handle in, io_handle out, io_handle err_out);
 void get_process_io(process *p, io_handle *in, io_handle *out, io_handle *err_out);

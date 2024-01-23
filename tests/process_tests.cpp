@@ -16,7 +16,9 @@ define_test(process_arguments_test)
 
     set_process_arguments(&p, R"=(echo "hello world"   a\\b\"c\")=");
 
-#if Linux
+#if Windows
+    assert_equal(compare_strings(p.start_info.args, LR"=(echo "hello world"   a\\b\"c\")="), 0);
+#else
     assert_equal(compare_strings(p.start_info.args[0], "echo"), 0);
     assert_equal(compare_strings(p.start_info.args[1], R"(hello world)"), 0);
     assert_equal(compare_strings(p.start_info.args[2], R"(a\b"c")"), 0);
@@ -31,7 +33,9 @@ define_test(process_arguments_test)
     set_process_executable(&p, "/usr/bin/echo");
     set_process_arguments(&p, R"=("hello world"   a\\b\"c\")=");
 
-#if Linux
+#if Windows
+    assert_equal(compare_strings(p.start_info.args, LR"=("hello world"   a\\b\"c\")="), 0);
+#else
     assert_equal(compare_strings(p.start_info.args[0], "echo"), 0);
     assert_equal(compare_strings(p.start_info.args[1], R"(hello world)"), 0);
     assert_equal(compare_strings(p.start_info.args[2], R"(a\b"c")"), 0);
