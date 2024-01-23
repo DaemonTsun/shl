@@ -8,6 +8,8 @@
 #define LIT(C, Literal)\
     inline_const_if(is_same(C, char), Literal, L##Literal)
 
+typedef string_base<sys_char> sys_string;
+
 #if Windows
 #include <tlhelp32.h> // CreateToolhelp32Snapshot
 #else
@@ -100,8 +102,6 @@ void _cmdline_to_args(const sys_char *cmd, const sys_char *exe, array<sys_char*>
     add_at_end(args, (sys_char*)nullptr);
 }
 #endif
-
-typedef string_base<sys_char> sys_string;
 
 // conversion helpers
 #if Linux
