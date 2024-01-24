@@ -1,25 +1,67 @@
 
 #pragma once
 
+/* process.hpp
+
+Process header. Defines structs and functions to work with processes.
+
+Example usage:
+
+    process p;
+    init(&p);
+
+    set_process_executable(&p, "/usr/bin/echo");
+    set_process_arguments(&p, "hello world");
+
+    start_process(&p);
+
+Functions:
+init(*process)  initializes the process struct with default values.
+free(*process)  deallocates any memory used by the process struct internally
+                and makes the process struct available to be init'd again.
+
+set_process_executable(*process, Exe)   sets the executable to be run for the
+    process to Exe.
+    Does nothing to the process if it's already running.
+
+set_process_arguments(*process, Args)   sets the arguments for _starting_ the
+    process to the given arguments. In most cases, the arguments are copied,
+    unless the overload has a "raw" flag to be set.
+    Does nothing to the process if it's already running.
+    WINDOWS: arguments are always copied because CreateProcess expects
+             arguments to be writable.
+
+set_process_io(*process, In, Out, Err)  sets the io_handles of the process
+    to In, Out and Err.
+    Does nothing to the process if it's already running.
+
+get_process_io(*process, In, Out, Err)  gets the io_handles of the process.
+
+start_process(*process[, err])  starts the process with the parameters set
+    and returns whether or not starting was successful.
+
+stop_process(*process[, err])   stops the given process that is associated
+    with the *process struct and returns whether or not stopping was
+    successful.
+
+stop_process(Pid[, err])    stops the process that has the given process Id
+    Pid and returns whether or not stopping was successful.
+
+get_pid()   gets the process ID of the currently running process.
+get_pid(*process)  gets the process ID of the given process.
+get_parent_pid()   gets the parent process ID of the currently running process.
+*/
+
 #include "shl/platform.hpp"
 #include "shl/pipe.hpp"
 #include "shl/error.hpp"
 
 #if Windows
 #include <windows.h>
-#elif Linux
-#define pipe __original_pipe
-#include <signal.h>
-#undef pipe
-#endif
 
-// platform-specific structs
-// struct process_start_detail;
-// struct process;
-
-#if Windows
 typedef STARTUPINFO process_start_detail;
 typedef PROCESS_INFORMATION process_detail;
+
 #elif Linux
 struct process_start_detail
 {
@@ -83,8 +125,9 @@ bool stop_process(int pid, error *err);
 
 // current process
 int get_pid();
-int get_parent_pid();
 // given process
 int get_pid(const process *p);
+
+int get_parent_pid();
 
 

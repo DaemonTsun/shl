@@ -1,7 +1,6 @@
 
 #pragma once
 
-// TODO: docs
 /* ring_buffer.hpp
 
 Contiguous, fixed-size, cyclic data structure.

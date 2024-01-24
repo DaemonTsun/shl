@@ -2,15 +2,18 @@
 #pragma once
 
 /* hash.hpp
- *
- * defines the hash_t type (64 bit unsigned integer) and functions to calculate hashes.
- *
- * the hash_data(data, size) function maybe used to calculate the hash of arbitrary data.
- * hash_raw(T) is the same as hash_data, but using a type T and its size instead of
- * a pointer and size.
- *
- * default hashing algorithm used in hash_data is murmur3. implementation of murmur3 is in
- * murmur_hash.hpp.
+
+Defines the hash_t type (32 bit unsigned integer) and functions to calculate hashes.
+
+The hash_data(data, size) function calculates the hash of arbitrary data.
+hash_raw(*T) is the same as hash_data, but using a type T and its size instead of
+a pointer and size.
+
+There are default overloads of the hash(*x) for many types in shl,
+including number types, strings, array and others.
+
+Default hashing algorithm used in hash_data is murmur3.
+Implementation of murmur3 is in murmur_hash.hpp.
  */
 
 #include "shl/number_types.hpp"

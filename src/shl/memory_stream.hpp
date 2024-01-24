@@ -1,22 +1,22 @@
 #pragma once
 
 /* memory_stream
- * v1.2
- * add seek_next_alignment
- *
- * defines the memory_stream struct and its functions.
- *
- * use init(stream) before using a new memory_stream instance.
- *
- * use open(stream, size, ...) create a memory_stream with newly allocated memory of
- * the given size.
- * use open(stream, data, size, ...) to create a memory_stream of existing data.
- *
- * both open functions have check_open and free_on_close parameters to check if
- * the memory_stream should free the current data before using the new one.
- * free_on_close does not automatically free the data when calling close(), as
- * close() has its own free parameter.
- */
+v1.2
+add seek_next_alignment
+
+defines the memory_stream struct and its functions.
+
+use init(stream) before using a new memory_stream instance.
+
+open(*stream, size, ...) creates a memory_stream with newly allocated memory of
+the given size.
+open(*stream, *data, size, ...) creates a memory_stream of existing data.
+
+Both open functions have check_open and free_on_close parameters to check if
+the memory_stream should free the current data before using the new one.
+free_on_close does not automatically free the data when calling close(), as
+close() has its own free parameter.
+*/
 
 #include "shl/hash.hpp"
 #include "shl/number_types.hpp"

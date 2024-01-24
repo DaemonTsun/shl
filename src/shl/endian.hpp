@@ -1,6 +1,15 @@
 
 #pragma once
 
+/* endian.hpp
+
+everyone's favorite header.
+
+Defines the macro IS_LITTLE_ENDIAN and IS_BIG_ENDIAN to check if the system
+is little or big endian, and force_big_endian and force_little_endian functions
+to convert a value if the system is not of the desired endianness.
+*/
+
 #include "shl/number_types.hpp"
 
 #define IS_LITTLE_ENDIAN  ('ABCD'==0x41424344ul) 

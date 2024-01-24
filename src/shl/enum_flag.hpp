@@ -12,7 +12,9 @@ operators and functions:
 
 #include "shl/type_functions.hpp"
 
+#ifndef JOIN
 #define JOIN(X, Y) X##Y
+#endif
 
 #define DEFINE_ENUM_VALUE(T)\
     constexpr inline underlying_type(T) value(T a) { return static_cast<underlying_type(T)>(a); }

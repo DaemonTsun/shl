@@ -1,6 +1,34 @@
 
 #pragma once
 
+/* bits.hpp
+
+Small collection of mostly mathematical functions for bit manipulation.
+See tests/bits_tests.cpp for examples of every function.
+
+Functions:
+
+const_log2(x)   log2 of x
+bit_log<N>(x)   number of times x can be shifted right N times
+
+floor_exp2(x)   rounds down to nearest power of 2
+floor_exp<N>(x) rounds down to nearest power of N
+floor_exp(x, N) rounds down to nearest power of N
+
+ceil_exp2(x)    rounds up to nearest power of 2
+ceil_exp<N>(x)  rounds up to nearest power of N
+ceil_exp(x, N)  rounds up to nearest power of N
+
+rotl(x, N)      rotates x N times to the left
+rotr(x, N)      rotates x N times to the right
+
+bitmask(From, To)   bitmask from From to To, e.g. bitmask(1, 4) = 00011110
+bitmask_between_values(From, To) bitmask between binary values
+
+bitrange(X, From, To) gets the bits of X in the range From to To
+
+ */
+
 #include "shl/number_types.hpp"
 
 template<typename T>

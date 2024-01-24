@@ -1,59 +1,33 @@
 
-#include <wchar.h>
 #include "shl/print.hpp"
 
-s64 put(FILE *f, char c)
+s64 put(io_handle h, char c, error *err)
 {
-    return fputc(c, f);
+    return io_write(h, &c, sizeof(char), err);
 }
 
-s64 put(FILE *f, wchar_t c)
+s64 put(io_handle h, wchar_t c, error *err)
 {
-    return fputwc(c, f);
-}
-
-s64 put(FILE *f, const char    *s)
-{
-    return fputs(s, f);
-}
-
-s64 put(FILE *f, const wchar_t *s)
-{
-    return fputws(s, f);
+    return io_write(h, (char*)&c, sizeof(wchar_t), err);
 }
 
 template<typename C>
-s64 _put(FILE *f, const_string_base<C> s)
+s64 _put_cs(io_handle h, const_string_base<C> s, error *err)
 {
-    // we use fwrite here because s can contain non-terminating null characters
-    return fwrite(s.c_str, s.size, sizeof(C), f);
+    return io_write(h, (const char*)s.c_str, s.size * sizeof(C), err);
 }
 
-s64 put(FILE *f, const_string  s)
+s64 _put(io_handle h, const_string  s, error *err)
 {
-    return _put(f, s);
+    return _put_cs(h, s, err);
 }
 
-s64 put(FILE *f, const_wstring s)
+s64 _put(io_handle h, const_wstring s, error *err)
 {
-    return _put(f, s);
+    return _put_cs(h, s, err);
 }
 
-s64 put(FILE *f, const string  *s)
-{
-    return _put(f, to_const_string(s));
-}
-
-s64 put(FILE *f, const wstring *s)
-{
-    return _put(f, to_const_string(s));
-}
-
-s64 put(char    c) { return put(stdout, c); }
-s64 put(wchar_t c)  { return put(stdout, c); }
-s64 put(const char    *s) { return put(stdout, s); }
-s64 put(const wchar_t *s) { return put(stdout, s); }
-s64 put(const_string  s)  { return put(stdout, s); }
-s64 put(const_wstring s)  { return put(stdout, s); }
-s64 put(const string  *s) { return put(stdout, s); }
-s64 put(const wstring *s) { return put(stdout, s); }
+s64 put(char    c, error *err)        { return put(stdout_handle(), c, err); }
+s64 put(wchar_t c, error *err)        { return put(stdout_handle(), c, err); }
+s64 _put(const_string  s, error *err) { return _put_cs(stdout_handle(), s, err); }
+s64 _put(const_wstring s, error *err) { return _put_cs(stdout_handle(), s, err); }

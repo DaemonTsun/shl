@@ -2,15 +2,15 @@
 #pragma once
 
 /* platform.hpp
- *
- * Defines simpler platform preprocessor constants for the platform the
- * program is being compiled on.
- *
- * Also defines the sys_char type which is wchar_t on Windows, char on
- * anything else.
- *
- * For compiler information, see <shl/compiler.hpp>
- */
+
+Defines simpler platform preprocessor constants for the platform the
+program is being compiled on.
+
+Also defines the sys_char type which is wchar_t on Windows, char on
+anything else.
+
+For compiler information, see <shl/compiler.hpp>
+*/
 
 #if defined(__linux__)
 #define Linux 1

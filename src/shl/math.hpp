@@ -1,14 +1,20 @@
 
-/*
- * math function header
- *
- * modulo(a, b)     calculates a % b, but also accepts floating point numbers.
- *
- * wrap_number(X, Min, Max)     wraps a number X between Min and Max, e.g.
- *                              wrap_number(12, 0, 9) -> 2.
- */
-
 #pragma once
+
+/* math.hpp
+
+math function header
+
+modulo(a, b)     calculates a % b, but also accepts floating point numbers.
+
+wrap_number(X, Min, Max)     wraps a number X between Min and Max, e.g.
+                             wrap_number(12, 0, 9) -> 2.
+
+ceil_multiple(x, N)     rounds x up to the next multiple of N
+ceil_multiple2(x, N)    optimized version of ceil_multiple where N
+                        is a power of 2.
+*/
+
 
 template<typename T1, typename T2>
 auto modulo(T1 a, T2 b)

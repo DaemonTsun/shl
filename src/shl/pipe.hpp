@@ -1,6 +1,16 @@
 
 #pragma once
 
+/* pipe.hpp
+
+Pipes. Use io.hpp functions with the read and write io handles of the pipe.
+
+Functions:
+
+init(*pipe[, *err]) initializes a new pipe with a read and write io_handle.
+free(*pipe[, *err]) destroys the pipe and its io_handles.
+*/
+
 #include "shl/error.hpp"
 #include "shl/io.hpp"
 #include "shl/number_types.hpp"

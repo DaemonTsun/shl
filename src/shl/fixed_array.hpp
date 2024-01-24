@@ -3,7 +3,7 @@
 
 /* fixed_array.hpp
 
-contiguous fixed memory structure, equivalent of the std::array class.
+contiguous fixed memory structure, counterpart to the std::array class.
 
 functions:
 

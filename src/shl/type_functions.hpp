@@ -2,9 +2,24 @@
 #pragma once
 
 /* type_functions.hpp
- *
- * defines some type template functions because stl is bad.
- */
+
+Type function header. Defines some type template functions because stl is bad.
+
+All functions may be used at compile time.
+
+Functions:
+
+underlying_type(T)  gets the underlying type of T if there is one, e.g. for
+                    enums.
+
+remove_reference(T) gets the type T without references.
+remove_pointer(T)   gets the type T without pointers or const pointers.
+remove_const(T)     gets the type T without const.
+
+is_same(T1, T2)     is true if T1 and T2 are the same type, false otherwise.
+is_signed(T)        is true if T is a signed number type.
+forward<T>(x)       "forwards" x.
+*/
 
 // update 01.10.2023: MSVC incorrectly handles __underlying_type, so we need
 // an explicit using type = __underlying_type (typedef doesn't work).

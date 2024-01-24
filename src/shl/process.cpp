@@ -13,9 +13,12 @@ typedef string_base<sys_char> sys_string;
 #if Windows
 #include <tlhelp32.h> // CreateToolhelp32Snapshot
 #else
+#define pipe __original_pipe
 #include <unistd.h> // fork, pid_t, _exit, ...
 #include <string.h>
 #include <errno.h>
+#include <signal.h>
+#undef pipe
 
 const char *_get_exe_name(const char *path)
 {
@@ -580,6 +583,16 @@ int get_pid()
 #endif
 }
 
+// given process
+int get_pid(const process *p)
+{
+#if Windows
+    return GetProcessId((HANDLE)p->detail.hProcess);
+#else
+    return p->detail.pid;
+#endif
+}
+
 int get_parent_pid()
 {
 #if Windows
@@ -615,15 +628,5 @@ int get_parent_pid()
     return entry.th32ParentProcessID;
 #else
     return getppid();
-#endif
-}
-
-// given process
-int get_pid(const process *p)
-{
-#if Windows
-    return GetProcessId((HANDLE)p->detail.hProcess);
-#else
-    return p->detail.pid;
 #endif
 }

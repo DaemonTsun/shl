@@ -1,6 +1,39 @@
 
 #pragma once
 
+/* memory.hpp
+
+memory management header.
+
+Default implementations of allocate_memory and free_memory are
+malloc and free respectively, currently.
+
+allocate_memory(N)  returns a pointer to uninitialized, writable memory
+                    that is N bytes long.
+allocate_zeroed_memory(N)   returns a pointer to zeroed, writable memory
+                            that is N bytes long.
+
+allocate_memory<T>  returns a pointer to type T of uninitialized,
+                    writable memory that is sizeof(T) bytes long.
+                    
+reallocate_memory(Ptr, N)   reallocates Ptr and returns a pointer to memory
+                            that is N bytes long.
+
+move_memory(From, To, N)    effectively copies N bytes from From to To.
+copy_memory(From, To, N)    effectively copies N bytes from From to To.
+
+free_memory(Ptr)    frees Ptr.
+
+fill_memory(Ptr, Byte, N)   fills Ptr with N bytes with the value Byte.
+fill_memory<T>(T *Ptr, Byte)    fills Ptr with sizeof(T) bytes with the
+                                value Byte.
+
+fill_memory<T>(T *Ptr, Byte, N) fills Ptr with N * sizeof(T) bytes with the
+                                value Byte.
+
+
+ */
+
 #include "shl/number_types.hpp"
 
 void *allocate_memory(u64 size);

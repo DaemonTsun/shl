@@ -9,7 +9,7 @@ project_author("DaemonTsun")
 
 # library
 add_lib(shl STATIC
-    VERSION 0.8.5
+    VERSION 0.9
     SOURCES_DIR "${ROOT}/src/"
     GENERATE_TARGET_HEADER "${ROOT}/src/shl/shl_info.hpp"
     CPP_VERSION 20

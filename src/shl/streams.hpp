@@ -3,11 +3,27 @@
 
 /* steams.hpp
 
-utility header providing memory and file streams
+Utility header providing memory stream, file stream, pipe and generic
+IO functionality and functions that work with multiple streams.
 
-read_entire_file(path or file_stream, memory_stream) reads an entire file
-and returns the size of the file read.
- */
+Functions:
+
+read_entire_file(path or file_stream, memory_stream or string[, err])
+    reads an entire file and returns whether the read was successful or not.
+
+read_entire_io(handle, memory_stream or string[, err])
+    reads the entire content of an IO handle and returns whether the read
+    was successful or not.
+
+read_entire_pipe(pipe, memory_stream or string[, err])
+    reads the entire content of the read end of a pipe and returns whether
+    the read was successful or not.
+
+write(stream or io or pipe, String) writes the string String to the stream
+    or io or pipe, whichever was passed, and returns the number of
+    bytes written.
+    String may be anything that can be converted to a const_string_base.
+*/
 
 #include "shl/io.hpp"
 #include "shl/pipe.hpp"
