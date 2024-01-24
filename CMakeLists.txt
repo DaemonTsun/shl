@@ -9,7 +9,7 @@ project_author("DaemonTsun")
 
 # library
 add_lib(shl STATIC
-    VERSION 0.9
+    VERSION 0.9.1
     SOURCES_DIR "${ROOT}/src/"
     GENERATE_TARGET_HEADER "${ROOT}/src/shl/shl_info.hpp"
     CPP_VERSION 20
@@ -18,10 +18,6 @@ add_lib(shl STATIC
         @Windows mincore.lib # for VirtualAlloc2 in ring_buffer.cpp
     TESTS "${ROOT}/tests"
     )
-
-if (Windows)
-    target_compile_definitions(${shl_TARGET} PUBLIC -DUNICODE=1)
-endif()
 
 exit_if_included()
 
