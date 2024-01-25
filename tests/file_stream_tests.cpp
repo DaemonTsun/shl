@@ -193,22 +193,22 @@ define_test(streams_read_entire_file_reads_entire_file)
 
     memory_stream ms{};
 
+    // read_entire_file acts as init()
     assert_equal(read_entire_file(filepath, &ms), true);
     assert_equal(strncmp(ms.data + 4, "abc", 4), 0);
-    assert_equal(close(&ms), true);
+    free(&ms);
 }
 
 define_test(streams_read_entire_file_yields_error_on_nonexistent_path)
 {
     memory_stream ms{};
-    defer { close(&ms); };
+    defer { free(&ms); };
 
     error err;
 
     assert_equal(read_entire_file("abc", &ms, &err), false);
 
-    // err.what will be something like "could not open file 'abc': no such file or directory"
-    assert_not_equal(err.what, nullptr);
+    assert_not_equal(err.error_code, 0);
 }
 
 define_default_test_main();

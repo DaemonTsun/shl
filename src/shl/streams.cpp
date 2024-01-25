@@ -32,8 +32,7 @@ bool read_entire_file(file_stream *stream, memory_stream *out, error *err)
     if (sz == 0)
         return true;
 
-    if (!open(out, sz, true, true, err))
-        return false;
+    init(out, sz);
 
     if (read_entire_file(stream, out->data, sz, err) == 0)
         return false;
@@ -63,12 +62,17 @@ bool read_entire_file(file_stream *stream, string *out, error *err)
     assert(stream != nullptr);
     assert(out != nullptr);
 
-    u64 sz = calculate_file_size(stream);
+    s64 sz = calculate_file_size(stream);
+
+    if (sz < 0)
+        return false;
 
     if (sz == 0)
         return true;
 
-    init(out, sz);
+    reserve((array<char>*)out, sz + 1);
+    out->data[sz] = '\0';
+    out->size = sz;
 
     if (read_entire_file(stream, out->data, sz, err) == 0)
         return false;
@@ -85,8 +89,7 @@ bool read_entire_io(io_handle h, memory_stream *out, error *err)
     if (sz < 0)
         return false;
 
-    if (!open(out, sz, true, true, err))
-        return false;
+    init(out, sz);
 
     if (sz == 0)
         return true;
