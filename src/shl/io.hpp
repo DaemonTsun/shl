@@ -57,6 +57,7 @@ typedef HANDLE io_handle;
 #define IO_SEEK_END FILE_END 
 #endif
 
+#define INVALID_IO_HANDLE nullptr
 #else
 typedef int io_handle;
 
@@ -65,6 +66,8 @@ typedef int io_handle;
 #define IO_SEEK_CUR 1 
 #define IO_SEEK_END 2 
 #endif
+
+#define INVALID_IO_HANDLE -1
 #endif
 
 io_handle stdin_handle();

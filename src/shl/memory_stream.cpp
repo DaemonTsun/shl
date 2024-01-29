@@ -136,7 +136,10 @@ s64 seek_block(memory_stream *stream, s64 nth_block, u64 block_size, int whence)
 {
     assert(stream != nullptr);
     
-    return seek(stream, nth_block * block_size, whence);
+    if (whence != IO_SEEK_CUR)
+        return seek(stream, nth_block * block_size, whence);
+
+    return seek_block_offset(stream, nth_block, block_size);
 }
 
 s64 seek_block_offset(memory_stream *stream, s64 nth_block, u64 block_size)

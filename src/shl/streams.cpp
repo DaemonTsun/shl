@@ -2,7 +2,6 @@
 #include <assert.h>
 
 #include "shl/chunk_array.hpp"
-#include "shl/defer.hpp"
 #include "shl/streams.hpp"
 
 bool read_entire_file(const char *path, memory_stream *out, error *err)
@@ -11,15 +10,14 @@ bool read_entire_file(const char *path, memory_stream *out, error *err)
     assert(out != nullptr);
 
     file_stream fstream{};
-    defer { close(&fstream); };
 
-    if (!open(&fstream, path, MODE_READ, false, false, err))
+    if (!init(&fstream, path, MODE_READ, 0, err))
         return false;
 
-    if (!read_entire_file(&fstream, out, err))
-        return false;
-    
-    return true;
+    bool ret = read_entire_file(&fstream, out, err);
+    bool free_ret = free(&fstream, err);
+
+    return ret && free_ret;
 }
 
 bool read_entire_file(file_stream *stream, memory_stream *out, error *err)
@@ -27,14 +25,17 @@ bool read_entire_file(file_stream *stream, memory_stream *out, error *err)
     assert(stream != nullptr);
     assert(out != nullptr);
 
-    u64 sz = calculate_file_size(stream);
+    u64 sz = get_file_size(stream, err);
+
+    if (sz == -1)
+        return false;
+
+    init(out, sz);
 
     if (sz == 0)
         return true;
 
-    init(out, sz);
-
-    if (read_entire_file(stream, out->data, sz, err) == 0)
+    if (read_entire_file(stream, out->data, sz, err) == -1)
         return false;
 
     return true;
@@ -46,15 +47,14 @@ bool read_entire_file(const char *path, string *out, error *err)
     assert(out != nullptr);
 
     file_stream fstream{};
-    defer { close(&fstream); };
 
-    if (!open(&fstream, path, MODE_READ, false, false, err))
+    if (!init(&fstream, path, MODE_READ, 0, err))
         return false;
 
-    if (!read_entire_file(&fstream, out, err))
-        return false;
+    bool ret = read_entire_file(&fstream, out, err);
+    bool free_ret = free(&fstream, err);
     
-    return true;
+    return ret && free_ret;
 }
 
 bool read_entire_file(file_stream *stream, string *out, error *err)
@@ -62,19 +62,19 @@ bool read_entire_file(file_stream *stream, string *out, error *err)
     assert(stream != nullptr);
     assert(out != nullptr);
 
-    s64 sz = calculate_file_size(stream);
+    s64 sz = get_file_size(stream);
 
     if (sz < 0)
         return false;
-
-    if (sz == 0)
-        return true;
 
     reserve((array<char>*)out, sz + 1);
     out->data[sz] = '\0';
     out->size = sz;
 
-    if (read_entire_file(stream, out->data, sz, err) == 0)
+    if (sz == 0)
+        return true;
+
+    if (read_entire_file(stream, out->data, sz, err) == -1)
         return false;
 
     return true;

@@ -7,192 +7,307 @@
 #include <assert.h>
 #include <string.h>
 #include <errno.h>
-#include <stdarg.h>
-#include "shl/file_stream.hpp"
+#include <stdlib.h> // wcstombs
+
 #include "shl/platform.hpp"
+#include "shl/memory.hpp"
 
 #if Windows
-#define fseeko _fseeki64
-#define ftello _ftelli64
-#endif
-
-file_stream::operator FILE*() const
-{
-    return this->handle;
-}
-
-void init(file_stream *stream)
-{
-    assert(stream != nullptr);
-
-    stream->handle = nullptr;
-    stream->size = 0;
-}
-
-bool open(file_stream *stream, const char *path, const char *mode, bool check_open_and_close, bool calc_size, error *err)
-{
-    assert(stream != nullptr);
-
-    if (check_open_and_close && !close(stream, err))
-        return false;
-
-    assert(path != nullptr);
-    assert(mode != nullptr);
-
-#if Windows
-    errno_t errcode = fopen_s(&stream->handle, path, mode);
-
-    if (err != 0)
-    {
-        set_error(err, errcode, strerror(errcode));
-        return false;
-    }
+#include <windows.h>
 #else
-    stream->handle = fopen(path, mode);
+#include <fcntl.h>
+#include <unistd.h> // close
 #endif
 
-    if (stream->handle == nullptr)
+#include "shl/file_stream.hpp"
+
+template<typename C>
+s64 _string_len(const C *str)
+{
+    s64 ret = 0;
+
+    while (*str++ != '\0')
+        ret++;
+
+    return ret;
+}
+
+bool init(file_stream *stream, const char *path, int mode, int permissions, error *err)
+{
+    assert(stream != nullptr);
+
+#if Windows
+    u64 char_count = _string_len(path);
+    u64 sz = (char_count + 1) * sizeof(wchar_t);
+    wchar_t *tmp = (wchar_t*)::allocate_memory(sz);
+
+    ::fill_memory((void*)tmp, 0, sz);
+    ::mbstowcs_s(nullptr, tmp, sz, path, char_count * sizeof(char));
+    
+    bool ok = init(stream, tmp, mode, permissions, err);
+
+    free_memory(tmp);
+
+    return ok;
+#else
+    stream->handle = -1;
+
+    int _flags = 0;
+    int _mode = 0;
+    bool _rd = mode & MODE_READ;
+    bool _wr = (mode & MODE_WRITE) || (mode & MODE_WRITE_TRUNC);
+
+    if (_wr)
+        _flags |= O_CREAT;
+
+    if (mode & MODE_WRITE_TRUNC)
+        _flags |= O_TRUNC;
+
+    if (_rd && _wr) _flags |= O_RDWR;
+    else if (_rd)   _flags |= O_RDONLY;
+    else if (_wr)   _flags |= O_WRONLY;
+
+    if (permissions & PERMISSION_READ)    _mode |= 0400;
+    if (permissions & PERMISSION_WRITE)   _mode |= 0200;
+    if (permissions & PERMISSION_EXECUTE) _mode |= 0100;
+
+    int fd = open(path, _flags, _mode);
+
+    if (fd == -1)
     {
         set_errno_error(err);
         return false;
     }
 
-    if (calc_size)
-        calculate_file_size(stream, err);
+    stream->handle = fd;
+    
+    if (get_file_size(stream, err) < 0)
+        return false;
+
+    return true;
+#endif
+}
+
+bool init(file_stream *stream, const wchar_t *path, int mode, int permissions, error *err)
+{
+    assert(stream != nullptr);
+
+#if Windows
+    int _access = 0;
+    int _share = 0;
+    int _creation = 0;
+    bool _rd = mode & MODE_READ;
+    bool _wr = (mode & MODE_WRITE) || (mode & MODE_WRITE_TRUNC);
+
+    if (permissions & PERMISSION_READ)    _access |= GENERIC_READ;
+    if (permissions & PERMISSION_WRITE)   _access |= GENERIC_WRITE;
+    if (permissions & PERMISSION_EXECUTE) _access |= GENERIC_EXECUTE;
+
+    if (_rd && _wr)
+    {
+        _access |= GENERIC_READ | GENERIC_WRITE;
+        _share = 0;
+    }
+    else if (_rd)
+    {
+        _access = GENERIC_READ;
+        _share = FILE_SHARE_READ;
+        _creation = OPEN_EXISTING;
+    }
+    else if (_wr)
+    {
+        _access = GENERIC_WRITE;
+        _share = 0;
+    }
+
+    if (mode & MODE_WRITE)
+    {
+        _creation = OPEN_ALWAYS;
+    }
+    else if (mode & MODE_WRITE_TRUNC)
+    {
+        _creation = CREATE_ALWAYS;
+    }
+
+    io_handle h = CreateFile(path,
+                             _access,
+                             _share,
+                             nullptr,
+                             _creation,
+                             FILE_ATTRIBUTE_NORMAL,
+                             nullptr);
+
+    if (h == nullptr || h == INVALID_HANDLE_VALUE)
+    {
+        set_GetLastError_error(err);
+        return false;
+    }
+
+    stream->handle = h;
+    
+    if (get_file_size(stream, err) < 0)
+        return false;
+
+    return true;
+#else
+    u64 char_count = _string_len(path);
+    u64 sz = (char_count + 1) * sizeof(char);
+    char *tmp = (char*)::allocate_memory(sz);
+
+    ::fill_memory((void*)tmp, 0, sz);
+    ::wcstombs(tmp, path, char_count * sizeof(wchar_t));
+    
+    bool ok = init(stream, tmp, mode, permissions, err);
+
+    free_memory(tmp);
+
+    return ok;
+#endif
+}
+
+bool free(file_stream *stream, error *err)
+{
+    if (stream == nullptr)
+        return true;
+
+#if Windows
+    if (stream->handle != nullptr && !CloseHandle(stream->handle))
+    {
+        set_GetLastError_error(err);
+        return false;
+    }
+
+    stream->handle = nullptr;
+#else
+    if (stream->handle != -1 && close(stream->handle) == -1)
+    {
+        set_errno_error(err);
+        return false;
+    }
+
+    stream->handle = -1;
+#endif
 
     return true;
 }
 
-bool close(file_stream *stream, error *err)
+bool is_open(file_stream *stream)
 {
     assert(stream != nullptr);
 
-    if (stream->handle == nullptr)
-        return true;
-
-    bool ret = fclose(stream->handle) == 0;
-
-    if (!ret)
-    {
-        set_errno_error(err);
-        return ret;
-    }
-
-    stream->handle = nullptr;
-
-    return ret;
+    return stream->handle != INVALID_IO_HANDLE;
 }
 
-bool is_open(const file_stream *stream)
+bool is_at_end(file_stream *stream, error *err)
 {
     assert(stream != nullptr);
 
-    return stream->handle != nullptr;
+    s64 cur = io_tell(stream->handle, err);
+
+    if (cur == -1 || stream->cached_size == -1)
+        return false;
+
+    return cur >= stream->cached_size;
 }
 
-bool is_at_end(file_stream *stream)
+bool is_ok(file_stream *stream, error *err)
 {
     assert(stream != nullptr);
-    assert(stream->handle != nullptr);
 
-    return feof(stream->handle) != 0;
+    return is_open(stream) && (!is_at_end(stream, err));
 }
 
-bool has_error(file_stream *stream)
+s64 get_file_size(file_stream *stream, error *err)
 {
     assert(stream != nullptr);
-    assert(stream->handle != nullptr);
 
-    return ferror(stream->handle) != 0;
+    stream->cached_size = io_size(stream->handle, err);
+
+    return stream->cached_size;
 }
 
-void clear_error(file_stream *stream)
+s64 block_count(const file_stream *stream, u64 block_size)
 {
     assert(stream != nullptr);
-    assert(stream->handle != nullptr);
-
-    clearerr(stream->handle);
+    return stream->cached_size / block_size;
 }
 
-bool is_ok(file_stream *stream)
+s64 current_block_number(file_stream *stream, u64 block_size, error *err)
 {
     assert(stream != nullptr);
+    assert(block_size > 0);
 
-    return (stream->handle != nullptr)
-        && (feof(stream->handle) == 0)
-        && (ferror(stream->handle) == 0);
-}
+    s64 pos = tell(stream, err);
 
-s64 calculate_file_size(file_stream *stream, error *err)
-{
-    assert(stream != nullptr);
-    assert(stream->handle != nullptr);
-
-    s64 curpos = tell(stream, err);
-
-    if (curpos < 0)
+    if (pos == -1)
         return -1;
 
-    if (seek(stream, 0, SEEK_END, err) < 0)
-        return -1;
-
-    s64 sz = tell(stream, err);
-
-    if (sz < 0)
-        return sz;
-
-    // if this one fails we're just screwed
-    seek(stream, curpos);
-
-    stream->size = (u64)sz;
-    return sz;
+    return (s64)(pos / block_size);
 }
 
-u64 block_count(const file_stream *stream, u64 block_size)
+s64 current_block_offset(file_stream *stream, u64 block_size, error *err)
 {
     assert(stream != nullptr);
-    return stream->size / block_size;
+    assert(block_size > 0);
+
+    return (s64)(current_block_number(stream, block_size, err) * block_size);
 }
 
-int seek(file_stream *stream, s64 offset, int whence, error *err)
+s64 seek(file_stream *stream, s64 offset, int whence, error *err)
 {
     assert(stream != nullptr);
-    assert(stream->handle != nullptr);
 
-    int ret = fseeko(stream->handle, offset, whence);
-
-    if (ret < 0)
-        set_errno_error(err);
-
-    return ret;
+    return io_seek(stream->handle, offset, whence, err);
 }
 
-int seek_block(file_stream *stream, s64 nth_block, u64 block_size, int whence, error *err)
+s64 seek_offset(file_stream *stream, s64 offset, error *err)
+{
+    return seek(stream, offset, IO_SEEK_CUR);
+}
+
+s64 seek_from_start(file_stream *stream, s64 offset, error *err)
+{
+    return seek(stream, offset, IO_SEEK_SET);
+}
+
+s64 seek_from_end(file_stream *stream, s64 offset, error *err)
+{
+    return seek(stream, offset, IO_SEEK_END);
+}
+
+s64 seek_block(file_stream *stream, s64 nth_block, u64 block_size, int whence, error *err)
 {
     assert(stream != nullptr);
-    assert(stream->handle != nullptr);
 
-    u64 bs = block_size;
-    u64 block_pos = nth_block * bs;
+    if (whence != IO_SEEK_CUR)
+        return seek(stream, nth_block * block_size, whence, err);
 
-    if (whence != SEEK_CUR)
-        return seek(stream, block_pos, whence, err);
+    return seek_block_offset(stream, nth_block, block_size, err);
+}
 
-    // SEEK_CUR
-    s64 cur = tell(stream, err);
+s64 seek_block_offset(file_stream *stream, s64 nth_block, u64 block_size, error *err)
+{
+    s64 cur = current_block_offset(stream, block_size);
 
     if (cur < 0)
         return -1;
 
-    s64 cur_block = (cur / bs) * bs;
-
-    return seek(stream, cur_block + block_pos, SEEK_SET, err);
+    return seek_from_start(stream, cur + nth_block * block_size, err);
 }
 
-int seek_next_alignment(file_stream *stream, u64 alignment, error *err)
+s64 seek_block_from_start(file_stream *stream, s64 nth_block, u64 block_size, error *err)
+{
+    return seek_from_start(stream, nth_block * block_size, err);
+}
+
+s64 seek_block_from_end(file_stream *stream, s64 nth_block, u64 block_size, error *err)
+{
+    return seek_from_end(stream, nth_block * block_size, err);
+}
+
+s64 seek_next_alignment(file_stream *stream, u64 alignment, error *err)
 {
     assert(stream != nullptr);
-    assert(stream->handle != nullptr);
     assert(alignment > 0);
 
     s64 npos = tell(stream, err);
@@ -200,284 +315,182 @@ int seek_next_alignment(file_stream *stream, u64 alignment, error *err)
     if (npos < 0)
         return -1;
 
-    npos = (npos + alignment - 1) / alignment * alignment;
+    npos = ((npos + alignment - 1) / alignment) * alignment;
 
-    return seek(stream, npos, SEEK_SET, err);
+    return seek_from_start(stream, npos, err);
 }
 
 s64 tell(file_stream *stream, error *err)
 {
     assert(stream != nullptr);
-    assert(stream->handle != nullptr);
 
-    s64 ret = ftello(stream->handle);
-
-    if (ret < 0)
-        set_errno_error(err);
-
-    return ret;
-}
-
-bool getpos(file_stream *stream, fpos_t *pos)
-{
-    assert(stream != nullptr);
-    assert(stream->handle != nullptr);
-    assert(pos != nullptr);
-    
-    return fgetpos(stream->handle, pos) == 0;
+    return io_tell(stream->handle, err);
 }
 
 bool rewind(file_stream *stream, error *err)
 {
     assert(stream != nullptr);
-    assert(stream->handle != nullptr);
     
-    return seek(stream, 0L, SEEK_SET, err) == 0;
+    return seek(stream, 0L, IO_SEEK_SET, err) == 0;
 }
 
-u64 read(file_stream *stream, void *out, u64 size)
+s64 read(file_stream *stream, void *out, u64 size, error *err)
 {
     assert(stream != nullptr);
-    assert(stream->handle != nullptr);
     assert(out != nullptr);
     
-    return fread(out, 1, size, stream->handle);
+    return io_read(stream->handle, (char*)out, size, err);
 }
 
-u64 read(file_stream *stream, void *out, u64 size, u64 nmemb)
+s64 read(file_stream *stream, void *out, u64 size, u64 nmemb, error *err)
 {
     assert(stream != nullptr);
-    assert(stream->handle != nullptr);
     assert(out != nullptr);
     
-    return fread(out, size, nmemb, stream->handle);
+    s64 ret = io_read(stream->handle, (char*)out, size * nmemb, err);
+    
+    if (ret < 0)
+        return -1;
+
+    return ret / size;
 }
 
-u64 read_at(file_stream *stream, void *out, u64 offset, u64 size)
+s64 read_at(file_stream *stream, void *out, u64 offset, u64 size, error *err)
 {
     assert(stream != nullptr);
-    assert(stream->handle != nullptr);
     assert(out != nullptr);
     
-    if (fseeko(stream->handle, offset, SEEK_SET) != 0)
-        return 0;
+    if (seek_from_start(stream, offset, err) == -1)
+        return -1;
 
-    return fread(out, 1, size, stream->handle);
+    return read(stream, out, size, err);
 }
 
-u64 read_at(file_stream *stream, void *out, u64 offset, u64 size, u64 nmemb)
+s64 read_at(file_stream *stream, void *out, u64 offset, u64 size, u64 nmemb, error *err)
 {
     assert(stream != nullptr);
-    assert(stream->handle != nullptr);
     assert(out != nullptr);
     
-    if (fseeko(stream->handle, offset, SEEK_SET) != 0)
-        return 0;
+    if (seek_from_start(stream, offset, err) == -1)
+        return -1;
 
-    return fread(out, size, nmemb, stream->handle);
+    return read(stream, out, size, nmemb, err);
 }
 
-u64 read_block(file_stream *stream, void *out, u64 block_size)
+s64 read_block(file_stream *stream, void *out, u64 block_size, error *err)
+{
+    return read(stream, out, block_size, err);
+}
+
+s64 read_block(file_stream *stream, void *out, s64 nth_block, u64 block_size, error *err)
+{
+    if (seek_block_from_start(stream, nth_block, block_size, err) == -1)
+        return -1;
+
+    return read(stream, out, block_size, err);
+}
+
+s64 read_blocks(file_stream *stream, void *out, s64 block_count, u64 block_size, error *err)
+{
+    return read(stream, out, block_size, block_count, err);
+}
+
+s64 read_blocks(file_stream *stream, void *out, s64 nth_block, s64 block_count, u64 block_size, error *err)
+{
+    assert(out != nullptr);
+
+    if (seek_block_from_start(stream, nth_block, block_size, err) == -1)
+        return -1;
+
+    return read(stream, out, block_size, block_count, err);
+}
+
+s64 read_entire_file(file_stream *stream, void *out, u64 max_size, error *err)
 {
     assert(stream != nullptr);
-    assert(stream->handle != nullptr);
     assert(out != nullptr);
 
-    return fread(out, 1, block_size, stream->handle);
-}
-
-u64 read_block(file_stream *stream, void *out, u64 nth_block, u64 block_size)
-{
-    assert(out != nullptr);
-    
-    if (seek_block(stream, nth_block, SEEK_SET) < 0)
-        return 0;
-
-    return fread(out, 1, block_size, stream->handle);
-}
-
-u64 read_blocks(file_stream *stream, void *out, u64 block_count, u64 block_size)
-{
-    assert(stream != nullptr);
-    assert(stream->handle != nullptr);
-    assert(out != nullptr);
-
-    return fread(out, block_size, block_count, stream->handle);
-}
-
-u64 read_blocks(file_stream *stream, void *out, u64 nth_block, u64 block_count, u64 block_size)
-{
-    assert(out != nullptr);
-
-    if (seek_block(stream, nth_block, SEEK_SET) < 0)
-        return 0;
-
-    return fread(out, block_size, block_count, stream->handle);
-}
-
-u64 read_entire_file(file_stream *stream, void *out, u64 max_size, error *err)
-{
-    assert(stream != nullptr);
-    assert(stream->handle != nullptr);
-    assert(out != nullptr);
-
-    u64 sz = stream->size;
+    s64 sz = get_file_size(stream, err);
 
     if (sz > max_size)
         sz = max_size;
 
-    if (sz == 0)
-    {
-        err->what = nullptr;
-        return 0;
-    }
+    if (sz == -1)
+        return -1;
     
     s64 old_pos = tell(stream, err);
 
     if (old_pos < 0)
-        return 0;
+        return -1;
 
-    if (seek(stream, 0, SEEK_SET, err) < 0) 
-        return 0;
+    if (seek(stream, 0, IO_SEEK_SET, err) == -1) 
+        return -1;
 
-    u64 ret = fread(out, 1, sz, stream->handle);
+    s64 ret = io_read(stream->handle, (char*)out, sz, err);
 
-    if (seek(stream, old_pos, SEEK_SET, err))
-        return 0;
-
-    return ret;
-}
-
-u64 write(file_stream *stream, const void *in, u64 size)
-{
-    assert(stream != nullptr);
-    assert(stream->handle != nullptr);
-    assert(in != nullptr);
-
-    return fwrite(in, 1, size, stream->handle);
-}
-
-u64 write(file_stream *stream, const void *in, u64 size, u64 nmemb)
-{
-    assert(stream != nullptr);
-    assert(stream->handle != nullptr);
-    assert(in != nullptr);
-
-    return fwrite(in, size, nmemb, stream->handle);
-}
-
-u64 write(file_stream *stream, const char *str)
-{
-    assert(stream != nullptr);
-    assert(stream->handle != nullptr);
-    assert(str != nullptr);
-
-    return fputs(str, stream->handle);
-}
-
-u64 write_at(file_stream *stream, const void *in, u64 offset, u64 size)
-{
-    assert(stream != nullptr);
-    assert(stream->handle != nullptr);
-    assert(in != nullptr);
-
-    if (fseeko(stream->handle, offset, SEEK_SET) != 0)
-        return 0;
-
-    return fwrite(in, 1, size, stream->handle);
-}
-
-u64 write_at(file_stream *stream, const void *in, u64 offset, u64 size, u64 nmemb)
-{
-    assert(stream != nullptr);
-    assert(stream->handle != nullptr);
-    assert(in != nullptr);
-
-    if (fseeko(stream->handle, offset, SEEK_SET) != 0)
-        return 0;
-
-    return fwrite(in, size, nmemb, stream->handle);
-}
-
-u64 write_at(file_stream *stream, const char *str, u64 offset)
-{
-    assert(stream != nullptr);
-    assert(stream->handle != nullptr);
-    assert(str != nullptr);
-
-    if (fseeko(stream->handle, offset, SEEK_SET) != 0)
-        return 0;
-
-    return fputs(str, stream->handle);
-}
-
-u64 write_block(file_stream *stream, const void *in, u64 block_size)
-{
-    assert(stream != nullptr);
-    assert(stream->handle != nullptr);
-    assert(in != nullptr);
-
-    return fwrite(in, 1, block_size, stream->handle);
-}
-
-u64 write_block(file_stream *stream, const void *in, u64 nth_block, u64 block_size)
-{
-    assert(in != nullptr);
-
-    seek_block(stream, nth_block, SEEK_SET);
-    return fwrite(in, 1, block_size, stream->handle);
-}
-
-u64 write_blocks(file_stream *stream, const void *in, u64 block_count, u64 block_size)
-{
-    assert(stream != nullptr);
-    assert(stream->handle != nullptr);
-    assert(in != nullptr);
-
-    return fwrite(in, block_size, block_count, stream->handle);
-}
-
-u64 write_blocks(file_stream *stream, const void *in, u64 nth_block, u64 block_count, u64 block_size)
-{
-    assert(in != nullptr);
-
-    seek_block(stream, nth_block, SEEK_SET);
-    return fwrite(in, block_size, block_count, stream->handle);
-}
-
-int format(FILE *stream, const char *format_string, ...)
-{
-    va_list arg;
-    int ret;
-
-    va_start(arg, format_string);
-    ret = vfprintf(stream, format_string, arg);
-    va_end(arg);
+    if (seek(stream, old_pos, IO_SEEK_SET, err) == -1)
+        return -1;
 
     return ret;
 }
 
-int format(file_stream *stream, const char *format_string, ...)
+s64 write(file_stream *stream, const void *in, u64 size, error *err)
 {
-    va_list arg;
-    int ret;
+    assert(in != nullptr);
 
-    va_start(arg, format_string);
-    ret = vfprintf(stream->handle, format_string, arg);
-    va_end(arg);
-
-    return ret;
+    return io_write(stream->handle, (const char*)in, size, err);
 }
 
-int flush(file_stream *stream, error *err)
+s64 write(file_stream *stream, const void *in, u64 size, u64 nmemb, error *err)
 {
-    assert(stream != nullptr);
-    assert(stream->handle != nullptr);
+    assert(in != nullptr);
 
-    int ret = fflush(stream->handle);
-    
-    if (ret != 0)
-        set_errno_error(err);
+    s64 ret = io_write(stream->handle, (const char*)in, size * nmemb, err);
 
-    return ret;
+    if (ret == -1)
+        return -1;
+
+    return ret / size;
+}
+
+s64 write_at(file_stream *stream, const void *in, u64 offset, u64 size, error *err)
+{
+    if (seek(stream, offset, IO_SEEK_SET, err) == -1)
+        return -1;
+
+    return write(stream, in, size, err);
+}
+
+s64 write_at(file_stream *stream, const void *in, u64 offset, u64 size, u64 nmemb, error *err)
+{
+    if (seek(stream, offset, IO_SEEK_SET, err) == -1)
+        return -1;
+
+    return write(stream, in, size, nmemb, err);
+}
+
+s64 write_block(file_stream *stream, const void *in, u64 block_size, error *err)
+{
+    return write(stream, in, block_size, err);
+}
+
+s64 write_block(file_stream *stream, const void *in, s64 nth_block, u64 block_size, error *err)
+{
+    if (seek_block_from_start(stream, nth_block, block_size, err) == -1)
+        return -1;
+
+    return write(stream, in, block_size, err);
+}
+
+s64 write_blocks(file_stream *stream, const void *in, s64 block_count, u64 block_size, error *err)
+{
+    return write(stream, in, block_size, block_count, err);
+}
+
+s64 write_blocks(file_stream *stream, const void *in, s64 nth_block, s64 block_count, u64 block_size, error *err)
+{
+    if (seek_block_from_start(stream, nth_block, block_size, err) == -1)
+        return -1;
+
+    return write(stream, in, block_size, block_count, err);
 }
