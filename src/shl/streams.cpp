@@ -4,7 +4,8 @@
 #include "shl/chunk_array.hpp"
 #include "shl/streams.hpp"
 
-bool read_entire_file(const char *path, memory_stream *out, error *err)
+template<typename C>
+bool _read_entire_file_ms(const C *path, memory_stream *out, error *err)
 {
     assert(path != nullptr);
     assert(out != nullptr);
@@ -18,6 +19,16 @@ bool read_entire_file(const char *path, memory_stream *out, error *err)
     bool free_ret = free(&fstream, err);
 
     return ret && free_ret;
+}
+
+bool read_entire_file(const char *path, memory_stream *out, error *err)
+{
+    return _read_entire_file_ms(path, out, err);
+}
+
+bool read_entire_file(const wchar_t *path, memory_stream *out, error *err)
+{
+    return _read_entire_file_ms(path, out, err);
 }
 
 bool read_entire_file(file_stream *stream, memory_stream *out, error *err)
@@ -41,7 +52,8 @@ bool read_entire_file(file_stream *stream, memory_stream *out, error *err)
     return true;
 }
 
-bool read_entire_file(const char *path, string *out, error *err)
+template<typename C>
+bool _read_entire_file_s(const C *path, string *out, error *err)
 {
     assert(path != nullptr);
     assert(out != nullptr);
@@ -55,6 +67,16 @@ bool read_entire_file(const char *path, string *out, error *err)
     bool free_ret = free(&fstream, err);
     
     return ret && free_ret;
+}
+
+bool read_entire_file(const char *path, string *out, error *err)
+{
+    return _read_entire_file_s(path, out, err);
+}
+
+bool read_entire_file(const wchar_t *path, string *out, error *err)
+{
+    return _read_entire_file_s(path, out, err);
 }
 
 bool read_entire_file(file_stream *stream, string *out, error *err)

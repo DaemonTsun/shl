@@ -33,8 +33,10 @@ write(stream or io or pipe, String) writes the string String to the stream
 #include "shl/error.hpp"
 
 bool read_entire_file(const char *path, memory_stream *out, error *err = nullptr);
+bool read_entire_file(const wchar_t *path, memory_stream *out, error *err = nullptr);
 bool read_entire_file(file_stream *stream, memory_stream *out, error *err = nullptr);
 bool read_entire_file(const char *path, string *out, error *err = nullptr);
+bool read_entire_file(const wchar_t *path, string *out, error *err = nullptr);
 bool read_entire_file(file_stream *stream, string *out, error *err = nullptr);
 
 // these only return false on error, not if nothing was read, e.g. if at

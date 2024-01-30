@@ -50,7 +50,7 @@ std::filesystem::path get_executable_path()
 
 sys_char *get_filepath(const sys_char *file)
 {
-    char *ret = nullptr;
+    sys_char *ret = nullptr;
 
     std::filesystem::path p = get_executable_path();
     p = p.parent_path() / file;
