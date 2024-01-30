@@ -950,7 +950,7 @@ s64 _last_index_of_c(const_string_base<C> str, C needle, s64 offset)
     if (offset + 1 >= str.size)
         offset = str.size - 1;
 
-    for (s64 i = offset; i > 0; --i)
+    for (s64 i = offset; i >= 0; --i)
         if (str.c_str[i] == needle)
             return i;
 

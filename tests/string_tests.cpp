@@ -735,6 +735,9 @@ define_test(last_index_of_returns_index_of_last_needle_occurence_in_haystack_sta
     assert_equal(last_index_of("hello", 'l'), 3);
     assert_equal(last_index_of("hello", 'l', 2), 2);
     assert_equal(last_index_of("hello", 'l', 1), -1);
+    assert_equal(last_index_of("hello", 'o'), 4);
+    assert_equal(last_index_of("hello", 'h'), 0);
+    assert_equal(last_index_of("o", 'o'), 0);
 }
 
 define_test(contains_returns_true_when_string_contains_other_string)
