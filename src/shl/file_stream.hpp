@@ -7,6 +7,7 @@ v1.2
 add template write and write_at
 add seek_next_alignment
 
+TODO: docs
  */
 
 #include "shl/io.hpp"
@@ -27,8 +28,11 @@ struct file_stream
     s64 cached_size;
 };
 
-bool init(file_stream *stream, const char *path, int mode = MODE_READ, int permissions = PERMISSION_READ | PERMISSION_WRITE, error *err = nullptr);
-bool init(file_stream *stream, const wchar_t *path, int mode = MODE_READ, int permissions = PERMISSION_READ | PERMISSION_WRITE, error *err = nullptr);
+// default mode is writing and reading
+bool init(file_stream *stream, const char *path, error *err = nullptr);
+bool init(file_stream *stream, const wchar_t *path, error *err = nullptr);
+bool init(file_stream *stream, const char *path, int mode, int permissions = PERMISSION_READ | PERMISSION_WRITE, error *err = nullptr);
+bool init(file_stream *stream, const wchar_t *path, int mode, int permissions = PERMISSION_READ | PERMISSION_WRITE, error *err = nullptr);
 bool free(file_stream *stream, error *err = nullptr);
 
 bool is_open(file_stream *stream);

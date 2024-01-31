@@ -32,6 +32,16 @@ s64 _string_len(const C *str)
     return ret;
 }
 
+bool init(file_stream *stream, const char *path, error *err)
+{
+    return init(stream, path, MODE_READ | MODE_WRITE, PERMISSION_READ | PERMISSION_WRITE, err);
+}
+
+bool init(file_stream *stream, const wchar_t *path, error *err)
+{
+    return init(stream, path, MODE_READ | MODE_WRITE, PERMISSION_READ | PERMISSION_WRITE, err);
+}
+
 bool init(file_stream *stream, const char *path, int mode, int permissions, error *err)
 {
     assert(stream != nullptr);
