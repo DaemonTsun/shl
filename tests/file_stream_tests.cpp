@@ -1,5 +1,4 @@
 
-#include <iostream>
 #include <string.h>
 #include <stdlib.h>
 #include <t1/t1.hpp>
@@ -15,8 +14,6 @@
 #include <linux/limits.h>
 #endif
 
-#include <filesystem>
-
 #include "shl/number_types.hpp"
 #include "shl/defer.hpp"
 #include "shl/memory.hpp"
@@ -27,39 +24,53 @@
 #define TXT_FILE SYS_CHAR("file_stream_text_data.txt") // 1024 bytes
 #define BIN_FILE SYS_CHAR("file_stream_binary_data.bin") // 12 bytes
 
-std::filesystem::path get_executable_path()
+const sys_char *get_executable_path()
 {
+    static sys_char pth[4096] = {0};
 #if Windows
-    sys_char pth[4096] = {0};
+    auto len = GetModuleFileName(nullptr, pth, 4095);
 
-    auto length = GetModuleFileName(nullptr, pth, 4095);
+    pth[len] = '\0';
 
-    if (length == 0)
-        return std::filesystem::path();
-
-    return std::filesystem::path(pth);
+    return pth;
 #else
-    char pth[PATH_MAX] = {0};
 
-    if (readlink("/proc/self/exe", pth, PATH_MAX) < 0)
-        return std::filesystem::path();
+    if (readlink("/proc/self/exe", pth, 4095) < 0)
+        return nullptr;
     
-    return std::filesystem::path(pth);
+    return pth;
 #endif
 }
 
-sys_char *get_filepath(const sys_char *file)
+string_base<sys_char> get_filepath(const sys_char *file)
 {
-    sys_char *ret = nullptr;
+    string_base<sys_char> ret{};
 
-    std::filesystem::path p = get_executable_path();
-    p = p.parent_path() / file;
+    const sys_char *exep = get_executable_path();
 
-    const sys_char *name = p.c_str();
-    u64 len = string_length(name) * sizeof(sys_char);
-    ret = (sys_char*)malloc(len + sizeof(sys_char));
-    memset(ret, 0, len + 1);
-    memcpy(ret, name, len);
+    if (exep == nullptr)
+        return ret;
+
+    set_string(&ret, exep);
+
+    s64 idx = last_index_of(ret, SYS_CHAR('/'));
+
+#if Windows
+    if (idx < 0)
+        idx = last_index_of(ret, SYS_CHAR('\\'));
+#endif
+
+    if (idx < 0)
+        idx = ret.size;
+
+    ret.size = idx;
+
+#if Windows
+    append_string(&ret, SYS_CHAR("\\"));
+#else
+    append_string(&ret, SYS_CHAR("/"));
+#endif
+    append_string(&ret, file);
 
     return ret;
 }
@@ -67,20 +78,20 @@ sys_char *get_filepath(const sys_char *file)
 define_test(file_stream_init_opens_file)
 {
     file_stream fs;
-    sys_char *filepath = get_filepath(BIN_FILE);
-    defer { free_memory(filepath); };
+    string_base<sys_char> filepath = get_filepath(BIN_FILE);
+    defer { free(&filepath); };
 
-    assert_equal(init(&fs, filepath), true);
+    assert_equal(init(&fs, filepath.data), true);
     assert_equal(free(&fs), true);
 }
 
 define_test(file_stream_read_reads_file_contents)
 {
     file_stream fs;
-    sys_char *filepath = get_filepath(BIN_FILE);
-    defer { free_memory(filepath); };
+    string_base<sys_char> filepath = get_filepath(BIN_FILE);
+    defer { free(&filepath); };
 
-    init(&fs, filepath);
+    init(&fs, filepath.data);
 
     u32 r;
     assert_equal(read(&fs, &r), sizeof(u32));
@@ -99,10 +110,10 @@ define_test(file_stream_read_reads_file_contents)
 define_test(file_stream_read_at_reads_file_contents_at_position)
 {
     file_stream fs;
-    sys_char *filepath = get_filepath(BIN_FILE);
-    defer { free_memory(filepath); };
+    string_base<sys_char> filepath = get_filepath(BIN_FILE);
+    defer { free(&filepath); };
 
-    init(&fs, filepath);
+    init(&fs, filepath.data);
 
     u32 r;
     assert_equal(read_at(&fs, &r, 0), sizeof(u32));
@@ -124,10 +135,10 @@ define_test(file_stream_read_at_reads_file_contents_at_position)
 define_test(file_stream_get_size_gets_size_and_sets_cached_size)
 {
     file_stream fs;
-    sys_char *filepath = get_filepath(BIN_FILE);
-    defer { free_memory(filepath); };
+    string_base<sys_char> filepath = get_filepath(BIN_FILE);
+    defer { free(&filepath); };
 
-    init(&fs, filepath);
+    init(&fs, filepath.data);
 
     assert_equal(get_file_size(&fs), 12u);
     assert_equal(fs.cached_size, 12u);
@@ -138,10 +149,10 @@ define_test(file_stream_get_size_gets_size_and_sets_cached_size)
 define_test(file_stream_read_entire_file_reads_entire_file)
 {
     file_stream fs;
-    sys_char *filepath = get_filepath(BIN_FILE);
-    defer { free_memory(filepath); };
+    string_base<sys_char> filepath = get_filepath(BIN_FILE);
+    defer { free(&filepath); };
 
-    init(&fs, filepath);
+    init(&fs, filepath.data);
     assert_equal(get_file_size(&fs), 12u);
 
     char contents[12];
@@ -153,13 +164,13 @@ define_test(file_stream_read_entire_file_reads_entire_file)
 
 define_test(streams_read_entire_file_reads_entire_file)
 {
-    sys_char *filepath = get_filepath(BIN_FILE);
-    defer { free_memory(filepath); };
+    string_base<sys_char> filepath = get_filepath(BIN_FILE);
+    defer { free(&filepath); };
 
     memory_stream ms{};
 
     // read_entire_file acts as init()
-    assert_equal(read_entire_file(filepath, &ms), true);
+    assert_equal(read_entire_file(filepath.data, &ms), true);
     assert_equal(strncmp(ms.data + 4, "abc", 4), 0);
     free(&ms);
 }
