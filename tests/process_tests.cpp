@@ -12,10 +12,10 @@
 
 define_test(process_arguments_test)
 {
-    process p;
+    process p{};
     init(&p);
 
-    set_process_arguments(&p, R"=(echo "hello world"   a\\b\"c\")=");
+    set_process_arguments(&p, SYS_CHAR(R"=(echo "hello world"   a\\b\"c\")="));
 
 #if Windows
     assert_equal(compare_strings(p.start_info.args, LR"=(echo "hello world"   a\\b\"c\")="), 0);
@@ -31,8 +31,8 @@ define_test(process_arguments_test)
     // ON LINUX: if the executable path is set, the name of the executable
     // is preprended to be the first argument of the argument list.
     // Does not apply to Windows.
-    set_process_executable(&p, "/usr/bin/echo");
-    set_process_arguments(&p, R"=("hello world"   a\\b\"c\")=");
+    set_process_executable(&p, SYS_CHAR("/usr/bin/echo"));
+    set_process_arguments(&p, SYS_CHAR(R"=("hello world"   a\\b\"c\")="));
 
 #if Windows
     assert_equal(compare_strings(p.start_info.args, LR"=("hello world"   a\\b\"c\")="), 0);

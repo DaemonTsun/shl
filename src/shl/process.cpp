@@ -128,7 +128,9 @@ wstring _convert_string(const char *cstring, u64 char_count)
     ret.data = (wchar_t*)::allocate_memory(sz);
     ::fill_memory((void*)ret.data, 0, sz);
 
-    ::mbstowcs_s(&ret.size, ret.data, sz, cstring, char_count * sizeof(char));
+    auto err = ::mbstowcs_s(&ret.size, ret.data, sz, cstring, _TRUNCATE);
+
+    assert(err == 0);
 
     return ret;
 }
