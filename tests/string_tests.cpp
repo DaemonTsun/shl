@@ -1,5 +1,6 @@
 
 #include <t1/t1.hpp>
+#include "shl/type_functions.hpp"
 #include "shl/number_types.hpp"
 #include "shl/string.hpp"
 
@@ -332,8 +333,8 @@ define_test(to_int_converts_to_int)
 {
     assert_equal(to_int("0"), 0);
     assert_equal(to_int("1234"), 1234);
-    assert_equal(to_int("2147483647"), max_value(s32)); // may be different on some platforms
-    assert_equal(to_int("-2147483648"), min_value(s32)); // may be different on some platforms
+    assert_equal(to_int("2147483647"), max_value(int)); // may be different on some platforms
+    assert_equal(to_int("-2147483648"), min_value(int)); // may be different on some platforms
     assert_equal(to_int("1234"_cs), 1234);
 }
 
@@ -341,8 +342,18 @@ define_test(to_long_converts_to_long)
 {
     assert_equal(to_long("0"), 0);
     assert_equal(to_long("1234"), 1234);
-    assert_equal(to_long("9223372036854775807"), max_value(s64)); // may be different on some platforms
-    assert_equal(to_long("-9223372036854775808"), min_value(s64)); // may be different on some platforms
+    
+    if constexpr (is_same(long, s64))
+    {
+        assert_equal(to_long("9223372036854775807"), max_value(s64));
+        assert_equal(to_long("-9223372036854775808"), min_value(s64));
+    }
+    else
+    {
+        assert_equal(to_long("9223372036854775807"), max_value(s32));
+        assert_equal(to_long("-9223372036854775808"), min_value(s32));
+    }
+
     assert_equal(to_long("1234"_cs), 1234);
 }
 
@@ -350,8 +361,8 @@ define_test(to_long_long_converts_to_long_long)
 {
     assert_equal(to_long_long("0"), 0);
     assert_equal(to_long_long("1234"), 1234);
-    assert_equal(to_long_long("9223372036854775807"), max_value(s64)); // may be different on some platforms
-    assert_equal(to_long_long("-9223372036854775808"), min_value(s64)); // may be different on some platforms
+    assert_equal(to_long_long("9223372036854775807"), max_value(long long)); // may be different on some platforms
+    assert_equal(to_long_long("-9223372036854775808"), min_value(long long)); // may be different on some platforms
     assert_equal(to_long_long("1234"_cs), 1234);
 }
 
