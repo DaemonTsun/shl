@@ -160,14 +160,14 @@ bool read_entire_io(io_handle h, string *out, error *err)
     return true;
 }
 
-bool read_entire_pipe(pipe *p, memory_stream *out, error *err)
+bool read_entire_pipe(pipe_t *p, memory_stream *out, error *err)
 {
     assert(p != nullptr);
 
     return read_entire_io(p->read, out, err);
 }
 
-bool read_entire_pipe(pipe *p, string *out, error *err)
+bool read_entire_pipe(pipe_t *p, string *out, error *err)
 {
     assert(p != nullptr);
 
@@ -230,12 +230,12 @@ s64 _write(io_handle h, const_wstring s, error *err)
     return io_write(h, (const char*)s.c_str, s.size * sizeof(wchar_t), err);
 }
 
-s64 _write(pipe *p, const_string  s, error *err)
+s64 _write(pipe_t *p, const_string  s, error *err)
 {
     return _write(p->write, s, err);
 }
 
-s64 _write(pipe *p, const_wstring s, error *err)
+s64 _write(pipe_t *p, const_wstring s, error *err)
 {
     return _write(p->write, s, err);
 }

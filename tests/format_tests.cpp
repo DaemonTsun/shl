@@ -2,15 +2,8 @@
 #include <t1/t1.hpp>
 #include "shl/format.hpp"
 
-std::ostream& operator<<(std::ostream &lhs, const string &rhs)
-{
-    return lhs << '"' << rhs.data << '"';
-}
-
-std::ostream& operator<<(std::ostream &lhs, const_string rhs)
-{
-    return lhs << '"' << rhs.c_str << '"';
-}
+define_t1_to_string(const string &s, "%s", s.data);
+define_t1_to_string(const_string s, "%s", s.c_str);
 
 #define assert_equal_str(Str1, Str2) assert_equal(to_const_string(Str1), to_const_string(Str2))
 

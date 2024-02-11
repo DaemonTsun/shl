@@ -21,8 +21,7 @@ add_lib(shl STATIC
 
 exit_if_included()
 
-find_package(t1 QUIET)
-if (t1_FOUND)
+if (DEFINED Tests)
     copy_files(FILES ${ROOT}/tests/file_stream_binary_data.bin
                      ${ROOT}/tests/file_stream_text_data.txt
                DESTINATION "${ROOT_BIN}"

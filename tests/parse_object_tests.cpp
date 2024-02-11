@@ -5,8 +5,6 @@
 #include "shl/string.hpp"
 #include "shl/parse_object.hpp"
 
-using namespace std::literals;
-
 #define SETUP(STR) \
     parser p;\
     init(&p, STR, STR == nullptr ? 0 : string_length(static_cast<const char*>(STR)));

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "shl/process.hpp"
+#include "shl/pipe.hpp"
 #include "shl/string.hpp"
 #include "shl/array.hpp"
 
@@ -109,7 +110,7 @@ define_test(process_pipe_test)
 
     init(&p);
 
-    pipe out_pipe{};
+    pipe_t out_pipe{};
     init(&out_pipe);
 
     set_handle_inheritance(out_pipe.read, false);
@@ -164,7 +165,7 @@ define_test(stop_process_stops_process)
     const sys_char *args[] = {"-", nullptr};
 #endif
 
-    pipe pip{};
+    pipe_t pip{};
     init(&pip);
     set_process_io(&p, pip.read, stdout_handle(), stderr_handle());
 

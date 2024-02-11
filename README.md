@@ -55,5 +55,6 @@ $ cmake --build <output dir>
 
 `cmake --install <output dir>` inside the build directory.
 
-## tests (optional)
-If [t1](https://github.com/DaemonTsun/t1) is installed, tests can be run as well using `cmake --build <output dir> --target runtests` or `ctest --test-dir <output dir>`.
+## Tests (optional)
+
+Tests can be built by specifying the `-DTests=1` command line flag in the `cmake` command and the tests can be run using `cmake --build <output dir> --target runtests` or `ctest --test-dir <output dir>`.

@@ -1,6 +1,7 @@
 
 #include <t1/t1.hpp>
 
+#include "shl/number_types.hpp"
 #include "shl/string.hpp"
 #include "shl/parse.hpp"
 
@@ -13,9 +14,9 @@
     init(&p, STR, STR == nullptr ? 0 : string_length(static_cast<const wchar_t*>(STR)));
 
 template<typename C>
-std::basic_string<C> slice(const C *input, const parse_range *range)
+const_string_base<C> slice(const C *input, const parse_range *range)
 {
-    return std::basic_string<C>(input + range->start.pos, range_length(range));
+    return const_string_base<C>{input + range->start.pos, range_length(range)};
 }
 
 define_test(skip_whitespace_does_nothing_on_nullptr)
@@ -109,7 +110,7 @@ define_test(parse_comment_parses_line_comment)
     assert_equal(p.it.line_pos, 9);
 
     assert_equal(success, true);
-    assert_equal(slice(p.input, &out), " hello");
+    assert_equal(slice(p.input, &out), " hello"_cs);
 }
 
 define_test(parse_comment_parses_line_comment2)
@@ -125,7 +126,7 @@ define_test(parse_comment_parses_line_comment2)
     assert_equal(p.it.line_pos, 1);
 
     assert_equal(success, true);
-    assert_equal(slice(p.input, &out), " hello\n");
+    assert_equal(slice(p.input, &out), " hello\n"_cs);
 }
 
 define_test(parse_comment_parses_block_comment)
@@ -152,7 +153,7 @@ define_test(parse_comment_parses_block_comment)
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 12);
 
-    assert_equal(slice(p.input, &out), " abc def ");
+    assert_equal(slice(p.input, &out), " abc def "_cs);
 }
 
 define_test(parse_comment_parses_block_comment2)
@@ -179,7 +180,7 @@ define_test(parse_comment_parses_block_comment2)
     assert_equal(out.end.line, 3);
     assert_equal(out.end.line_pos, 1);
 
-    assert_equal(slice(p.input, &out), L"\nhello world\n");
+    assert_equal(slice(p.input, &out), L"\nhello world\n"_cs);
 }
 
 define_test(skip_whitespace_and_comments_skips_whitespace)
@@ -309,7 +310,7 @@ define_test(parse_string_parses_string)
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 2);
 
-    assert_equal(slice(p.input, &out), "");
+    assert_equal(slice(p.input, &out), ""_cs);
 }
 
 define_test(parse_string_parses_string2)
@@ -338,7 +339,7 @@ define_test(parse_string_parses_string2)
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 5);
 
-    assert_equal(slice(p.input, &out), "abc");
+    assert_equal(slice(p.input, &out), "abc"_cs);
 }
 
 define_test(parse_string_parses_string3)
@@ -367,7 +368,7 @@ define_test(parse_string_parses_string3)
     assert_equal(out.end.line, 3);
     assert_equal(out.end.line_pos, 1);
 
-    assert_equal(slice(p.input, &out), "\nabc\n");
+    assert_equal(slice(p.input, &out), "\nabc\n"_cs);
 }
 
 define_test(parse_string_parses_string_with_delims)
@@ -396,7 +397,7 @@ define_test(parse_string_parses_string_with_delims)
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 8);
 
-    assert_equal(slice(p.input, &out), "\"hello\"");
+    assert_equal(slice(p.input, &out), "\"hello\""_cs);
 }
 
 define_test(parse_string_parses_string_with_delims2)
@@ -425,7 +426,7 @@ define_test(parse_string_parses_string_with_delims2)
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 17);
 
-    assert_equal(slice(p.input, &out), "\"hello world\\\" \"");
+    assert_equal(slice(p.input, &out), "\"hello world\\\" \""_cs);
 }
 
 define_test(parse_string_parses_string_delims)
@@ -454,7 +455,7 @@ define_test(parse_string_parses_string_delims)
     assert_equal(out.end.line, 1);
     assert_equal(out.end.line_pos, 11);
 
-    assert_equal(slice(p.input, &out), " abc XYZ ");
+    assert_equal(slice(p.input, &out), " abc XYZ "_cs);
 }
 
 define_test(parse_integer_parses_integer)
@@ -473,7 +474,7 @@ define_test(parse_integer_parses_integer)
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 5);
 
-    assert_equal(slice(p.input, &out), "1234");
+    assert_equal(slice(p.input, &out), "1234"_cs);
 }
 
 define_test(parse_integer_parses_integer2)
@@ -492,7 +493,7 @@ define_test(parse_integer_parses_integer2)
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 5);
 
-    assert_equal(slice(p.input, &out), "1234");
+    assert_equal(slice(p.input, &out), "1234"_cs);
 }
 
 define_test(parse_integer_parses_integer3)
@@ -582,7 +583,7 @@ define_test(parse_integer_parses_unsigned_integer2)
     assert_equal(p.it.line_start, 0);
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 3);
-    assert_equal(out, std::numeric_limits<u64>::max());
+    assert_equal(out, max_value(u64));
 }
 
 define_test(parse_integer_parses_binary_integer)
@@ -599,7 +600,7 @@ define_test(parse_integer_parses_binary_integer)
     assert_equal(p.it.line_start, 0);
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 7);
-    assert_equal(slice(p.input, &out), "0b1010");
+    assert_equal(slice(p.input, &out), "0b1010"_cs);
 }
 
 define_test(parse_int_parses_binary_integer)
@@ -831,7 +832,7 @@ define_test(parse_decimal_parses_float)
     assert_equal(p.it.line_start, 0);
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 4);
-    assert_equal(slice(p.input, &out), "1.0");
+    assert_equal(slice(p.input, &out), "1.0"_cs);
 }
 
 define_test(parse_decimal_parses_float2)
@@ -848,7 +849,7 @@ define_test(parse_decimal_parses_float2)
     assert_equal(p.it.line_start, 0);
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 5);
-    assert_equal(slice(p.input, &out), "+.06");
+    assert_equal(slice(p.input, &out), "+.06"_cs);
 }
 
 define_test(parse_decimal_parses_float3)
@@ -865,7 +866,7 @@ define_test(parse_decimal_parses_float3)
     assert_equal(p.it.line_start, 0);
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 6);
-    assert_equal(slice(p.input, &out), "-0.06");
+    assert_equal(slice(p.input, &out), "-0.06"_cs);
 }
 
 define_test(parse_decimal_parses_float4)
@@ -882,7 +883,7 @@ define_test(parse_decimal_parses_float4)
     assert_equal(p.it.line_start, 0);
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 9);
-    assert_equal(slice(p.input, &out), "1.33e+10");
+    assert_equal(slice(p.input, &out), "1.33e+10"_cs);
 }
 
 define_test(parse_decimal_parses_float5)
@@ -899,7 +900,7 @@ define_test(parse_decimal_parses_float5)
     assert_equal(p.it.line_start, 0);
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 8);
-    assert_equal(slice(p.input, &out), "2.5E-12");
+    assert_equal(slice(p.input, &out), "2.5E-12"_cs);
 }
 
 define_test(parse_decimal_parses_float6)
@@ -916,7 +917,7 @@ define_test(parse_decimal_parses_float6)
     assert_equal(p.it.line_start, 0);
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 9);
-    assert_equal(slice(p.input, &out), "12341234");
+    assert_equal(slice(p.input, &out), "12341234"_cs);
 }
 
 define_test(parse_decimal_parses_float7)
@@ -933,7 +934,7 @@ define_test(parse_decimal_parses_float7)
     assert_equal(p.it.line_start, 0);
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 7);
-    assert_equal(slice(p.input, &out), "1234e5");
+    assert_equal(slice(p.input, &out), "1234e5"_cs);
 }
 
 define_test(parse_decimal_parses_float8)
@@ -1279,7 +1280,7 @@ define_test(parse_identifier_parses_identifier)
     assert_equal(p.it.line_start, 0);
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 4);
-    assert_equal(slice(p.input, &out), "abc");
+    assert_equal(slice(p.input, &out), "abc"_cs);
 }
 
 define_test(parse_identifier_parses_identifier2)
@@ -1296,7 +1297,7 @@ define_test(parse_identifier_parses_identifier2)
     assert_equal(p.it.line_start, 0);
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 4);
-    assert_equal(slice(p.input, &out), "def");
+    assert_equal(slice(p.input, &out), "def"_cs);
 }
 
 define_test(parse_identifier_parses_identifier3)
@@ -1313,7 +1314,7 @@ define_test(parse_identifier_parses_identifier3)
     assert_equal(p.it.line_start, 0);
     assert_equal(p.it.line, 1);
     assert_equal(p.it.line_pos, 13);
-    assert_equal(slice(p.input, &out), "_hello_WORLD");
+    assert_equal(slice(p.input, &out), "_hello_WORLD"_cs);
 }
 
 define_test(parse_bool_parses_true)

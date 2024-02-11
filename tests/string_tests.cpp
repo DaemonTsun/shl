@@ -1,17 +1,10 @@
 
 #include <t1/t1.hpp>
+#include "shl/number_types.hpp"
 #include "shl/string.hpp"
 
-// operators necessary for test formatting... unfortunately
-std::ostream& operator<<(std::ostream &lhs, const string &rhs)
-{
-    return lhs << rhs.data;
-}
-
-std::ostream& operator<<(std::ostream &lhs, const_string rhs)
-{
-    return lhs << rhs.c_str;
-}
+define_t1_to_string(const string &s, "%s", s.data);
+define_t1_to_string(const_string s, "%s", s.c_str);
 
 define_test(cs_suffix_constructs_const_string_from_literal)
 {
@@ -339,8 +332,8 @@ define_test(to_int_converts_to_int)
 {
     assert_equal(to_int("0"), 0);
     assert_equal(to_int("1234"), 1234);
-    assert_equal(to_int("2147483647"), std::numeric_limits<int>::max()); // may be different on some platforms
-    assert_equal(to_int("-2147483648"), std::numeric_limits<int>::min()); // may be different on some platforms
+    assert_equal(to_int("2147483647"), max_value(s32)); // may be different on some platforms
+    assert_equal(to_int("-2147483648"), min_value(s32)); // may be different on some platforms
     assert_equal(to_int("1234"_cs), 1234);
 }
 
@@ -348,8 +341,8 @@ define_test(to_long_converts_to_long)
 {
     assert_equal(to_long("0"), 0);
     assert_equal(to_long("1234"), 1234);
-    assert_equal(to_long("9223372036854775807"), std::numeric_limits<long>::max()); // may be different on some platforms
-    assert_equal(to_long("-9223372036854775808"), std::numeric_limits<long>::min()); // may be different on some platforms
+    assert_equal(to_long("9223372036854775807"), max_value(s64)); // may be different on some platforms
+    assert_equal(to_long("-9223372036854775808"), min_value(s64)); // may be different on some platforms
     assert_equal(to_long("1234"_cs), 1234);
 }
 
@@ -357,8 +350,8 @@ define_test(to_long_long_converts_to_long_long)
 {
     assert_equal(to_long_long("0"), 0);
     assert_equal(to_long_long("1234"), 1234);
-    assert_equal(to_long_long("9223372036854775807"), std::numeric_limits<long long>::max()); // may be different on some platforms
-    assert_equal(to_long_long("-9223372036854775808"), std::numeric_limits<long long>::min()); // may be different on some platforms
+    assert_equal(to_long_long("9223372036854775807"), max_value(s64)); // may be different on some platforms
+    assert_equal(to_long_long("-9223372036854775808"), min_value(s64)); // may be different on some platforms
     assert_equal(to_long_long("1234"_cs), 1234);
 }
 
@@ -366,7 +359,7 @@ define_test(to_unsigned_int_converts_to_unsigned_int)
 {
     assert_equal(to_unsigned_int("0"), 0);
     assert_equal(to_unsigned_int("1234"), 1234);
-    assert_equal(to_unsigned_int("4294967295"), std::numeric_limits<unsigned int>::max()); // may be different on some platforms
+    assert_equal(to_unsigned_int("4294967295"), max_value(u32)); // may be different on some platforms
     assert_equal(to_unsigned_int("1234"_cs), 1234);
 }
 

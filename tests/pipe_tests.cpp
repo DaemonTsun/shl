@@ -1,13 +1,12 @@
 
 #include <t1/t1.hpp>
-#include <stdlib.h>
 
 #include "shl/streams.hpp"
 #include "shl/pipe.hpp"
 
 define_test(init_initializes_new_pipe)
 {
-    pipe p{};
+    pipe_t p{};
     error err{};
 
     assert_equal(init(&p, &err), true);
@@ -29,7 +28,7 @@ define_test(init_initializes_new_pipe)
 
 define_test(io_read_reads_from_pipe)
 {
-    pipe p{};
+    pipe_t p{};
     error err{};
 
     assert_equal(init(&p, &err), true);
@@ -59,7 +58,7 @@ define_test(io_read_reads_from_pipe)
 
 define_test(read_entire_pipe_reads_everything_in_pipe)
 {
-    pipe p{};
+    pipe_t p{};
     error err{};
     string contents{};
 

@@ -53,7 +53,7 @@ get_parent_pid()   gets the parent process ID of the currently running process.
 */
 
 #include "shl/platform.hpp"
-#include "shl/pipe.hpp"
+#include "shl/io.hpp"
 #include "shl/error.hpp"
 
 #if Windows

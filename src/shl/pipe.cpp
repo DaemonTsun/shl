@@ -10,13 +10,10 @@
 #include <errno.h>
 #include <string.h>
 
-// beautiful
-#define pipe __default_pipe
 #include <unistd.h> // pipe2
-#undef pipe
 #endif
 
-bool init(pipe *p, error *err)
+bool init(pipe_t *p, error *err)
 {
     return init(p, 0, true, err);
 }
@@ -78,7 +75,7 @@ bool _CreatePipeEx(LPHANDLE out_read,
 }
 #endif
 
-bool init(pipe *p, int flags, bool inherit, error *err)
+bool init(pipe_t *p, int flags, bool inherit, error *err)
 {
     assert(p != nullptr);
 
@@ -110,7 +107,7 @@ bool init(pipe *p, int flags, bool inherit, error *err)
     return true;
 }
 
-bool free(pipe *p, error *err)
+bool free(pipe_t *p, error *err)
 {
     assert(p != nullptr);
 
