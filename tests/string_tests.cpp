@@ -361,8 +361,13 @@ define_test(to_long_long_converts_to_long_long)
 {
     assert_equal(to_long_long("0"), 0);
     assert_equal(to_long_long("1234"), 1234);
-    assert_equal(to_long_long("9223372036854775807"), max_value(long long)); // may be different on some platforms
-    assert_equal(to_long_long("-9223372036854775808"), min_value(long long)); // may be different on some platforms
+
+    if constexpr (is_same(long long, s64))
+    {
+        assert_equal(to_long_long("9223372036854775807"), max_value(s64)); // may be different on some platforms
+        assert_equal(to_long_long("-9223372036854775808"), min_value(s64)); // may be different on some platforms
+    }
+
     assert_equal(to_long_long("1234"_cs), 1234);
 }
 
