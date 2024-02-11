@@ -128,7 +128,7 @@ wstring _convert_string(const char *cstring, u64 char_count)
     ret.data = (wchar_t*)::allocate_memory(sz);
     ::fill_memory((void*)ret.data, 0, sz);
 
-    auto err = ::mbstowcs_s(&ret.size, ret.data, sz, cstring, _TRUNCATE);
+    [[maybe_unused]] auto err = ::mbstowcs_s(&ret.size, ret.data, sz, cstring, _TRUNCATE);
 
     assert(err == 0);
 
