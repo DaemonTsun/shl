@@ -54,7 +54,7 @@ bool init(file_stream *stream, const char *path, int mode, int permissions, erro
     wchar_t *tmp = (wchar_t*)::allocate_memory(sz);
 
     ::fill_memory((void*)tmp, 0, sz);
-    ::mbstowcs_s(nullptr, tmp, char_count, path, char_count * sizeof(char));
+    ::mbstowcs_s(nullptr, tmp, char_count, path, _TRUNCATE);
     
     bool ok = init(stream, tmp, mode, permissions, err);
 

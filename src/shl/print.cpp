@@ -29,7 +29,7 @@ s64 _put(io_handle h, const_wstring s, error *err)
 
     buf->buffer.data[buf->offset + bytes_written] = '\0';
     
-    internal::_buffer_advance<char>(buf, bytes_written);
+    internal::_buffer_advance<char>(buf, bytes_written+1);
 
     return _put(h, const_string{start, bytes_written}, err);
 }

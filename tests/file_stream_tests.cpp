@@ -22,15 +22,6 @@
 #define TXT_FILE SYS_CHAR("file_stream_text_data.txt") // 1024 bytes
 #define BIN_FILE SYS_CHAR("file_stream_binary_data.bin") // 12 bytes
 
-#if Windows
-// TODO: fix windows build.
-// right now this just throws some heap corruption error, which considering
-// doesn't happen on linux, means that Windows is just a huge pile of shit doing
-// things without telling you.
-// PS: the "Visual C++ CRT" debug window popping up, disrupting any chance at debugging
-// the program AND not telling you what you need to know to debug the program is probably
-// one of the worst things I have ever seen in programming. Fuck you, Microsoft.
-#else
 const sys_char *get_executable_path()
 {
     static sys_char pth[4096] = {0};
@@ -314,6 +305,5 @@ define_test(streams_read_entire_file_yields_error_on_nonexistent_path)
 
     assert_not_equal(err.error_code, 0);
 }
-#endif
 
 define_default_test_main();
