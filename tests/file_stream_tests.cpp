@@ -8,9 +8,7 @@
 #if Windows
 #include <windows.h>
 #else
-#define pipe __original_pipe
 #include <unistd.h>
-#undef pipe
 #include <linux/limits.h>
 #endif
 
@@ -154,6 +152,126 @@ define_test(file_stream_get_size_gets_size_and_sets_cached_size)
     assert_equal(fs.cached_size, 12u);
 
     free(&fs);
+}
+
+define_test(file_stream_seek_next_alignment_seeks_next_alignment)
+{
+    file_stream fs;
+    defer { free(&fs); };
+    string_base<sys_char> filepath = get_filepath(BIN_FILE);
+    defer { free(&filepath); };
+
+    init(&fs, filepath.data);
+
+    assert_equal(tell(&fs), 0);
+    assert_equal(seek_next_alignment(&fs, 4), 4);
+    assert_equal(seek_next_alignment(&fs, 4), 8);
+    assert_equal(seek_next_alignment(&fs, 4), 12);
+
+    seek(&fs, 1);
+
+    assert_equal(seek_next_alignment(&fs, 4), 4);
+    assert_equal(seek_next_alignment(&fs, 4), 8);
+
+    seek(&fs, 2);
+
+    assert_equal(seek_next_alignment(&fs, 4), 4);
+    assert_equal(seek_next_alignment(&fs, 4), 8);
+
+    seek(&fs, 3);
+
+    assert_equal(seek_next_alignment(&fs, 4), 4);
+    assert_equal(seek_next_alignment(&fs, 4), 8);
+
+    seek(&fs, 4);
+
+    assert_equal(seek_next_alignment2(&fs, 4), 8);
+
+    // 5
+    seek(&fs, 0);
+
+    assert_equal(seek_next_alignment(&fs, 5), 5);
+    assert_equal(seek_next_alignment(&fs, 5), 10);
+}
+
+define_test(file_stream_read_block_reads_block)
+{
+    file_stream fs;
+    defer { free(&fs); };
+    string_base<sys_char> filepath = get_filepath(BIN_FILE);
+    defer { free(&filepath); };
+
+    init(&fs, filepath.data);
+
+    u32 r;
+    assert_equal(read_block(&fs, &r, sizeof(u32)), sizeof(u32));
+    assert_equal(r, 0x30303030u);
+
+    assert_equal(read_block(&fs, &r, sizeof(u32)), sizeof(u32));
+    assert_equal(r, 0x00636261u);
+
+    assert_equal(read_block(&fs, &r, sizeof(u32)), sizeof(u32));
+    assert_equal(r, 0x10101010u);
+
+    assert_equal(read_block(&fs, &r, sizeof(u32)), 0);
+
+    seek(&fs, 10); // input is 12 bytes long, cannot read a 4 byte block from position 10!
+    assert_equal(read_block(&fs, &r, sizeof(u32)), 0);
+}
+
+define_test(file_stream_read_block_reads_nth_block)
+{
+    file_stream fs;
+    defer { free(&fs); };
+    string_base<sys_char> filepath = get_filepath(BIN_FILE);
+    defer { free(&filepath); };
+
+    init(&fs, filepath.data);
+
+    u32 r;
+    assert_equal(read_block(&fs, &r, 0, sizeof(u32)), sizeof(u32));
+    assert_equal(r, 0x30303030u);
+
+    assert_equal(read_block(&fs, &r, 1, sizeof(u32)), sizeof(u32));
+    assert_equal(r, 0x00636261u);
+
+    assert_equal(read_block(&fs, &r, 2, sizeof(u32)), sizeof(u32));
+    assert_equal(r, 0x10101010u);
+
+    assert_equal(read_block(&fs, &r, 3, sizeof(u32)), 0);
+}
+
+define_test(file_stream_read_blocks_reads_blocks)
+{
+    file_stream fs;
+    defer { free(&fs); };
+    string_base<sys_char> filepath = get_filepath(BIN_FILE);
+    defer { free(&filepath); };
+
+    init(&fs, filepath.data);
+
+    u32 r[3] = {0};
+    assert_equal(read_blocks(&fs, r, 0, sizeof(u32)), 0);
+    assert_equal(read_blocks(&fs, r, 1, sizeof(u32)), 1);
+    assert_equal(r[0], 0x30303030u);
+
+    seek(&fs, 0);
+
+    assert_equal(read_blocks(&fs, r, 2, sizeof(u32)), 2);
+    assert_equal(r[0], 0x30303030u);
+    assert_equal(r[1], 0x00636261u);
+
+    seek(&fs, 0);
+
+    assert_equal(read_blocks(&fs, r, 3, sizeof(u32)), 3);
+    assert_equal(r[0], 0x30303030u);
+    assert_equal(r[1], 0x00636261u);
+    assert_equal(r[2], 0x10101010u);
+
+    seek(&fs, 6);
+
+    assert_equal(read_blocks(&fs, r, 3, sizeof(u32)), 1);
+    assert_equal(r[0], 0x10100063u);
 }
 
 define_test(file_stream_read_entire_file_reads_entire_file)

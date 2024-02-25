@@ -214,3 +214,8 @@ constexpr inline T bitrange(const T &val, TBit from, TBit to)
     return static_cast<T>((val & bitmask((u32)from, (u32)to)) >> from);
 }
 
+template<typename T>
+constexpr inline bool is_pow2(T val)
+{
+    return (val != 0) && ((val & (val - 1)) == 0);
+}

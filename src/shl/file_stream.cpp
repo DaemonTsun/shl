@@ -11,6 +11,8 @@
 
 #include "shl/platform.hpp"
 #include "shl/memory.hpp"
+#include "shl/bits.hpp"
+#include "shl/math.hpp"
 
 #if Windows
 #include <windows.h>
@@ -52,7 +54,7 @@ bool init(file_stream *stream, const char *path, int mode, int permissions, erro
     wchar_t *tmp = (wchar_t*)::allocate_memory(sz);
 
     ::fill_memory((void*)tmp, 0, sz);
-    ::mbstowcs_s(nullptr, tmp, sz, path, char_count * sizeof(char));
+    ::mbstowcs_s(nullptr, tmp, char_count, path, char_count * sizeof(char));
     
     bool ok = init(stream, tmp, mode, permissions, err);
 
@@ -325,7 +327,25 @@ s64 seek_next_alignment(file_stream *stream, u64 alignment, error *err)
     if (npos < 0)
         return -1;
 
-    npos = ((npos + alignment - 1) / alignment) * alignment;
+    if (is_pow2(alignment))
+        npos = ceil_multiple2((u64)npos + 1, alignment);
+    else
+        npos = ceil_multiple((u64)npos +1, alignment);
+
+    return seek_from_start(stream, npos, err);
+}
+
+s64 seek_next_alignment2(file_stream *stream, u64 alignment, error *err)
+{
+    assert(stream != nullptr);
+    assert(alignment > 0);
+
+    s64 npos = tell(stream, err);
+
+    if (npos < 0)
+        return -1;
+
+    npos = ceil_multiple2((u64)npos + 1, alignment);
 
     return seek_from_start(stream, npos, err);
 }
@@ -389,7 +409,15 @@ s64 read_at(file_stream *stream, void *out, u64 offset, u64 size, u64 nmemb, err
 
 s64 read_block(file_stream *stream, void *out, u64 block_size, error *err)
 {
-    return read(stream, out, block_size, err);
+    s64 ret = read(stream, out, block_size, err);
+
+    if (ret == -1)
+        return -1;
+
+    if (ret < block_size)
+        return 0;
+
+    return ret;
 }
 
 s64 read_block(file_stream *stream, void *out, s64 nth_block, u64 block_size, error *err)
@@ -397,7 +425,7 @@ s64 read_block(file_stream *stream, void *out, s64 nth_block, u64 block_size, er
     if (seek_block_from_start(stream, nth_block, block_size, err) == -1)
         return -1;
 
-    return read(stream, out, block_size, err);
+    return read_block(stream, out, block_size, err);
 }
 
 s64 read_blocks(file_stream *stream, void *out, s64 block_count, u64 block_size, error *err)

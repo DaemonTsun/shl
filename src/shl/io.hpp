@@ -14,6 +14,8 @@ stdin_handle()      obtains the stdin handle
 stdout_handle()     obtains the stdout handle
 stderr_handle()     obtains the stderr handle
 
+INVALID_IO_HANDLE is the constant for invalid handles.
+
 set_handle_inheritance(h, enable)   enables or disables inheritance on the given handle.
     LINUX: does nothing.
 
@@ -57,7 +59,7 @@ typedef HANDLE io_handle;
 #define IO_SEEK_END FILE_END 
 #endif
 
-#define INVALID_IO_HANDLE nullptr
+#define INVALID_IO_HANDLE INVALID_HANDLE_VALUE
 #else
 typedef int io_handle;
 

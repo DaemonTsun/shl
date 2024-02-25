@@ -128,4 +128,17 @@ define_test(bit_log_gets_integer_log)
     assert_equal(bit_log<1>(8), 3); // 0100
 }
 
+define_test(is_pow2_checks_if_number_is_pow2)
+{
+    assert_equal(is_pow2(0), false);
+    assert_equal(is_pow2(1), true);
+    assert_equal(is_pow2(2), true);
+    assert_equal(is_pow2(3), false);
+    assert_equal(is_pow2(4), true);
+    assert_equal(is_pow2(5), false);
+    assert_equal(is_pow2(6), false);
+    assert_equal(is_pow2(7), false);
+    assert_equal(is_pow2(8), true);
+}
+
 define_default_test_main();

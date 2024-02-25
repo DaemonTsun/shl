@@ -7,8 +7,179 @@ v1.2
 add template write and write_at
 add seek_next_alignment
 
-TODO: docs
- */
+File stream API for writing data to file I/O handles.
+
+Functions
+
+init(*Stream, Path[, *err])
+    initializes the stream with a handle to the file at Path.
+    Returns false if unsuccessful and optionally writes error codes
+    and messages to *err.
+    Returns true if successful.
+
+init(*Stream, Path, Mode, Permissions[, *err])
+    initializes Stream with a handle to the file at Path with access mode Mode and
+    Permissions permissions.
+    MODE_READ reads an existing file.
+    MODE_WRITE writes to a new or existing file, not truncating its contents.
+    MODE_WRITE_TRUNC writes to a new or existing file, truncating its contents.
+    
+is_open(*Stream) returns if Stream has a valid handle.
+is_at_end(*Stream[, *err]) returns if the Stream is at the end.
+
+is_ok(*Stream[, *err]) returns if the Stream is open and not at the end.
+
+get_file_size(*Stream[, *err])
+    returns and caches the file size of the file handle in Stream.
+    If possible, uses operating system functions to determine the size,
+    otherwise calculates sizes by using seek and tell.
+    On error, returns -1.
+
+block_count(*Stream, Blocksize)
+    returns the number of blocks in Stream given the block size Blocksize and
+    the cached size in Stream.
+    Does not calculate or query the file size and only uses the cached size. 
+
+current_block_number(*Stream, Blocksize[, *err])
+    returns the number of the block where the Stream position is currently
+    located at.
+    Basically tell(Stream) / Blocksize.
+
+current_block_offset(*Stream, Blocksize[, *err])
+    returns the start offset of the current block in Stream.
+
+seek(*Stream, Offset, Whence[, *err])
+    sets the Stream position to a value depending on Offset and Whence.
+    If Whence is IO_SEEK_SET, sets the Stream position to Offset.
+    If Whence is IO_SEEK_CUR, adds Offset to the Stream position.
+    If Whence is IO_SEEK_END, sets the Stream position to (Stream size + Offset).
+    Returns the new position.
+
+seek_offset(*Stream, Offset[, *err])     basically seek(Stream, Offset, IO_SEEK_CUR, err).
+seek_from_start(*Stream, Offset[, *err]) basically seek(Stream, Offset, IO_SEEK_SET, err).
+seek_from_end(*Stream, Offset[, *err])   basically seek(Stream, Offset, IO_SEEK_END, err).
+
+seek_block(*Stream, NthBlock, Blocksize, Whence[, *err])
+    sets the Stream position to a value depending on Nthblock, Blocksize and Whence.
+    If Whence is IO_SEEK_SET, sets the Stream position to NthBlock * Blocksize.
+    If Whence is IO_SEEK_CUR, adds NthBlock * Blocksize to the offset of the current block.
+    If Whence is IO_SEEK_END, sets the Stream position to (Stream size + NthBlock * Blocksize).
+    Returns the new position.
+
+seek_block_offset(*Stream, NthBlock, Blocksize[, *err])
+    basically seek_block(Stream, NthBlock, Blocksize, IO_SEEK_CUR, err).
+
+seek_block_from_start(*Stream, NthBlock, Blocksize[, *err])
+    basically seek_block(Stream, NthBlock, Blocksize, IO_SEEK_SET, err).
+
+seek_block_from_end(*Stream, NthBlock, Blocksize[, *err])
+    basically seek_block(Stream, NthBlock, Blocksize, IO_SEEK_END, err).
+
+seek_next_alignment(*Stream, Alignment[, *err])
+    sets the Stream position to the start of the next Alignment.
+    Returns the new position.
+
+seek_next_alignment2(*Stream, Alignment[, *err])
+    sets the Stream position to the start of the next Alignment.
+    Always assumes Alignment is a power of 2.
+    Returns the new position.
+
+tell(*Stream[, *err])
+    Returns the Stream position.
+
+rewind(*Stream[, *err])
+    Sets the Stream position to the beginning, which is probably 0.
+    Returns true when successful.
+
+read(*Stream, *Out, Size[, *err])
+    read Size bytes from Stream and writes them to Out.
+    Returns the number of bytes read (and written to Out), or -1 on error.
+    The Stream position is advanced by the number of bytes read.
+    The returned number may be less than Size.
+
+read(*Stream, *Out, Size, N[, *err])
+    reads Size * N bytes from Stream and writes them to Out.
+    Returns the number of bytes / Size read, or -1 on error.
+    The Stream position is advanced by the number of bytes read.
+    The returned number may be less than Size * N.
+
+read<T>(*Stream, T *Out[, *err])
+    basically read(Stream, Out, sizeof(T), err)
+
+read_at(*Stream, *Out, Offset, Size[, *Err])
+    sets the Stream position to Offset before reading up to Size bytes from
+    Stream to Out.
+    Returns the number of bytes read, or -1 on error.
+
+read_at(*Stream, *Out, Offset, Size, N[, *Err])
+    sets the Stream position to Offset before reading up to Size * N bytes
+    from Stream to Out.
+    Returns the number of bytes / Size read, or -1 on error.
+
+read_at<T>(*Stream, T *Out, Offset[, *err])
+    basically read_at(Stream, Out, Offset, sizeof(T), err)
+
+read_block(*Stream, *Out, Blocksize[, *err])
+    reads one block of size Blocksize at the current Stream position from
+    Stream to Out.
+    Returns the number of bytes read, which is either Blocksize if the entire
+    block could be read, 0 if Blocksize bytes could not be read, or -1 on error.
+
+read_blocks(*Stream, *Out, N, Blocksize[, *err])
+    reads N blocks of size Blocksize at the current Stream position from
+    Stream to Out.
+    Returns the number of blocks read, or -1 on error.
+
+read_blocks(*Stream, *Out, NthBlock, N, Blocksize[, *err])
+    reads N blocks of size Blocksize starting from the offset of the NthBlock
+    from Stream to Out.
+    Returns the number of blocks read, or -1 on error.
+
+read_entire_file(*Stream, *Out, MaxSize[, *err])
+    reads the entire contents of Stream into Out, up to MaxSize bytes.
+    If MaxSize is -1, reads the entire Stream.
+    Returns the number of bytes read, or -1 on error.
+    On success, does not modify the Stream position.
+
+write(*Stream, *In, Size[, *err])
+    writes Size bytes from In to Stream at the current Stream position.
+    Returns the number of bytes written, or -1 on error.
+
+write(*Stream, *In, Size, N[, *err])
+    writes Size * N bytes from In to Stream at the current Stream position.
+    Returns the number of bytes / Size written, or -1 on error.
+
+write<T>(*Stream, T *In[, *err])
+    basically write(Stream, In, sizeof(T), err)
+
+write_at(*Stream, *In, Offset, Size[, *err])
+    sets Stream position to Offset, then writes Size bytes from In to Stream.
+    Returns the number of bytes written, or -1 on error.
+
+write_at(*Stream, *In, Offset, Size, N[, *err])
+    sets Stream position to Offset, then writes Size * N bytes from In to Stream.
+    Returns the number of bytes / Size written, or -1 on error.
+
+write_at<T>(*Stream, T *In, Offset[, *err])
+    basically write_at(Stream, In, Offset, sizeof(T), err)
+
+write_block(*Stream, *In, Blocksize[, *err])
+    writes one block of Blocksize from In to Stream at the current Stream position.
+    Returns the number of bytes written, or -1 on error.
+
+write_block(*Stream, *In, NthBlock, Blocksize[, *err])
+    writes one block of Blocksize from In to Stream.
+    Returns the number of bytes written, or -1 on error.
+
+write_blocks(*Stream, *In, N, Blocksize[, *err])
+    writes N blocks of size Blocksize from In to Stream at the current Stream position.
+    Returns the number of blocks written, or -1 on error.
+
+write_blocks(*Stream, *In, NthBlock, N, Blocksize[, *err])
+    writes N blocks of size Blocksize from In to Stream starting at the offset of
+    the NthBlock in Stream.
+    Returns the number of blocks written, or -1 on error.
+*/
 
 #include "shl/io.hpp"
 #include "shl/number_types.hpp"
@@ -56,6 +227,7 @@ s64 seek_block_offset(file_stream *stream, s64 nth_block, u64 block_size, error 
 s64 seek_block_from_start(file_stream *stream, s64 nth_block, u64 block_size, error *err = nullptr);
 s64 seek_block_from_end(file_stream *stream, s64 nth_block, u64 block_size, error *err = nullptr);
 s64 seek_next_alignment(file_stream *stream, u64 alignment, error *err = nullptr);
+s64 seek_next_alignment2(file_stream *stream, u64 alignment, error *err = nullptr);
 s64 tell(file_stream *stream, error *err = nullptr);
 bool rewind(file_stream *stream, error *err = nullptr);
 
@@ -88,7 +260,6 @@ s64 read_block(file_stream *stream, void *out, s64 nth_block, u64 block_size, er
 s64 read_blocks(file_stream *stream, void *out, s64 block_count, u64 block_size, error *err = nullptr);
 s64 read_blocks(file_stream *stream, void *out, s64 nth_block, s64 block_count, u64 block_size, error *err = nullptr);
 
-// uses stream->size, make sure its set and out has enough space
 s64 read_entire_file(file_stream *stream, void *out, u64 max_size = -1u, error *err = nullptr);
 
 // returns number of bytes written
