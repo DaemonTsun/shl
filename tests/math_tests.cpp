@@ -55,4 +55,52 @@ define_test(ceil_multiple2_rounds_up_to_multiple_of_2)
     assert_equal(ceil_multiple2(2049, 1024), 3072);
 }
 
+define_test(floor_multiple_rounds_down_to_multiple)
+{
+    assert_equal(floor_multiple(0, 5), 0);
+    assert_equal(floor_multiple(1, 5), 0);
+    assert_equal(floor_multiple(2, 5), 0);
+    assert_equal(floor_multiple(3, 5), 0);
+    assert_equal(floor_multiple(4, 5), 0);
+    assert_equal(floor_multiple(5, 5), 5);
+    assert_equal(floor_multiple(6, 5), 5);
+    assert_equal(floor_multiple(7, 5), 5);
+    assert_equal(floor_multiple(8, 5), 5);
+    assert_equal(floor_multiple(9, 5), 5);
+    assert_equal(floor_multiple(10, 5), 10);
+    assert_equal(floor_multiple(11, 5), 10);
+}
+
+define_test(floor_multiple2_rounds_down_to_multiple_of_2)
+{
+    assert_equal(floor_multiple2(0, 8),  0);
+    assert_equal(floor_multiple2(1, 8),  0);
+    assert_equal(floor_multiple2(2, 8),  0);
+    assert_equal(floor_multiple2(3, 8),  0);
+    assert_equal(floor_multiple2(4, 8),  0);
+    assert_equal(floor_multiple2(5, 8),  0);
+    assert_equal(floor_multiple2(6, 8),  0);
+    assert_equal(floor_multiple2(7, 8),  0);
+    assert_equal(floor_multiple2(8, 8),  8);
+    assert_equal(floor_multiple2(9, 8),  8);
+    assert_equal(floor_multiple2(10, 8), 8);
+    assert_equal(floor_multiple2(11, 8), 8);
+    assert_equal(floor_multiple2(12, 8), 8);
+    assert_equal(floor_multiple2(13, 8), 8);
+    assert_equal(floor_multiple2(14, 8), 8);
+    assert_equal(floor_multiple2(15, 8), 8);
+    assert_equal(floor_multiple2(16, 8), 16);
+    assert_equal(floor_multiple2(17, 8), 16);
+
+    assert_equal(floor_multiple2(0, 1024), 0);
+    assert_equal(floor_multiple2(1, 1024), 0);
+    assert_equal(floor_multiple2(1023, 1024), 0);
+    assert_equal(floor_multiple2(1024, 1024), 1024);
+    assert_equal(floor_multiple2(1025, 1024), 1024);
+    
+    assert_equal(floor_multiple2(2047, 1024), 1024);
+    assert_equal(floor_multiple2(2048, 1024), 2048);
+    assert_equal(floor_multiple2(2049, 1024), 2048);
+}
+
 define_default_test_main();

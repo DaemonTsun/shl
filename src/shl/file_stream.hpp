@@ -48,6 +48,9 @@ current_block_number(*Stream, Blocksize[, *err])
 current_block_offset(*Stream, Blocksize[, *err])
     returns the start offset of the current block in Stream.
 
+current_block_offset2(*Stream, Blocksize[, *err])
+    optimized version of current_block_offset where Blocksize is a power of 2.
+
 seek(*Stream, Offset, Whence[, *err])
     sets the Stream position to a value depending on Offset and Whence.
     If Whence is IO_SEEK_SET, sets the Stream position to Offset.
@@ -217,6 +220,7 @@ s64 get_file_size(file_stream *stream, error *err = nullptr);
 s64 block_count(file_stream *stream, u64 block_size);
 s64 current_block_number(file_stream *stream, u64 block_size, error *err = nullptr);
 s64 current_block_offset(file_stream *stream, u64 block_size, error *err = nullptr);
+s64 current_block_offset2(file_stream *stream, u64 block_size, error *err = nullptr);
 
 s64 seek(file_stream *stream, s64 offset, int whence = IO_SEEK_SET, error *err = nullptr);
 s64 seek_offset(file_stream *stream, s64 offset, error *err = nullptr);

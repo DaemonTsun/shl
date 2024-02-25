@@ -262,7 +262,25 @@ s64 current_block_offset(file_stream *stream, u64 block_size, error *err)
     assert(stream != nullptr);
     assert(block_size > 0);
 
-    return (s64)(current_block_number(stream, block_size, err) * block_size);
+    s64 cur = tell(stream, err);
+
+    if (cur < 0)
+        return -1;
+
+    return (s64)floor_multiple((u64)cur, block_size);
+}
+
+s64 current_block_offset2(file_stream *stream, u64 block_size, error *err)
+{
+    assert(stream != nullptr);
+    assert(block_size > 0);
+
+    s64 cur = tell(stream, err);
+
+    if (cur < 0)
+        return -1;
+
+    return (s64)floor_multiple2((u64)cur, block_size);
 }
 
 s64 seek(file_stream *stream, s64 offset, int whence, error *err)
@@ -299,7 +317,12 @@ s64 seek_block(file_stream *stream, s64 nth_block, u64 block_size, int whence, e
 
 s64 seek_block_offset(file_stream *stream, s64 nth_block, u64 block_size, error *err)
 {
-    s64 cur = current_block_offset(stream, block_size);
+    s64 cur = -1;
+
+    if (is_pow2(block_size))
+        cur = current_block_offset2(stream, block_size);
+    else
+        cur = current_block_offset(stream, block_size);
 
     if (cur < 0)
         return -1;

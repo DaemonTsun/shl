@@ -161,6 +161,92 @@ define_test(memory_stream_seek_block_seeks_block)
     free(&mem);
 }
 
+define_test(memory_stream_read_block_reads_block)
+{
+    memory_stream mem{};
+    defer { free(&mem); };
+
+    init(&mem, 12);
+    u32 *data = (u32*)mem.data;
+    *data++ = 0x30303030u;
+    *data++ = 0x00636261u;
+    *data++ = 0x10101010u;
+
+    u32 r;
+    assert_equal(read_block(&mem, &r, sizeof(u32)), sizeof(u32));
+    assert_equal(r, 0x30303030u);
+
+    assert_equal(read_block(&mem, &r, sizeof(u32)), sizeof(u32));
+    assert_equal(r, 0x00636261u);
+
+    assert_equal(read_block(&mem, &r, sizeof(u32)), sizeof(u32));
+    assert_equal(r, 0x10101010u);
+
+    assert_equal(read_block(&mem, &r, sizeof(u32)), 0);
+
+    seek(&mem, 10); // input is 12 bytes long, cannot read a 4 byte block from position 10!
+    assert_equal(read_block(&mem, &r, sizeof(u32)), 0);
+}
+
+define_test(memory_stream_read_block_reads_nth_block)
+{
+    memory_stream mem;
+    defer { free(&mem); };
+
+    init(&mem, 12);
+    u32 *data = (u32*)mem.data;
+    *data++ = 0x30303030u;
+    *data++ = 0x00636261u;
+    *data++ = 0x10101010u;
+
+    u32 r;
+    assert_equal(read_block(&mem, &r, 0, sizeof(u32)), sizeof(u32));
+    assert_equal(r, 0x30303030u);
+
+    assert_equal(read_block(&mem, &r, 1, sizeof(u32)), sizeof(u32));
+    assert_equal(r, 0x00636261u);
+
+    assert_equal(read_block(&mem, &r, 2, sizeof(u32)), sizeof(u32));
+    assert_equal(r, 0x10101010u);
+
+    assert_equal(read_block(&mem, &r, 3, sizeof(u32)), 0);
+}
+
+define_test(memory_stream_read_blocks_reads_blocks)
+{
+    memory_stream mem;
+    defer { free(&mem); };
+
+    init(&mem, 12);
+    u32 *data = (u32*)mem.data;
+    *data++ = 0x30303030u;
+    *data++ = 0x00636261u;
+    *data++ = 0x10101010u;
+
+    u32 r[3] = {0};
+    assert_equal(read_blocks(&mem, r, 0, sizeof(u32)), 0);
+    assert_equal(read_blocks(&mem, r, 1, sizeof(u32)), 1);
+    assert_equal(r[0], 0x30303030u);
+
+    seek(&mem, 0);
+
+    assert_equal(read_blocks(&mem, r, 2, sizeof(u32)), 2);
+    assert_equal(r[0], 0x30303030u);
+    assert_equal(r[1], 0x00636261u);
+
+    seek(&mem, 0);
+
+    assert_equal(read_blocks(&mem, r, 3, sizeof(u32)), 3);
+    assert_equal(r[0], 0x30303030u);
+    assert_equal(r[1], 0x00636261u);
+    assert_equal(r[2], 0x10101010u);
+
+    seek(&mem, 6);
+
+    assert_equal(read_blocks(&mem, r, 3, sizeof(u32)), 1);
+    assert_equal(r[0], 0x10100063u);
+}
+
 define_test(memory_stream_seek_next_alignment_seeks_to_next_alignment)
 {
     memory_stream mem{};
@@ -170,7 +256,7 @@ define_test(memory_stream_seek_next_alignment_seeks_to_next_alignment)
     assert_equal(mem.position, 0);
 
     seek_next_alignment(&mem, 2);
-    assert_equal(mem.position, 0);
+    assert_equal(mem.position, 2);
 
     mem.position = 1;
 
@@ -181,7 +267,7 @@ define_test(memory_stream_seek_next_alignment_seeks_to_next_alignment)
     assert_equal(mem.position, 4);
 
     seek_next_alignment(&mem, 4);
-    assert_equal(mem.position, 4);
+    assert_equal(mem.position, 8);
     mem.position = 5;
 
     seek_next_alignment(&mem, 4);
@@ -189,7 +275,6 @@ define_test(memory_stream_seek_next_alignment_seeks_to_next_alignment)
 
     free(&mem);
 }
-
 
 define_test(memory_stream_read_reads)
 {
