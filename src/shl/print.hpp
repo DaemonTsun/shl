@@ -22,8 +22,8 @@ tprint(fmt, ...)    formats a string using tformat(fmt, ...) and prints the
 #include "shl/io.hpp"
 #include "shl/format.hpp"
 
-s64 put(io_handle h, char    c, error *err);
-s64 put(io_handle h, wchar_t c, error *err);
+s64 put(io_handle h, char    c, error *err = nullptr);
+s64 put(io_handle h, wchar_t c, error *err = nullptr);
 s64 _put(io_handle h, const_string  s, error *err);
 s64 _put(io_handle h, const_wstring s, error *err);
 
@@ -34,8 +34,8 @@ auto put(io_handle h, T str, error *err = nullptr)
     return _put(h, to_const_string(str), err);
 }
 
-s64 put(char    c, error *err);
-s64 put(wchar_t c, error *err);
+s64 put(char    c, error *err = nullptr);
+s64 put(wchar_t c, error *err = nullptr);
 s64 _put(const_string  s, error *err);
 s64 _put(const_wstring s, error *err);
 
