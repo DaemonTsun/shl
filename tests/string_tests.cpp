@@ -1,8 +1,10 @@
 
 #include <t1/t1.hpp>
+
 #include "shl/type_functions.hpp"
 #include "shl/number_types.hpp"
 #include "shl/string.hpp"
+#include "shl/environment.hpp"
 
 define_t1_to_string(const string &s, "%s", s.data);
 define_t1_to_string(const_string s, "%s", s.c_str);
@@ -1490,5 +1492,114 @@ define_test(join_joins_strings_by_string_delim3)
     free(&splits);
 }
 
+define_test(resolve_environment_variables_resolves_c_string_environment_variables)
+{
+    set_environment_variable("world", "WORLD");
+    char buf[14] = "hello $world\n";
+
+    resolve_environment_variables(buf, 13);
+
+    assert_equal(to_const_string(buf), "hello WORLD\n"_cs);
+}
+
+define_test(resolve_environment_variables_cuts_off_too_long_variables)
+{
+    set_environment_variable("foobar", "Somebody once told me the world is g");
+    char buf[15] = "hello $foobar\n";
+
+    resolve_environment_variables(buf, 14);
+
+    assert_equal(to_const_string(buf), "hello Somebody"_cs);
+}
+
+define_test(resolve_environment_variables_cuts_off_too_long_variables2)
+{
+    set_environment_variable("foobar", "Somebody once told me the world is g");
+    wchar_t buf[15] = L"hello $foobar\n";
+
+    resolve_environment_variables(buf, 14);
+
+    assert_equal(to_const_string(buf), L"hello Somebody"_cs);
+}
+
+define_test(resolve_environment_variables_resolves_nonexistent_variables_as_empty_strings)
+{
+    char buf[32] = "world $hello xyz $abcde $world\n";
+
+    resolve_environment_variables(buf, 31);
+
+    assert_equal(to_const_string(buf), "world  xyz  WORLD\n"_cs);
+}
+
+define_test(resolve_environment_variables_doesnt_resolve_escaped_variables)
+{
+    char buf[14] = R"(hello \$world)";
+
+    resolve_environment_variables(buf, 13);
+
+    assert_equal(to_const_string(buf), R"(hello $world)"_cs);
+}
+
+define_test(resolve_environment_variables_doesnt_resolve_escaped_variables2)
+{
+    char buf[16] = R"(hello \\\$world)";
+
+    resolve_environment_variables(buf, 15);
+
+    assert_equal(to_const_string(buf), R"(hello \\$world)"_cs);
+}
+
+define_test(resolve_environment_variables_doesnt_resolve_escaped_variables3)
+{
+    wchar_t buf[17] = LR"(hello \\\\$world)";
+
+    resolve_environment_variables(buf, 16);
+
+    assert_equal(to_const_string(buf), LR"(hello \\\$world)"_cs);
+}
+
+define_test(resolve_environment_variables_does_nothing_on_strings_without_variables)
+{
+    char buf[13] = "hello world\n";
+
+    resolve_environment_variables(buf, 12);
+
+    assert_equal(to_const_string(buf), "hello world\n"_cs);
+}
+
+define_test(resolve_environment_variables_resolves_string_environment_variables)
+{
+    set_environment_variable("world", "WORLD");
+    string str = "hello $world\n"_s;
+    defer { free(&str); };
+
+    resolve_environment_variables(&str);
+
+    assert_equal(to_const_string(str), "hello WORLD\n"_cs);
+    assert_equal(str.size, 12);
+}
+
+define_test(resolve_environment_variables_expands_string)
+{
+    set_environment_variable("foobar", "Somebody once told me the world is g");
+    string str = "hello $foobar\n"_s;
+    defer { free(&str); };
+
+    resolve_environment_variables(&str);
+
+    assert_equal(to_const_string(str), "hello Somebody once told me the world is g\n"_cs);
+    assert_equal(str.size, 43);
+}
+
+define_test(resolve_environment_variables_resolves_wide_strings)
+{
+    wstring str = L"hello $world\n"_s;
+    defer { free(&str); };
+
+    resolve_environment_variables(&str);
+
+    assert_equal(to_const_string(str), L"hello WORLD\n"_cs);
+    assert_equal(str.size, 12);
+}
 
 define_default_test_main();

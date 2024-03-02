@@ -16,7 +16,12 @@ const sys_char *get_environment_variable(const sys_char *name, error *err)
 {
     s64 len = string_length(name);
 
-    if (len == 0)
+    return get_environment_variable(name, len, err);
+}
+
+const sys_char *get_environment_variable(const sys_char *name, s64 name_len, error *err)
+{
+    if (name_len == 0)
         return nullptr;
 
 #if Windows
@@ -43,7 +48,7 @@ const sys_char *get_environment_variable(const sys_char *name, error *err)
 
         s64 equals = (s64)(vars - varline);
         
-        if (equals != len)
+        if (equals != name_len)
         {
             while (*vars != '\0')
                 vars++;
@@ -84,7 +89,7 @@ const sys_char *get_environment_variable(const sys_char *name, error *err)
 
         s64 equals = (s64)(i - varline);
         
-        if (equals != len)
+        if (equals != name_len)
         {
             idx += 1;
             continue;

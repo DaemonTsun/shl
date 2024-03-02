@@ -9,8 +9,10 @@
 #include "shl/memory.hpp"
 #include "shl/type_functions.hpp"
 #include "shl/compare.hpp"
-#include "shl/string.hpp"
+#include "shl/defer.hpp"
 #include "shl/platform.hpp"
+#include "shl/environment.hpp"
+#include "shl/string.hpp"
 
 #define LIT(C, Literal)\
     inline_const_if(is_same(C, char), Literal, L##Literal)
@@ -1885,6 +1887,260 @@ void join(const array<wstring>         *arr, const_wstring  delim, wstring *out)
 void join(const array<wstring>         *arr, const wstring *delim, wstring *out)
 {
     join(arr->data, arr->size, to_const_string(delim), out);
+}
+
+static inline u64 _convert_str(char *dst, const wchar_t *src, u64 n)
+{
+    return wcstombs(dst, src, n);
+}
+
+static inline u64 _convert_str(wchar_t *dst, const char *src, u64 n)
+{
+    return mbstowcs(dst, src, n);
+}
+
+template<typename C>
+static bool _get_converted_environment_variable(const C *name, s64 namesize, C **outbuf, s64 *outsize, sys_char **sysbuf, s64 *syssize)
+{
+    if constexpr (is_same(C, sys_char))
+    {
+        *outbuf = const_cast<C*>(get_environment_variable(name, namesize));
+    }
+    else
+    {
+        s64 char_count = _convert_str(nullptr, name, namesize);
+
+        if (char_count == (size_t)(-1))
+            return false;
+
+        if (*syssize < Max((s64)64, char_count + 1))
+        {
+            *syssize = Max((s64)64, char_count + 1);
+            *sysbuf = reallocate_memory<sys_char>(*sysbuf, *syssize);
+            fill_memory((void*)*sysbuf, 0, (*syssize) * sizeof(sys_char));
+        }
+
+        _convert_str(*sysbuf, name, char_count);
+
+        const sys_char *envvar = get_environment_variable(*sysbuf, namesize);
+
+        if (envvar != nullptr)
+        {
+            char_count = _convert_str(nullptr, envvar, 0);
+
+            if (char_count == -1)
+                return false;
+
+            if (*outsize < Max((s64)64, char_count + 1))
+            {
+                *outsize = Max((s64)64, char_count + 1);
+                *outbuf = reallocate_memory<C>(*outbuf, *outsize);
+                fill_memory((void*)*outbuf, 0, *outsize * sizeof(C));
+            }
+
+            _convert_str(*outbuf, envvar, char_count);
+        }
+        else
+        {
+            *outsize = Max((s64)64, *outsize);
+            *outbuf = reallocate_memory<C>(*outbuf, *outsize);
+            fill_memory((void*)*outbuf, 0, *outsize * sizeof(C));
+        }
+    }
+
+    return true;
+}
+
+template<typename C>
+static void _alias_environment_variables([[maybe_unused]] const_string_base<C> *str)
+{
+#if Windows
+    if (*str == LIT(C, "HOME"_cs))
+    {
+        *str = LIT(C, "USERPROFILE"_cs);
+    }
+#endif
+}
+
+template<typename C>
+static void _resolve_environment_variables(C *str, u64 _size, bool aliases)
+{
+    // this converts variables inside the string and environment variables
+    // on the fly. I wonder if converting the entire string, resolving
+    // variables and converting back performs better......
+    s64 size = (s64)_size;
+    s64 i = 0;
+
+    C *_val = nullptr;
+    s64 _val_buf_size = 0;
+    sys_char *_sys_char_buf = nullptr;
+    s64 _sys_char_buf_size = 0;
+
+    defer {
+        if constexpr (!is_same(C, sys_char))
+        {
+            if (_val != nullptr)
+                free_memory(_val);
+
+            if (_sys_char_buf != nullptr)
+                free_memory(_sys_char_buf);
+        }
+    };
+
+    while (i < size)
+    {
+        while (i + 1 < size && str[i] == '\\' && str[i + 1] == '$')
+        {
+            move_memory(str + i + 1, str + i, (size - i) * sizeof(C));
+            str[size - 1] = '\0';
+
+            i += 1;
+        }
+
+        if (i >= size)
+            break;
+
+        if (str[i] != '$')
+        {
+            i += 1;
+            continue;
+        }
+
+        // start of variable
+        s64 start = i + 1;
+        s64 end = start;
+
+        while ((end < size) && (is_alphanum(str[end]) || (str[end] == '_')))
+            end += 1;
+
+        const_string_base<C> varname{str + start, (u64)(end - start)};
+        const_string_base<C> varname_to_resolve = varname;
+
+        if (aliases)
+            _alias_environment_variables(&varname_to_resolve);
+        
+        if (!_get_converted_environment_variable(varname_to_resolve.c_str, varname_to_resolve.size, &_val, &_val_buf_size, &_sys_char_buf, &_sys_char_buf_size))
+            return;
+
+        const_string_base<C> var{_val, string_length(_val)};
+
+        s64 move_by = Min(size - end, (s64)var.size - ((s64)varname.size + 1));
+        s64 mem_left = size - (end + move_by);
+
+        if (move_by != 0)
+        {
+            move_memory(str + end, str + end + move_by, mem_left * sizeof(C));
+
+            if (move_by < 0)
+                fill_memory((void*)(str + size + move_by), 0, -move_by * sizeof(C));
+        }
+
+        mem_left = size - i;
+        copy_memory(var.c_str, str + i, Min(mem_left, (s64)var.size) * sizeof(C));
+
+        i += var.size;
+    }
+}
+
+void resolve_environment_variables(char *str, u64 size, bool aliases)
+{
+    _resolve_environment_variables(str, size, aliases);
+}
+
+void resolve_environment_variables(wchar_t *str, u64 size, bool aliases)
+{
+    _resolve_environment_variables(str, size, aliases);
+}
+
+template<typename C>
+static void _resolve_environment_variables_s(string_base<C> *str, bool aliases)
+{
+    s64 i = 0;
+
+    C *_val = nullptr;
+    s64 _val_buf_size = 0;
+    sys_char *_sys_char_buf = nullptr;
+    s64 _sys_char_buf_size = 0;
+
+    defer {
+        if constexpr (!is_same(C, sys_char))
+        {
+            if (_val != nullptr)
+                free_memory(_val);
+
+            if (_sys_char_buf != nullptr)
+                free_memory(_sys_char_buf);
+        }
+    };
+
+    while (i < str->size)
+    {
+        while (i + 1 < str->size && str->data[i] == '\\' && str->data[i + 1] == '$')
+        {
+            move_memory(str->data + i + 1, str->data + i, (str->size - i) * sizeof(C));
+            str->size -= 1;
+            str->data[str->size] = '\0';
+
+            i += 1;
+        }
+
+        if (i >= str->size)
+            break;
+
+        if (str->data[i] != '$')
+        {
+            i += 1;
+            continue;
+        }
+
+        // start of variable
+        s64 start = i + 1;
+        s64 end = start;
+
+        while ((end < str->size) && (is_alphanum(str->data[end]) || (str->data[end] == '_')))
+            end += 1;
+
+        const_string_base<C> varname{str->data + start, (u64)(end - start)};
+        const_string_base<C> varname_to_resolve = varname;
+
+        if (aliases)
+            _alias_environment_variables(&varname_to_resolve);
+        
+        if (!_get_converted_environment_variable(varname_to_resolve.c_str, varname_to_resolve.size, &_val, &_val_buf_size, &_sys_char_buf, &_sys_char_buf_size))
+            return;
+
+        const_string_base<C> var{_val, string_length(_val)};
+
+        s64 move_by = (s64)var.size - ((s64)varname.size + 1);
+        s64 mem_left = str->size - end;
+
+        if (move_by != 0)
+        {
+            if (move_by > 0)
+                string_reserve(str, str->size + move_by);
+
+            move_memory(str->data + end, str->data + end + move_by, mem_left * sizeof(C));
+
+            if (move_by < 0)
+                fill_memory((void*)(str->data + str->size + move_by), 0, -move_by * sizeof(C));
+
+            str->size += move_by;
+        }
+
+        copy_memory(var.c_str, str->data + i, var.size * sizeof(C));
+
+        i += var.size;
+    }
+}
+
+void resolve_environment_variables(string  *str, bool aliases)
+{
+    _resolve_environment_variables_s(str, aliases);
+}
+
+void resolve_environment_variables(wstring *str, bool aliases)
+{
+    _resolve_environment_variables_s(str, aliases);
 }
 
 template<typename C>

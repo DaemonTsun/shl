@@ -138,6 +138,21 @@ join(strings*, N, delim, out) joins strings together, separated by delim, and wr
 join(string array, delim, out) same thing as above, except strings is a pointer to an
                                array of strings.
 
+resolve_environment_variables(*str, aliases = false)
+    Replaces "$Varname" parts of str with the contents of environment variables,
+    e.g. "hello $HOST" replaces "$HOST" with the HOST environment variable
+    (assuming the HOST environment variable is set on the system).
+    Any variable not found is replaced by an empty string.
+    If aliases is true, uses a number of variable aliases to try to be more OS
+    agnostic.
+    The list of aliases and their contents:
+
+    On Windows:
+        HOME    -> gets replaced by the USERPROFILE environment variable
+
+resolve_environment_variables(*cstr, N, aliases = false)
+    C string alternative which writes at most N characters.
+
 hash(str) returns a 32 bit hash of the string.
 */
 
@@ -621,6 +636,11 @@ void join(const array<wstring>          *arr, wchar_t        delim, wstring *out
 void join(const array<wstring>          *arr, const wchar_t *delim, wstring *out);
 void join(const array<wstring>          *arr, const_wstring  delim, wstring *out);
 void join(const array<wstring>          *arr, const wstring *delim, wstring *out);
+
+void resolve_environment_variables(char    *str, u64 size, bool aliases = false);
+void resolve_environment_variables(wchar_t *str, u64 size, bool aliases = false);
+void resolve_environment_variables(string  *str, bool aliases = false);
+void resolve_environment_variables(wstring *str, bool aliases = false);
 
 /*
 these are not the same as hash(const char *c) because hash(const char *c)
