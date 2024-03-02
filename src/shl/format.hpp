@@ -108,6 +108,12 @@ s64 _to_string(wchar_t *s, u64 ssize, const_wstring  x, u64 offset, format_optio
 s64 _to_string(string  *s, const_string   x, u64 offset, format_options<char>    opt);
 s64 _to_string(wstring *s, const_wstring  x, u64 offset, format_options<wchar_t> opt);
 
+// not redundant
+s64 _to_string(char    *s, u64 ssize, const_wstring x, u64 offset, format_options<char>    opt);
+s64 _to_string(wchar_t *s, u64 ssize, const_string  x, u64 offset, format_options<wchar_t> opt);
+s64 _to_string(string  *s, const_wstring x, u64 offset, format_options<char>    opt);
+s64 _to_string(wstring *s, const_string  x, u64 offset, format_options<wchar_t> opt);
+
 template<typename T>
 auto to_string(char *out, u64 ssize, T other, u64 offset = 0, format_options<char> opt = default_format_options<char>)
     -> decltype(_to_string(out, ssize, to_const_string(other), offset, opt))
