@@ -1,9 +1,11 @@
-#include <string.h>
 
+#include "shl/string.hpp"
 #include "shl/number_types.hpp"
 #include "shl/environment.hpp"
 
-#if Linux
+#if Windows
+#include <windows.h>
+#else
 #include <stdlib.h>
 #include <errno.h>
 extern char **environ;
@@ -11,14 +13,58 @@ extern char **environ;
 
 const sys_char *get_environment_variable(const sys_char *name, error *err)
 {
-    if (name == nullptr)
+    s64 len = string_length(name);
+
+    if (len == 0)
         return nullptr;
 
 #if Windows
-    // TODO: implement
+    const sys_char *vars = GetEnvironmentStrings();
+
+    if (vars == nullptr)
+    {
+        set_GetLastError_error(err);
+        return nullptr;
+    }
+
+    while (*vars != '\0')
+    {
+        const sys_char *varline = vars;
+        
+        while (*vars != '=' && *vars != '\0')
+            vars++;
+
+        if (*vars == '\0')
+        {
+            vars++;
+            continue;
+        }
+
+        s64 equals = (s64)(vars - varline);
+        
+        if (equals != len)
+        {
+            while (*vars != '\0')
+                vars++;
+            vars++;
+
+            continue;
+        }
+
+        if (compare_strings(varline, name, equals - 1) != 0)
+        {
+            while (*vars != '\0')
+                vars++;
+            vars++;
+
+            continue;
+        }
+
+        return varline + equals + 1;
+    }
+
     return nullptr;
 #else
-    s64 len = strlen(name);
     u32 idx = 0;
 
     while (::environ[idx] != nullptr)
@@ -30,7 +76,10 @@ const sys_char *get_environment_variable(const sys_char *name, error *err)
             i++;
 
         if (*i == '\0')
-            return nullptr;
+        {
+            idx += 1;
+            continue;
+        }
 
         s64 equals = (s64)(i - varline);
         
@@ -40,7 +89,7 @@ const sys_char *get_environment_variable(const sys_char *name, error *err)
             continue;
         }
 
-        if (::strncmp(varline, name, equals - 1) != 0)
+        if (compare_strings(varline, name, equals - 1) != 0)
         {
             idx += 1;
             continue;
@@ -56,8 +105,16 @@ const sys_char *get_environment_variable(const sys_char *name, error *err)
 bool set_environment_variable(const sys_char *name, const sys_char *value, bool overwrite, error *err)
 {
 #if Windows
-    // TODO: implement
-    return false;
+    if (!overwrite && get_environment_variable(name, err) != nullptr)
+        return false;
+
+    if (!SetEnvironmentVariable(name, value))
+    {
+        set_GetLastError_error(err);
+        return false;
+    }
+
+    return true;
 #else
     if (value == nullptr)
     {
