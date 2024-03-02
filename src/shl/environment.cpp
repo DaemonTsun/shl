@@ -7,6 +7,7 @@
 #include <windows.h>
 #else
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 extern char **environ;
 #endif
