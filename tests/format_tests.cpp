@@ -372,10 +372,12 @@ define_test(to_string_converts_pointer_to_string)
     void *voidptr = nullptr;
     int *intptr = reinterpret_cast<int*>(0x13379001);
     const char *charptr = "hello";
+    const char *charptr2 = nullptr;
 
     assert_to_string(str, "0x00000000"_cs,  10, voidptr);
     assert_to_string(str, "0x13379001"_cs,  10, intptr);
     assert_to_string(str, "hello"_cs,        5, charptr);
+    assert_to_string(str, "<null>"_cs,       6, charptr2);
 
     free(&str);
 }

@@ -255,6 +255,7 @@ define_test(is_blank_returns_false_if_string_contains_non_whitespaces)
 
 define_test(string_length_returns_length_of_string)
 {
+    assert_equal(string_length((char*)nullptr), 0);
     assert_equal(string_length(""), 0);
     assert_equal(string_length("a"), 1);
     assert_equal(string_length("abc"), 3);

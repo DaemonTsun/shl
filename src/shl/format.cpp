@@ -4,7 +4,7 @@
 #include "shl/format.hpp"
 
 #define LIT(C, Literal)\
-    inline_const_if(is_same(C, char), Literal##_cs, L##Literal##_cs)
+    inline_const_if(is_same(C, char), Literal, L##Literal)
 
 #define as_array_ptr(C, str) (array<C>*)(str)
 
@@ -55,6 +55,12 @@ s64 _copy_string_reverse_checked(const C *src, u64 src_size, C *dst, u64 dst_siz
 template<typename C>
 s64 _copy_string_checked(const C *src, u64 src_size, C *dst, u64 dst_size)
 {
+    if (src == nullptr)
+    {
+        src = LIT(C, "<null>");
+        src_size = 6;
+    }
+
     u64 ssize = Min(src_size, dst_size);
     C *ptr = copy_string(src, dst, ssize);
 
@@ -167,9 +173,9 @@ s64 _bool_to_c_string(C *s, s64 ssize, bool value, u64 offset, format_options<C>
         const_string_base<C> lit_to_write{};
 
         if (value)
-            lit_to_write = LIT(C, "true");
+            lit_to_write = LIT(C, "true"_cs);
         else
-            lit_to_write = LIT(C, "false");
+            lit_to_write = LIT(C, "false"_cs);
 
         written += pad_string(s, ssize, opt.pad_char, opt.pad_length - lit_to_write.size, offset);
         written += _copy_string_checked(lit_to_write.c_str, lit_to_write.size, s, ssize, written + offset);

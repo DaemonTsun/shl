@@ -493,11 +493,17 @@ bool is_blank(const wstring *s)
 
 u64 string_length(const char *s)
 {
+    if (s == nullptr)
+        return 0;
+
     return strlen(s);
 }
 
 u64 string_length(const wchar_t *s)
 {
+    if (s == nullptr)
+        return 0;
+
     return wcslen(s);
 }
 
