@@ -1494,7 +1494,7 @@ define_test(join_joins_strings_by_string_delim3)
 
 define_test(resolve_environment_variables_resolves_c_string_environment_variables)
 {
-    set_environment_variable("world", "WORLD");
+    set_environment_variable(SYS_CHAR("world"), SYS_CHAR("WORLD"));
     char buf[14] = "hello $world\n";
 
     resolve_environment_variables(buf, 13);
@@ -1504,7 +1504,7 @@ define_test(resolve_environment_variables_resolves_c_string_environment_variable
 
 define_test(resolve_environment_variables_cuts_off_too_long_variables)
 {
-    set_environment_variable("foobar", "Somebody once told me the world is g");
+    set_environment_variable(SYS_CHAR("foobar"), SYS_CHAR("Somebody once told me the world is g"));
     char buf[15] = "hello $foobar\n";
 
     resolve_environment_variables(buf, 14);
@@ -1514,7 +1514,7 @@ define_test(resolve_environment_variables_cuts_off_too_long_variables)
 
 define_test(resolve_environment_variables_cuts_off_too_long_variables2)
 {
-    set_environment_variable("foobar", "Somebody once told me the world is g");
+    set_environment_variable(SYS_CHAR("foobar"), SYS_CHAR("Somebody once told me the world is g"));
     wchar_t buf[15] = L"hello $foobar\n";
 
     resolve_environment_variables(buf, 14);
@@ -1569,7 +1569,7 @@ define_test(resolve_environment_variables_does_nothing_on_strings_without_variab
 
 define_test(resolve_environment_variables_resolves_string_environment_variables)
 {
-    set_environment_variable("world", "WORLD");
+    set_environment_variable(SYS_CHAR("world"), SYS_CHAR("WORLD"));
     string str = "hello $world\n"_s;
     defer { free(&str); };
 
@@ -1581,7 +1581,7 @@ define_test(resolve_environment_variables_resolves_string_environment_variables)
 
 define_test(resolve_environment_variables_expands_string)
 {
-    set_environment_variable("foobar", "Somebody once told me the world is g");
+    set_environment_variable(SYS_CHAR("foobar"), SYS_CHAR("Somebody once told me the world is g"));
     string str = "hello $foobar\n"_s;
     defer { free(&str); };
 
