@@ -709,9 +709,9 @@ define_test(format_formats_int_padding)
 
 define_test(new_format_creates_string_from_format)
 {
-    string str = new_format("%s %d %1.f", "abc", 5, 16.5f);
+    string str = new_format("%s %d %1.f %u", "abc", 5, 16.5f, 32u);
 
-    assert_equal_str(str, "abc 5 16.5"_cs);
+    assert_equal_str(str, "abc 5 16.5 32"_cs);
     free(&str);
 }
 

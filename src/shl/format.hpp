@@ -332,6 +332,7 @@ s64 _format(u64 i, s64 written, C *s, u64 ssize, u64 offset, const_string_base<C
         case 'c':
         case 's':
         case 'd':
+        case 'u':
         case 'p':
             i++;
             break;
@@ -409,6 +410,7 @@ s64 _format(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_base
         case 'c':
         case 's':
         case 'd':
+        case 'u':
         case 'p':
             i++;
             break;
