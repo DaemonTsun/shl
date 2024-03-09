@@ -739,4 +739,20 @@ define_test(format_only_escapes_percent_backslashes)
 
 }
 
+define_test(format_padding_pads_string)
+{
+    assert_equal_str(tformat("%6s", "hello"),  " hello");
+    assert_equal_str(tformat("%-6s", "hello"), "hello ");
+    assert_equal_str(tformat("%7s", "hello"),  "  hello");
+    assert_equal_str(tformat("%-7s", "hello"), "hello  ");
+    assert_equal_str(tformat("%8s", "hello"),  "   hello");
+    assert_equal_str(tformat("%-8s", "hello"), "hello   ");
+    assert_equal_str(tformat("%9s", "hello"),  "    hello");
+    assert_equal_str(tformat("%-9s", "hello"), "hello    ");
+    assert_equal_str(tformat("%10s", "hello"),  "     hello");
+    assert_equal_str(tformat("%-10s", "hello"), "hello     ");
+    assert_equal_str(tformat("%11s", "hello"),  "      hello");
+    assert_equal_str(tformat("%-11s", "hello"), "hello      ");
+}
+
 define_default_test_main();

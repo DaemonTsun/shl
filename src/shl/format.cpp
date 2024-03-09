@@ -1048,7 +1048,7 @@ s64 _format_skip_until_placeholder_c_s(u64 *_i, internal::_placeholder_info<C> *
 
     while (c >= '0' && c <= '9')
     {
-        pl->options.pad_length += (pl->options.pad_length * 10) + (c - '0');
+        pl->options.pad_length = (pl->options.pad_length * 10) + (c - '0');
         j++;
 
         if (j >= fmt.size) // break here to apply sign
