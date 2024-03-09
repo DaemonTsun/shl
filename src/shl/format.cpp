@@ -871,8 +871,16 @@ s64 _format_c_s(u64 i, s64 written, C *s, u64 ssize, u64 offset, const_string_ba
                 i++;
 
                 if (i >= fmt.size)
+                {
+                    s[offset++] = '\\';
+                    written++;
                     break;
-
+                }
+                else if (fmt[i] != '%')
+                {
+                    s[offset++] = '\\';
+                    written++;
+                }
             }
 
             s[offset++] = fmt[i];
@@ -909,8 +917,16 @@ s64 _format_s(u64 i, s64 written, string_base<C> *s, u64 offset, const_string_ba
                 i++;
 
                 if (i >= fmt.size)
+                {
+                    s->data[offset++] = '\\';
+                    written++;
                     break;
-
+                }
+                else if (fmt[i] != '%')
+                {
+                    s->data[offset++] = '\\';
+                    written++;
+                }
             }
 
             s->data[offset++] = fmt[i];
@@ -965,9 +981,17 @@ s64 _format_skip_until_placeholder_c_s(u64 *_i, internal::_placeholder_info<C> *
             i++;
 
             if (i >= fmt.size)
+            {
+                s[offset++] = '\\';
+                written++;
                 break;
-
-            c = fmt[i];
+            }
+            else if (fmt[i] != '%')
+            {
+                s[offset++] = '\\';
+                written++;
+                c = fmt[i];
+            }
         }
         else if (c == '%')
             break;
@@ -1084,9 +1108,17 @@ s64 _format_skip_until_placeholder_s(u64 *_i, internal::_placeholder_info<C> *pl
             i++;
 
             if (i >= fmt.size)
+            {
+                s->data[offset++] = '\\';
+                written++;
                 break;
-
-            c = fmt[i];
+            }
+            else if (fmt[i] != '%')
+            {
+                s->data[offset++] = '\\';
+                written++;
+                c = fmt[i];
+            }
         }
         else if (c == '%')
             break;

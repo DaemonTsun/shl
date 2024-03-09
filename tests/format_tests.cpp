@@ -715,4 +715,22 @@ define_test(new_format_creates_string_from_format)
     free(&str);
 }
 
+define_test(format_only_escapes_percent_backslashes)
+{
+    // no escape
+    assert_equal_str(tformat(R"(abc\def)"),    R"(abc\def)");
+    assert_equal_str(tformat(R"(abc\\def)"),   R"(abc\\def)");
+    assert_equal_str(tformat(R"(abc\\\def)"),  R"(abc\\\def)");
+    assert_equal_str(tformat(R"(abc\\\\def)"), R"(abc\\\\def)");
+
+    // escape
+    assert_equal_str(tformat(R"(abc\%def)"),    R"(abc%def)");
+    assert_equal_str(tformat(R"(abc\\\%def)"),  R"(abc\\%def)");
+
+    // no escape
+    assert_equal_str(tformat(R"(abc\\% def)", 123),   R"(abc\\123 def)");
+    assert_equal_str(tformat(R"(abc\\\\% def)", 123), R"(abc\\\\123 def)");
+
+}
+
 define_default_test_main();
