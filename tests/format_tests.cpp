@@ -726,6 +726,12 @@ define_test(format_only_escapes_percent_backslashes)
     // escape
     assert_equal_str(tformat(R"(abc\%def)"),    R"(abc%def)");
     assert_equal_str(tformat(R"(abc\\\%def)"),  R"(abc\\%def)");
+    assert_equal_str(tformat(R"(abc\%0def)"),   R"(abc%0def)");
+    assert_equal_str(tformat(R"(/* \% */)"),    R"(/* % */)");
+
+    char buf[32] = {0};
+    format(buf, 32, R"(/* \%0% \%08x \%08x */)", 5);
+    assert_equal_str(buf, R"(/* %05 %08x %08x */)");
 
     // no escape
     assert_equal_str(tformat(R"(abc\\% def)", 123),   R"(abc\\123 def)");

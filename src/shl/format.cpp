@@ -992,6 +992,8 @@ s64 _format_skip_until_placeholder_c_s(u64 *_i, internal::_placeholder_info<C> *
                 written++;
                 c = fmt[i];
             }
+            else
+                c = fmt[i];
         }
         else if (c == '%')
             break;
@@ -1119,6 +1121,8 @@ s64 _format_skip_until_placeholder_s(u64 *_i, internal::_placeholder_info<C> *pl
                 written++;
                 c = fmt[i];
             }
+            else
+                c = fmt[i];
         }
         else if (c == '%')
             break;
