@@ -755,4 +755,14 @@ define_test(format_padding_pads_string)
     assert_equal_str(tformat("%-11s", "hello"), "hello      ");
 }
 
+define_test(format_alt_formats_hex)
+{
+    assert_equal_str(tformat("%#x", 0),     "0");
+    assert_equal_str(tformat("%#x", 1),     "0x1");
+    assert_equal_str(tformat("%#x", 255),   "0xff");
+    assert_equal_str(tformat("%#x", 65535), "0xffff");
+    assert_equal_str(tformat("%#x", 65535), "0xffff");
+    assert_equal_str(tformat("%#x", (1lu << 32lu) - 1lu), "0xffffffff");
+}
+
 define_default_test_main();

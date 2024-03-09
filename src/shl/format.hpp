@@ -313,12 +313,12 @@ s64 _format(u64 i, s64 written, C *s, u64 ssize, u64 offset, const_string_base<C
             integer_format_options iopt = default_integer_options;\
             iopt.base = Base;\
             iopt.caps_letters = (c == Upper);\
-            iopt.include_prefix = pl.alternative;\
 \
             auto ptr = best_type_match<T, u64, u32, u16, u8>(forward<T>(arg));\
 \
             if constexpr (!is_same(decltype(ptr), void*))\
             {\
+                iopt.include_prefix = pl.alternative && (*ptr != 0);\
                 tostring_written = to_string(s, ssize, *ptr, offset, pl.options, iopt);\
                 return _format(++i, written + tostring_written, s, ssize, offset + tostring_written, fmt, forward<Ts>(args)...);\
             }\
