@@ -22,6 +22,7 @@ static int _memfd_create(const char *name, u32 flags)
 #endif
 
 #include "shl/math.hpp"
+#include "shl/compare.hpp"
 #include "shl/defer.hpp"
 #include "shl/ring_buffer.hpp"
 
@@ -34,12 +35,13 @@ bool init(ring_buffer *buf, u64 min_size, u32 mapping_count, error *err)
 
     buf->data = nullptr;
 
-#if Linux
-    u64 pagesize = (u64)sysconf(_SC_PAGESIZE);
+    u64 pagesize = get_system_pagesize();
     u64 actual_size = ceil_multiple2(min_size, pagesize);
-
     assert(actual_size > 0);
 
+    u64 total_size = actual_size * mapping_count;
+
+#if Linux
     int anonfd = _memfd_create("ringbuf", 0);
 
     if (anonfd == -1)
@@ -64,7 +66,7 @@ bool init(ring_buffer *buf, u64 min_size, u32 mapping_count, error *err)
         bool all_ranges_mapped = true;
 
         // find an address that works
-        ptr = ::mmap(nullptr, actual_size * mapping_count, PROT_NONE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+        ptr = ::mmap(nullptr, total_size, PROT_NONE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
 
         if (ptr == MAP_FAILED)
         {
@@ -106,13 +108,6 @@ bool init(ring_buffer *buf, u64 min_size, u32 mapping_count, error *err)
 
     return true;
 #elif Windows
-    SYSTEM_INFO info;
-    GetSystemInfo(&info);
-
-    u64 actual_size = ceil_multiple2(min_size, info.dwAllocationGranularity);
-    u64 total_size = actual_size * mapping_count;
-
-    assert(actual_size > 0);
     HANDLE fd = CreateFileMappingA(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE,
                                    (DWORD)(actual_size >> 32), (DWORD)(actual_size & 0xffffffff), 0);
 
@@ -184,5 +179,41 @@ bool free(ring_buffer *buf, error *err)
     return true;
 #else
     return false;
+#endif
+}
+
+bool resize(ring_buffer *buf, u64 min_size, u32 mapping_count, error *err)
+{
+    assert(buf != nullptr);
+
+    u64 pagesize = get_system_pagesize();
+    u64 actual_size = ceil_multiple2(min_size, pagesize);
+
+    if (buf->size == actual_size && buf->mapping_count == mapping_count)
+        return true;
+
+    ring_buffer nbuf{};
+    
+    if (!init(&nbuf, min_size, mapping_count, err))
+        return false;
+
+    u64 size_to_copy = Min(buf->size, nbuf.size);
+
+    memcpy(nbuf.data, buf->data, size_to_copy);
+    free(buf);
+    *buf = nbuf;
+
+    return true;
+}
+
+u64 get_system_pagesize()
+{
+#if Windows
+    SYSTEM_INFO info;
+    GetSystemInfo(&info);
+
+    return (u64)info.dwAllocationGranularity;
+#else
+    return (u64)sysconf(_SC_PAGESIZE);
 #endif
 }
