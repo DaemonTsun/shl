@@ -2,13 +2,36 @@
 
 /* enum_flag.hpp
 
-defines the macro enum_flag which defines
-operators and functions:
+Defines the macro enum_flag which defines operators and functions:
      value       - returns the underlying value of the enum
      is_flag_set - checks if a given flag is set
      set_flag    - sets a flag
      unset_flag  - unsets a flag
- */
+
+Example:
+
+enum class Attributes
+{
+    None        = 0,
+    Floating    = 1,
+    Liquid      = 2,
+    Blue        = 4
+};
+
+enum_flag(Attributes);
+
+void ...()
+{
+    Attributes attrs = Attributes::None;
+
+    set_flag(attrs, Attributes::Liquid);
+    set_flag(attrs, Attributes::Blue);
+
+    if (is_flag_set(attrs, Attributes::Blue))
+        printf("Blue attribute is indeed set.\n");
+}
+
+*/
 
 #include "shl/type_functions.hpp"
 

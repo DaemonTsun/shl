@@ -14,6 +14,7 @@ chunk index and slot index within the chunk.
 Alternatively, the chunk_array defines the index operator to access
 the Nth chunk, and chunks define the index operator to access the Nth
 slot within the chunk.
+
 Example:
 
     chunk_array<int, 4> arr{};
@@ -21,45 +22,48 @@ Example:
 
     printf("%d\n", arr[0][0]);
 
+    free(&arr);
+
 Chunks are not guaranteed to be next to each other in memory, but a
 chunks elements are contiguous.
 
 Functions:
 
-init(*arr): initializes the chunk_array
-add_element(*arr, Val): inserts the value Val into the array at the first
+init(*arr): Initializes the chunk_array.
+
+add_element(*arr, Val): Inserts the value Val into the array at the first
                         free slot in a nonfull chunk.
                         The nonfull chunk may not be the first nonfull chunk in the
                         array.
                         Returns a pointer to the inserted element as well as the index
                         to the element in the array.
 
-remove_element(*arr, index): removes an element from the array by item index.
-                             chunk_item_index is a struct containing the chunk and
+remove_element(*arr, index): Removes an element from the array by item index.
+                             Chunk_item_index is a struct containing the chunk and
                              slot index.
-                             example:
+                             Example:
                              remove_element(&arr, {.chunk_index = 0, .slot_index = 0});
 
-at(*arr, index): returns a pointer to an element in the array by item index.
+at(*arr, index): Returns a pointer to an element in the array by item index.
                  If the index is out of range (chunk or slot), return nullptr.
                  If the element at the given index is not used (i.e. not added
                  with add_element), also returns nullptr.
                  
-clear(*arr): marks all chunks as empty and resets size, but does not deallocate
+clear(*arr): Marks all chunks as empty and resets size, but does not deallocate
              any memory.
 
-free_values(*arr): calls free() on every used element in the array.
+free_values(*arr): Calls free() on every used element in the array.
 
-free(*arr): frees the memory of the chunks and the array and resets the data structure.
-free<True>(*arr): frees the memory of the elements, chunks and the array and resets
+free(*arr): Frees the memory of the chunks and the array and resets the data structure.
+free<True>(*arr): Frees the memory of the elements, chunks and the array and resets
                   the data structure. Use when storing e.g. strings.
 
-search/index_of/contains/hash: as usual, index_of yields an item index.
+search/index_of/contains/hash: As usual, index_of yields an item index.
 
 for_chunk_array(*value, *arr)
 for_chunk_array(index, *value, *arr)
 for_chunk_array(index, *value, *chunk, *arr)
-    iterates the used elements of a chunk_array. example:
+    Iterates the used elements of a chunk_array. example:
 
     chunk_array<int, 4> arr{};
     add_element(&arr, 1);
@@ -68,7 +72,7 @@ for_chunk_array(index, *value, *chunk, *arr)
     add_element(&arr, 4);
     add_element(&arr, 5);
 
-    // there's an allocated 8 values, but only the 5 used will be
+    // there's 8 allocated values, but only the 5 used will be
     // iterated.
     for_chunk_array(i, v, &arr)
         printf("[%d:%d]: %d\n", i.chunk_index, i.slot_index, *v);

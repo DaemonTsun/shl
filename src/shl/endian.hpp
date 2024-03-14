@@ -3,7 +3,7 @@
 
 /* endian.hpp
 
-everyone's favorite header.
+Everyone's favorite header.
 
 Defines the macro IS_LITTLE_ENDIAN and IS_BIG_ENDIAN to check if the system
 is little or big endian, and force_big_endian and force_little_endian functions

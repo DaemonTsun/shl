@@ -3,7 +3,8 @@
 
 /* bits.hpp
 
-Small collection of mostly mathematical functions for bit manipulation.
+Collection of mostly mathematical functions for bit manipulation,
+sometimes optimized for powers of two.
 See tests/bits_tests.cpp for examples of every function.
 
 Functions:

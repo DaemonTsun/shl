@@ -44,6 +44,16 @@ bool init(file_stream *stream, const wchar_t *path, error *err)
     return init(stream, path, MODE_READ | MODE_WRITE, PERMISSION_READ | PERMISSION_WRITE, err);
 }
 
+bool init(file_stream *stream, const char *path, int mode, error *err)
+{
+    return init(stream, path, mode, PERMISSION_READ | PERMISSION_WRITE, err);
+}
+
+bool init(file_stream *stream, const wchar_t *path, int mode, error *err)
+{
+    return init(stream, path, mode, PERMISSION_READ | PERMISSION_WRITE, err);
+}
+
 bool init(file_stream *stream, const char *path, int mode, int permissions, error *err)
 {
     assert(stream != nullptr);

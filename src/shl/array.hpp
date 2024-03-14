@@ -3,41 +3,72 @@
 
 /* array.hpp
 
-contiguous dynamic memory structure.
+Contiguous dynamic memory structure.
 
-functions:
+    template<typename T>
+    struct array
+    {
+        T *data;
+        u64 size;
+        u64 reserved_size;
+    }
 
-init(*arr) initializes an empty array with no elements. arr.data will be nullptr.
-init(*arr, N) initializes an array with N elements. the elements will be uninitialized.
+Example usage:
 
-add_at_start(*arr) returns a pointer to a new element at the start of the array.
-                   may allocate more memory if necessary.
-add_at_start(*arr, V) adds the value V at the start of the array, allocating more memory
+    array<int> arr{};
+    init(&arr, 3);
+    arr[0] = 1;
+    arr[1] = 2;
+    arr[2] = 3;
+
+    add_at_end(&arr, 4);
+
+    int x = 5;
+    add_at_end(&arr, &x);
+
+    int *ptr = add_at_end(&arr);
+    *ptr = 6;
+
+    for_array(i, val, &arr)
+        printf("%lu: %d\n", i, *val);
+
+    free(&arr);
+
+Functions:
+
+init(*arr)    Initializes an empty array with no elements. arr.data will be nullptr.
+init(*arr, N) Initializes an array with N elements. the elements will be uninitialized.
+
+add_at_start(*arr) Returns a pointer to a new element at the start of the array.
+                   May allocate more memory if necessary.
+add_at_start(*arr, V) Adds the value V at the start of the array, allocating more memory
                       if necessary.
-                      returns a pointer to the inserted value, which is always start.
+                      Returns a pointer to the inserted value, which is always start.
 
-add_at_end(*arr) returns a pointer to a new element at the end of the array.
-                 may allocate more memory if necessary.
-add_at_end(*arr, V) adds the value V at the end of the array, allocating more memory
+add_at_end(*arr) Returns a pointer to a new element at the end of the array.
+                 May allocate more memory if necessary.
+add_at_end(*arr, V) Adds the value V at the end of the array, allocating more memory
                     if necessary.
-                    returns a pointer to the inserted value.
+                    Returns a pointer to the inserted value.
 
-add_elements(*arr, N) adds N elements to the array at the end and returns a pointer
-                      to the start of the new elements.
-                      may allocate more memory than needed to store N elements,
-                      or allocate nothing if the array has enough reserved memory.
+add_elements(*arr, N)
+    Adds N elements to the array at the end and returns a pointer
+    to the start of the new elements.
+    May allocate more memory than needed to store N elements,
+    or allocate nothing if the array has enough reserved memory.
 
-insert_elements(*arr, pos, N) inserts N elements at position pos in the array.
-                              if pos == arr.size, behaves like add_elements(arr, N).
-                              if pos > arr.size, does nothing and returns nullptr.
-                              otherwise, adds N elements using add_elements,
-                              moves elements from [pos, arr.size[ to pos + N,
-                              then returns a pointer to where the elements
-                              were inserted.
+insert_elements(*arr, pos, N)
+    Inserts N elements at position pos in the array.
+    If pos == arr.size, behaves like add_elements(arr, N).
+    If pos > arr.size, does nothing and returns nullptr.
+    Otherwise, adds N elements using add_elements,
+    moves elements from [pos, arr.size[ to pos + N,
+    then returns a pointer to where the elements
+    were inserted.
 
-add_range(*arr, *Elems, N) adds N elements from Elems at the end of arr.
-                           if Elems is nullptr, returns nullptr,
-                           if N is 0, returns nullptr,
+add_range(*arr, *Elems, N) Adds N elements from Elems at the end of arr.
+                           If Elems is nullptr, returns nullptr.
+                           If N is 0, returns nullptr,
                            otherwise, returns pointer to the inserted elements
                            within arr.
 
@@ -46,89 +77,95 @@ add_range(*arr, *arr2) overload of add_range that adds all elements of arr2 to t
 
 add_range(*arr, *arr2, Start, Count) add_range(arr, arr2->data + Start, Count)
 
-insert_range(*arr, pos, *Elems, N) adds N elements from Elems into arr at position pos.
-                                   if pos == arr.size, behaves like add_range(arr, Elems, N).
-                                   if pos > arr.size, does nothing and returns nullptr.
-                                   if Elems is nullptr, returns nullptr,
-                                   if N is 0, returns nullptr,
-                                   otherwise, returns pointer to the inserted elements
-                                   within arr.
+insert_range(*arr, pos, *Elems, N)
+    Adds N elements from Elems into arr at position pos.
+    If pos == arr.size, behaves like add_range(arr, Elems, N).
+    If pos > arr.size, does nothing and returns nullptr.
+    If Elems is nullptr, returns nullptr.
+    If N is 0, returns nullptr,
+    otherwise, returns pointer to the inserted elements
+    within arr.
 
-insert_range(*arr, pos, *arr2) overload of insert_range that inserts all elements of arr2
+insert_range(*arr, pos, *arr2) Overload of insert_range that inserts all elements of arr2
                                into arr at position pos.
 
 insert_range(*arr, pos, *arr2, Start, Count) insert_range(arr, pos, arr2->data + Start, Count)
 
-remove_from_start(*arr) removes the first element from the start of the array,
+remove_from_start(*arr) Removes the first element from the start of the array,
                         shifting all others back. probably a heavy operation if
                         the array contains many elements. does nothing if the
                         array is empty.
 
-remove_from_end(*arr) reduces the size of the array by 1 (does not deallocate anything).
+remove_from_end(*arr) Reduces the size of the array by 1 (does not deallocate anything).
                       does nothing if the array is empty.
 
-remove_elements(*arr, pos, N) removes N elements starting at position pos from the array.
-                              does nothing if pos >= arr.size.
-                              if pos + n >= arr.size, simply changes the size of
-                              the array and keeps the reserved memory.
-                              use shrink_to_fit to remove the excess memory.
+remove_elements(*arr, pos, N)
+    Removes N elements starting at position pos from the array.
+    Does nothing if pos >= arr.size.
+    If pos + n >= arr.size, simply changes the size of
+    the array and keeps the reserved memory.
+    Use shrink_to_fit to remove the excess memory.
 
-reserve(*arr, N) if number of allocated elements in arr is smaller than N,
+reserve(*arr, N) If number of allocated elements in arr is smaller than N,
                  allocates enough elements for arr to store N total elements
                  and sets arr.reserved_size accordingly.
                  arr.size is untouched.
-                 cannot make arr smaller.
+                 Cannot make arr smaller.
 
-reserve_exp2(*arr, N) same as reserve, but if it allocates, it allocates
+reserve_exp2(*arr, N) Same as reserve, but if it allocates, it allocates
                       up to the next power of 2 to store at least N elements.
 
-resize(*arr, N) sets the size of the array to contain exactly N elements.
+resize(*arr, N) Sets the size of the array to contain exactly N elements.
 
-shrink_to_fit(*arr) reallocates to only use as much memory as required
-                   to store all the elements in the array if
-                   more memory is being used.
-                   does nothing if arr.size == arr.reserved_size.
+shrink_to_fit(*arr) Reallocates to only use as much memory as required
+                    to store all the elements in the array if
+                    more memory is being used.
+                    Does nothing if arr.size == arr.reserved_size.
 
-at(*arr, N) returns a pointer to the Nth element in the array.
+at(*arr, N) Returns a pointer to the Nth element in the array.
 
-clear(*arr) simply sets arr.size to 0, no memory is deallocated and
-            reserved memory is kept. use free(*arr) to deallocate memory.
+clear(*arr) Simply sets arr.size to 0, no memory is deallocated and
+            reserved memory is kept.
+            Use free(*arr) to deallocate memory.
 
-array_data(*arr) returns arr.data, pointer to the first element
-array_size(*arr) returns arr.size
+array_data(*arr) Returns arr.data, pointer to the first element.
+array_size(*arr) Returns arr.size.
+    array_data and array_size are used in for_array to loop through an array or
+    array-like object.
 
-free_values(*arr) calls free(*v) on each element in the array, but does
+free_values(*arr) Calls free(*v) on each element in the array, but does
                   not deallocate memory of the array.
 
-free(*arr) frees memory of the array and sets arr.size and arr.reserved_size to 0.
-           you may call init(*arr, size) after calling free(*arr).
-           the difference between free and free_values is that free frees the
+free(*arr) Frees memory of the array and sets arr.size and arr.reserved_size to 0.
+           You may call init(*arr, size) after calling free(*arr).
+           The difference between free and free_values is that free frees the
            memory of the _array_, whereas free_values frees the memory that
            the individual entries may have allocated.
 
 other functions:
 
-search(*arr, *key, eq) returns a pointer to an element that eq(elem, key)
+search(*arr, *key, eq) Returns a pointer to an element where eq(elem, key)
                        returns true to, otherwise returns nullptr if key
-                       was not found. does not assume anything about the
+                       was not found. Does not assume anything about the
                        array and will do a full scan in the worst case.
 
-index_of(*arr, *key, eq) returns the index of an element that eq(elem, key)
+index_of(*arr, *key, eq) Returns the index of an element where eq(elem, key)
                          returns true to, otherwise returns -1 if key
-                         was not found. does not assume anything about the
+                         was not found. Does not assume anything about the
                          array and will do a full scan in the worst case.
 
-contains(*arr, *key, eq) returns true if key is in the array, false
-                         otherwise. does not assume anything about the
+contains(*arr, *key, eq) Returns true if key is in the array, false
+                         otherwise. Does not assume anything about the
                          array and will do a full scan in the worst case.
 
-hash(*arr) returns the default hash of the _memory_ of the elements
+hash(*arr) Returns the default hash of the _memory_ of the elements
            of the array.
+           See shl/hash.hpp for details.
 
 supports index operator: arr[0] == arr.data[0].
 
-for_array(v, *arr) iterate an array. v will be a pointer to an element in the array.
-                   example, setting all values to 5:
+for_array(v, *arr) Iterate an array. v will be a pointer to an element in the array.
+                   Example, setting all values to 5:
 
                    array<int> arr;
                    init(&arr, 3)
@@ -138,7 +175,7 @@ for_array(v, *arr) iterate an array. v will be a pointer to an element in the ar
                        *v = 5;
                    }
 
-for_array(i, v, *arr) iterate an array. i will be the index of an element and
+for_array(i, v, *arr) Iterate an array. i will be the index of an element and
                       v will be a pointer to an element in the array.
  */
 

@@ -1,5 +1,6 @@
 
 #include <stdarg.h>
+#include <string.h>
 #include <stdio.h>
 
 #include "shl/platform.hpp"
@@ -44,6 +45,11 @@ error_buffer *_get_error_buffer(bool free_buffer = false)
 void _error_buffer_cleanup()
 {
     _get_error_buffer(true);
+}
+
+const char *_errno_error_message(int error_code)
+{
+    return strerror(error_code);
 }
 
 const char *_windows_error_message(int error_code)

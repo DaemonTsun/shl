@@ -9,20 +9,46 @@ add seek_next_alignment
 
 File stream API for writing data to file I/O handles.
 
+The file_stream struct has a handle member of type io_handle, and a cached size.
+The cached size is updated with get_file_size(file_stream*).
+
+Example:
+
+    file_stream fs{};
+    error err{};
+
+    if (!init(&fs, "test.txt", &err))
+        exit(err.error_code);
+
+    char buf[256] = {0};
+
+    s64 len = read(&fs, buf, 256, &err);
+
+    if (len < 0)
+        exit(err.error_code);
+
+    ...
+    free(&fs);
+
 Functions
 
 init(*Stream, Path[, *err])
-    initializes the stream with a handle to the file at Path.
+    Initializes the stream with a handle to the file at Path, opening the file with
+    Read and Write permissions.
     Returns false if unsuccessful and optionally writes error codes
     and messages to *err.
     Returns true if successful.
 
-init(*Stream, Path, Mode, Permissions[, *err])
-    initializes Stream with a handle to the file at Path with access mode Mode and
-    Permissions permissions.
+init(*Stream, Path, Mode[, *err])
+    Initializes Stream with a handle to the file at Path with access mode Mode.
     MODE_READ reads an existing file.
     MODE_WRITE writes to a new or existing file, not truncating its contents.
     MODE_WRITE_TRUNC writes to a new or existing file, truncating its contents.
+
+init(*Stream, Path, Mode, Permissions[, *err])
+    initializes Stream with a handle to the file at Path with access mode Mode and
+    Permissions permissions.
+    Available permissions are PERMISSION_READ, PERMISSION_WRITE and PERMISSION_EXECUTE.
     
 is_open(*Stream) returns if Stream has a valid handle.
 is_at_end(*Stream[, *err]) returns if the Stream is at the end.
@@ -205,8 +231,10 @@ struct file_stream
 // default mode is writing and reading
 bool init(file_stream *stream, const char *path, error *err = nullptr);
 bool init(file_stream *stream, const wchar_t *path, error *err = nullptr);
-bool init(file_stream *stream, const char *path, int mode, int permissions = PERMISSION_READ | PERMISSION_WRITE, error *err = nullptr);
-bool init(file_stream *stream, const wchar_t *path, int mode, int permissions = PERMISSION_READ | PERMISSION_WRITE, error *err = nullptr);
+bool init(file_stream *stream, const char *path, int mode, error *err = nullptr);
+bool init(file_stream *stream, const wchar_t *path, int mode, error *err = nullptr);
+bool init(file_stream *stream, const char *path, int mode, int permissions, error *err = nullptr);
+bool init(file_stream *stream, const wchar_t *path, int mode, int permissions, error *err = nullptr);
 bool free(file_stream *stream, error *err = nullptr);
 
 bool is_open(file_stream *stream);

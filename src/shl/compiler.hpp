@@ -2,10 +2,11 @@
 #pragma once
 
 /* compiler.hpp
- *
- * Detects the used compiler and sets preprocessor constants. 
- * For the used operating system used during compilation, see <shl/platform.hpp>.
- */
+
+Detects the used compiler and sets preprocessor constants. 
+For the used operating system used during compilation, see <shl/platform.hpp>.
+
+*/
 
 #if defined(__GNUC__)
 #define GNU 1

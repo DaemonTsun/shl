@@ -5,21 +5,24 @@
 
 Defines the error struct, a lightweight alternative to std::exception.
 
-format_error_message(fmt, ...) is similar to snprintf, but returns a pointer to the
-formatted string. The pointer points to static memory and only one message
-can be formatted at a time.
+format_error_message(fmt, ...)
+    Similar to snprintf, but returns a pointer to the formatted string.
+    The pointer points to static ring buffer memory which may be overwritten
+    with newer error messages.
 
-The set_error(*err, errcode, message) macro writes the given error message to *err.
-In debug, file and line information is also set in *err.
-Does nothing if *err is nullptr.
+set_error(*err, errcode, message)
+    Writes the given error code and message to *err.
+    In debug, file and line information is also set in *err.
+    Does nothing if *err is nullptr.
 
-format_error(*err, errcode, fmt, ...) is the same as set_error, but formats the error
-message using format_error_message.
+format_error(*err, errcode, fmt, ...)
+    Same as set_error, but formats the error message using format_error_message.
 
-A typical use-case for this is to have an optional *error parameter in a function
-and set the error if it's set, e.g.:
+A typical pattern for this is to have an optional *error parameter in a function
+and set the error if it's not nullptr (set_error and format_error check for nullptr),
+e.g.:
 
-bool do_thing(int x, int y, error *err)
+bool do_thing(int x, int y, error *err = nullptr)
 {
     if (x <= y)
     {
@@ -44,6 +47,7 @@ struct error
 
 const char *format_error_message(const char *format, ...);
 
+const char *_errno_error_message(int errcode);
 const char *_windows_error_message(int errcode);
 
 #ifndef NDEBUG
@@ -51,7 +55,7 @@ const char *_windows_error_message(int errcode);
     do { if ((Err) != nullptr) { *(Err) = ::error{.error_code = Code, .what = Msg, .file = __FILE__, .line = __LINE__}; } } while (0)
 
 #define set_errno_error(Err) \
-    do { if ((Err) != nullptr) { int _errcode = errno; *(Err) = ::error{.error_code = _errcode, .what = ::strerror(_errcode), .file = __FILE__, .line = __LINE__}; } } while (0)
+    do { if ((Err) != nullptr) { int _errcode = errno; *(Err) = ::error{.error_code = _errcode, .what = ::_errno_error_message(_errcode), .file = __FILE__, .line = __LINE__}; } } while (0)
 
 #define set_GetLastError_error(Err) \
     do { if ((Err) != nullptr) { int _errcode = (int)GetLastError(); *(Err) = ::error{.error_code = _errcode, .what = _windows_error_message(_errcode), .file = __FILE__, .line = __LINE__}; } } while (0)
@@ -62,7 +66,7 @@ const char *_windows_error_message(int errcode);
     do { if ((Err) != nullptr) { *(Err) = ::error{.error_code = Code, .what = Msg }; }} while (0)
 
 #define set_errno_error(Err) \
-    do { if ((Err) != nullptr) { int _errcode = errno; *(Err) = ::error{.error_code = _errcode, .what = ::strerror(_errcode) }; } } while (0)
+    do { if ((Err) != nullptr) { int _errcode = errno; *(Err) = ::error{.error_code = _errcode, .what = ::_errno_error_message(_errcode) }; } } while (0)
 
 #define set_GetLastError_error(Err) \
     do { if ((Err) != nullptr) { int _errcode = (int)GetLastError(); *(Err) = ::error{.error_code = _errcode, .what = _windows_error_message(_errcode) }; } } while (0)

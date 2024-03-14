@@ -2,21 +2,27 @@
 #pragma once
 
 /* compare.hpp
- *
- * defines function types for comparing and checking equality of
- * pointers of typed data.
- *
- * compare_function<T> = int(*)(const T a, const T b)
- *      returns -1 if a < b
- *               0 if a == b
- *               1 if a > b
- *
- * equality_function = bool(*)(const T a, const T b)
- *      returns true if a == b
- *              false otherwise
- *
- * _p variants for pointers.
- */
+
+Comparison functions and types.
+
+Defines function types for comparing and checking equality of
+pointers of typed data.
+
+compare_function<T> = int(*)(const T a, const T b)
+     returns -1 if a < b
+              0 if a == b
+              1 if a > b
+
+equality_function = bool(*)(const T a, const T b)
+     returns true if a == b
+             false otherwise
+
+_p variants for pointers.
+
+Min(X, Y)        If X < Y, returns X, otherwise returns Y.
+Max(X, Y)        If X > Y, returns X, otherwise returns Y.
+Clamp(Val, X, Y) If Val < X, returns X; if Val > Y, returns Y; otherwise returns Val.
+*/
 
 template<typename T1, typename T2 = T1>
 using compare_function = int (*)(T1, T2);

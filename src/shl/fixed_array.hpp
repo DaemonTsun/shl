@@ -3,48 +3,57 @@
 
 /* fixed_array.hpp
 
-contiguous fixed memory structure, counterpart to the std::array class.
+Contiguous fixed memory structure, counterpart to the std::array class.
+May also be used with constexpr for compile time arrays.
 
-functions:
+Example:
+
+    fixed_array<const char*, 3> int_names{
+        "zero",
+        "one",
+        "two",
+    };
+
+    for (int i = 0; i < 3; ++i)
+        printf("%d: %s\n", int_names[i]);
+
+Functions:
 
 at(*arr, N) returns a pointer to the Nth element in the array.
 
-array_data(*arr) returns a pointer to the first element in the array
-array_size(*arr) returns the size of the array
+array_data(*arr) Returns a pointer to the first element in the array.
+array_size(*arr) Returns the size of the array.
 
 other functions:
 
-search(*arr, *key, eq) returns a pointer to an element that eq(elem, key)
+search(*arr, *key, eq) Returns a pointer to an element that eq(elem, key)
                        returns true to, otherwise returns nullptr if key
-                       was not found. does not assume anything about the
+                       was not found. Does not assume anything about the
                        array and will do a full scan in the worst case.
 
-index_of(*arr, *key, eq) returns the index of an element that eq(elem, key)
+index_of(*arr, *key, eq) Returns the index of an element that eq(elem, key)
                          returns true to, otherwise returns -1 if key
-                         was not found. does not assume anything about the
+                         was not found. Does not assume anything about the
                          array and will do a full scan in the worst case.
 
-contains(*arr, *key, eq) returns true if key is in the array, false
-                         otherwise. does not assume anything about the
+contains(*arr, *key, eq) Returns true if key is in the array, false
+                         otherwise. Does not assume anything about the
                          array and will do a full scan in the worst case.
 
-hash(*arr) returns the default hash of the _memory_ of the elements
+hash(*arr) Returns the default hash of the _memory_ of the elements
            of the array.
 
 supports index operator: arr[0] == arr.data[0].
 
-for_array(v, *arr) iterate an array. v will be a pointer to an element in the array.
-                   example, setting all values to 5:
+for_array(v, *arr) Iterate an array. v will be a pointer to an element in the array.
+                   Example, setting all values to 5:
 
-                   array<int> arr;
-                   init(&arr, 3)
+                   fixed_array<int, 3> arr;
                    
                    for_array(v, &arr)
-                   {
                        *v = 5;
-                   }
 
-for_array(i, v, *arr) iterate an array. i will be the index of an element and
+for_array(i, v, *arr) Iterate an array. i will be the index of an element and
                       v will be a pointer to an element in the array.
  */
 
