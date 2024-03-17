@@ -4,7 +4,8 @@
 
 define_test(assert_test)
 {
-    assert(5 > 4);
+    volatile int x = 5;
+    assert(x > 4);
 }
 
 define_default_test_main();
