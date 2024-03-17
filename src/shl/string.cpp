@@ -1,11 +1,11 @@
 
-#include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <wctype.h>
 #include <wchar.h>
 
+#include "shl/assert.hpp"
 #include "shl/memory.hpp"
 #include "shl/type_functions.hpp"
 #include "shl/compare.hpp"
@@ -1329,7 +1329,7 @@ void _replace_s(string_base<C> *s, const_string_base<C> needle, const_string_bas
         s->data[s->size] = '\0';
     }
 
-    copy_string(replacement, s, UINT64_MAX, idx);
+    copy_string(replacement, s, U64_MAX, idx);
 }
 
 void replace(string *s, char needle, char replacement, s64 offset)
@@ -1396,7 +1396,7 @@ void _replace_all_s(string_base<C> *s, const_string_base<C> needle, const_string
             s->data[s->size] = '\0';
         }
 
-        copy_string(replacement, s, UINT64_MAX, idx);
+        copy_string(replacement, s, U64_MAX, idx);
 
         idx = index_of(s, needle, idx + 1);
     }

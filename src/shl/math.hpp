@@ -3,7 +3,7 @@
 
 /* math.hpp
 
-math function header
+Math function header.
 
 modulo(a, b)     calculates a % b, but also accepts floating point numbers.
 

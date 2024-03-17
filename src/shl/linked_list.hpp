@@ -3,9 +3,19 @@
 
 /* linked_list.hpp
 
-non-contiguous linked memory structure.
-contains nodes, each node contains one element, access via node.value.
-each node has a previous and next pointer to the previous and next node respectively.
+Non-contiguous linked memory structure.
+Contains nodes, each node contains one element, access via node.value.
+Each node has a previous and next pointer to the previous and next node respectively.
+
+Example, writing 0..4 to linked list.
+
+    linked_list<int> list{};
+    add_elements(&list, 5);
+
+    for_list(i, v, &list)
+        *v = i;
+
+    free(&list);
 
 initialize a list with init(*list, size), free with free(*list).
 
@@ -140,7 +150,7 @@ for_list(i, v, n, *list) iterate a list. i will be the index of an element and
                          n will be a pointer to a node in the list.
  */
 
-#include <assert.h>
+#include "shl/assert.hpp"
 #include "shl/compare.hpp"
 #include "shl/macros.hpp"
 #include "shl/type_functions.hpp"

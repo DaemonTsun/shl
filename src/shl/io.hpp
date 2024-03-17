@@ -7,6 +7,7 @@ I/O handles and functions.
 
 This header provides the io_handle type which refers to kernel I/O handles.
 On Linux, this is int (file descriptor), on Windows this is HANDLE.
+For obtaining file handles, see shl/file_stream.hpp.
 
 Functions:
 

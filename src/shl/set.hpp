@@ -113,8 +113,7 @@ for_array(i, v, *st) iterate a set. i will be the index of an element and
                      v will be a pointer to an element in the set.
  */
 
-#include <assert.h>
-
+#include "shl/assert.hpp"
 #include "shl/macros.hpp"
 #include "shl/compare.hpp"
 #include "shl/type_functions.hpp"

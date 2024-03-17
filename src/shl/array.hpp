@@ -179,8 +179,7 @@ for_array(i, v, *arr) Iterate an array. i will be the index of an element and
                       v will be a pointer to an element in the array.
  */
 
-#include <assert.h>
-
+#include "shl/assert.hpp"
 #include "shl/macros.hpp"
 #include "shl/compare.hpp"
 #include "shl/type_functions.hpp"

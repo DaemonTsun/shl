@@ -12,6 +12,19 @@ The memory_stream struct contains 3 members:
     size, the total size of data
     position, the current stream position
 
+Example:
+
+    memory_stream mem{};
+    init(&mem, 4 * 4096 * 4096);
+
+    write(&mem, "hello world", 11);
+    seek_from_start(&mem, 0);
+
+    char buf[32] = {0};
+    read(&mem, buf, 5); // buf contains hello now
+
+    free(&mem);
+
 Functions:
 
 init(*Stream, Size)

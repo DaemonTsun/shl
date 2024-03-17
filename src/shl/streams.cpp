@@ -1,6 +1,5 @@
 
-#include <assert.h>
-
+#include "shl/assert.hpp"
 #include "shl/chunk_array.hpp"
 #include "shl/streams.hpp"
 

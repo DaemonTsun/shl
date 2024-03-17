@@ -45,8 +45,7 @@ data member by setting it to the pointer of the stack buffer, or always use
 the scratch_buffer_data() function to obtain the correct pointer.
  */
 
-#include <assert.h>
-
+#include "shl/assert.hpp"
 #include "shl/number_types.hpp"
 #include "shl/memory.hpp"
 

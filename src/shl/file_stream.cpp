@@ -4,11 +4,11 @@
 // v1.1
 // add seek_next_alignment
 
-#include <assert.h>
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h> // wcstombs
 
+#include "shl/assert.hpp"
 #include "shl/platform.hpp"
 #include "shl/memory.hpp"
 #include "shl/bits.hpp"

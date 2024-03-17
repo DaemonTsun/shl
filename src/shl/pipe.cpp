@@ -1,6 +1,5 @@
 
-#include <assert.h>
-
+#include "shl/assert.hpp"
 #include "shl/pipe.hpp"
 
 #if Windows
@@ -8,7 +7,6 @@
 #include "shl/format.hpp"
 #else
 #include <errno.h>
-#include <string.h>
 
 #include <unistd.h> // pipe2
 #endif
@@ -31,7 +29,7 @@ bool _CreatePipeEx(LPHANDLE out_read,
     DWORD dwError;
     sys_char pipe_name[48] = {0};
 
-    format(pipe_name, 48, SYS_CHAR("\\\\\\\\.\\\\Pipe\\\\_anonymousPipe.%08x.%08x"),
+    format(pipe_name, 48, SYS_CHAR(R"(\\.\Pipe\_anonymousPipe.%08x.%08x)"),
              (u32)GetCurrentProcessId(), (u64)InterlockedIncrement(&pipeId));
 
     if (preferred_size <= 0)

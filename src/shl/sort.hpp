@@ -19,7 +19,7 @@
  *
  */
 
-#include <assert.h>
+#include "shl/assert.hpp"
 #include "shl/compare.hpp"
 #include "shl/number_types.hpp"
 

@@ -5,8 +5,7 @@
 // add seek_next_alignment
 // fix string writing
 
-#include <assert.h>
-
+#include "shl/assert.hpp"
 #include "shl/bits.hpp"
 #include "shl/math.hpp"
 #include "shl/memory.hpp"

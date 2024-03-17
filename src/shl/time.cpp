@@ -1,6 +1,5 @@
 
-#include <assert.h>
-
+#include "shl/assert.hpp"
 #include "shl/platform.hpp"
 
 #if Windows

@@ -3,7 +3,7 @@
 
 /* hash_table.hpp
 
-the hash table.
+The hash table.
 
 A pretty simple hash table that stores everything in an array and marks
 entries as unused/removed/used by setting the hash in the entry.
@@ -85,7 +85,7 @@ for_hash_table(*key, *value, *entry, *table)
     free(&table);
 */
 
-#include <assert.h>
+#include "shl/assert.hpp"
 #include "shl/compare.hpp"
 #include "shl/bits.hpp"
 #include "shl/hash.hpp"

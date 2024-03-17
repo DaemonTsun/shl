@@ -1,23 +1,23 @@
 
 /* format.hpp
 
-string formatting library
+String formatting library
 
-provides the to_string(...) functions with overloads for basic types,
+Provides the to_string(...) functions with overloads for basic types,
 e.g. int, char, bool, float, string (const char*, string* and const_string),
 pointers, etc.
 
-also provides the format(string, fmt, ...) function to format a string object
+Also provides the format(string, fmt, ...) function to format a string object
 using the format string and the rest of the arguments.
 format() is not (sn)printf compliant, but provides similar functionality.
 
-the formatting is generally type-safe, as every argument of a type T
+The formatting is generally type-safe, as every argument of a type T
 in the variable argument list must have the following function signature
 declared:
 
      to_string(string_base<C> *s, T x, u64 offset, format_options<C> opt)
 
-this to_string overload is called with the argument when the placeholder
+This to_string overload is called with the argument when the placeholder
 character '%' is encountered in the format string.
 This also means that you can define your own to_string overload for other
 types and use them with the format() function (be aware that you need to
@@ -36,7 +36,7 @@ format() (and the to_string functions) will allocate more memory in str as neede
 
      to_string(C *s, u64 ssize, T x, u64 offset, format_options<C> opt)
 
-these overloads take a pointer to a char (or wchar_t) buffer of size ssize and
+These overloads take a pointer to a char (or wchar_t) buffer of size ssize and
 work similar to the overloads that take a string parameter, except these
 overloads never allocate more memory.
 These functions will only write up to ssize characters, which means that if the

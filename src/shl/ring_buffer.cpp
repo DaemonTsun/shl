@@ -1,6 +1,6 @@
 
-#include <assert.h>
 
+#include "shl/assert.hpp"
 #include "shl/platform.hpp"
 #include "shl/number_types.hpp"
 

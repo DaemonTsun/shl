@@ -1,6 +1,7 @@
 
 #include <stdlib.h>
 
+#include "shl/assert.hpp"
 #include "shl/sort.hpp"
 
 void sort(void *ptr, u64 count, u64 size, compare_function_p<void> comp)

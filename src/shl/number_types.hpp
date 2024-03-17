@@ -1,22 +1,100 @@
 #pragma once
 
-// number_types.hpp
-// v1.1
-// max / min values
-// v1.0
-// defines common number types
+/* number_types.hpp
+v1.2
+got rid of stdint.h
+v1.1
+max / min values
 
-#include <stdint.h>
+Defines common number types, macros and compile-time functions for number types.
 
-typedef uint8_t  u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
-typedef int8_t   s8;
-typedef int16_t  s16;
-typedef int32_t  s32;
-typedef int64_t  s64;
+The number types are:
 
+    u8
+    u16
+    u32
+    u64
+    s8
+    s16
+    s32
+    s64
+
+with 'u' meaning unsigned, 's' meaning signed.
+Each type has a T_MAX macro constant (where T is the type, capitalized, e.g. s8 -> S8_MAX)
+with the largest possible value of that type, and signed types have T_MIN values.
+
+Templated min and max values are available with min_value(T) and max_value(T) macros,
+e.g.
+    if constexpr (123 < max_value(u8)) { ... }
+works fine.
+
+*/
+
+#if (defined(__x86_64__) || defined(_M_X64)) && !defined __ILP32__
+#define WORDSIZE 64
+#else
+#define WORDSIZE 32
+#endif
+
+#if WORDSIZE == 64 && !defined(_MSC_VER)
+#define LONG_INT_LIT(c)  c ## L
+#define LONG_UINT_LIT(c) c ## UL
+#else
+#define LONG_INT_LIT(c)  c ## LL
+#define LONG_UINT_LIT(c) c ## ULL
+#endif
+
+#if defined(_MSC_VER)
+#if (_MSC_VER >= 1300)
+typedef unsigned __int8     u8;
+typedef unsigned __int16    u16;
+typedef unsigned __int32    u32;
+typedef   signed __int8     s8;
+typedef   signed __int16    s16;
+typedef   signed __int32    s32;
+#else // old MSVC
+typedef unsigned char       u8;
+typedef unsigned short      u16;
+typedef unsigned int        u32;
+typedef   signed char       s8;
+typedef   signed short      s16;
+typedef   signed int        s32;
+#endif
+
+typedef unsigned __int64    u64;
+typedef   signed __int64    s64;
+#else // not MSVC
+typedef unsigned char       u8;
+typedef unsigned short      u16;
+typedef unsigned int        u32;
+typedef   signed char       s8;
+typedef   signed short      s16;
+typedef   signed int        s32;
+
+#if WORDSIZE == 64
+typedef unsigned long int   u64;
+typedef   signed long int   s64;
+#else
+typedef unsigned long long int u64;
+typedef   signed long long int s64;
+#endif
+#endif
+
+// max & min values
+#define  S8_MIN (-128)
+#define S16_MIN (-32768)
+#define S32_MIN (-2147483647 - 1)
+#define S64_MIN (-LONG_INT_LIT(9223372036854775807) - 1)
+
+#define  S8_MAX (127)
+#define S16_MAX (32767)
+#define S32_MAX (2147483647)
+#define S64_MAX (LONG_INT_LIT(9223372036854775807))
+
+#define  U8_MAX (255)
+#define U16_MAX (65535)
+#define U32_MAX (4294967295u)
+#define U64_MAX (LONG_UINT_LIT(18446744073709551615))
 
 template<typename T> struct _max_value { };
 #define define_max_value(T, Val) template<> struct _max_value<T>     { static constexpr T value = Val; };
@@ -26,21 +104,21 @@ template<typename T> struct _min_value { };
 #define define_min_value(T, Val) template<> struct _min_value<T>     { static constexpr T value = Val; };
 #define min_value(T) _min_value<T>::value
 
-define_max_value(u8,  UINT8_MAX);
-define_max_value(u16, UINT16_MAX);
-define_max_value(u32, UINT32_MAX);
-define_max_value(u64, UINT64_MAX);
-define_max_value(s8,  INT8_MAX);
-define_max_value(s16, INT16_MAX);
-define_max_value(s32, INT32_MAX);
-define_max_value(s64, INT64_MAX);
+define_max_value(u8,  U8_MAX);
+define_max_value(u16, U16_MAX);
+define_max_value(u32, U32_MAX);
+define_max_value(u64, U64_MAX);
+define_max_value(s8,  S8_MAX);
+define_max_value(s16, S16_MAX);
+define_max_value(s32, S32_MAX);
+define_max_value(s64, S64_MAX);
 
 define_min_value(u8,  0);
 define_min_value(u16, 0);
 define_min_value(u32, 0);
 define_min_value(u64, 0);
-define_min_value(s8,  INT8_MIN);
-define_min_value(s16, INT16_MIN);
-define_min_value(s32, INT32_MIN);
-define_min_value(s64, INT64_MIN);
+define_min_value(s8,  S8_MIN);
+define_min_value(s16, S16_MIN);
+define_min_value(s32, S32_MIN);
+define_min_value(s64, S64_MIN);
 

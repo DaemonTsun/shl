@@ -4,7 +4,6 @@
 #if Linux
 #include <unistd.h>
 #include <errno.h>
-#include <string.h>
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h> // ioctl

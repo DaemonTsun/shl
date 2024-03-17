@@ -5,6 +5,14 @@
 
 Defines the hash_t type (32 bit unsigned integer) and functions to calculate hashes.
 
+Example:
+
+    int myint = 10;
+    hash_t h1 = hash(&myint); // for some builtin types, see below
+
+    float myvec[3] = {0.3f, 0.7f, 1.f};
+    hash_t h2 = hash_data(myvec, sizeof(float) * 3); // for any pointer
+
 The hash_data(data, size) function calculates the hash of arbitrary data.
 hash_raw(*T) is the same as hash_data, but using a type T and its size instead of
 a pointer and size.

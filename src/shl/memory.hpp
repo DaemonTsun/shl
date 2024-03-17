@@ -3,7 +3,15 @@
 
 /* memory.hpp
 
-memory management header.
+Poor memory management header. Currently just wrappers around malloc, realloc and free.
+
+Example:
+
+    int *x = allocate_memory<int>();
+    free_memory(x);
+
+    char *data = allocate_memory(255);
+    free_memory(data);
 
 Default implementations of allocate_memory and free_memory are
 malloc and free respectively, currently.

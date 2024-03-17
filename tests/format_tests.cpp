@@ -762,7 +762,7 @@ define_test(format_alt_formats_hex)
     assert_equal_str(tformat("%#x", 255),   "0xff");
     assert_equal_str(tformat("%#x", 65535), "0xffff");
     assert_equal_str(tformat("%#x", 65535), "0xffff");
-    assert_equal_str(tformat("%#x", (1lu << 32lu) - 1lu), "0xffffffff");
+    assert_equal_str(tformat("%#x", U32_MAX), "0xffffffff");
 }
 
 define_default_test_main();

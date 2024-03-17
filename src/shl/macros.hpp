@@ -1,6 +1,11 @@
 
 #pragma once
 
+/* macros.hpp
+
+Used mostly internally.
+*/
+
 #ifndef JOIN
 #define JOIN(X, Y) X##Y
 #endif
