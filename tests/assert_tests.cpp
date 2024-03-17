@@ -4,7 +4,7 @@
 
 define_test(assert_test)
 {
-    volatile int x = 5;
+    [[maybe_unused]] volatile int x = 5;
     assert(x > 4);
 }
 
