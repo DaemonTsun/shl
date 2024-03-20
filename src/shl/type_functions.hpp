@@ -41,6 +41,9 @@ template<typename T> struct _remove_const          { typedef T type; };
 template<typename T> struct _remove_const<const T> { typedef T type; };
 #define remove_const(T) _remove_const<T>::type
 
+template<typename T> struct _add_pointer           { typedef T* type; };
+#define add_pointer(T) _add_pointer<T>::type
+
 template<typename T1, typename T2> struct _is_same { static constexpr bool value = false; };
 template<typename T>               struct _is_same<T, T> { static constexpr bool value = true;  };
 #define is_same(T1, T2) _is_same<T1, T2>::value

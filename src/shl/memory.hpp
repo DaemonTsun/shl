@@ -43,38 +43,34 @@ fill_memory<T>(T *Ptr, Byte, N) fills Ptr with N * sizeof(T) bytes with the
  */
 
 #include "shl/number_types.hpp"
+#include "shl/type_functions.hpp"
+#include "shl/macros.hpp"
 
-void *allocate_memory(u64 size);
-void *allocate_zeroed_memory(u64 size);
-
-template<typename T, bool Zero = false>
-T *allocate_memory()
-{
-    if constexpr (Zero)
-        return reinterpret_cast<T*>(allocate_zeroed_memory(sizeof(T)));
-    else
-        return reinterpret_cast<T*>(allocate_memory(sizeof(T)));
-}
-
-template<typename T, bool Zero = false>
-T *allocate_memory(u64 n_elements)
-{
-    if constexpr (Zero)
-        return reinterpret_cast<T*>(allocate_zeroed_memory(sizeof(T) * n_elements));
-    else
-        return reinterpret_cast<T*>(allocate_memory(sizeof(T) * n_elements));
-}
-
-void *reallocate_memory(void *ptr, u64 size);
+void *allocate_memory(s64 size);
+void *allocate_zeroed_memory(s64 size);
 
 template<typename T>
-T *reallocate_memory(T *ptr, u64 n_elements)
+T *allocate_memory()
+{
+    return reinterpret_cast<T*>(allocate_memory(sizeof(T)));
+}
+
+template<typename T>
+T *allocate_memory(s64 n_elements)
+{
+    return reinterpret_cast<T*>(allocate_memory(sizeof(T) * n_elements));
+}
+
+void *reallocate_memory(void *ptr, s64 size);
+
+template<typename T>
+T *reallocate_memory(T *ptr, s64 n_elements)
 {
     return reinterpret_cast<T*>(reallocate_memory(reinterpret_cast<void*>(ptr), sizeof(T) * n_elements));
 }
 
-void *move_memory(const void *from, void *to, u64 size);
-void *copy_memory(const void *from, void *to, u64 size);
+void *move_memory(const void *from, void *to, s64 size);
+void *copy_memory(const void *from, void *to, s64 size);
 void free_memory(void *ptr);
 
 template<typename T>
@@ -83,7 +79,7 @@ void free_memory(T *ptr)
     free_memory(reinterpret_cast<void*>(ptr));
 }
 
-void fill_memory(void *ptr, u8 byte, u64 size);
+void fill_memory(void *ptr, u8 byte, s64 size);
 
 template<typename T>
 void fill_memory(T *ptr, u8 byte)
@@ -92,8 +88,53 @@ void fill_memory(T *ptr, u8 byte)
 }
 
 template<typename T>
-void fill_memory(T *ptr, u8 byte, u64 count)
+void fill_memory(T *ptr, u8 byte, s64 count)
 {
     fill_memory(reinterpret_cast<void*>(ptr), byte, count * sizeof(T));
 }
 
+
+// allocators
+typedef void *(*alloc_function)(void *context, void *ptr, s64 old_size, s64 new_size);
+
+struct allocator
+{
+    alloc_function alloc;   
+    void *context;
+};
+
+void *default_alloc(void *context, void *ptr, s64 old_size, s64 new_size);
+
+const allocator default_allocator{.alloc = default_alloc, .context = nullptr};
+
+// helpers
+#define Alloc(A, Size)\
+    ((A).alloc((A).context, nullptr, 0, Size))
+
+#define _AllocT(A, Type)\
+    (reinterpret_cast<add_pointer(Type)>(Alloc((A), sizeof(Type))))
+
+#define _AllocTCount(A, Type, Count)\
+    (reinterpret_cast<add_pointer(Type)>(Alloc((A), sizeof(Type) * (Count))))
+
+#define AllocT(...) GET_MACRO2(__VA_ARGS__, _AllocTCount, _AllocT)(__VA_ARGS__)
+
+#define Realloc(A, Ptr, OldSize, NewSize)\
+    ((A).alloc((A).context, (Ptr), (OldSize), (NewSize)))
+
+#define ReallocT(A, Ptr, Type, OldCount, NewCount)\
+    (reinterpret_cast<add_pointer(Type)>((A).alloc((A).context, (Ptr), sizeof(Type) * (OldCount), sizeof(Type) * (NewCount))))
+
+#define Free(A, Ptr, Size)\
+    ((A).alloc((A).context, (Ptr), (Size), 0))
+
+#define _FreeTNotEnoughArgs(A, B)\
+    static_assert(false && "FreeT takes at least 3 arguments: allocator, pointer, type [, count]");
+
+#define _FreeT(A, Ptr, Type)\
+    (reinterpret_cast<typeof(Ptr)>(Free((A), (Ptr), sizeof(Type))))
+
+#define _FreeTCount(A, Ptr, Type, Count)\
+    (reinterpret_cast<typeof(Ptr)>(Free((A), (Ptr), sizeof(Type) * (Count))))
+
+#define FreeT(...) GET_MACRO3(__VA_ARGS__, _FreeTCount, _FreeT, _FreeTNotEnoughArgs)(__VA_ARGS__)

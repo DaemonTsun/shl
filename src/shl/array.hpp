@@ -11,6 +11,7 @@ Contiguous dynamic memory structure.
         T *data;
         u64 size;
         u64 reserved_size;
+        allocator allocator;
     }
 
 Example usage:
@@ -196,6 +197,7 @@ struct array
     T *data;
     u64 size;
     u64 reserved_size;
+    ::allocator allocator;
 
           T &operator[](u64 index)       { return data[index]; }
     const T &operator[](u64 index) const { return data[index]; }
@@ -215,23 +217,25 @@ bool operator==(const array<T> &lhs, const array<T> &rhs)
 }
 
 template<typename T>
-void init(array<T> *arr)
+void init(array<T> *arr, allocator a = default_allocator)
 {
     assert(arr != nullptr);
 
     arr->data = nullptr;
     arr->size = 0;
     arr->reserved_size = 0;
+    arr->allocator = a;
 }
 
 template<typename T>
-void init(array<T> *arr, u64 n_elements)
+void init(array<T> *arr, u64 n_elements, allocator a = default_allocator)
 {
     assert(arr != nullptr);
 
-    arr->data = allocate_memory<T>(n_elements);
+    arr->data = AllocT(a, T, n_elements);
     arr->size = n_elements;
     arr->reserved_size = n_elements;
+    arr->allocator = a;
 }
 
 template<typename T>
@@ -253,7 +257,10 @@ T *add_elements(array<T> *arr, u64 n_elements)
 
     u64 new_reserved_size = ceil_exp2(arr->reserved_size + n_elements);
 
-    T *n = reallocate_memory<T>(arr->data, new_reserved_size);
+    if (arr->allocator.alloc == nullptr)
+        arr->allocator = default_allocator;
+
+    T *n = ReallocT(arr->allocator, arr->data, T, arr->reserved_size, new_reserved_size);
 
     if (n == nullptr)
         return nullptr;
@@ -475,7 +482,10 @@ bool reserve(array<T> *arr, u64 size)
     if (arr->reserved_size >= size)
         return true;
 
-    T *n = reallocate_memory<T>(arr->data, size);
+    if (arr->allocator.alloc == nullptr)
+        arr->allocator = default_allocator;
+
+    T *n = ReallocT(arr->allocator, arr->data, T, arr->reserved_size, size);
 
     if (n == nullptr)
         return false;
@@ -512,7 +522,10 @@ bool resize(array<T> *arr, u64 size)
             free(arr->data + i);
     }
 
-    T *n = reallocate_memory<T>(arr->data, size);
+    if (arr->allocator.alloc == nullptr)
+        arr->allocator = default_allocator;
+
+    T *n = ReallocT(arr->allocator, arr->data, T, arr->reserved_size, size);
 
     if (n == nullptr && size > 0)
         return false;
@@ -532,7 +545,10 @@ bool shrink_to_fit(array<T> *arr)
     if (arr->size == arr->reserved_size)
         return true;
 
-    T *n = reallocate_memory<T>(arr->data, arr->size);
+    if (arr->allocator.alloc == nullptr)
+        arr->allocator = default_allocator;
+
+    T *n = ReallocT(arr->allocator, arr->data, T, arr->reserved_size, arr->size);
 
     if (n == nullptr)
         return false;
@@ -629,9 +645,13 @@ void free(array<T> *arr)
     if constexpr (FreeValues) free_values(arr);
 
     if (arr->data != nullptr)
-        free_memory<T>(arr->data);
+    {
+        if (arr->allocator.alloc == nullptr)
+            arr->allocator = default_allocator;
 
-    arr->data = nullptr;
+        arr->data = FreeT(arr->allocator, arr->data, T, arr->reserved_size);
+    }
+
     arr->size = 0;
     arr->reserved_size = 0;
 }
