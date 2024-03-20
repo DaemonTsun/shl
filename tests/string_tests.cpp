@@ -1010,7 +1010,7 @@ define_test(substring_with_no_out_parameter_returns_slice_to_data)
     assert_equal(compare_strings(input, output), 0);
     assert_equal(input.c_str, output.c_str);
 
-    output = substring(input, 0, max_value(u64));
+    output = substring(input, 0, max_value(s64));
     assert_equal(compare_strings(input, output), 0);
     assert_equal(input.c_str, output.c_str);
 

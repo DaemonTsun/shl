@@ -15,7 +15,7 @@ use the string literal suffix _cs, or use to_const_string(...), such as:
 
     const_string mystr = "hello world!"_cs;
     const char *cstr = mystr.c_str;
-    u64 size = mystr.size; // or string_length(mystr);
+    s64 size = mystr.size; // or string_length(mystr);
 
     const_string mystr2 = to_const_string("hello");
 
@@ -38,7 +38,7 @@ string literals, such as:
 
      string mystr = "hello world!"_s;                    // copy of string literal
      const char *cstr = static_cast<const char*>(mystr); // or mystr.data;
-     u64 size = string_length(&mystr);
+     s64 size = string_length(&mystr);
      free(&mystr);                                       // every string must be freed.
 
 
@@ -114,7 +114,7 @@ to_lower(c/s)                converts the given character or string to upper cas
 substring(src, start[, length]) returns a slice (not a copy) of the substring of src
                                 starting at start, up to length characters.
 
-substring(const_string src, u64 start, u64 length, string out, u64 out_start)
+substring(const_string src, s64 start, s64 length, string out, s64 out_start)
          copies src, starting at start, for up to length characters, into out,
          starting at out_start.
          allocates more memory in out if out does not have enough to fit
@@ -167,12 +167,12 @@ struct const_string_base
     typedef C value_type;
 
     const C *c_str;
-    u64 size;
+    s64 size;
 
     operator bool() const { return c_str != nullptr; }
     explicit operator const C *() const { return c_str; }
 
-    C operator[](u64 i) const { return c_str[i]; }
+    C operator[](s64 i) const { return c_str[i]; }
 };
 
 typedef const_string_base<char>    const_string;
@@ -187,19 +187,19 @@ struct string_base
     typedef C value_type;
 
     C *data;
-    u64 size;
-    u64 reserved_size;
+    s64 size;
+    s64 reserved_size;
+    ::allocator allocator;
 
     operator bool() const { return data != nullptr; }
-    explicit operator const C *() const { return data; }
+    explicit operator const C *() { return data; }
 
-    operator const_string_base<C>() const
+    operator const_string_base<C>()
     {
         return const_string_base<C>{data, size};
     }
 
-    C &operator[](u64 i)       { return data[i]; }
-    C  operator[](u64 i) const { return data[i]; }
+    C &operator[](s64 i)       { return data[i]; }
 };
 
 typedef string_base<char>    string;
@@ -210,18 +210,18 @@ string  operator ""_s(const char    *, u64);
 wstring operator ""_s(const wchar_t *, u64);
 
 void init(string *str);
-void init(string *str, u64 size);
+void init(string *str, s64 size);
 void init(string *str, const char *c);
-void init(string *str, const char *c, u64 size);
+void init(string *str, const char *c, s64 size);
 void init(string *str, const_string s);
 void init(wstring *str);
-void init(wstring *str, u64 size);
+void init(wstring *str, s64 size);
 void init(wstring *str, const wchar_t *c);
-void init(wstring *str, const wchar_t *c, u64 size);
+void init(wstring *str, const wchar_t *c, s64 size);
 void init(wstring *str, const_wstring s);
 
-bool string_reserve(string  *s, u64 total_size);
-bool string_reserve(wstring *s, u64 total_size);
+bool string_reserve(string  *s, s64 total_size);
+bool string_reserve(wstring *s, s64 total_size);
 
 void clear(string  *str);
 void clear(wstring *str);
@@ -271,12 +271,12 @@ bool is_blank(const_wstring s);
 bool is_blank(const string  *s);
 bool is_blank(const wstring *s);
 
-u64 string_length(const char    *s);
-u64 string_length(const wchar_t *s);
-u64 string_length(const_string  s);
-u64 string_length(const_wstring s);
-u64 string_length(const string  *s);
-u64 string_length(const wstring *s);
+s64 string_length(const char    *s);
+s64 string_length(const wchar_t *s);
+s64 string_length(const_string  s);
+s64 string_length(const_wstring s);
+s64 string_length(const string  *s);
+s64 string_length(const wstring *s);
 
 template<typename C>
 inline const_string_base<C> to_const_string(const C *s)
@@ -285,12 +285,12 @@ inline const_string_base<C> to_const_string(const C *s)
 }
 
 template<typename C>
-inline const_string_base<C> to_const_string(const C *s, u64 n)
+inline const_string_base<C> to_const_string(const C *s, s64 n)
 {
     return const_string_base<C>{s, n};
 }
 
-template<typename C, u64 N>
+template<typename C, s64 N>
 inline const_string_base<C> to_const_string(const C s[N])
 {
     return const_string_base<C>{s, N};
@@ -314,11 +314,11 @@ inline const_string_base<C> to_const_string(const_string_base<C> s)
     return s;
 }
 
-int _compare_strings(const_string   s1, const_string   s2, u64 n);
-int _compare_strings(const_wstring  s1, const_wstring  s2, u64 n);
+int _compare_strings(const_string   s1, const_string   s2, s64 n);
+int _compare_strings(const_wstring  s1, const_wstring  s2, s64 n);
 
 template<typename T1, typename T2>
-auto compare_strings(T1 s1, T2 s2, u64 n = max_value(u64))
+auto compare_strings(T1 s1, T2 s2, s64 n = max_value(s64))
     -> decltype(_compare_strings(to_const_string(s1), to_const_string(s2), n))
 {
     return _compare_strings(to_const_string(s1), to_const_string(s2), n);
@@ -387,8 +387,8 @@ DEFINE_DECIMAL_SIGNATURE(long double, to_long_double);
 // sets dst to src, discarding all previous data in dst
 void set_string(string  *dst, const char    *src);
 void set_string(wstring *dst, const wchar_t *src);
-void set_string(string  *dst, const char    *src, u64 n);
-void set_string(wstring *dst, const wchar_t *src, u64 n);
+void set_string(string  *dst, const char    *src, s64 n);
+void set_string(wstring *dst, const wchar_t *src, s64 n);
 void set_string(string  *dst, const_string   src);
 void set_string(wstring *dst, const_wstring  src);
 void set_string(string  *dst, const string  *src);
@@ -396,26 +396,26 @@ void set_string(wstring *dst, const wstring *src);
 
 char    *copy_string(const char    *src, char    *dst);
 wchar_t *copy_string(const wchar_t *src, wchar_t *dst);
-char    *copy_string(const char    *src, char    *dst, u64 n);
-wchar_t *copy_string(const wchar_t *src, wchar_t *dst, u64 n);
+char    *copy_string(const char    *src, char    *dst, s64 n);
+wchar_t *copy_string(const wchar_t *src, wchar_t *dst, s64 n);
 
 // allocates more memory in dst if dst is not large enough to store src
-void _copy_string(const_string   src, string  *dst, u64 n, u64 dst_offset);
-void _copy_string(const_wstring  src, wstring *dst, u64 n, u64 dst_offset);
+void _copy_string(const_string   src, string  *dst, s64 n, s64 dst_offset);
+void _copy_string(const_wstring  src, wstring *dst, s64 n, s64 dst_offset);
 
 // T = anything that can become (or is) a const_string_base
 template<typename T, typename C>
-void copy_string(T src, string_base<C> *dst, u64 n = max_value(u64), u64 dst_offset = 0)
+void copy_string(T src, string_base<C> *dst, s64 n = max_value(s64), s64 dst_offset = 0)
 {
     _copy_string(to_const_string(src), dst, n, dst_offset);
 }
 
-string  _copy_string(const_string  src, u64 n);
-wstring _copy_string(const_wstring src, u64 n);
+string  _copy_string(const_string  src, s64 n);
+wstring _copy_string(const_wstring src, s64 n);
 
 // T = anything that can become (or is) a const_string_base
 template<typename T>
-auto copy_string(T src, u64 n = max_value(u64))
+auto copy_string(T src, s64 n = max_value(s64))
 {
     return _copy_string(to_const_string(src), n);
 }
@@ -473,21 +473,47 @@ s64 _last_index_of(const_string   haystack, const_string   needle, s64 offset);
 s64 _last_index_of(const_wstring  haystack, const_wstring  needle, s64 offset);
 
 template<typename T1, typename T2>
-auto last_index_of(T1 haystack, T2 needle, s64 offset = max_value(s64))
+auto last_index_of(T1 haystack, T2 needle)
+    -> decltype(_last_index_of(to_const_string(haystack), to_const_string(needle), 0))
+{
+    auto h = to_const_string(haystack);
+    auto n = to_const_string(needle);
+
+    return _last_index_of(h, n, h.size - n.size);
+}
+
+template<typename T1, typename T2>
+auto last_index_of(T1 haystack, T2 needle, s64 offset)
     -> decltype(_last_index_of(to_const_string(haystack), to_const_string(needle), offset))
 {
     return _last_index_of(to_const_string(haystack), to_const_string(needle), offset);
 }
 
 template<typename T>
-auto last_index_of(T haystack, char needle, s64 offset = max_value(s64))
+auto last_index_of(T haystack, char needle)
+    -> decltype(_last_index_of(to_const_string(haystack), needle, 0))
+{
+    auto h = to_const_string(haystack);
+    return _last_index_of(h, needle, h.size - 1);
+}
+
+template<typename T>
+auto last_index_of(T haystack, char needle, s64 offset)
     -> decltype(_last_index_of(to_const_string(haystack), needle, offset))
 {
     return _last_index_of(to_const_string(haystack), needle, offset);
 }
 
 template<typename T>
-auto last_index_of(T haystack, wchar_t needle, s64 offset = max_value(s64))
+auto last_index_of(T haystack, wchar_t needle)
+    -> decltype(_last_index_of(to_const_string(haystack), needle, 0))
+{
+    auto h = to_const_string(haystack);
+    return _last_index_of(h, needle, h.size - 1);
+}
+
+template<typename T>
+auto last_index_of(T haystack, wchar_t needle, s64 offset)
     -> decltype(_last_index_of(to_const_string(haystack), needle, offset))
 {
     return _last_index_of(to_const_string(haystack), needle, offset);
@@ -521,24 +547,24 @@ void    to_lower(wchar_t *s);
 void    to_lower(string  *s);
 void    to_lower(wstring *s);
 
-const_string  _substring(const_string  s, u64 start, u64 length);
-const_wstring _substring(const_wstring s, u64 start, u64 length);
+const_string  _substring(const_string  s, s64 start, s64 length);
+const_wstring _substring(const_wstring s, s64 start, s64 length);
 
 template<typename T>
-auto substring(T str, u64 start, u64 length = max_value(u64))
+auto substring(T str, s64 start, s64 length = max_value(s64))
     -> decltype(_substring(to_const_string(str), start, length))
 {
     return _substring(to_const_string(str), start, length);
 }
 
-void substring(const char    *s, u64 start, u64 length, char    *out, u64 out_offset = 0);
-void substring(const wchar_t *s, u64 start, u64 length, wchar_t *out, u64 out_offset = 0);
+void substring(const char    *s, s64 start, s64 length, char    *out, s64 out_offset = 0);
+void substring(const wchar_t *s, s64 start, s64 length, wchar_t *out, s64 out_offset = 0);
 
-void _substring(const_string  s, u64 start, u64 length, string *out,  u64 out_offset);
-void _substring(const_wstring s, u64 start, u64 length, wstring *out, u64 out_offset);
+void _substring(const_string  s, s64 start, s64 length, string *out,  s64 out_offset);
+void _substring(const_wstring s, s64 start, s64 length, wstring *out, s64 out_offset);
 
 template<typename C, typename T>
-auto substring(T str, u64 start, u64 length, string_base<C> *out, u64 out_offset = 0)
+auto substring(T str, s64 start, s64 length, string_base<C> *out, s64 out_offset = 0)
     -> decltype(_substring(to_const_string(str), start, length, out, out_offset))
 {
     _substring(to_const_string(str), start, length, out, out_offset);
@@ -587,18 +613,18 @@ auto split(T s, C delim, array<const_string_base<C>> *out)
     return _split(to_const_string(s), delim, out);
 }
 
-void join(const char  **strings, u64 count, char          delim, string *out);
-void join(const char  **strings, u64 count, const char   *delim, string *out);
-void join(const char  **strings, u64 count, const_string  delim, string *out);
-void join(const char  **strings, u64 count, const string *delim, string *out);
-void join(const_string *strings, u64 count, char          delim, string *out);
-void join(const_string *strings, u64 count, const char   *delim, string *out);
-void join(const_string *strings, u64 count, const_string  delim, string *out);
-void join(const_string *strings, u64 count, const string *delim, string *out);
-void join(const string *strings, u64 count, char          delim, string *out);
-void join(const string *strings, u64 count, const char   *delim, string *out);
-void join(const string *strings, u64 count, const_string  delim, string *out);
-void join(const string *strings, u64 count, const string *delim, string *out);
+void join(const char  **strings, s64 count, char          delim, string *out);
+void join(const char  **strings, s64 count, const char   *delim, string *out);
+void join(const char  **strings, s64 count, const_string  delim, string *out);
+void join(const char  **strings, s64 count, const string *delim, string *out);
+void join(const_string *strings, s64 count, char          delim, string *out);
+void join(const_string *strings, s64 count, const char   *delim, string *out);
+void join(const_string *strings, s64 count, const_string  delim, string *out);
+void join(const_string *strings, s64 count, const string *delim, string *out);
+void join(const string *strings, s64 count, char          delim, string *out);
+void join(const string *strings, s64 count, const char   *delim, string *out);
+void join(const string *strings, s64 count, const_string  delim, string *out);
+void join(const string *strings, s64 count, const string *delim, string *out);
 void join(const array<const char*>    *arr, char          delim, string *out);
 void join(const array<const char*>    *arr, const char   *delim, string *out);
 void join(const array<const char*>    *arr, const_string  delim, string *out);
@@ -612,18 +638,18 @@ void join(const array<string>         *arr, const char   *delim, string *out);
 void join(const array<string>         *arr, const_string  delim, string *out);
 void join(const array<string>         *arr, const string *delim, string *out);
 
-void join(const wchar_t **strings, u64 count, wchar_t        delim, wstring *out);
-void join(const wchar_t **strings, u64 count, const wchar_t *delim, wstring *out);
-void join(const wchar_t **strings, u64 count, const_wstring  delim, wstring *out);
-void join(const wchar_t **strings, u64 count, const wstring *delim, wstring *out);
-void join(const_wstring *strings,  u64 count, wchar_t        delim, wstring *out);
-void join(const_wstring *strings,  u64 count, const wchar_t *delim, wstring *out);
-void join(const_wstring *strings,  u64 count, const_wstring  delim, wstring *out);
-void join(const_wstring *strings,  u64 count, const wstring *delim, wstring *out);
-void join(const wstring *strings,  u64 count, wchar_t        delim, wstring *out);
-void join(const wstring *strings,  u64 count, const wchar_t *delim, wstring *out);
-void join(const wstring *strings,  u64 count, const_wstring  delim, wstring *out);
-void join(const wstring *strings,  u64 count, const wstring *delim, wstring *out);
+void join(const wchar_t **strings, s64 count, wchar_t        delim, wstring *out);
+void join(const wchar_t **strings, s64 count, const wchar_t *delim, wstring *out);
+void join(const wchar_t **strings, s64 count, const_wstring  delim, wstring *out);
+void join(const wchar_t **strings, s64 count, const wstring *delim, wstring *out);
+void join(const_wstring *strings,  s64 count, wchar_t        delim, wstring *out);
+void join(const_wstring *strings,  s64 count, const wchar_t *delim, wstring *out);
+void join(const_wstring *strings,  s64 count, const_wstring  delim, wstring *out);
+void join(const_wstring *strings,  s64 count, const wstring *delim, wstring *out);
+void join(const wstring *strings,  s64 count, wchar_t        delim, wstring *out);
+void join(const wstring *strings,  s64 count, const wchar_t *delim, wstring *out);
+void join(const wstring *strings,  s64 count, const_wstring  delim, wstring *out);
+void join(const wstring *strings,  s64 count, const wstring *delim, wstring *out);
 void join(const array<const wchar_t*>   *arr, wchar_t        delim, wstring *out);
 void join(const array<const wchar_t*>   *arr, const wchar_t *delim, wstring *out);
 void join(const array<const wchar_t*>   *arr, const_wstring  delim, wstring *out);
@@ -637,8 +663,8 @@ void join(const array<wstring>          *arr, const wchar_t *delim, wstring *out
 void join(const array<wstring>          *arr, const_wstring  delim, wstring *out);
 void join(const array<wstring>          *arr, const wstring *delim, wstring *out);
 
-void resolve_environment_variables(char    *str, u64 size, bool aliases = false);
-void resolve_environment_variables(wchar_t *str, u64 size, bool aliases = false);
+void resolve_environment_variables(char    *str, s64 size, bool aliases = false);
+void resolve_environment_variables(wchar_t *str, s64 size, bool aliases = false);
 void resolve_environment_variables(string  *str, bool aliases = false);
 void resolve_environment_variables(wstring *str, bool aliases = false);
 

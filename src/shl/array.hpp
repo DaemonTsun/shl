@@ -9,8 +9,8 @@ Contiguous dynamic memory structure.
     struct array
     {
         T *data;
-        u64 size;
-        u64 reserved_size;
+        s64 size;
+        s64 reserved_size;
         allocator allocator;
     }
 
@@ -195,12 +195,12 @@ struct array
     typedef T value_type;
 
     T *data;
-    u64 size;
-    u64 reserved_size;
+    s64 size;
+    s64 reserved_size;
     ::allocator allocator;
 
-          T &operator[](u64 index)       { return data[index]; }
-    const T &operator[](u64 index) const { return data[index]; }
+          T &operator[](s64 index)       { return data[index]; }
+    const T &operator[](s64 index) const { return data[index]; }
 };
 
 template<typename T>
@@ -209,7 +209,7 @@ bool operator==(const array<T> &lhs, const array<T> &rhs)
     if (lhs.size != rhs.size)
         return false;
 
-    for (u64 i = 0; i < lhs.size; ++i)
+    for (s64 i = 0; i < lhs.size; ++i)
         if (!(lhs.data[i] == rhs.data[i]))
             return false;
 
@@ -228,9 +228,12 @@ void init(array<T> *arr, allocator a = default_allocator)
 }
 
 template<typename T>
-void init(array<T> *arr, u64 n_elements, allocator a = default_allocator)
+void init(array<T> *arr, s64 n_elements, allocator a = default_allocator)
 {
     assert(arr != nullptr);
+
+    if (n_elements < 0)
+        n_elements = 0;
 
     arr->data = AllocT(a, T, n_elements);
     arr->size = n_elements;
@@ -239,14 +242,14 @@ void init(array<T> *arr, u64 n_elements, allocator a = default_allocator)
 }
 
 template<typename T>
-T *add_elements(array<T> *arr, u64 n_elements)
+T *add_elements(array<T> *arr, s64 n_elements)
 {
     assert(arr != nullptr);
 
-    if (n_elements == 0)
+    if (n_elements <= 0)
         return nullptr;
 
-    u64 nsize = arr->size + n_elements; 
+    s64 nsize = arr->size + n_elements; 
 
     if (nsize < arr->reserved_size)
     {
@@ -255,7 +258,7 @@ T *add_elements(array<T> *arr, u64 n_elements)
         return ret;
     }
 
-    u64 new_reserved_size = ceil_exp2(arr->reserved_size + n_elements);
+    s64 new_reserved_size = ceil_exp2(arr->reserved_size + n_elements);
 
     if (arr->allocator.alloc == nullptr)
         arr->allocator = default_allocator;
@@ -279,11 +282,13 @@ T *add_elements(array<T> *arr, u64 n_elements)
 }
 
 template<typename T>
-T *insert_elements(array<T> *arr, u64 index, u64 n_elements)
+T *insert_elements(array<T> *arr, s64 index, s64 n_elements)
 {
     assert(arr != nullptr);
 
-    if (index == arr->size)
+    if (index < 0)
+        return nullptr;
+    else if (index == arr->size)
         return add_elements(arr, n_elements);
     else if (index > arr->size)
     {
@@ -297,7 +302,7 @@ T *insert_elements(array<T> *arr, u64 index, u64 n_elements)
     if (n_elements == 0)
         return arr->data + index;
 
-    u64 prev_size = arr->size;
+    s64 prev_size = arr->size;
     T *n = add_elements(arr, n_elements);
 
     if (n == nullptr)
@@ -305,7 +310,7 @@ T *insert_elements(array<T> *arr, u64 index, u64 n_elements)
 
     void *start = reinterpret_cast<void*>(arr->data + index);
     void *new_start = reinterpret_cast<void*>(arr->data + index + n_elements);
-    u64 elem_count = prev_size - index;
+    s64 elem_count = prev_size - index;
 
     ::move_memory(start, new_start, elem_count * sizeof(T));
 
@@ -313,7 +318,7 @@ T *insert_elements(array<T> *arr, u64 index, u64 n_elements)
 }
 
 template<typename T>
-T *add_range(array<T> *arr, const T *elements, u64 n_elements)
+T *add_range(array<T> *arr, const T *elements, s64 n_elements)
 {
     assert(arr != nullptr);
 
@@ -336,7 +341,7 @@ T *add_range(array<T> *arr, const array<T> *other)
 }
 
 template<typename T>
-T *add_range(array<T> *arr, const array<T> *other, u64 other_start, u64 count)
+T *add_range(array<T> *arr, const array<T> *other, s64 other_start, s64 count)
 {
     assert(arr != nullptr);
     assert(other != nullptr);
@@ -347,11 +352,11 @@ T *add_range(array<T> *arr, const array<T> *other, u64 other_start, u64 count)
 }
 
 template<typename T>
-T *insert_range(array<T> *arr, u64 index, const T *elements, u64 n_elements)
+T *insert_range(array<T> *arr, s64 index, const T *elements, s64 n_elements)
 {
     assert(arr != nullptr);
 
-    if (elements == nullptr || n_elements == 0)
+    if (elements == nullptr || n_elements <= 0 || index < 0)
         return nullptr;
 
     T *ret = insert_elements(arr, index, n_elements);
@@ -365,7 +370,7 @@ T *insert_range(array<T> *arr, u64 index, const T *elements, u64 n_elements)
 }
 
 template<typename T>
-T *insert_range(array<T> *arr, u64 index, const array<T> *other)
+T *insert_range(array<T> *arr, s64 index, const array<T> *other)
 {
     assert(arr != nullptr);
     assert(other != nullptr);
@@ -374,7 +379,7 @@ T *insert_range(array<T> *arr, u64 index, const array<T> *other)
 }
 
 template<typename T>
-T *insert_range(array<T> *arr, u64 index, const array<T> *other, u64 other_start, u64 count)
+T *insert_range(array<T> *arr, s64 index, const array<T> *other, s64 other_start, s64 count)
 {
     assert(arr != nullptr);
     assert(other != nullptr);
@@ -429,21 +434,21 @@ inline T *add_at_end(array<T> *arr, const T *val)
 }
 
 template<bool FreeValues = false, typename T>
-void remove_elements(array<T> *arr, u64 index, u64 n_elements)
+void remove_elements(array<T> *arr, s64 index, s64 n_elements)
 {
     assert(arr != nullptr);
 
-    if (n_elements == 0)
+    if (n_elements <= 0)
         return;
 
-    if (index >= arr->size)
+    if (index < 0 || index >= arr->size)
         return;
 
     if constexpr (FreeValues)
     {
-        u64 max = Min(index + n_elements, arr->size);
+        s64 max = Min(index + n_elements, arr->size);
         
-        for (u64 i = index; i < max; ++i)
+        for (s64 i = index; i < max; ++i)
             free(arr->data + i);
     }
 
@@ -456,7 +461,7 @@ void remove_elements(array<T> *arr, u64 index, u64 n_elements)
     void *before = reinterpret_cast<void*>(arr->data + index);
     void *after = reinterpret_cast<void*>(arr->data + index + n_elements);
 
-    u64 num_items_after = arr->size - (index + n_elements);
+    s64 num_items_after = arr->size - (index + n_elements);
     ::move_memory(after, before, num_items_after * sizeof(T));
 
     arr->size = arr->size - n_elements;
@@ -475,7 +480,7 @@ inline void remove_from_end(array<T> *arr)
 }
 
 template<typename T>
-bool reserve(array<T> *arr, u64 size)
+bool reserve(array<T> *arr, s64 size)
 {
     assert(arr != nullptr);
 
@@ -497,7 +502,7 @@ bool reserve(array<T> *arr, u64 size)
 }
 
 template<typename T>
-bool reserve_exp2(array<T> *arr, u64 size)
+bool reserve_exp2(array<T> *arr, s64 size)
 {
     return reserve(arr, ceil_exp2(size));
 }
@@ -505,7 +510,7 @@ bool reserve_exp2(array<T> *arr, u64 size)
 // if size makes array smaller and FreeValues is true, call free() on all
 // removed values before reallocating memory.
 template<bool FreeValues = false, typename T>
-bool resize(array<T> *arr, u64 size)
+bool resize(array<T> *arr, s64 size)
 {
     assert(arr != nullptr);
 
@@ -518,7 +523,7 @@ bool resize(array<T> *arr, u64 size)
     if constexpr (FreeValues)
     {
         if (arr->size > size)
-        for (u64 i = size; i < arr->size; ++i)
+        for (s64 i = size; i < arr->size; ++i)
             free(arr->data + i);
     }
 
@@ -577,7 +582,7 @@ T *end(array<T> *arr)
 }
 
 template<typename T>
-T *at(array<T> *arr, u64 index)
+T *at(array<T> *arr, s64 index)
 {
     assert(arr != nullptr);
     assert(index < arr->size);
@@ -586,7 +591,7 @@ T *at(array<T> *arr, u64 index)
 }
 
 template<typename T>
-const T *at(const array<T> *arr, u64 index)
+const T *at(const array<T> *arr, s64 index)
 {
     assert(arr != nullptr);
     assert(index < arr->size);
@@ -619,7 +624,7 @@ const T *array_data(const array<T> *arr)
 }
 
 template<typename T>
-u64 array_size(const array<T> *arr)
+s64 array_size(const array<T> *arr)
 {
     assert(arr != nullptr);
 

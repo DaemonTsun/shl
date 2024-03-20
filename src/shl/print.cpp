@@ -22,14 +22,14 @@ s64 _put(io_handle h, const_wstring s, error *err)
     internal::tformat_buffer *buf = internal::_get_tformat_buffer_char();
 
     char *start = buf->buffer.data + buf->offset;
-    u64 bytes_written = wcstombs(start, s.c_str, buf->buffer.size);
+    s64 bytes_written = wcstombs(start, s.c_str, buf->buffer.size);
 
-    if (bytes_written == (u64)-1)
+    if (bytes_written < 0)
         return -1;
 
     buf->buffer.data[buf->offset + bytes_written] = '\0';
     
-    internal::_buffer_advance<char>(buf, bytes_written+1);
+    internal::_buffer_advance<char>(buf, bytes_written + 1);
 
     return _put(h, const_string{start, bytes_written}, err);
 }

@@ -38,19 +38,19 @@ void next_line(parse_iterator *it)
 }
 
 template<typename C>
-inline void _init(parser_base<C> *p, const C *input, u64 input_size)
+inline void _init(parser_base<C> *p, const C *input, s64 input_size)
 {
     init(&p->it);
     p->input = input;
     p->input_size = input_size;
 }
 
-void init(parser *p, const char *input, u64 input_size)
+void init(parser *p, const char *input, s64 input_size)
 {
     _init(p, input, input_size);
 }
 
-void init(wparser *p, const wchar_t *input, u64 input_size)
+void init(wparser *p, const wchar_t *input, s64 input_size)
 {
     _init(p, input, input_size);
 }
@@ -139,7 +139,7 @@ wchar_t current_char(const wparser *p)
     return _current_char(p);
 }
 
-u64 range_length(const parse_range *range)
+s64 range_length(const parse_range *range)
 {
     return range->end.pos - range->start.pos;
 }
@@ -885,8 +885,8 @@ bool parse_integer(parser_base<C> *p, OutT *out, parse_error<C> *err)\
     if (!_parse_integer_t(p, &digit_start, &base, &neg, err))\
         return false;\
 \
-    constexpr const u64 digit_size = sizeof(OutT) * 8 + 4;\
-    u64 len = p->it.pos - digit_start.pos;\
+    constexpr const s64 digit_size = sizeof(OutT) * 8 + 4;\
+    s64 len = p->it.pos - digit_start.pos;\
 \
     if (len > digit_size - 1)\
     {\
@@ -1117,8 +1117,8 @@ bool parse_decimal(parser_base<C> *p, OutT *out, parse_error<C> *err)\
     if (!parse_decimal(p, &range, err))\
         return false;\
 \
-    constexpr const u64 digit_size = 128;\
-    u64 len = range_length(&range);\
+    constexpr const s64 digit_size = 128;\
+    s64 len = range_length(&range);\
 \
     if (len > digit_size - 1)\
     {\

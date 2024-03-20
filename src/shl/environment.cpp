@@ -19,7 +19,7 @@ const sys_char *get_environment_variable(const sys_char *name, error *err)
     return get_environment_variable(name, len, err);
 }
 
-const sys_char *get_environment_variable(const sys_char *name, s64 name_len, error *err)
+const sys_char *get_environment_variable(const sys_char *name, s64 name_len, [[maybe_unused]] error *err)
 {
     if (name_len == 0)
         return nullptr;

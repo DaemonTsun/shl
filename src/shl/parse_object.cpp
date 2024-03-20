@@ -5,7 +5,7 @@
 template<typename C>
 void init_slice(string_base<C> *out, const C *input, const parse_range *range)
 {
-    u64 len = range_length(range);
+    s64 len = range_length(range);
     init(out, len);
     copy_string(const_string_base<C>{input + range->start.pos, len}, out, len);
 }
@@ -764,7 +764,7 @@ void free(wparsed_object *obj)
 }
 
 template<typename C>
-s64 _parsed_object_to_string(string_base<C> *s, const parsed_object_base<C> *x, u64 offset, format_options<C> opt)
+s64 _parsed_object_to_string(string_base<C> *s, const parsed_object_base<C> *x, s64 offset, format_options<C> opt)
 {
     s64 written = 0;
 
@@ -786,7 +786,7 @@ s64 _parsed_object_to_string(string_base<C> *s, const parsed_object_base<C> *x, 
 
     case parsed_object_type::String:
     {
-        u64 len = string_length(&x->data._string);
+        s64 len = string_length(&x->data._string);
         string_reserve(s, offset + 2 + len);
 
         s->data[offset] = PARSE_STRING_DELIM;
@@ -802,7 +802,7 @@ s64 _parsed_object_to_string(string_base<C> *s, const parsed_object_base<C> *x, 
 
     case parsed_object_type::Identifier:
     {
-        u64 len = string_length(&x->data._string);
+        s64 len = string_length(&x->data._string);
         string_reserve(s, offset + len);
 
         copy_string(&x->data._string, s, len, written + offset);
@@ -856,7 +856,7 @@ s64 _parsed_object_to_string(string_base<C> *s, const parsed_object_base<C> *x, 
 
         if (table->size != 0)
         {
-            u64 i = 0;
+            s64 i = 0;
             auto *node = table->data.data;
 
             while (i < table->data.size)
@@ -950,8 +950,8 @@ s64 _parsed_object_to_string(string_base<C> *s, const parsed_object_base<C> *x, 
 }
 
 s64 to_string(string  *s, const parsed_object  *x)             to_string_body(_parsed_object_to_string, s, x, 0, default_format_options<char>);
-s64 to_string(string  *s, const parsed_object  *x, u64 offset) to_string_body(_parsed_object_to_string, s, x, offset, default_format_options<char>);
-s64 to_string(string  *s, const parsed_object  *x, u64 offset, format_options<char> opt) to_string_body(_parsed_object_to_string, s, x, offset, opt);
+s64 to_string(string  *s, const parsed_object  *x, s64 offset) to_string_body(_parsed_object_to_string, s, x, offset, default_format_options<char>);
+s64 to_string(string  *s, const parsed_object  *x, s64 offset, format_options<char> opt) to_string_body(_parsed_object_to_string, s, x, offset, opt);
 s64 to_string(wstring *s, const wparsed_object *x)             to_string_body(_parsed_object_to_string, s, x, 0, default_format_options<wchar_t>);
-s64 to_string(wstring *s, const wparsed_object *x, u64 offset) to_string_body(_parsed_object_to_string, s, x, offset, default_format_options<wchar_t>);
-s64 to_string(wstring *s, const wparsed_object *x, u64 offset, format_options<wchar_t> opt) to_string_body(_parsed_object_to_string, s, x, offset, opt);
+s64 to_string(wstring *s, const wparsed_object *x, s64 offset) to_string_body(_parsed_object_to_string, s, x, offset, default_format_options<wchar_t>);
+s64 to_string(wstring *s, const wparsed_object *x, s64 offset, format_options<wchar_t> opt) to_string_body(_parsed_object_to_string, s, x, offset, opt);

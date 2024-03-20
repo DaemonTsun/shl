@@ -77,6 +77,9 @@ const char *_windows_error_message(int error_code)
 
     return ret;
 #else
+    // Nothing on other platforms.
+    // Use _errno_error_message(error_code) to get a errno error message.
+    (void)(error_code);
     return nullptr;
 #endif
 }

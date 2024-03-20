@@ -86,10 +86,10 @@ struct parsed_object_base
         table_type      _table;
     } data;
 
-    parsed_object_base<C> &operator[](u64 n) 
+    parsed_object_base<C> &operator[](s64 n) 
     { return data._list[n]; }
 
-    const parsed_object_base<C> &operator[](u64 n) const
+    const parsed_object_base<C> &operator[](s64 n) const
     { return data._list[n]; }
 
     parsed_object_base<C> &operator[](const C *i) { return this->operator[](to_const_string(i)); }
@@ -146,8 +146,8 @@ void free(wparsed_object *obj);
 
 
 s64 to_string(string  *s, const parsed_object  *x);
-s64 to_string(string  *s, const parsed_object  *x, u64 offset);
-s64 to_string(string  *s, const parsed_object  *x, u64 offset, format_options<char> opt);
+s64 to_string(string  *s, const parsed_object  *x, s64 offset);
+s64 to_string(string  *s, const parsed_object  *x, s64 offset, format_options<char> opt);
 s64 to_string(wstring *s, const wparsed_object *x);
-s64 to_string(wstring *s, const wparsed_object *x, u64 offset);
-s64 to_string(wstring *s, const wparsed_object *x, u64 offset, format_options<wchar_t> opt);
+s64 to_string(wstring *s, const wparsed_object *x, s64 offset);
+s64 to_string(wstring *s, const wparsed_object *x, s64 offset, format_options<wchar_t> opt);

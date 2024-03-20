@@ -302,17 +302,17 @@ s64 seek(file_stream *stream, s64 offset, int whence, error *err)
 
 s64 seek_offset(file_stream *stream, s64 offset, error *err)
 {
-    return seek(stream, offset, IO_SEEK_CUR);
+    return seek(stream, offset, IO_SEEK_CUR, err);
 }
 
 s64 seek_from_start(file_stream *stream, s64 offset, error *err)
 {
-    return seek(stream, offset, IO_SEEK_SET);
+    return seek(stream, offset, IO_SEEK_SET, err);
 }
 
 s64 seek_from_end(file_stream *stream, s64 offset, error *err)
 {
-    return seek(stream, offset, IO_SEEK_END);
+    return seek(stream, offset, IO_SEEK_END, err);
 }
 
 s64 seek_block(file_stream *stream, s64 nth_block, u64 block_size, int whence, error *err)

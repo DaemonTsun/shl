@@ -174,11 +174,11 @@ bool read_entire_pipe(pipe_t *p, string *out, error *err)
 }
 
 template<typename C>
-s64 _write_fs(file_stream *stream, const_string_base<C> cs, error *err)
+inline s64 _write_fs(file_stream *stream, const_string_base<C> cs, error *err)
 {
     assert(stream != nullptr);
 
-    s64 ret = write(stream, (const void*)cs.c_str, cs.size * sizeof(C));
+    s64 ret = write(stream, (const void*)cs.c_str, cs.size * sizeof(C), err);
 
     if (!is_ok(stream))
         return -1;
@@ -197,7 +197,7 @@ s64 _write(file_stream *stream, const_wstring s, error *err)
 }
 
 template<typename C>
-s64 _write_ms(memory_stream *stream, const_string_base<C> cs, error *err)
+s64 _write_ms(memory_stream *stream, const_string_base<C> cs)
 {
     assert(stream != nullptr);
 
@@ -209,14 +209,14 @@ s64 _write_ms(memory_stream *stream, const_string_base<C> cs, error *err)
     return ret;
 }
 
-s64 _write(memory_stream *stream, const_string  s, error *err)
+s64 _write(memory_stream *stream, const_string  s)
 {
-    return _write_ms(stream, s, err);
+    return _write_ms(stream, s);
 }
 
-s64 _write(memory_stream *stream, const_wstring s, error *err)
+s64 _write(memory_stream *stream, const_wstring s)
 {
-    return _write_ms(stream, s, err);
+    return _write_ms(stream, s);
 }
 
 s64 _write(io_handle h, const_string  s, error *err)

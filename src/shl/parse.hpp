@@ -38,10 +38,10 @@ skip_whitespace_and_comments(p) skips whitespaces and comments. returns true if
 // parse iterator
 struct parse_iterator
 {
-    u64 pos;
-    u64 line_start; // character at file offset where line starts
-    u64 line; // line number, starting at 1
-    u64 line_pos; // character within line, starting at 1
+    s64 pos;
+    s64 line_start; // character at file offset where line starts
+    s64 line; // line number, starting at 1
+    s64 line_pos; // character within line, starting at 1
 };
 
 #define IT_FMT "%u:%u"
@@ -58,14 +58,14 @@ struct parser_base
 {
     parse_iterator it;
     const CharT *input;
-    u64 input_size;
+    s64 input_size;
 };
 
 typedef parser_base<char>    parser;
 typedef parser_base<wchar_t> wparser;
 
-void init(parser  *p, const char *input, u64 input_size);
-void init(wparser *p, const wchar_t *input, u64 input_size);
+void init(parser  *p, const char *input, s64 input_size);
+void init(wparser *p, const wchar_t *input, s64 input_size);
 void init(parser  *p, const_string   input);
 void init(wparser *p, const_wstring  input);
 void init(parser  *p, const string  *input);
@@ -92,7 +92,7 @@ struct parse_range
 #define RANGE_FMT "%u-%u"
 #define format_range(RANGE) RANGE.start.pos, RANGE.end.pos
 
-u64 range_length(const parse_range *range);
+s64 range_length(const parse_range *range);
 
 // parse error
 template<typename CharT>
@@ -107,7 +107,7 @@ struct parse_error
 
     parse_iterator it;
     const CharT *input;
-    u64 input_size;
+    s64 input_size;
 };
 
 #ifndef NDEBUG

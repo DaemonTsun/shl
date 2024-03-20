@@ -89,8 +89,8 @@ constexpr u32 MurmurHash3_x86_32(const char *data, int len, u32 seed)
 
     switch (len & 3)
     {
-    case 3: k1 ^= tail[2] << 16;
-    case 2: k1 ^= tail[1] << 8;
+    case 3: k1 ^= tail[2] << 16; [[fallthrough]];
+    case 2: k1 ^= tail[1] << 8;  [[fallthrough]];
     case 1: k1 ^= tail[0];
             k1 *= c1; k1 = rotl(k1, 15);
             k1 *= c2;

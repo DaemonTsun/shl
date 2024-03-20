@@ -73,7 +73,7 @@ bool _CreatePipeEx(LPHANDLE out_read,
 }
 #endif
 
-bool init(pipe_t *p, int flags, bool inherit, error *err)
+bool init(pipe_t *p, int flags, [[maybe_unused]] bool inherit, error *err)
 {
     assert(p != nullptr);
 

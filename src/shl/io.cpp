@@ -46,6 +46,9 @@ bool set_handle_inheritance(io_handle handle, bool inherit, error *err)
         return false;
     }
 #else
+    (void)(handle);
+    (void)(inherit);
+    (void)(err);
     // TODO: implement? is there something to implement?
 #endif
 

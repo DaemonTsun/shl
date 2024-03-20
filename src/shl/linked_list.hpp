@@ -177,10 +177,9 @@ struct linked_list
 
     list_node<T> *first;
     list_node<T> *last;
-    u64 size;
+    s64 size;
 
-          T &operator[](u64 index)       { return nth_node(this, index)->value; }
-    const T &operator[](u64 index) const { return nth_node(this, index)->value; }
+    T &operator[](s64 index)       { return nth_node(this, index)->value; }
 };
 
 template<typename T>
@@ -212,28 +211,28 @@ void init(linked_list<T> *list)
 }
 
 template<typename T>
-void init(linked_list<T> *list, u64 n_elements)
+void init(linked_list<T> *list, s64 n_elements)
 {
     assert(list != nullptr);
 
     init(list);
 
-    if (n_elements == 0)
+    if (n_elements <= 0)
         return;
 
     add_elements(list, n_elements);
 }
 
 template<typename T>
-list_node<T> *nth_node(const linked_list<T> *list, u64 n)
+list_node<T> *nth_node(const linked_list<T> *list, s64 n)
 {
     assert(list != nullptr);
 
-    if (n >= list->size)
+    if (n < 0 || n >= list->size)
         return nullptr;
 
     list_node<T> *ret = nullptr;
-    u64 half = list->size / 2;
+    s64 half = list->size / 2;
 
     if (n < half)
     {

@@ -137,12 +137,12 @@ wstring _convert_string(const char *cstring, u64 char_count)
 #endif
 
 template<typename C>
-u64 _get_argument_count(const C **args)
+s64 _get_argument_count(const C **args)
 {
     if (args == nullptr)
         return 0;
 
-    u64 arg_count = 0;
+    s64 arg_count = 0;
 
     while (*args != nullptr)
     {
@@ -156,7 +156,7 @@ u64 _get_argument_count(const C **args)
 template<typename C>
 void _args_to_cmdline(const C **args, string_base<C> *cmdline)
 {
-    u64 arg_count = _get_argument_count(args);
+    s64 arg_count = _get_argument_count(args);
 
     if (arg_count > 0)
     {
@@ -197,8 +197,8 @@ void _free_process_start_info_arguments(process_start_info *info)
 #if Windows
         free_memory((void*)info->args);
 #else
-        u64 arg_count = _get_argument_count(info->args);
-        array<sys_char*> _args{.data = (sys_char**)info->args, .size = arg_count, .reserved_size = arg_count};
+        s64 arg_count = _get_argument_count(info->args);
+        array<sys_char*> _args{.data = (sys_char**)info->args, .size = arg_count, .reserved_size = arg_count, .allocator = default_allocator};
 
         for_array(sstr, &_args)
             free_memory(*sstr);

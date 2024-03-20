@@ -40,7 +40,7 @@ void* memmem(const void* haystack, size_t haystack_len,
 }
 
 template<typename T>
-T *stpncpy(T *dst, const T *src, u64 len)
+T *stpncpy(T *dst, const T *src, s64 len)
 {
     if (memcpy(dst, src, len * sizeof(T)) == nullptr)
         return nullptr;
@@ -48,7 +48,7 @@ T *stpncpy(T *dst, const T *src, u64 len)
     return dst + len;
 }
 
-wchar_t *wcpncpy(wchar_t *dst, const wchar_t *src, u64 len)
+wchar_t *wcpncpy(wchar_t *dst, const wchar_t *src, s64 len)
 {
     return stpncpy<wchar_t>(dst, src, len);
 }
@@ -67,25 +67,25 @@ wchar_t *wcpcpy(wchar_t *dst, const wchar_t *src)
 
 const_string  operator ""_cs(const char *str, u64 n)
 {
-    return const_string{str, n};
+    return const_string{str, (s64)n};
 }
 
 const_wstring operator ""_cs(const wchar_t *str, u64 n)
 {
-    return const_wstring{str, n};
+    return const_wstring{str, (s64)n};
 }
 
 string  operator ""_s(const char *str, u64 n)
 {
     string ret;
-    init(&ret, str, n);
+    init(&ret, str, (s64)n);
     return ret;
 }
 
 wstring operator ""_s(const wchar_t *str, u64 n)
 {
     wstring ret;
-    init(&ret, str, n);
+    init(&ret, str, (s64)n);
     return ret;
 }
 
@@ -98,7 +98,7 @@ void _init(string_base<C> *str)
 }
 
 template<typename C>
-void _init(string_base<C> *str, u64 size)
+void _init(string_base<C> *str, s64 size)
 {
     assert(str != nullptr);
 
@@ -114,7 +114,7 @@ void _init(string_base<C> *str, const C *c)
 }
 
 template<typename C>
-void _init(string_base<C> *str, const C *c, u64 size)
+void _init(string_base<C> *str, const C *c, s64 size)
 {
     assert(str != nullptr);
 
@@ -137,7 +137,7 @@ void init(string *str)
     _init(str);
 }
 
-void init(string *str, u64 size)
+void init(string *str, s64 size)
 {
     _init(str, size);
 }
@@ -147,7 +147,7 @@ void init(string *str, const char *c)
     _init(str, c);
 }
 
-void init(string *str, const char *c, u64 size)
+void init(string *str, const char *c, s64 size)
 {
     _init(str, c, size);
 }
@@ -162,7 +162,7 @@ void init(wstring *str)
     _init(str);
 }
 
-void init(wstring *str, u64 size)
+void init(wstring *str, s64 size)
 {
     _init(str, size);
 }
@@ -172,7 +172,7 @@ void init(wstring *str, const wchar_t *c)
     _init(str, c);
 }
 
-void init(wstring *str, const wchar_t *c, u64 size)
+void init(wstring *str, const wchar_t *c, s64 size)
 {
     _init(str, c, size);
 }
@@ -183,7 +183,7 @@ void init(wstring *str, const_wstring s)
 }
 
 template<typename C>
-bool _string_reserve(string_base<C> *s, u64 size)
+bool _string_reserve(string_base<C> *s, s64 size)
 {
     // +1 for \0
     if (s->reserved_size < size + 1)
@@ -195,12 +195,12 @@ bool _string_reserve(string_base<C> *s, u64 size)
     return false;
 }
 
-bool string_reserve(string *s, u64 size)
+bool string_reserve(string *s, s64 size)
 {
     return _string_reserve(s, size);
 }
 
-bool string_reserve(wstring *s, u64 size)
+bool string_reserve(wstring *s, s64 size)
 {
     return _string_reserve(s, size);
 }
@@ -454,8 +454,8 @@ bool is_blank(const wchar_t *s)
 template<typename C>
 bool _is_blank_cs(const_string_base<C> s)
 {
-    u64 i = 0;
-    u64 size = s.size;
+    s64 i = 0;
+    s64 size = s.size;
     C c;
 
     while (i < size)
@@ -493,7 +493,7 @@ bool is_blank(const wstring *s)
     return _is_blank_cs(to_const_string(s));
 }
 
-u64 string_length(const char *s)
+s64 string_length(const char *s)
 {
     if (s == nullptr)
         return 0;
@@ -501,7 +501,7 @@ u64 string_length(const char *s)
     return strlen(s);
 }
 
-u64 string_length(const wchar_t *s)
+s64 string_length(const wchar_t *s)
 {
     if (s == nullptr)
         return 0;
@@ -509,17 +509,17 @@ u64 string_length(const wchar_t *s)
     return wcslen(s);
 }
 
-u64 string_length(const_string s)
+s64 string_length(const_string s)
 {
     return s.size;
 }
 
-u64 string_length(const_wstring s)
+s64 string_length(const_wstring s)
 {
     return s.size;
 }
 
-u64 string_length(const string *s)
+s64 string_length(const string *s)
 {
     if (s == nullptr)
         return 0;
@@ -527,7 +527,7 @@ u64 string_length(const string *s)
     return s->size;
 }
 
-u64 string_length(const wstring *s)
+s64 string_length(const wstring *s)
 {
     if (s == nullptr)
         return 0;
@@ -536,10 +536,10 @@ u64 string_length(const wstring *s)
 }
 
 template<typename C>
-int _compare_strings_cs(const_string_base<C> s1, const_string_base<C> s2, u64 n)
+int _compare_strings_cs(const_string_base<C> s1, const_string_base<C> s2, s64 n)
 {
     int res = 0;
-    u64 i = 0;
+    s64 i = 0;
 
     if ((s1.size < n || s2.size < n) && s1.size != s2.size)
         return compare_ascending(s1.size, s2.size);
@@ -559,12 +559,12 @@ int _compare_strings_cs(const_string_base<C> s1, const_string_base<C> s2, u64 n)
     return res;
 }
 
-int _compare_strings(const_string   s1, const_string   s2, u64 n)
+int _compare_strings(const_string   s1, const_string   s2, s64 n)
 {
     return _compare_strings_cs(s1, s2, n);
 }
 
-int _compare_strings(const_wstring   s1, const_wstring   s2, u64 n)
+int _compare_strings(const_wstring   s1, const_wstring   s2, s64 n)
 {
     return _compare_strings_cs(s1, s2, n);
 }
@@ -608,8 +608,8 @@ bool _begins_with(const_wstring s, const_wstring prefix)
 template<typename C>
 bool _ends_with_cs(const_string_base<C> s, const_string_base<C> suffix)
 {
-    u64 str_length = string_length(s);
-    u64 suffix_length = string_length(suffix);
+    s64 str_length = string_length(s);
+    s64 suffix_length = string_length(suffix);
 
     if (str_length < suffix_length)
         return false;
@@ -666,12 +666,12 @@ void set_string(wstring *dst, const wchar_t *src)
     set_string(dst, to_const_string(src));
 }
 
-void set_string(string  *dst, const char    *src, u64 n)
+void set_string(string  *dst, const char    *src, s64 n)
 {
     set_string(dst, to_const_string(src, n));
 }
 
-void set_string(wstring *dst, const wchar_t *src, u64 n)
+void set_string(wstring *dst, const wchar_t *src, s64 n)
 {
     set_string(dst, to_const_string(src, n));
 }
@@ -722,18 +722,18 @@ wchar_t *copy_string(const wchar_t *src, wchar_t *dst)
     return wcpcpy(dst, src);
 }
 
-char *copy_string(const char *src, char *dst, u64 n)
+char *copy_string(const char *src, char *dst, s64 n)
 {
     return stpncpy(dst, src, n);
 }
 
-wchar_t *copy_string(const wchar_t *src, wchar_t *dst, u64 n)
+wchar_t *copy_string(const wchar_t *src, wchar_t *dst, s64 n)
 {
     return wcpncpy(dst, src, n);
 }
 
 template<typename C>
-void _copy_string_cs_s(const_string_base<C> src, string_base<C> *dst, u64 n, u64 dst_offset)
+void _copy_string_cs_s(const_string_base<C> src, string_base<C> *dst, s64 n, s64 dst_offset)
 {
     assert(dst != nullptr);
 
@@ -745,8 +745,8 @@ void _copy_string_cs_s(const_string_base<C> src, string_base<C> *dst, u64 n, u64
     if (n == 0)
         return;
 
-    u64 prev_size = string_length(dst);
-    u64 size_needed = n + dst_offset;
+    s64 prev_size = string_length(dst);
+    s64 size_needed = n + dst_offset;
 
     if (dst->reserved_size < size_needed + 1)
         string_reserve(dst, size_needed);
@@ -763,18 +763,18 @@ void _copy_string_cs_s(const_string_base<C> src, string_base<C> *dst, u64 n, u64
         dst->data[dst->size] = '\0';
 }
 
-void _copy_string(const_string src, string *dst, u64 n, u64 dst_offset)
+void _copy_string(const_string src, string *dst, s64 n, s64 dst_offset)
 {
     _copy_string_cs_s(src, dst, n, dst_offset);
 }
 
-void _copy_string(const_wstring src, wstring *dst, u64 n, u64 dst_offset)
+void _copy_string(const_wstring src, wstring *dst, s64 n, s64 dst_offset)
 {
     _copy_string_cs_s(src, dst, n, dst_offset);
 }
 
 template<typename C>
-string_base<C> _copy_new_string(const_string_base<C> src, u64 n)
+string_base<C> _copy_new_string(const_string_base<C> src, s64 n)
 {
     string_base<C> ret;
     init(&ret);
@@ -783,12 +783,12 @@ string_base<C> _copy_new_string(const_string_base<C> src, u64 n)
     return ret;
 }
 
-string _copy_string(const_string  src, u64 n)
+string _copy_string(const_string  src, s64 n)
 {
     return _copy_new_string<char>(src, n);
 }
 
-wstring _copy_string(const_wstring  src, u64 n)
+wstring _copy_string(const_wstring  src, s64 n)
 {
     return _copy_new_string<wchar_t>(src, n);
 }
@@ -801,11 +801,11 @@ void _append_string_cs(string_base<C> *dst, const_string_base<C> other)
     if (other.size == 0)
         return;
 
-    u64 size_left = dst->reserved_size - dst->size;
+    s64 size_left = dst->reserved_size - dst->size;
 
     if (size_left < other.size + 1)
     {
-        u64 required_space = dst->reserved_size + ((other.size + 1) - size_left);
+        s64 required_space = dst->reserved_size + ((other.size + 1) - size_left);
         string_reserve(dst, required_space);
     }
 
@@ -843,11 +843,11 @@ void _prepend_string_cs(string_base<C> *dst, const_string_base<C> other)
     if (other.size == 0)
         return;
 
-    u64 size_left = dst->reserved_size - dst->size;
+    s64 size_left = dst->reserved_size - dst->size;
 
     if (size_left < other.size + 1)
     {
-        u64 required_space = dst->reserved_size + ((other.size + 1) - size_left);
+        s64 required_space = dst->reserved_size + ((other.size + 1) - size_left);
         string_reserve(dst, required_space);
     }
 
@@ -913,7 +913,7 @@ s64 _index_of_s(const_string_base<C> str, const_string_base<C> needle, s64 offse
     {
         // char
         void *begin = (void*)(str.c_str + offset);
-        u64 size = str.size - offset;
+        s64 size = str.size - offset;
 
         void *f = memmem(begin, size, needle.c_str, needle.size);
 
@@ -921,20 +921,20 @@ s64 _index_of_s(const_string_base<C> str, const_string_base<C> needle, s64 offse
             return -1;
 
         // casting to char ONLY for math
-        u64 diff = (char*)f - (char*)str.c_str;
+        s64 diff = (char*)f - (char*)str.c_str;
         return static_cast<s64>(diff);
     }
     else
     {
         void *begin = (void*)(str.c_str + offset);
-        u64 size = (str.size - offset) * sizeof(C);
+        s64 size = (str.size - offset) * sizeof(C);
 
         void *f = memmem(begin, size, needle.c_str, needle.size * sizeof(C));
 
         if (f == nullptr)
             return -1;
 
-        u64 diff = (char*)f - (char*)str.c_str;
+        s64 diff = (char*)f - (char*)str.c_str;
         return static_cast<s64>(diff / sizeof(C));
     }
 }
@@ -1025,8 +1025,8 @@ void _trim_left(string_base<C> *s)
 {
     assert(s != nullptr);
 
-    u64 i = 0;
-    u64 len = string_length(s);
+    s64 i = 0;
+    s64 len = string_length(s);
 
     C c;
     while (i < len)
@@ -1061,7 +1061,7 @@ void _trim_right(string_base<C> *s)
 {
     assert(s != nullptr);
 
-    u64 len = string_length(s);
+    s64 len = string_length(s);
     s64 i = len;
     i -= 1;
 
@@ -1146,7 +1146,7 @@ inline void _to_upper_s(string_base<C> *s)
 {
     assert(s != nullptr);
 
-    for (u64 i = 0; i < s->size; ++i)
+    for (s64 i = 0; i < s->size; ++i)
         s->data[i] = to_upper(s->data[i]);
 }
 
@@ -1195,9 +1195,9 @@ inline void _to_lower_s(string_base<C> *s)
 {
     assert(s != nullptr);
 
-    u64 len = string_length(s);
+    s64 len = string_length(s);
 
-    for (u64 i = 0; i < len; ++i)
+    for (s64 i = 0; i < len; ++i)
         s->data[i] = to_lower(s->data[i]);
 }
 
@@ -1212,7 +1212,7 @@ void to_lower(wstring *s)
 }
 
 template<typename C>
-const_string_base<C> _substring_nocopy(const_string_base<C> str, u64 start, u64 length)
+const_string_base<C> _substring_nocopy(const_string_base<C> str, s64 start, s64 length)
 {
     if (start >= str.size)
     {
@@ -1225,39 +1225,39 @@ const_string_base<C> _substring_nocopy(const_string_base<C> str, u64 start, u64 
     return const_string_base<C>{.c_str = str.c_str + start, .size = length};
 }
 
-const_string  _substring(const_string  s, u64 start, u64 length)
+const_string  _substring(const_string  s, s64 start, s64 length)
 {
     return _substring_nocopy(s, start, length);
 }
 
-const_wstring _substring(const_wstring s, u64 start, u64 length)
+const_wstring _substring(const_wstring s, s64 start, s64 length)
 {
     return _substring_nocopy(s, start, length);
 }
 
 template<typename C>
-void _substring_c_str(const C *s, u64 start, u64 length, C *out, u64 out_offset)
+void _substring_c_str(const C *s, s64 start, s64 length, C *out, s64 out_offset)
 {
     copy_string(s + start, out + out_offset, length);
 }
 
-void substring(const char    *s, u64 start, u64 length, char    *out, u64 out_offset)
+void substring(const char    *s, s64 start, s64 length, char    *out, s64 out_offset)
 {
     _substring_c_str(s, start, length, out, out_offset);
 }
 
-void substring(const wchar_t *s, u64 start, u64 length, wchar_t *out, u64 out_offset)
+void substring(const wchar_t *s, s64 start, s64 length, wchar_t *out, s64 out_offset)
 {
     _substring_c_str(s, start, length, out, out_offset);
 }
 
 template<typename C>
-void _substring_copy(const_string_base<C> s, u64 start, u64 length, string_base<C> *out, u64 out_offset)
+void _substring_copy(const_string_base<C> s, s64 start, s64 length, string_base<C> *out, s64 out_offset)
 {
     assert(out != nullptr);
 
     const_string_base<C> subs = _substring_nocopy(s, start, length);
-    u64 offsize = out_offset + subs.size;
+    s64 offsize = out_offset + subs.size;
     bool append_null = false;
 
     if (offsize >= out->size)
@@ -1275,12 +1275,12 @@ void _substring_copy(const_string_base<C> s, u64 start, u64 length, string_base<
         out->data[out->size] = '\0';
 }
 
-void _substring(const_string  s, u64 start, u64 length, string *out,  u64 out_offset)
+void _substring(const_string  s, s64 start, s64 length, string *out,  s64 out_offset)
 {
     _substring_copy(s, start, length, out, out_offset);
 }
 
-void _substring(const_wstring s, u64 start, u64 length, wstring *out, u64 out_offset)
+void _substring(const_wstring s, s64 start, s64 length, wstring *out, s64 out_offset)
 {
     _substring_copy(s, start, length, out, out_offset);
 }
@@ -1309,8 +1309,8 @@ void _replace_s(string_base<C> *s, const_string_base<C> needle, const_string_bas
 
     if (needle.size > replacement.size)
     {
-        u64 size_diff = needle.size - replacement.size;
-        u64 remaining_size = string_length(s) - idx - needle.size;
+        s64 size_diff = needle.size - replacement.size;
+        s64 remaining_size = string_length(s) - idx - needle.size;
 
         s->size -= size_diff;
 
@@ -1319,8 +1319,8 @@ void _replace_s(string_base<C> *s, const_string_base<C> needle, const_string_bas
     }
     else if (needle.size < replacement.size)
     {
-        u64 size_diff = replacement.size - needle.size;
-        u64 remaining_size = string_length(s) - idx - needle.size;
+        s64 size_diff = replacement.size - needle.size;
+        s64 remaining_size = string_length(s) - idx - needle.size;
 
         string_reserve(s, string_length(s) + size_diff);
         s->size += size_diff;
@@ -1329,7 +1329,7 @@ void _replace_s(string_base<C> *s, const_string_base<C> needle, const_string_bas
         s->data[s->size] = '\0';
     }
 
-    copy_string(replacement, s, U64_MAX, idx);
+    copy_string(replacement, s, max_value(s64), idx);
 }
 
 void replace(string *s, char needle, char replacement, s64 offset)
@@ -1376,8 +1376,8 @@ void _replace_all_s(string_base<C> *s, const_string_base<C> needle, const_string
     {
         if (needle.size > replacement.size)
         {
-            u64 size_diff = needle.size - replacement.size;
-            u64 remaining_size = string_length(s) - idx - needle.size;
+            s64 size_diff = needle.size - replacement.size;
+            s64 remaining_size = string_length(s) - idx - needle.size;
 
             s->size -= size_diff;
 
@@ -1386,8 +1386,8 @@ void _replace_all_s(string_base<C> *s, const_string_base<C> needle, const_string
         }
         else if (needle.size < replacement.size)
         {
-            u64 size_diff = replacement.size - needle.size;
-            u64 remaining_size = string_length(s) - idx - needle.size;
+            s64 size_diff = replacement.size - needle.size;
+            s64 remaining_size = string_length(s) - idx - needle.size;
 
             string_reserve(s, string_length(s) + size_diff);
             s->size += size_diff;
@@ -1396,7 +1396,7 @@ void _replace_all_s(string_base<C> *s, const_string_base<C> needle, const_string
             s->data[s->size] = '\0';
         }
 
-        copy_string(replacement, s, U64_MAX, idx);
+        copy_string(replacement, s, max_value(s64), idx);
 
         idx = index_of(s, needle, idx + 1);
     }
@@ -1554,18 +1554,18 @@ s64 _split(const_wstring s, const_wstring delim, array<const_wstring> *out)
 template<typename C> inline const_string_base<C> _to_const_string(const C **s) { return to_const_string(*s); }
 template<typename C> inline const_string_base<C> _to_const_string(const_string_base<C> *s) { return *s; }
 template<typename C> inline const_string_base<C> _to_const_string(const string_base<C> *s) { return to_const_string(s); }
-template<typename C> inline u64 _string_length(const C  **s) { return string_length(*s); }
-template<typename C> inline u64 _string_length(const_string_base<C> *s) { return s->size; }
-template<typename C> inline u64 _string_length(const string_base<C> *s) { return string_length(s); }
+template<typename C> inline s64 _string_length(const C  **s) { return string_length(*s); }
+template<typename C> inline s64 _string_length(const_string_base<C> *s) { return s->size; }
+template<typename C> inline s64 _string_length(const string_base<C> *s) { return string_length(s); }
 
 template<typename Str, typename C>
-void _join_c(Str *strings, u64 count, C delim, string_base<C> *out)
+void _join_c(Str *strings, s64 count, C delim, string_base<C> *out)
 {
     if (count == 0)
         return;
 
-    u64 total_size = 0;
-    u64 i = 0;
+    s64 total_size = 0;
+    s64 i = 0;
 
     total_size += count - 1; // delims
 
@@ -1574,7 +1574,7 @@ void _join_c(Str *strings, u64 count, C delim, string_base<C> *out)
 
     string_reserve(out, total_size);
 
-    u64 offset = 0;
+    s64 offset = 0;
     i = 0;
 
     const_string_base<C> s = _to_const_string(strings + i);
@@ -1604,13 +1604,13 @@ void _join_c(Str *strings, u64 count, C delim, string_base<C> *out)
 }
 
 template<typename Str, typename C>
-void _join(Str *strings, u64 count, const_string_base<C> delim, string_base<C> *out)
+void _join(Str *strings, s64 count, const_string_base<C> delim, string_base<C> *out)
 {
     if (count == 0)
         return;
 
-    u64 total_size = 0;
-    u64 i = 0;
+    s64 total_size = 0;
+    s64 i = 0;
 
     total_size += (count - 1) * delim.size;
 
@@ -1619,7 +1619,7 @@ void _join(Str *strings, u64 count, const_string_base<C> delim, string_base<C> *
 
     string_reserve(out, total_size);
 
-    u64 offset = 0;
+    s64 offset = 0;
     i = 0;
 
     const_string_base<C> s = _to_const_string(strings + i);
@@ -1649,62 +1649,62 @@ void _join(Str *strings, u64 count, const_string_base<C> delim, string_base<C> *
     out->data[total_size] = 0;
 }
 
-void join(const char  **strings, u64 count, char          delim, string *out)
+void join(const char  **strings, s64 count, char          delim, string *out)
 {
     _join_c(strings, count, delim, out);
 }
 
-void join(const char  **strings, u64 count, const char   *delim, string *out)
+void join(const char  **strings, s64 count, const char   *delim, string *out)
 {
     _join(strings, count, to_const_string(delim), out);
 }
 
-void join(const char  **strings, u64 count, const_string  delim, string *out)
+void join(const char  **strings, s64 count, const_string  delim, string *out)
 {
     _join(strings, count, delim, out);
 }
 
-void join(const char  **strings, u64 count, const string *delim, string *out)
+void join(const char  **strings, s64 count, const string *delim, string *out)
 {
     _join(strings, count, to_const_string(delim), out);
 }
 
-void join(const_string *strings, u64 count, char          delim, string *out)
+void join(const_string *strings, s64 count, char          delim, string *out)
 {
     _join_c(strings, count, delim, out);
 }
 
-void join(const_string *strings, u64 count, const char   *delim, string *out)
+void join(const_string *strings, s64 count, const char   *delim, string *out)
 {
     _join(strings, count, to_const_string(delim), out);
 }
 
-void join(const_string *strings, u64 count, const_string  delim, string *out)
+void join(const_string *strings, s64 count, const_string  delim, string *out)
 {
     _join(strings, count, delim, out);
 }
 
-void join(const_string *strings, u64 count, const string *delim, string *out)
+void join(const_string *strings, s64 count, const string *delim, string *out)
 {
     _join(strings, count, to_const_string(delim), out);
 }
 
-void join(const string *strings, u64 count, char          delim, string *out)
+void join(const string *strings, s64 count, char          delim, string *out)
 {
     _join_c(strings, count, delim, out);
 }
 
-void join(const string *strings, u64 count, const char   *delim, string *out)
+void join(const string *strings, s64 count, const char   *delim, string *out)
 {
     _join(strings, count, to_const_string(delim), out);
 }
 
-void join(const string *strings, u64 count, const_string  delim, string *out)
+void join(const string *strings, s64 count, const_string  delim, string *out)
 {
     _join(strings, count, delim, out);
 }
 
-void join(const string *strings, u64 count, const string *delim, string *out)
+void join(const string *strings, s64 count, const string *delim, string *out)
 {
     _join(strings, count, to_const_string(delim), out);
 }
@@ -1769,62 +1769,62 @@ void join(const array<string>         *arr, const string *delim, string *out)
     join(arr->data, arr->size, to_const_string(delim), out);
 }
 
-void join(const wchar_t  **strings, u64 count, wchar_t          delim, wstring *out)
+void join(const wchar_t  **strings, s64 count, wchar_t          delim, wstring *out)
 {
     _join_c(strings, count, delim, out);
 }
 
-void join(const wchar_t  **strings, u64 count, const wchar_t   *delim, wstring *out)
+void join(const wchar_t  **strings, s64 count, const wchar_t   *delim, wstring *out)
 {
     _join(strings, count, to_const_string(delim), out);
 }
 
-void join(const wchar_t  **strings, u64 count, const_wstring  delim, wstring *out)
+void join(const wchar_t  **strings, s64 count, const_wstring  delim, wstring *out)
 {
     _join(strings, count, delim, out);
 }
 
-void join(const wchar_t  **strings, u64 count, const wstring *delim, wstring *out)
+void join(const wchar_t  **strings, s64 count, const wstring *delim, wstring *out)
 {
     _join(strings, count, to_const_string(delim), out);
 }
 
-void join(const_wstring *strings, u64 count, wchar_t          delim, wstring *out)
+void join(const_wstring *strings, s64 count, wchar_t          delim, wstring *out)
 {
     _join_c(strings, count, delim, out);
 }
 
-void join(const_wstring *strings, u64 count, const wchar_t   *delim, wstring *out)
+void join(const_wstring *strings, s64 count, const wchar_t   *delim, wstring *out)
 {
     _join(strings, count, to_const_string(delim), out);
 }
 
-void join(const_wstring *strings, u64 count, const_wstring  delim, wstring *out)
+void join(const_wstring *strings, s64 count, const_wstring  delim, wstring *out)
 {
     _join(strings, count, delim, out);
 }
 
-void join(const_wstring *strings, u64 count, const wstring *delim, wstring *out)
+void join(const_wstring *strings, s64 count, const wstring *delim, wstring *out)
 {
     _join(strings, count, to_const_string(delim), out);
 }
 
-void join(const wstring *strings, u64 count, wchar_t          delim, wstring *out)
+void join(const wstring *strings, s64 count, wchar_t          delim, wstring *out)
 {
     _join_c(strings, count, delim, out);
 }
 
-void join(const wstring *strings, u64 count, const wchar_t   *delim, wstring *out)
+void join(const wstring *strings, s64 count, const wchar_t   *delim, wstring *out)
 {
     _join(strings, count, to_const_string(delim), out);
 }
 
-void join(const wstring *strings, u64 count, const_wstring  delim, wstring *out)
+void join(const wstring *strings, s64 count, const_wstring  delim, wstring *out)
 {
     _join(strings, count, delim, out);
 }
 
-void join(const wstring *strings, u64 count, const wstring *delim, wstring *out)
+void join(const wstring *strings, s64 count, const wstring *delim, wstring *out)
 {
     _join(strings, count, to_const_string(delim), out);
 }
@@ -1889,12 +1889,12 @@ void join(const array<wstring>         *arr, const wstring *delim, wstring *out)
     join(arr->data, arr->size, to_const_string(delim), out);
 }
 
-static inline u64 _convert_str(char *dst, const wchar_t *src, u64 n)
+static inline s64 _convert_str(char *dst, const wchar_t *src, s64 n)
 {
     return wcstombs(dst, src, n);
 }
 
-static inline u64 _convert_str(wchar_t *dst, const char *src, u64 n)
+static inline s64 _convert_str(wchar_t *dst, const char *src, s64 n)
 {
     return mbstowcs(dst, src, n);
 }
@@ -1910,7 +1910,7 @@ static bool _get_converted_environment_variable(const C *name, s64 namesize, C *
     {
         s64 char_count = _convert_str(nullptr, name, namesize);
 
-        if (char_count == (size_t)(-1))
+        if (char_count == -1)
             return false;
 
         if (*syssize < Max((s64)64, char_count + 1))
@@ -1963,7 +1963,7 @@ static void _alias_environment_variables([[maybe_unused]] const_string_base<C> *
 }
 
 template<typename C>
-static void _resolve_environment_variables(C *str, u64 _size, bool aliases)
+static void _resolve_environment_variables(C *str, s64 _size, bool aliases)
 {
     // this converts variables inside the string and environment variables
     // on the fly. I wonder if converting the entire string, resolving
@@ -2013,7 +2013,7 @@ static void _resolve_environment_variables(C *str, u64 _size, bool aliases)
         while ((end < size) && (is_alphanum(str[end]) || (str[end] == '_')))
             end += 1;
 
-        const_string_base<C> varname{str + start, (u64)(end - start)};
+        const_string_base<C> varname{str + start, (s64)(end - start)};
         const_string_base<C> varname_to_resolve = varname;
 
         if (aliases)
@@ -2042,12 +2042,12 @@ static void _resolve_environment_variables(C *str, u64 _size, bool aliases)
     }
 }
 
-void resolve_environment_variables(char *str, u64 size, bool aliases)
+void resolve_environment_variables(char *str, s64 size, bool aliases)
 {
     _resolve_environment_variables(str, size, aliases);
 }
 
-void resolve_environment_variables(wchar_t *str, u64 size, bool aliases)
+void resolve_environment_variables(wchar_t *str, s64 size, bool aliases)
 {
     _resolve_environment_variables(str, size, aliases);
 }
@@ -2100,7 +2100,7 @@ static void _resolve_environment_variables_s(string_base<C> *str, bool aliases)
         while ((end < str->size) && (is_alphanum(str->data[end]) || (str->data[end] == '_')))
             end += 1;
 
-        const_string_base<C> varname{str->data + start, (u64)(end - start)};
+        const_string_base<C> varname{str->data + start, (s64)(end - start)};
         const_string_base<C> varname_to_resolve = varname;
 
         if (aliases)
