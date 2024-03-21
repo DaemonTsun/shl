@@ -46,14 +46,14 @@ define_test(resize_resizes_ring_buffer)
     error err{};
     ring_buffer buf;
 
-    u64 sz = get_system_pagesize();
+    s64 sz = get_system_pagesize();
     assert_equal(init(&buf, sz, 3, &err), true);
 
     assert_not_equal(buf.data, nullptr);
     assert_greater_or_equal(buf.size, sz);
     assert_equal(buf.mapping_count, 3);
 
-    u64 oldsize = buf.size;
+    s64 oldsize = buf.size;
 
     assert_equal(resize(&buf, sz * 3, 3, &err), true);
     assert_not_equal(buf.data, nullptr);

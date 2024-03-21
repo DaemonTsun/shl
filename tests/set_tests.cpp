@@ -329,11 +329,11 @@ define_test(index_of_custom_comparator_compares_different_data_types)
     set<myvec> st{};
     defer { free(&st); };
 
-    myvec vec2{2,4,6};
+    myvec vec2{2,4,6,0};
 
-    insert_element(&st, myvec{1,2,3});
+    insert_element(&st, myvec{1,2,3,0});
     insert_element(&st, vec2);
-    insert_element(&st, myvec{8,16,32});
+    insert_element(&st, myvec{8,16,32,0});
 
     compare_function_p<u8, myvec> y_comp = y_comparator;
 

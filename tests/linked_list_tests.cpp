@@ -1352,7 +1352,7 @@ define_test(index_of_returns_negative_one_if_key_is_not_found)
     
     int val = 6;
 
-    assert_equal(index_of(&list, &val), -1ull);
+    assert_equal(index_of(&list, &val), -1);
 
     free(&list);
 }

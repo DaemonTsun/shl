@@ -47,27 +47,27 @@ define_test(bitmask_gets_bitmask)
 
 define_test(bitmask_between_values_gets_bitmask_between_values)
 {
-    assert_equal(bitmask_between_values<u32>(0, 2),  0b00000011);
-    assert_equal(bitmask_between_values<u32>(0, 1),  0b00000001);
-    assert_equal(bitmask_between_values<u32>(0, 0),  0b00000000);
-    assert_equal(bitmask_between_values<u32>(4, 8),  0b00001100);
-    assert_equal(bitmask_between_values<u32>(4, 32), 0b00111100);
-    assert_equal(bitmask_between_values<u32>(0, 128), 0b11111111);
+    assert_equal(bitmask_between_values<u32>(0, 2),   0b00000011u);
+    assert_equal(bitmask_between_values<u32>(0, 1),   0b00000001u);
+    assert_equal(bitmask_between_values<u32>(0, 0),   0b00000000u);
+    assert_equal(bitmask_between_values<u32>(4, 8),   0b00001100u);
+    assert_equal(bitmask_between_values<u32>(4, 32),  0b00111100u);
+    assert_equal(bitmask_between_values<u32>(0, 128), 0b11111111u);
 }
 
 define_test(bitrange_gets_bitrange)
 {
-    assert_equal(bitrange(0x00ff, 0, 0),  0x1);
-    assert_equal(bitrange(0x00ff, 0, 1),  0x3);
-    assert_equal(bitrange(0x00ff, 0, 3),  0xf);
+    assert_equal(bitrange(0x00ff, 0, 0),  0x01);
+    assert_equal(bitrange(0x00ff, 0, 1),  0x03);
+    assert_equal(bitrange(0x00ff, 0, 3),  0x0f);
     assert_equal(bitrange(0x00ff, 0, 7),  0xff);
     assert_equal(bitrange(0x01ff, 0, 7),  0xff);
     assert_equal(bitrange(0x00ff, 0, 8),  0xff);
     assert_equal(bitrange(0x01ff, 1, 8),  0xff);
     assert_equal(bitrange(0x0ff0, 4, 11), 0xff);
     assert_equal(bitrange(0xff00, 8, 15), 0xff);
-    assert_equal(bitrange(0xabcdef01, 0, 30), 0x2bcdef01);
-    assert_equal(bitrange(0xabcdef01, 0, 31), 0xabcdef01);
+    assert_equal(bitrange(0xabcdef01, 0, 30), 0x2bcdef01u);
+    assert_equal(bitrange(0xabcdef01, 0, 31), 0xabcdef01u);
 }
 
 define_test(floor_exp2_gets_previous_power_of_2)

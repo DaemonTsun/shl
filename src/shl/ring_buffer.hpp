@@ -57,13 +57,13 @@ Example:
 struct ring_buffer
 {
     char *data;
-    u64 size;
-    u32 mapping_count; // how many times the memory is mapped
+    s64 size;
+    s32 mapping_count; // how many times the memory is mapped
 };
 
-bool init(ring_buffer *buf, u64 min_size, u32 mapping_count = 3, error *err = nullptr);
+bool init(ring_buffer *buf, s64 min_size, s32 mapping_count = 3, error *err = nullptr);
 bool free(ring_buffer *buf, error *err = nullptr);
 
-bool resize(ring_buffer *buf, u64 min_size, u32 mapping_count = 3, error *err = nullptr);
+bool resize(ring_buffer *buf, s64 min_size, s32 mapping_count = 3, error *err = nullptr);
 
-u64 get_system_pagesize();
+s64 get_system_pagesize();

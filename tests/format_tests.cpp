@@ -1,6 +1,11 @@
 
 #include <t1/t1.hpp>
 #include "shl/format.hpp"
+#include "shl/compiler.hpp"
+
+#if GNU
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#endif
 
 define_t1_to_string(const string &s, "%s", s.data);
 define_t1_to_string(const_string s, "%s", s.c_str);
@@ -89,14 +94,17 @@ define_test(to_string_converts_bool_to_string)
     assert_equal_str(str, "false"_cs);
     clear(&str);
 
-    assert_equal(to_string(&str, true, 0, format_options<char>{.pad_length = 8, .pad_char = ' '}, false), 8);
+    opt.pad_length = 8;
+    opt.pad_char = ' ';
+    assert_equal(to_string(&str, true, 0, opt, false), 8);
     assert_equal_str(str, "       1"_cs);
-    assert_equal(to_string(&str, true, 0, format_options<char>{.pad_length = 8, .pad_char = ' '}, true), 8);
+    assert_equal(to_string(&str, true, 0, opt, true), 8);
     assert_equal_str(str, "    true"_cs);
 
-    assert_equal(to_string(&str, false, 0, format_options<char>{.pad_length = -8, .pad_char = ' '}, false), 8);
+    opt.pad_length = -8;
+    assert_equal(to_string(&str, false, 0, opt, false), 8);
     assert_equal_str(str, "0       "_cs);
-    assert_equal(to_string(&str, false, 0, format_options<char>{.pad_length = -8, .pad_char = ' '}, true), 8);
+    assert_equal(to_string(&str, false, 0, opt, true), 8);
     assert_equal_str(str, "false   "_cs);
 
     free(&str);
@@ -149,9 +157,15 @@ define_test(to_string_converts_char_to_string)
     assert_equal_str(str, "bc"_cs);
     clear(&str);
 
-    assert_equal(to_string(&str, 'd', 0, format_options<char>{.pad_length = 6, .pad_char = ' '}), 6);
+    format_options<char> opt = default_format_options<char>;
+    opt.pad_length = 6;
+    opt.pad_char = ' ';
+
+    assert_equal(to_string(&str, 'd', 0, opt), 6);
     assert_equal_str(str, "     d"_cs);
-    assert_equal(to_string(&str, 'e', 0, format_options<char>{.pad_length = -6, .pad_char = ' '}), 6);
+
+    opt.pad_length = -6;
+    assert_equal(to_string(&str, 'e', 0, opt), 6);
     assert_equal_str(str, "e     "_cs);
 
     free(&str);
@@ -171,9 +185,15 @@ define_test(to_string_converts_char_to_c_string)
 
     copy_string("     ", buf);
 
-    assert_equal(to_string(buf, 5, 'd', 0, format_options<char>{.pad_length =  5, .pad_char = ' '}), 5);
+    format_options<char> opt = default_format_options<char>;
+    opt.pad_length = 5;
+    opt.pad_char = ' ';
+
+    assert_equal(to_string(buf, 5, 'd', 0, opt), 5);
     assert_equal_str(str, "    d"_cs);
-    assert_equal(to_string(buf, 5, 'e', 0, format_options<char>{.pad_length = -5, .pad_char = ' '}), 5);
+
+    opt.pad_length = -5;
+    assert_equal(to_string(buf, 5, 'e', 0, opt), 5);
     assert_equal_str(str, "e    "_cs);
 }
 
@@ -194,9 +214,15 @@ define_test(to_string_converts_string_to_string)
     assert_equal_str(str, "hello"_cs);
     clear(&str);
 
-    assert_equal(to_string(&str, "hello"_cs, 0, format_options<char>{.pad_length = 10, .pad_char = ' '}), 10);
+    format_options<char> opt = default_format_options<char>;
+    opt.pad_length = 10;
+    opt.pad_char = ' ';
+
+    assert_equal(to_string(&str, "hello"_cs, 0, opt), 10);
     assert_equal_str(str, "     hello"_cs);
-    assert_equal(to_string(&str, "hello"_cs, 0, format_options<char>{.pad_length = -10, .pad_char = ' '}), 10);
+
+    opt.pad_length = -10;
+    assert_equal(to_string(&str, "hello"_cs, 0, opt), 10);
     assert_equal_str(str, "hello     "_cs);
 
     free(&str);
@@ -219,9 +245,15 @@ define_test(to_string_converts_string_to_c_string)
     assert_equal(to_string(buf, 10, "world"_cs, 7), 3);
     assert_equal_str(buf, "hellohewor");
 
-    assert_equal(to_string(buf, 10, "hello"_cs, 0, format_options<char>{.pad_length = 10, .pad_char = ' '}), 10);
+    format_options<char> opt = default_format_options<char>;
+    opt.pad_length = 10;
+    opt.pad_char = ' ';
+
+    assert_equal(to_string(buf, 10, "hello"_cs, 0, opt), 10);
     assert_equal_str(buf, "     hello");
-    assert_equal(to_string(buf, 10, "hello"_cs, 0, format_options<char>{.pad_length = -10, .pad_char = ' '}), 10);
+
+    opt.pad_length = -10;
+    assert_equal(to_string(buf, 10, "hello"_cs, 0, opt), 10);
     assert_equal_str(buf, "hello     ");
 }
 
@@ -237,30 +269,40 @@ define_test(to_string_converts_integer_to_string)
     init(&str);
 
     format_options<char> opt = default_format_options<char>;
+    integer_format_options iopt = default_integer_options;
 
     // decimal
     assert_to_string(str, "5"_cs,   1, (u8)5);
     assert_to_string(str, "0"_cs,   1, (u8)0);
 
     // binary
-    assert_to_string(str, "101"_cs, 3, (u8)5, 0 /*offset*/, opt, integer_format_options{.base = 2, .include_prefix = false});
-    assert_to_string(str, "110"_cs, 3, (u8)6, 0, opt, integer_format_options{.base = 2, .include_prefix = false});
-    assert_to_string(str, "0"_cs,   1, (u8)0, 0, opt, integer_format_options{.base = 2, .include_prefix = false});
+    iopt.base = 2;
+    iopt.include_prefix = false;
+    assert_to_string(str, "101"_cs, 3, (u8)5, 0 /*offset*/, opt, iopt);
+    assert_to_string(str, "110"_cs, 3, (u8)6, 0, opt, iopt);
+    assert_to_string(str, "0"_cs,   1, (u8)0, 0, opt, iopt);
 
-    assert_to_string(str, "0b1010"_cs, 6, (u8)0b1010, 0, opt, integer_format_options{.base = 2, .include_prefix = true});
+    iopt.include_prefix = true;
+    assert_to_string(str, "0b1010"_cs, 6, (u8)0b1010, 0, opt, iopt);
 
     // octal
-    assert_to_string(str, "36"_cs, 2, (u8)30, 0, opt, integer_format_options{.base = 8, .include_prefix = false});
-    assert_to_string(str, "77"_cs, 2, (u8)63, 0, opt, integer_format_options{.base = 8, .include_prefix = false});
-    assert_to_string(str, "0"_cs,  1, (u8)0,  0, opt, integer_format_options{.base = 8, .include_prefix = false});
+    iopt.base = 8;
+    iopt.include_prefix = false;
+    assert_to_string(str, "36"_cs, 2, (u8)30, 0, opt, iopt);
+    assert_to_string(str, "77"_cs, 2, (u8)63, 0, opt, iopt);
+    assert_to_string(str, "0"_cs,  1, (u8)0,  0, opt, iopt);
 
-    assert_to_string(str, "055"_cs, 3, (u8)055, 0, opt, integer_format_options{.base = 8, .include_prefix = true});
+    iopt.include_prefix = true;
+    assert_to_string(str, "055"_cs, 3, (u8)055, 0, opt, iopt);
 
     // hexadecimal
+    iopt.base = 16;
+    iopt.include_prefix = false;
     assert_to_string(str, "10"_cs, 2, (u8)0x10, 0, opt, integer_format_options{.base = 16, .include_prefix = false});
     assert_to_string(str, "ff"_cs, 2, (u8)0xff, 0, opt, integer_format_options{.base = 16, .include_prefix = false});
     assert_to_string(str, "0"_cs,  1, (u8)0x00, 0, opt, integer_format_options{.base = 16, .include_prefix = false});
 
+    iopt.include_prefix = true;
     assert_to_string(str, "0xde"_cs, 4, (u8)0xde, 0, opt, integer_format_options{.base = 16, .include_prefix = true});
     assert_to_string(str, "0xDE"_cs, 4, (u8)0xde, 0, opt, integer_format_options{.base = 16, .include_prefix = true, .caps_letters = true});
     assert_to_string(str, "0Xde"_cs, 4, (u8)0xde, 0, opt, integer_format_options{.base = 16, .include_prefix = true, .caps_letters = false, .caps_prefix = true});
@@ -664,7 +706,7 @@ define_test(format_formats_c_string)
 
 define_test(tformat_formats_to_temporary_string)
 {
-    u64 bufsize = get_tformat_buffer_size();
+    s64 bufsize = get_tformat_buffer_size();
 
     assert_greater_or_equal(bufsize, 4096);
     assert_equal(tformat("abc"_cs), "abc"_cs);
@@ -673,7 +715,7 @@ define_test(tformat_formats_to_temporary_string)
     assert_equal_str(prev, "hello world"_cs);
     assert_equal(prev.c_str[prev.size], '\0');
 
-    for (int i = 0; i < bufsize * 10; ++i)
+    for (s64 i = 0; i < bufsize * 10; ++i)
     {
         const_string next = tformat("% %"_cs, "hello", "world");
 

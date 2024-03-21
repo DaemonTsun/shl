@@ -93,14 +93,14 @@ define_test(file_stream_read_reads_file_contents)
     init(&fs, filepath.data);
 
     u32 r;
-    assert_equal(read(&fs, &r), sizeof(u32));
+    assert_equal(read(&fs, &r), (s64)sizeof(u32));
     assert_equal(r, 0x30303030u);
 
     char c[4];
     assert_equal(read(&fs, &c, 4), 4);
     assert_equal(strncmp("abc", c, 4), 0);
 
-    assert_equal(read(&fs, &r), sizeof(u32));
+    assert_equal(read(&fs, &r), (s64)sizeof(u32));
     assert_equal(r, 0x10101010u);
 
     free(&fs);
@@ -115,7 +115,7 @@ define_test(file_stream_read_at_reads_file_contents_at_position)
     init(&fs, filepath.data);
 
     u32 r;
-    assert_equal(read_at(&fs, &r, 0), sizeof(u32));
+    assert_equal(read_at(&fs, &r, 0), (s64)sizeof(u32));
     assert_equal(r, 0x30303030u);
 
     char c[2];
@@ -125,7 +125,7 @@ define_test(file_stream_read_at_reads_file_contents_at_position)
     assert_equal(read_at(&fs, &c, 4, 2), 2);
     assert_equal(strncmp("ab", c, 2), 0);
 
-    assert_equal(read_at(&fs, &r, 8), sizeof(u32));
+    assert_equal(read_at(&fs, &r, 8), (s64)sizeof(u32));
     assert_equal(r, 0x10101010u);
 
     free(&fs);
@@ -139,8 +139,8 @@ define_test(file_stream_get_size_gets_size_and_sets_cached_size)
 
     init(&fs, filepath.data);
 
-    assert_equal(get_file_size(&fs), 12u);
-    assert_equal(fs.cached_size, 12u);
+    assert_equal(get_file_size(&fs), 12);
+    assert_equal(fs.cached_size, 12);
 
     free(&fs);
 }
@@ -195,13 +195,13 @@ define_test(file_stream_read_block_reads_block)
     init(&fs, filepath.data);
 
     u32 r;
-    assert_equal(read_block(&fs, &r, sizeof(u32)), sizeof(u32));
+    assert_equal(read_block(&fs, &r, sizeof(u32)), (s64)sizeof(u32));
     assert_equal(r, 0x30303030u);
 
-    assert_equal(read_block(&fs, &r, sizeof(u32)), sizeof(u32));
+    assert_equal(read_block(&fs, &r, sizeof(u32)), (s64)sizeof(u32));
     assert_equal(r, 0x00636261u);
 
-    assert_equal(read_block(&fs, &r, sizeof(u32)), sizeof(u32));
+    assert_equal(read_block(&fs, &r, sizeof(u32)), (s64)sizeof(u32));
     assert_equal(r, 0x10101010u);
 
     assert_equal(read_block(&fs, &r, sizeof(u32)), 0);
@@ -220,13 +220,13 @@ define_test(file_stream_read_block_reads_nth_block)
     init(&fs, filepath.data);
 
     u32 r;
-    assert_equal(read_block(&fs, &r, 0, sizeof(u32)), sizeof(u32));
+    assert_equal(read_block(&fs, &r, 0, sizeof(u32)), (s64)sizeof(u32));
     assert_equal(r, 0x30303030u);
 
-    assert_equal(read_block(&fs, &r, 1, sizeof(u32)), sizeof(u32));
+    assert_equal(read_block(&fs, &r, 1, sizeof(u32)), (s64)sizeof(u32));
     assert_equal(r, 0x00636261u);
 
-    assert_equal(read_block(&fs, &r, 2, sizeof(u32)), sizeof(u32));
+    assert_equal(read_block(&fs, &r, 2, sizeof(u32)), (s64)sizeof(u32));
     assert_equal(r, 0x10101010u);
 
     assert_equal(read_block(&fs, &r, 3, sizeof(u32)), 0);
@@ -275,7 +275,7 @@ define_test(file_stream_read_entire_file_reads_entire_file)
     assert_equal(get_file_size(&fs), 12u);
 
     char contents[12];
-    assert_equal(read_entire_file(&fs, contents), 12u);
+    assert_equal(read_entire_file(&fs, contents), 12);
     assert_equal(strncmp(contents + 4, "abc", 4), 0);
 
     free(&fs);

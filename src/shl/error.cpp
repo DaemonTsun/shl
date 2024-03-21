@@ -17,7 +17,7 @@
 struct error_buffer
 {
     ring_buffer buffer;
-    u64 offset;
+    s64 offset;
 };
 
 void _error_buffer_cleanup();

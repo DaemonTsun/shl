@@ -201,11 +201,11 @@ write_blocks(*Stream, *In, NthBlock, N, Blocksize)
 struct memory_stream
 {
     char *data;
-    u64 size;
-    u64 position;
+    s64 size;
+    s64 position;
 };
 
-void init(memory_stream *stream, u64 size);
+void init(memory_stream *stream, s64 size);
 void free(memory_stream *stream);
 
 bool is_open(memory_stream *stream);
@@ -214,33 +214,33 @@ bool is_at_end(memory_stream *stream);
 // is_open && !is_at_end
 bool is_ok(memory_stream *stream);
 
-s64 block_count(memory_stream *stream, u64 block_size);
+s64 block_count(memory_stream *stream, s64 block_size);
 // returns a pointer in the data at the current position
 char *current(memory_stream *stream);
-char *current_block_start(memory_stream *stream, u64 block_size);
-char *current_block_start2(memory_stream *stream, u64 block_size);
-s64 current_block_number(memory_stream *stream, u64 block_size);
-s64 current_block_offset(memory_stream *stream, u64 block_size);
-s64 current_block_offset2(memory_stream *stream, u64 block_size);
+char *current_block_start(memory_stream *stream, s64 block_size);
+char *current_block_start2(memory_stream *stream, s64 block_size);
+s64 current_block_number(memory_stream *stream, s64 block_size);
+s64 current_block_offset(memory_stream *stream, s64 block_size);
+s64 current_block_offset2(memory_stream *stream, s64 block_size);
 
 s64 seek(memory_stream *stream, s64 offset, int whence = IO_SEEK_SET);
 s64 seek_offset(memory_stream *stream, s64 offset);
 s64 seek_from_start(memory_stream *stream, s64 offset);
 s64 seek_from_end(memory_stream *stream, s64 offset);
-s64 seek_block(memory_stream *stream, s64 nth_block, u64 block_size, int whence = IO_SEEK_SET);
-s64 seek_block_offset(memory_stream *stream, s64 nth_block, u64 block_size);
-s64 seek_block_from_start(memory_stream *stream, s64 nth_block, u64 block_size);
-s64 seek_block_from_end(memory_stream *stream, s64 nth_block, u64 block_size);
+s64 seek_block(memory_stream *stream, s64 nth_block, s64 block_size, int whence = IO_SEEK_SET);
+s64 seek_block_offset(memory_stream *stream, s64 nth_block, s64 block_size);
+s64 seek_block_from_start(memory_stream *stream, s64 nth_block, s64 block_size);
+s64 seek_block_from_end(memory_stream *stream, s64 nth_block, s64 block_size);
 // seeks to next alignment if unaligned or does nothing if aligned
-s64 seek_next_alignment(memory_stream *stream, u64 alignment);
+s64 seek_next_alignment(memory_stream *stream, s64 alignment);
 s64 tell(memory_stream *stream);
 void rewind(memory_stream *stream);
 
 // read & write perform memcpy
 // returns number of bytes read
-s64 read(memory_stream *stream, void *out, u64 size);
+s64 read(memory_stream *stream, void *out, s64 size);
 // returns number of items read
-s64 read(memory_stream *stream, void *out, u64 size, u64 nmemb);
+s64 read(memory_stream *stream, void *out, s64 size, s64 nmemb);
 
 template<typename T>
 s64 read(memory_stream *stream, T *out)
@@ -249,29 +249,29 @@ s64 read(memory_stream *stream, T *out)
 }
 
 // returns bytes read
-s64 read_at(memory_stream *stream, void *out, u64 offset, u64 size);
+s64 read_at(memory_stream *stream, void *out, s64 offset, s64 size);
 // returns number of items read
-s64 read_at(memory_stream *stream, void *out, u64 offset, u64 size, u64 nmemb);
+s64 read_at(memory_stream *stream, void *out, s64 offset, s64 size, s64 nmemb);
 
 template<typename T>
-s64 read_at(memory_stream *stream, T *out, u64 offset)
+s64 read_at(memory_stream *stream, T *out, s64 offset)
 {
     return read_at(stream, out, offset, sizeof(T));
 }
 
 // returns bytes read
-s64 read_block(memory_stream *stream, void *out, u64 block_size);
-s64 read_block(memory_stream *stream, void *out, u64 nth_block, u64 block_size);
+s64 read_block(memory_stream *stream, void *out, s64 block_size);
+s64 read_block(memory_stream *stream, void *out, s64 nth_block, s64 block_size);
 // returns number of items read
-s64 read_blocks(memory_stream *stream, void *out, u64 block_count, u64 block_size);
-s64 read_blocks(memory_stream *stream, void *out, u64 nth_block, u64 block_count, u64 block_size);
+s64 read_blocks(memory_stream *stream, void *out, s64 block_count, s64 block_size);
+s64 read_blocks(memory_stream *stream, void *out, s64 nth_block, s64 block_count, s64 block_size);
 
-s64 copy_entire_stream(memory_stream *stream, void *out, u64 max_size = -1u);
+s64 copy_entire_stream(memory_stream *stream, void *out, s64 max_size = max_value(s64));
 
 // returns number of bytes written
-s64 write(memory_stream *stream, const void *in, u64 size);
+s64 write(memory_stream *stream, const void *in, s64 size);
 // returns number of items written
-s64 write(memory_stream *stream, const void *in, u64 size, u64 nmemb);
+s64 write(memory_stream *stream, const void *in, s64 size, s64 nmemb);
 
 template<typename T>
 s64 write(memory_stream *stream, const T *in)
@@ -279,19 +279,19 @@ s64 write(memory_stream *stream, const T *in)
     return write(stream, in, sizeof(T));
 }
 
-s64 write_at(memory_stream *stream, const void *in, u64 offset, u64 size);
-s64 write_at(memory_stream *stream, const void *in, u64 offset, u64 size, u64 nmemb);
+s64 write_at(memory_stream *stream, const void *in, s64 offset, s64 size);
+s64 write_at(memory_stream *stream, const void *in, s64 offset, s64 size, s64 nmemb);
 
 template<typename T>
-s64 write_at(memory_stream *stream, const T *in, u64 offset)
+s64 write_at(memory_stream *stream, const T *in, s64 offset)
 {
     return write_at(stream, in, offset, sizeof(T));
 }
 
-s64 write_block(memory_stream *stream, const void *in, u64 block_size);
-s64 write_block(memory_stream *stream, const void *in, u64 nth_block, u64 block_size);
-s64 write_blocks(memory_stream *stream, const void *in, u64 block_count, u64 block_size);
-s64 write_blocks(memory_stream *stream, const void *in, u64 nth_block, u64 block_count, u64 block_size);
+s64 write_block(memory_stream *stream, const void *in, s64 block_size);
+s64 write_block(memory_stream *stream, const void *in, s64 nth_block, s64 block_size);
+s64 write_blocks(memory_stream *stream, const void *in, s64 block_count, s64 block_size);
+s64 write_blocks(memory_stream *stream, const void *in, s64 nth_block, s64 block_count, s64 block_size);
 
 // get does not perform memcpy
 template<typename T>
@@ -303,12 +303,12 @@ void get(memory_stream *stream, T **out)
 template<typename T>
 void get_aligned(memory_stream *stream, T **out)
 {
-    u64 pos = (stream->position / sizeof(T)) * sizeof(T)
+    s64 pos = (stream->position / sizeof(T)) * sizeof(T)
     *out = reinterpret_cast<T*>(stream->data + pos);
 }
 
 template<typename T>
-void get_at(memory_stream *stream, T **out, u64 offset)
+void get_at(memory_stream *stream, T **out, s64 offset)
 {
     *out = reinterpret_cast<T*>(stream->data + offset);
 }

@@ -1,7 +1,7 @@
 
 #include "shl/print.hpp"
 
-int main(int argc, char **argv)
+int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
 {
     tprint("hello %\n", "world");
     tprint(stdout_handle(), "hello %\n", "world");

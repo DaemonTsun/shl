@@ -5,7 +5,7 @@
 
 define_test(init_initializes_scratch_buffer)
 {
-    constexpr u64 Size = 64;
+    constexpr s64 Size = 64;
     scratch_buffer<Size> buf;
 
     init(&buf);
@@ -21,7 +21,7 @@ define_test(init_initializes_scratch_buffer)
 
 define_test(grow_grows_scratch_buffer)
 {
-    constexpr u64 Size = 64;
+    constexpr s64 Size = 64;
     scratch_buffer<Size> buf;
 
     init(&buf);
@@ -46,7 +46,7 @@ define_test(grow_grows_scratch_buffer)
 
 define_test(grow_by_grows_scratch_buffer_by_factor)
 {
-    constexpr u64 Size = 64;
+    constexpr s64 Size = 64;
     scratch_buffer<Size> buf;
 
     init(&buf);

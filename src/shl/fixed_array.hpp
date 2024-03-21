@@ -65,23 +65,23 @@ for_array(i, v, *arr) Iterate an array. i will be the index of an element and
 #include "shl/hash.hpp"
 #include "shl/bits.hpp"
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 struct fixed_array
 {
     typedef T value_type;
-    static constexpr u64 size = N;
+    static constexpr s64 size = N;
 
     T data[N];
 
-    constexpr       T &operator[](u64 index)       { return data[index]; }
-    constexpr const T &operator[](u64 index) const { return data[index]; }
+    constexpr       T &operator[](s64 index)       { return data[index]; }
+    constexpr const T &operator[](s64 index) const { return data[index]; }
 };
 
 template<typename T, typename... Ts>
 fixed_array(T, Ts...) -> fixed_array<T, 1 + sizeof...(Ts)>;
 
-template<typename T, u64 N>
-constexpr T *at(fixed_array<T, N> *arr, u64 index)
+template<typename T, s64 N>
+constexpr T *at(fixed_array<T, N> *arr, s64 index)
 {
     assert(arr != nullptr);
     assert(index < arr->size);
@@ -89,8 +89,8 @@ constexpr T *at(fixed_array<T, N> *arr, u64 index)
     return arr->data + index;
 }
 
-template<typename T, u64 N>
-constexpr const T *at(const fixed_array<T, N> *arr, u64 index)
+template<typename T, s64 N>
+constexpr const T *at(const fixed_array<T, N> *arr, s64 index)
 {
     assert(arr != nullptr);
     assert(index < arr->size);
@@ -98,20 +98,20 @@ constexpr const T *at(const fixed_array<T, N> *arr, u64 index)
     return arr->data + index;
 }
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 constexpr T *array_data(fixed_array<T, N> *arr)
 {
     return arr->data;
 }
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 constexpr const T *array_data(const fixed_array<T, N> *arr)
 {
     return arr->data;
 }
 
-template<typename T, u64 N>
-constexpr u64 array_size(const fixed_array<T, N> *)
+template<typename T, s64 N>
+constexpr s64 array_size(const fixed_array<T, N> *)
 {
     return N;
 }
@@ -140,23 +140,23 @@ constexpr u64 array_size(const fixed_array<T, N> *)
     return nullptr;\
 }
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 constexpr T *search(fixed_array<T, N> *arr, T key, equality_function<T> eq = equals<T>)
     search_body()
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 constexpr T *search(fixed_array<T, N> *arr, const T *key, equality_function_p<T> eq = equals_p<T>)
     search_body_p()
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 constexpr const T *search(const fixed_array<T, N> *arr, T key, equality_function<T> eq = equals<T>)
     search_body()
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 constexpr const T *search(const fixed_array<T, N> *arr, const T *key, equality_function_p<T> eq = equals_p<T>)
     search_body_p()
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 constexpr s64 index_of(const fixed_array<T, N> *arr, T key, equality_function<T> eq = equals<T>)
 {
     assert(arr != nullptr);
@@ -168,7 +168,7 @@ constexpr s64 index_of(const fixed_array<T, N> *arr, T key, equality_function<T>
     return -1;
 }
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 constexpr s64 index_of(const fixed_array<T, N> *arr, const T *key, equality_function_p<T> eq = equals_p<T>)
 {
     assert(arr != nullptr);
@@ -180,13 +180,13 @@ constexpr s64 index_of(const fixed_array<T, N> *arr, const T *key, equality_func
     return -1;
 }
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 constexpr bool contains(const fixed_array<T, N> *arr, T key, equality_function<T> eq = equals<T>)
 {
     return index_of(arr, key, eq) != -1;
 }
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 constexpr bool contains(const fixed_array<T, N> *arr, const T *key, equality_function_p<T> eq = equals_p<T>)
 {
     return index_of(arr, key, eq) != -1;
@@ -194,7 +194,7 @@ constexpr bool contains(const fixed_array<T, N> *arr, const T *key, equality_fun
 
 // TODO: sort
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 constexpr hash_t hash(const fixed_array<T, N> *arr)
 {
     return hash_data(reinterpret_cast<const void*>(arr->data), arr->size * sizeof(T));

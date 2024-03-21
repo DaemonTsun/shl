@@ -257,15 +257,15 @@ list_node<T> *nth_node(const linked_list<T> *list, s64 n)
 }
 
 template<typename T>
-list_node<T> *add_elements(linked_list<T> *list, u64 n_elements)
+list_node<T> *add_elements(linked_list<T> *list, s64 n_elements)
 {
     assert(list != nullptr);
 
-    if (n_elements == 0)
+    if (n_elements <= 0)
         return nullptr;
 
     list_node<T> *ret = nullptr;
-    u64 new_elements_to_add = n_elements;
+    s64 new_elements_to_add = n_elements;
 
     if (list->last == nullptr)
     {
@@ -282,7 +282,7 @@ list_node<T> *add_elements(linked_list<T> *list, u64 n_elements)
     
     list_node<T> *n = list->last;
 
-    for (u64 i = 0; i < new_elements_to_add; ++i)
+    for (s64 i = 0; i < new_elements_to_add; ++i)
     {
         list_node<T> *tmp = allocate_memory<list_node<T>>();
         tmp->previous = n;
@@ -301,14 +301,14 @@ list_node<T> *add_elements(linked_list<T> *list, u64 n_elements)
 }
 
 template<typename T>
-list_node<T> *insert_elements(linked_list<T> *list, u64 index, u64 n_elements)
+list_node<T> *insert_elements(linked_list<T> *list, s64 index, s64 n_elements)
 {
     assert(list != nullptr);
 
-    if (n_elements == 0)
+    if (n_elements <= 0)
         return nullptr;
 
-    if (index > list->size)
+    if (index < 0 || index > list->size)
         return nullptr;
 
     if (index == list->size)
@@ -318,7 +318,7 @@ list_node<T> *insert_elements(linked_list<T> *list, u64 index, u64 n_elements)
     list_node<T> *n = after->previous;
     list_node<T> *ret = nullptr;
 
-    for (u64 i = 0; i < n_elements; ++i)
+    for (s64 i = 0; i < n_elements; ++i)
     {
         list_node<T> *tmp = allocate_memory<list_node<T>>();
         tmp->previous = n;
@@ -342,17 +342,17 @@ list_node<T> *insert_elements(linked_list<T> *list, u64 index, u64 n_elements)
 }
 
 template<typename T>
-list_node<T> *add_range(linked_list<T> *list, const T *elements, u64 n_elements)
+list_node<T> *add_range(linked_list<T> *list, const T *elements, s64 n_elements)
 {
     assert(list != nullptr);
 
-    if (elements == nullptr || n_elements == 0)
+    if (elements == nullptr || n_elements <= 0)
         return nullptr;
 
     list_node<T> *ret = add_elements(list, n_elements);
     list_node<T> *tmp = ret;
 
-    for (u64 i = 0; i < n_elements; ++i)
+    for (s64 i = 0; i < n_elements; ++i)
     {
         tmp->value = elements[i];
         tmp = tmp->next;
@@ -371,7 +371,7 @@ list_node<T> *add_range(linked_list<T> *list, const linked_list<T> *other)
 }
 
 template<typename T>
-list_node<T> *add_range(linked_list<T> *list, const linked_list<T> *other, u64 other_start, u64 count)
+list_node<T> *add_range(linked_list<T> *list, const linked_list<T> *other, s64 other_start, s64 count)
 {
     assert(list != nullptr);
     assert(other != nullptr);
@@ -386,7 +386,7 @@ list_node<T> *add_range(linked_list<T> *list, const linked_list<T> *other, u64 o
     list_node<T> *tmp = ret;
     list_node<T> *other_tmp = nth_node(other, other_start);
 
-    for (u64 i = 0; i < count; ++i)
+    for (s64 i = 0; i < count; ++i)
     {
         tmp->value = other_tmp->value;
         tmp = tmp->next;
@@ -397,7 +397,7 @@ list_node<T> *add_range(linked_list<T> *list, const linked_list<T> *other, u64 o
 }
 
 template<typename T>
-list_node<T> *insert_range(linked_list<T> *list, u64 index, const T *elements, u64 n_elements)
+list_node<T> *insert_range(linked_list<T> *list, s64 index, const T *elements, s64 n_elements)
 {
     assert(list != nullptr);
 
@@ -411,7 +411,7 @@ list_node<T> *insert_range(linked_list<T> *list, u64 index, const T *elements, u
 
     list_node<T> *tmp = ret;
 
-    for (u64 i = 0; i < n_elements; ++i)
+    for (s64 i = 0; i < n_elements; ++i)
     {
         tmp->value = elements[i];
         tmp = tmp->next;
@@ -421,7 +421,7 @@ list_node<T> *insert_range(linked_list<T> *list, u64 index, const T *elements, u
 }
 
 template<typename T>
-list_node<T> *insert_range(linked_list<T> *list, u64 index, linked_list<T> *other)
+list_node<T> *insert_range(linked_list<T> *list, s64 index, linked_list<T> *other)
 {
     assert(list != nullptr);
     assert(other != nullptr);
@@ -430,7 +430,7 @@ list_node<T> *insert_range(linked_list<T> *list, u64 index, linked_list<T> *othe
 }
 
 template<typename T>
-list_node<T> *insert_range(linked_list<T> *list, u64 index, linked_list<T> *other, u64 other_start, u64 count)
+list_node<T> *insert_range(linked_list<T> *list, s64 index, linked_list<T> *other, s64 other_start, s64 count)
 {
     assert(list != nullptr);
     assert(other != nullptr);
@@ -449,7 +449,7 @@ list_node<T> *insert_range(linked_list<T> *list, u64 index, linked_list<T> *othe
     list_node<T> *tmp = ret;
     list_node<T> *other_tmp = nth_node(other, other_start);
 
-    for (u64 i = 0; i < count; ++i)
+    for (s64 i = 0; i < count; ++i)
     {
         tmp->value = other_tmp->value;
         tmp = tmp->next;
@@ -504,11 +504,11 @@ inline list_node<T> *add_at_end(linked_list<T> *list, const T *val)
 }
 
 template<bool FreeValues = false, typename T>
-void remove_elements(linked_list<T> *list, u64 index, u64 n_elements)
+void remove_elements(linked_list<T> *list, s64 index, s64 n_elements)
 {
     assert(list != nullptr);
 
-    if (n_elements == 0)
+    if (n_elements <= 0)
         return;
 
     if (index >= list->size)
@@ -517,7 +517,7 @@ void remove_elements(linked_list<T> *list, u64 index, u64 n_elements)
     list_node<T> *node = nth_node(list, index);
     list_node<T> *before_start = node->previous;
 
-    u64 i = 0;
+    s64 i = 0;
     while (i < n_elements && node != nullptr)
     {
         list_node<T> *next = node->next;
@@ -565,7 +565,7 @@ inline void remove_from_end(linked_list<T> *list)
 }
 
 template<typename T>
-T *at(linked_list<T> *list, u64 n)
+T *at(linked_list<T> *list, s64 n)
 {
     assert(list != nullptr);
 
@@ -576,7 +576,7 @@ T *at(linked_list<T> *list, u64 n)
 }
 
 template<typename T>
-const T *at(const linked_list<T> *list, u64 n)
+const T *at(const linked_list<T> *list, s64 n)
 {
     assert(list != nullptr);
 
@@ -595,12 +595,12 @@ const T *at(const linked_list<T> *list, u64 n)
     for (; V_Var##_node != nullptr; V_Var##_node = V_Var##_node->next, V_Var = &V_Var##_node->value)
 
 #define for_list_IV(I_Var, V_Var, LIST)\
-    if constexpr (u64 I_Var = 0; true)\
+    if constexpr (s64 I_Var = 0; true)\
     _for_list_vars(V_Var, I_Var##V_Var##_node, LIST)\
     for (; I_Var##V_Var##_node != nullptr; I_Var##V_Var##_node = I_Var##V_Var##_node->next, ++I_Var, V_Var = &I_Var##V_Var##_node->value)
 
 #define for_list_IVN(I_Var, V_Var, N_Var, LIST)\
-    if constexpr (u64 I_Var = 0; true)\
+    if constexpr (s64 I_Var = 0; true)\
     _for_list_vars(V_Var, N_Var, LIST)\
     for (; N_Var != nullptr; N_Var = N_Var->next, ++I_Var, V_Var = &N_Var->value)
 
@@ -638,7 +638,7 @@ void free(linked_list<T> *list)
 }
 
 template<bool FreeValues = false, typename T>
-void resize(linked_list<T> *list, u64 n_elements)
+void resize(linked_list<T> *list, s64 n_elements)
 {
     assert(list != nullptr);
 
@@ -651,7 +651,7 @@ void resize(linked_list<T> *list, u64 n_elements)
         return;
     }
 
-    if (n_elements == 0)
+    if (n_elements <= 0)
     {
         free<FreeValues, T>(list);
         return;

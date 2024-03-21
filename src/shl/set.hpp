@@ -132,8 +132,7 @@ struct set
     array<T> data;
     compare_function_p<T> compare;
 
-          T &operator[](u64 index)       { return data[index]; }
-    const T &operator[](u64 index) const { return data[index]; }
+    T &operator[](s64 index)       { return data[index]; }
 };
 
 template<typename T>
@@ -155,7 +154,7 @@ void init(set<T> *st, compare_function_p<T> comp = compare_ascending_p<T>)
 }
 
 template<typename T>
-void init(set<T> *st, u64 reserve_size, compare_function_p<T> comp = compare_ascending_p<T>)
+void init(set<T> *st, s64 reserve_size, compare_function_p<T> comp = compare_ascending_p<T>)
 {
     assert(st != nullptr);
 
@@ -275,7 +274,7 @@ void remove_element(set<T> *st, T val)
 }
 
 template<bool FreeValues = false, typename T>
-void remove_elements_at_index(set<T> *st, u64 index, u64 n_elements)
+void remove_elements_at_index(set<T> *st, s64 index, s64 n_elements)
 {
     assert(st != nullptr);
 
@@ -283,7 +282,7 @@ void remove_elements_at_index(set<T> *st, u64 index, u64 n_elements)
 }
 
 template<typename T>
-bool reserve(set<T> *st, u64 size)
+bool reserve(set<T> *st, s64 size)
 {
     assert(st != nullptr);
 
@@ -291,7 +290,7 @@ bool reserve(set<T> *st, u64 size)
 }
 
 template<typename T>
-bool reserve_exp2(set<T> *st, u64 size)
+bool reserve_exp2(set<T> *st, s64 size)
 {
     return reserve_exp2(&st->data, size);
 }
@@ -299,7 +298,7 @@ bool reserve_exp2(set<T> *st, u64 size)
 // if size makes set smaller and FreeValues is true, call free() on all
 // removed values before reallocating memory.
 template<bool FreeValues = false, typename T>
-bool resize(set<T> *st, u64 size)
+bool resize(set<T> *st, s64 size)
 {
     assert(st != nullptr);
 
@@ -332,7 +331,7 @@ T *end(set<T> *st)
 }
 
 template<typename T>
-T *at(set<T> *st, u64 index)
+T *at(set<T> *st, s64 index)
 {
     assert(st != nullptr);
     assert(index < st->data.size);
@@ -341,7 +340,7 @@ T *at(set<T> *st, u64 index)
 }
 
 template<typename T>
-const T *at(const set<T> *st, u64 index)
+const T *at(const set<T> *st, s64 index)
 {
     assert(st != nullptr);
     assert(index < st->data.size);
@@ -374,7 +373,7 @@ const T *set_data(const set<T> *st)
 }
 
 template<typename T>
-u64 set_size(const set<T> *st)
+s64 set_size(const set<T> *st)
 {
     assert(st != nullptr);
 
@@ -398,7 +397,7 @@ const T *array_data(const set<T> *st)
 }
 
 template<typename T>
-u64 array_size(const set<T> *st)
+s64 array_size(const set<T> *st)
 {
     assert(st != nullptr);
 

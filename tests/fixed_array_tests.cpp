@@ -113,7 +113,7 @@ define_test(index_of_returns_negative_one_if_key_is_not_found)
     for_array(i, v, &arr)
         *v = (int)i;
     
-    assert_equal(index_of(&arr, 6), -1ull);
+    assert_equal(index_of(&arr, 6), -1);
 }
 
 define_test(index_of_returns_index_of_key_if_key_is_found)

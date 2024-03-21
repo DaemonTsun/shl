@@ -10,7 +10,7 @@ T *array_data(T (*arr)[N])
 }
 
 template<typename T, s64 N>
-s64 array_size(T (*arr)[N])
+s64 array_size([[maybe_unused]] T (*arr)[N])
 {
     return N;
 }

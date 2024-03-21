@@ -376,10 +376,10 @@ define_test(to_long_long_converts_to_long_long)
 
 define_test(to_unsigned_int_converts_to_unsigned_int)
 {
-    assert_equal(to_unsigned_int("0"), 0);
-    assert_equal(to_unsigned_int("1234"), 1234);
+    assert_equal(to_unsigned_int("0"), 0u);
+    assert_equal(to_unsigned_int("1234"), 1234u);
     assert_equal(to_unsigned_int("4294967295"), max_value(u32)); // may be different on some platforms
-    assert_equal(to_unsigned_int("1234"_cs), 1234);
+    assert_equal(to_unsigned_int("1234"_cs), 1234u);
 }
 
 define_test(to_float_converts_to_float)

@@ -173,13 +173,13 @@ define_test(memory_stream_read_block_reads_block)
     *data++ = 0x10101010u;
 
     u32 r;
-    assert_equal(read_block(&mem, &r, sizeof(u32)), sizeof(u32));
+    assert_equal(read_block(&mem, &r, sizeof(u32)), (s64)sizeof(u32));
     assert_equal(r, 0x30303030u);
 
-    assert_equal(read_block(&mem, &r, sizeof(u32)), sizeof(u32));
+    assert_equal(read_block(&mem, &r, sizeof(u32)), (s64)sizeof(u32));
     assert_equal(r, 0x00636261u);
 
-    assert_equal(read_block(&mem, &r, sizeof(u32)), sizeof(u32));
+    assert_equal(read_block(&mem, &r, sizeof(u32)), (s64)sizeof(u32));
     assert_equal(r, 0x10101010u);
 
     assert_equal(read_block(&mem, &r, sizeof(u32)), 0);
@@ -200,13 +200,13 @@ define_test(memory_stream_read_block_reads_nth_block)
     *data++ = 0x10101010u;
 
     u32 r;
-    assert_equal(read_block(&mem, &r, 0, sizeof(u32)), sizeof(u32));
+    assert_equal(read_block(&mem, &r, 0, sizeof(u32)), (s64)sizeof(u32));
     assert_equal(r, 0x30303030u);
 
-    assert_equal(read_block(&mem, &r, 1, sizeof(u32)), sizeof(u32));
+    assert_equal(read_block(&mem, &r, 1, sizeof(u32)), (s64)sizeof(u32));
     assert_equal(r, 0x00636261u);
 
-    assert_equal(read_block(&mem, &r, 2, sizeof(u32)), sizeof(u32));
+    assert_equal(read_block(&mem, &r, 2, sizeof(u32)), (s64)sizeof(u32));
     assert_equal(r, 0x10101010u);
 
     assert_equal(read_block(&mem, &r, 3, sizeof(u32)), 0);
@@ -291,11 +291,11 @@ define_test(memory_stream_read_reads)
     u32 rdata;
     mem.position = 0;
     assert_equal(read(&mem, &rdata, 4), 4);
-    assert_equal(rdata, 0x6c6c6568); // "hell" in u32 little endian
+    assert_equal(rdata, 0x6c6c6568u); // "hell" in u32 little endian
 
     mem.position = 14;
     assert_equal(read(&mem, &rdata, 4), 2);
-    assert_equal(rdata, 0x6c6c0000);
+    assert_equal(rdata, 0x6c6c0000u);
 
     free(&mem);
 }
@@ -312,11 +312,11 @@ define_test(memory_stream_read_with_number_of_items_reads)
 
     u32 rdata;
     assert_equal(read(&mem, &rdata, 2, 2), 2);
-    assert_equal(rdata, 0x6c6c6568); // "hell" in u32 little endian
+    assert_equal(rdata, 0x6c6c6568u); // "hell" in u32 little endian
 
     mem.position = 14;
     assert_equal(read(&mem, &rdata, 4, 1), 0);
-    assert_equal(rdata, 0x6c6c6568);
+    assert_equal(rdata, 0x6c6c6568u);
 
     free(&mem);
 }
@@ -339,11 +339,11 @@ define_test(memory_stream_read_with_type_ptr_reads)
 
     u32 rdata;
     assert_equal(read(&mem, &rdata), 4);
-    assert_equal(rdata, 0x6c6c6568); // "hell" in u32 little endian
+    assert_equal(rdata, 0x6c6c6568u); // "hell" in u32 little endian
 
     mem.position = 14;
     assert_equal(read(&mem, &rdata), 2);
-    assert_equal(rdata, 0x6c6c0000);
+    assert_equal(rdata, 0x6c6c0000u);
 
     free(&mem);
 }

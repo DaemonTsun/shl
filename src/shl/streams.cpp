@@ -35,7 +35,7 @@ bool read_entire_file(file_stream *stream, memory_stream *out, error *err)
     assert(stream != nullptr);
     assert(out != nullptr);
 
-    u64 sz = get_file_size(stream, err);
+    s64 sz = get_file_size(stream, err);
 
     if (sz == -1)
         return false;

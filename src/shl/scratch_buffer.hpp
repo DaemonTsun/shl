@@ -49,17 +49,17 @@ the scratch_buffer_data() function to obtain the correct pointer.
 #include "shl/number_types.hpp"
 #include "shl/memory.hpp"
 
-template<u64 N>
+template<s64 N>
 struct scratch_buffer
 {
-    static constexpr u64 stack_size = N;
+    static constexpr s64 stack_size = N;
 
     char *data;
-    u64 size;
+    s64 size;
     char stack_buffer[N];
 };
 
-template<u64 N>
+template<s64 N>
 void init(scratch_buffer<N> *buf)
 {
     assert(buf != nullptr);
@@ -68,7 +68,7 @@ void init(scratch_buffer<N> *buf)
     buf->size = N;
 }
 
-template<u64 N>
+template<s64 N>
 void free(scratch_buffer<N> *buf)
 {
     if (buf == nullptr)
@@ -81,12 +81,12 @@ void free(scratch_buffer<N> *buf)
     buf->size = 0;
 }
 
-template<u64 N>
-u64 grow_by(scratch_buffer<N> *buf, s64 factor)
+template<s64 N>
+s64 grow_by(scratch_buffer<N> *buf, s64 factor)
 {
     assert(buf != nullptr);
 
-    u64 nsize = (u64)(buf->size * factor);
+    s64 nsize = (s64)(buf->size * factor);
 
     // overflow, highly unlikely
     if (nsize < buf->size)
@@ -115,13 +115,13 @@ u64 grow_by(scratch_buffer<N> *buf, s64 factor)
     return nsize;
 }
 
-template<u64 N>
-u64 grow(scratch_buffer<N> *buf)
+template<s64 N>
+s64 grow(scratch_buffer<N> *buf)
 {
     return grow_by(buf, 2);
 }
 
-template<u64 N>
+template<s64 N>
 char *scratch_buffer_data(const scratch_buffer<N> *buf)
 {
     if (buf->size > N)

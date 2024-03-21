@@ -114,7 +114,7 @@ struct hash_table
     typedef hash_table_entry<TKey, TValue> entry_type;
 
     array<entry_type> data;
-    u64 size;
+    s64 size;
 
     hash_function<TKey> hasher;
     equality_function_p<TKey> eq;
@@ -124,7 +124,7 @@ struct hash_table
 };
 
 template<typename TKey, typename TValue>
-void init(hash_table<TKey, TValue> *table, u64 initial_size = MIN_TABLE_SIZE, hash_function<TKey> hasher = hash, equality_function_p<TKey> eq = equals_p<TKey>)
+void init(hash_table<TKey, TValue> *table, s64 initial_size = MIN_TABLE_SIZE, hash_function<TKey> hasher = hash, equality_function_p<TKey> eq = equals_p<TKey>)
 {
     assert(table != nullptr);
 
@@ -400,7 +400,7 @@ void free(hash_table<TKey, TValue> *table)
 }
 
 #define _for_hash_table_vars(I_Var, V_Var, E_Var, TABLE)\
-    if constexpr (u64 I_Var = 0; true)\
+    if constexpr (s64 I_Var = 0; true)\
     if constexpr (auto *E_Var = (TABLE)->data.data; true)\
     if constexpr (auto *V_Var = &E_Var->value; true)
 

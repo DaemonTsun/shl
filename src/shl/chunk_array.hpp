@@ -86,44 +86,42 @@ for_chunk_array(index, *value, *chunk, *arr)
 
 struct chunk_item_index
 {
-    u32 chunk_index;
+    s32 chunk_index;
     s32 slot_index;
 };
 
-template<typename T, u64 N = Default_chunk_size>
+template<typename T, s64 N = Default_chunk_size>
 struct chunk
 {
-    u32 index;
-    u32 used_count;
+    s32 index;
+    s32 used_count;
 
     bool used[N];
     T data[N];
 
-          T &operator[](u64 i)       { return data[i]; }
-    const T &operator[](u64 i) const { return data[i]; }
+          T &operator[](s64 i)       { return data[i]; }
+    const T &operator[](s64 i) const { return data[i]; }
 };
 
-template<typename T, u64 N = Default_chunk_size>
+template<typename T, s64 N = Default_chunk_size>
 struct chunk_array
 {
     typedef T value_type;
     typedef chunk<T, N> chunk_type;
 
-    static constexpr u64 chunk_size = N;
+    static constexpr s64 chunk_size = N;
 
     array<chunk_type*> all_chunks;
     array<chunk_type*> nonfull_chunks;
 
     // number of items in the array
-    u64 size;
+    s64 size;
 
-          chunk_type &operator[](u64 index)       { return *all_chunks[index]; }
-    const chunk_type &operator[](u64 index) const { return *all_chunks[index]; }
-          T &operator[](chunk_item_index index)       { return all_chunks[index.chunk_index]->data[index.slot_index]; }
-    const T &operator[](chunk_item_index index) const { return all_chunks[index.chunk_index]->data[index.slot_index]; }
+    chunk_type &operator[](s64 index)     { return *all_chunks[index]; }
+    T &operator[](chunk_item_index index) { return all_chunks[index.chunk_index]->data[index.slot_index]; }
 };
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 void init(chunk_array<T, N> *arr)
 {
     assert(arr != nullptr);
@@ -134,7 +132,7 @@ void init(chunk_array<T, N> *arr)
     arr->size = 0;
 }
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 chunk<T, N> *add_chunk(chunk_array<T, N> *arr)
 {
     assert(arr != nullptr);
@@ -165,7 +163,7 @@ struct chunk_slot_locator
 };
 
 // allocates more if there's no more space
-template<typename T, u64 N>
+template<typename T, s64 N>
 chunk_slot_locator<T> get_first_free_slot(chunk_array<T, N> *arr)
 {
     assert(arr != nullptr);
@@ -204,7 +202,7 @@ chunk_slot_locator<T> get_first_free_slot(chunk_array<T, N> *arr)
     return res;
 }
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 chunk_slot_locator<T> add_element(chunk_array<T, N> *arr, const T *val)
 {
     assert(arr != nullptr);
@@ -220,7 +218,7 @@ chunk_slot_locator<T> add_element(chunk_array<T, N> *arr, const T *val)
     return loc;
 }
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 chunk_slot_locator<T> add_element(chunk_array<T, N> *arr, T val)
 {
     assert(arr != nullptr);
@@ -228,7 +226,7 @@ chunk_slot_locator<T> add_element(chunk_array<T, N> *arr, T val)
     return add_element(arr, &val);
 }
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 void remove_element(chunk_array<T, N> *arr, chunk_item_index index)
 {
     assert(arr != nullptr);
@@ -250,7 +248,7 @@ void remove_element(chunk_array<T, N> *arr, chunk_item_index index)
         add_at_end(&arr->nonfull_chunks, c);
 }
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 chunk<T, N> **begin(chunk_array<T, N> *arr)
 {
     assert(arr != nullptr);
@@ -258,7 +256,7 @@ chunk<T, N> **begin(chunk_array<T, N> *arr)
     return arr->all_chunks.data;
 }
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 chunk<T, N> **end(chunk_array<T, N> *arr)
 {
     assert(arr != nullptr);
@@ -266,7 +264,7 @@ chunk<T, N> **end(chunk_array<T, N> *arr)
     return arr->all_chunks.data + arr->all_chunks.size;
 }
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 T *at(chunk_array<T, N> *arr, chunk_item_index index)
 {
     assert(arr != nullptr);
@@ -285,7 +283,7 @@ T *at(chunk_array<T, N> *arr, chunk_item_index index)
     return c->data + index.slot_index;
 }
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 void clear(chunk_array<T, N> *arr)
 {
     assert(arr != nullptr);
@@ -307,16 +305,16 @@ void clear(chunk_array<T, N> *arr)
 }
 
 // number of elements
-template<typename T, u64 N>
-u64 array_size(const chunk_array<T, N> *arr)
+template<typename T, s64 N>
+s64 array_size(const chunk_array<T, N> *arr)
 {
     assert(arr != nullptr);
 
     return arr->size;
 }
 
-template<typename T, u64 N>
-u64 chunk_count(const chunk_array<T, N> *arr)
+template<typename T, s64 N>
+s64 chunk_count(const chunk_array<T, N> *arr)
 {
     assert(arr != nullptr);
 
@@ -344,7 +342,7 @@ u64 chunk_count(const chunk_array<T, N> *arr)
 
 #define for_chunk_array(...) GET_MACRO3(__VA_ARGS__, for_chunk_array_IVC, for_chunk_array_IV, for_chunk_array_V)(__VA_ARGS__)
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 void free_values(chunk_array<T, N> *arr)
 {
     assert(arr != nullptr);
@@ -353,7 +351,7 @@ void free_values(chunk_array<T, N> *arr)
         free(v);
 }
 
-template<bool FreeValues = false, typename T, u64 N>
+template<bool FreeValues = false, typename T, s64 N>
 void free(chunk_array<T, N> *arr)
 {
     assert(arr != nullptr);
@@ -368,7 +366,7 @@ void free(chunk_array<T, N> *arr)
     arr->size = 0;
 }
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 T *search(chunk_array<T, N> *arr, T key, equality_function<T> eq = equals<T>)
 {
     assert(arr != nullptr);
@@ -380,7 +378,7 @@ T *search(chunk_array<T, N> *arr, T key, equality_function<T> eq = equals<T>)
     return nullptr;
 }
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 T *search(chunk_array<T, N> *arr, const T *key, equality_function_p<T> eq = equals_p<T>)
 {
     assert(arr != nullptr);
@@ -392,7 +390,7 @@ T *search(chunk_array<T, N> *arr, const T *key, equality_function_p<T> eq = equa
     return nullptr;
 }
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 chunk_item_index index_of(const chunk_array<T, N> *arr, const T *key, equality_function_p<T> eq = equals_p<T>)
 {
     assert(arr != nullptr);
@@ -404,25 +402,25 @@ chunk_item_index index_of(const chunk_array<T, N> *arr, const T *key, equality_f
     return {.chunk_index = (u32)-1, .slot_index = (s32)-1};
 }
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 chunk_item_index index_of(const chunk_array<T, N> *arr, T key, equality_function<T> eq = equals<T>)
 {
     return index_of(arr, &key, eq);
 }
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 bool contains(const chunk_array<T, N> *arr, T key, equality_function<T> eq = equals<T>)
 {
     return index_of(arr, key, eq) != -1;
 }
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 bool contains(const chunk_array<T, N> *arr, const T *key, equality_function_p<T> eq = equals_p<T>)
 {
     return index_of(arr, key, eq) != -1;
 }
 
-template<typename T, u64 N>
+template<typename T, s64 N>
 hash_t hash(const chunk_array<T, N> *arr)
 {
     assert(arr != nullptr);

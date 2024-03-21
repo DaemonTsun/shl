@@ -28,18 +28,18 @@ static int _memfd_create(const char *name, u32 flags)
 
 #define ALLOC_RETRY_COUNT 10
 
-bool init(ring_buffer *buf, u64 min_size, u32 mapping_count, error *err)
+bool init(ring_buffer *buf, s64 min_size, s32 mapping_count, error *err)
 {
     assert(buf != nullptr);
     assert(mapping_count > 0);
 
     buf->data = nullptr;
 
-    u64 pagesize = get_system_pagesize();
-    u64 actual_size = ceil_multiple2(min_size, pagesize);
+    s64 pagesize = get_system_pagesize();
+    s64 actual_size = ceil_multiple2(min_size, pagesize);
     assert(actual_size > 0);
 
-    u64 total_size = actual_size * mapping_count;
+    s64 total_size = actual_size * mapping_count;
 
 #if Linux
     int anonfd = _memfd_create("ringbuf", 0);
@@ -75,7 +75,7 @@ bool init(ring_buffer *buf, u64 min_size, u32 mapping_count, error *err)
             return false;
         }
 
-        for (u32 i = 0; i < mapping_count; ++i)
+        for (s32 i = 0; i < mapping_count; ++i)
         {
             void *mapped_ptr = ::mmap(((char*)ptr) + (i * actual_size), actual_size,
                                       PROT_READ | PROT_WRITE,
@@ -85,7 +85,7 @@ bool init(ring_buffer *buf, u64 min_size, u32 mapping_count, error *err)
             if (mapped_ptr == MAP_FAILED)
             {
                 // un-roll
-                for (u32 j = 0; j < i; ++j)
+                for (s32 j = 0; j < i; ++j)
                 if (::munmap(((char*)ptr) + (j * actual_size), actual_size) != 0)
                 {
                     set_errno_error(err);
@@ -120,9 +120,9 @@ bool init(ring_buffer *buf, u64 min_size, u32 mapping_count, error *err)
     char *ptr = (char*)VirtualAlloc2(0, 0, total_size, MEM_RESERVE | MEM_RESERVE_PLACEHOLDER, PAGE_NOACCESS, 0, 0);
     bool mapped = true;
 
-    for (u32 i = 0; i < mapping_count; ++i)
+    for (s32 i = 0; i < mapping_count; ++i)
     {
-        u64 offset = i * actual_size;
+        s64 offset = i * actual_size;
         VirtualFree(ptr + offset, actual_size, MEM_RELEASE | MEM_PRESERVE_PLACEHOLDER);
 
         void *mapping = MapViewOfFile3(fd, 0, ptr + offset, 0, actual_size, MEM_REPLACE_PLACEHOLDER, PAGE_READWRITE, 0, 0);
@@ -160,7 +160,7 @@ bool free(ring_buffer *buf, error *err)
         return true;
 
 #if Linux
-    for (u32 i = 0; i < buf->mapping_count; ++i)
+    for (s32 i = 0; i < buf->mapping_count; ++i)
     if (::munmap(buf->data + (i * buf->size), buf->size) != 0)
     {
         set_errno_error(err);
@@ -171,7 +171,7 @@ bool free(ring_buffer *buf, error *err)
 
     return true;
 #elif Windows
-    for (u32 i = 0; i < buf->mapping_count; ++i)
+    for (s32 i = 0; i < buf->mapping_count; ++i)
         UnmapViewOfFile(buf->data + (i * buf->size));
 
     buf->data = nullptr;
@@ -182,12 +182,12 @@ bool free(ring_buffer *buf, error *err)
 #endif
 }
 
-bool resize(ring_buffer *buf, u64 min_size, u32 mapping_count, error *err)
+bool resize(ring_buffer *buf, s64 min_size, s32 mapping_count, error *err)
 {
     assert(buf != nullptr);
 
-    u64 pagesize = get_system_pagesize();
-    u64 actual_size = ceil_multiple2(min_size, pagesize);
+    s64 pagesize = get_system_pagesize();
+    s64 actual_size = ceil_multiple2(min_size, pagesize);
 
     if (buf->size == actual_size && buf->mapping_count == mapping_count)
         return true;
@@ -197,7 +197,7 @@ bool resize(ring_buffer *buf, u64 min_size, u32 mapping_count, error *err)
     if (!init(&nbuf, min_size, mapping_count, err))
         return false;
 
-    u64 size_to_copy = Min(buf->size, nbuf.size);
+    s64 size_to_copy = Min(buf->size, nbuf.size);
 
     memcpy(nbuf.data, buf->data, size_to_copy);
     free(buf);
@@ -206,14 +206,14 @@ bool resize(ring_buffer *buf, u64 min_size, u32 mapping_count, error *err)
     return true;
 }
 
-u64 get_system_pagesize()
+s64 get_system_pagesize()
 {
 #if Windows
     SYSTEM_INFO info;
     GetSystemInfo(&info);
 
-    return (u64)info.dwAllocationGranularity;
+    return (s64)info.dwAllocationGranularity;
 #else
-    return (u64)sysconf(_SC_PAGESIZE);
+    return (s64)sysconf(_SC_PAGESIZE);
 #endif
 }

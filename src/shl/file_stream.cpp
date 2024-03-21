@@ -59,8 +59,8 @@ bool init(file_stream *stream, const char *path, int mode, int permissions, erro
     assert(stream != nullptr);
 
 #if Windows
-    u64 char_count = _string_len(path);
-    u64 sz = (char_count + 1) * sizeof(wchar_t);
+    s64 char_count = _string_len(path);
+    s64 sz = (char_count + 1) * sizeof(wchar_t);
     wchar_t *tmp = (wchar_t*)::allocate_memory(sz);
 
     ::fill_memory((void*)tmp, 0, sz);
@@ -172,8 +172,8 @@ bool init(file_stream *stream, const wchar_t *path, int mode, int permissions, e
 
     return true;
 #else
-    u64 char_count = _string_len(path);
-    u64 sz = (char_count + 1) * sizeof(char);
+    s64 char_count = _string_len(path);
+    s64 sz = (char_count + 1) * sizeof(char);
     char *tmp = (char*)::allocate_memory(sz);
 
     ::fill_memory((void*)tmp, 0, sz);
@@ -248,13 +248,13 @@ s64 get_file_size(file_stream *stream, error *err)
     return stream->cached_size;
 }
 
-s64 block_count(const file_stream *stream, u64 block_size)
+s64 block_count(const file_stream *stream, s64 block_size)
 {
     assert(stream != nullptr);
     return stream->cached_size / block_size;
 }
 
-s64 current_block_number(file_stream *stream, u64 block_size, error *err)
+s64 current_block_number(file_stream *stream, s64 block_size, error *err)
 {
     assert(stream != nullptr);
     assert(block_size > 0);
@@ -267,7 +267,7 @@ s64 current_block_number(file_stream *stream, u64 block_size, error *err)
     return (s64)(pos / block_size);
 }
 
-s64 current_block_offset(file_stream *stream, u64 block_size, error *err)
+s64 current_block_offset(file_stream *stream, s64 block_size, error *err)
 {
     assert(stream != nullptr);
     assert(block_size > 0);
@@ -277,10 +277,10 @@ s64 current_block_offset(file_stream *stream, u64 block_size, error *err)
     if (cur < 0)
         return -1;
 
-    return (s64)floor_multiple((u64)cur, block_size);
+    return floor_multiple(cur, block_size);
 }
 
-s64 current_block_offset2(file_stream *stream, u64 block_size, error *err)
+s64 current_block_offset2(file_stream *stream, s64 block_size, error *err)
 {
     assert(stream != nullptr);
     assert(block_size > 0);
@@ -290,7 +290,7 @@ s64 current_block_offset2(file_stream *stream, u64 block_size, error *err)
     if (cur < 0)
         return -1;
 
-    return (s64)floor_multiple2((u64)cur, block_size);
+    return (s64)floor_multiple2(cur, block_size);
 }
 
 s64 seek(file_stream *stream, s64 offset, int whence, error *err)
@@ -315,7 +315,7 @@ s64 seek_from_end(file_stream *stream, s64 offset, error *err)
     return seek(stream, offset, IO_SEEK_END, err);
 }
 
-s64 seek_block(file_stream *stream, s64 nth_block, u64 block_size, int whence, error *err)
+s64 seek_block(file_stream *stream, s64 nth_block, s64 block_size, int whence, error *err)
 {
     assert(stream != nullptr);
 
@@ -325,7 +325,7 @@ s64 seek_block(file_stream *stream, s64 nth_block, u64 block_size, int whence, e
     return seek_block_offset(stream, nth_block, block_size, err);
 }
 
-s64 seek_block_offset(file_stream *stream, s64 nth_block, u64 block_size, error *err)
+s64 seek_block_offset(file_stream *stream, s64 nth_block, s64 block_size, error *err)
 {
     s64 cur = -1;
 
@@ -340,17 +340,17 @@ s64 seek_block_offset(file_stream *stream, s64 nth_block, u64 block_size, error 
     return seek_from_start(stream, cur + nth_block * block_size, err);
 }
 
-s64 seek_block_from_start(file_stream *stream, s64 nth_block, u64 block_size, error *err)
+s64 seek_block_from_start(file_stream *stream, s64 nth_block, s64 block_size, error *err)
 {
     return seek_from_start(stream, nth_block * block_size, err);
 }
 
-s64 seek_block_from_end(file_stream *stream, s64 nth_block, u64 block_size, error *err)
+s64 seek_block_from_end(file_stream *stream, s64 nth_block, s64 block_size, error *err)
 {
     return seek_from_end(stream, nth_block * block_size, err);
 }
 
-s64 seek_next_alignment(file_stream *stream, u64 alignment, error *err)
+s64 seek_next_alignment(file_stream *stream, s64 alignment, error *err)
 {
     assert(stream != nullptr);
     assert(alignment > 0);
@@ -361,14 +361,14 @@ s64 seek_next_alignment(file_stream *stream, u64 alignment, error *err)
         return -1;
 
     if (is_pow2(alignment))
-        npos = ceil_multiple2((u64)npos + 1, alignment);
+        npos = ceil_multiple2(npos + 1, alignment);
     else
-        npos = ceil_multiple((u64)npos +1, alignment);
+        npos = ceil_multiple(npos +1, alignment);
 
     return seek_from_start(stream, npos, err);
 }
 
-s64 seek_next_alignment2(file_stream *stream, u64 alignment, error *err)
+s64 seek_next_alignment2(file_stream *stream, s64 alignment, error *err)
 {
     assert(stream != nullptr);
     assert(alignment > 0);
@@ -378,7 +378,7 @@ s64 seek_next_alignment2(file_stream *stream, u64 alignment, error *err)
     if (npos < 0)
         return -1;
 
-    npos = ceil_multiple2((u64)npos + 1, alignment);
+    npos = ceil_multiple2(npos + 1, alignment);
 
     return seek_from_start(stream, npos, err);
 }
@@ -397,7 +397,7 @@ bool rewind(file_stream *stream, error *err)
     return seek(stream, 0L, IO_SEEK_SET, err) == 0;
 }
 
-s64 read(file_stream *stream, void *out, u64 size, error *err)
+s64 read(file_stream *stream, void *out, s64 size, error *err)
 {
     assert(stream != nullptr);
     assert(out != nullptr);
@@ -405,7 +405,7 @@ s64 read(file_stream *stream, void *out, u64 size, error *err)
     return io_read(stream->handle, (char*)out, size, err);
 }
 
-s64 read(file_stream *stream, void *out, u64 size, u64 nmemb, error *err)
+s64 read(file_stream *stream, void *out, s64 size, s64 nmemb, error *err)
 {
     assert(stream != nullptr);
     assert(out != nullptr);
@@ -418,7 +418,7 @@ s64 read(file_stream *stream, void *out, u64 size, u64 nmemb, error *err)
     return ret / size;
 }
 
-s64 read_at(file_stream *stream, void *out, u64 offset, u64 size, error *err)
+s64 read_at(file_stream *stream, void *out, s64 offset, s64 size, error *err)
 {
     assert(stream != nullptr);
     assert(out != nullptr);
@@ -429,7 +429,7 @@ s64 read_at(file_stream *stream, void *out, u64 offset, u64 size, error *err)
     return read(stream, out, size, err);
 }
 
-s64 read_at(file_stream *stream, void *out, u64 offset, u64 size, u64 nmemb, error *err)
+s64 read_at(file_stream *stream, void *out, s64 offset, s64 size, s64 nmemb, error *err)
 {
     assert(stream != nullptr);
     assert(out != nullptr);
@@ -440,7 +440,7 @@ s64 read_at(file_stream *stream, void *out, u64 offset, u64 size, u64 nmemb, err
     return read(stream, out, size, nmemb, err);
 }
 
-s64 read_block(file_stream *stream, void *out, u64 block_size, error *err)
+s64 read_block(file_stream *stream, void *out, s64 block_size, error *err)
 {
     s64 ret = read(stream, out, block_size, err);
 
@@ -453,7 +453,7 @@ s64 read_block(file_stream *stream, void *out, u64 block_size, error *err)
     return ret;
 }
 
-s64 read_block(file_stream *stream, void *out, s64 nth_block, u64 block_size, error *err)
+s64 read_block(file_stream *stream, void *out, s64 nth_block, s64 block_size, error *err)
 {
     if (seek_block_from_start(stream, nth_block, block_size, err) == -1)
         return -1;
@@ -461,12 +461,12 @@ s64 read_block(file_stream *stream, void *out, s64 nth_block, u64 block_size, er
     return read_block(stream, out, block_size, err);
 }
 
-s64 read_blocks(file_stream *stream, void *out, s64 block_count, u64 block_size, error *err)
+s64 read_blocks(file_stream *stream, void *out, s64 block_count, s64 block_size, error *err)
 {
     return read(stream, out, block_size, block_count, err);
 }
 
-s64 read_blocks(file_stream *stream, void *out, s64 nth_block, s64 block_count, u64 block_size, error *err)
+s64 read_blocks(file_stream *stream, void *out, s64 nth_block, s64 block_count, s64 block_size, error *err)
 {
     assert(out != nullptr);
 
@@ -476,7 +476,7 @@ s64 read_blocks(file_stream *stream, void *out, s64 nth_block, s64 block_count, 
     return read(stream, out, block_size, block_count, err);
 }
 
-s64 read_entire_file(file_stream *stream, void *out, u64 max_size, error *err)
+s64 read_entire_file(file_stream *stream, void *out, s64 max_size, error *err)
 {
     assert(stream != nullptr);
     assert(out != nullptr);
@@ -505,14 +505,14 @@ s64 read_entire_file(file_stream *stream, void *out, u64 max_size, error *err)
     return ret;
 }
 
-s64 write(file_stream *stream, const void *in, u64 size, error *err)
+s64 write(file_stream *stream, const void *in, s64 size, error *err)
 {
     assert(in != nullptr);
 
     return io_write(stream->handle, (const char*)in, size, err);
 }
 
-s64 write(file_stream *stream, const void *in, u64 size, u64 nmemb, error *err)
+s64 write(file_stream *stream, const void *in, s64 size, s64 nmemb, error *err)
 {
     assert(in != nullptr);
 
@@ -524,7 +524,7 @@ s64 write(file_stream *stream, const void *in, u64 size, u64 nmemb, error *err)
     return ret / size;
 }
 
-s64 write_at(file_stream *stream, const void *in, u64 offset, u64 size, error *err)
+s64 write_at(file_stream *stream, const void *in, s64 offset, s64 size, error *err)
 {
     if (seek(stream, offset, IO_SEEK_SET, err) == -1)
         return -1;
@@ -532,7 +532,7 @@ s64 write_at(file_stream *stream, const void *in, u64 offset, u64 size, error *e
     return write(stream, in, size, err);
 }
 
-s64 write_at(file_stream *stream, const void *in, u64 offset, u64 size, u64 nmemb, error *err)
+s64 write_at(file_stream *stream, const void *in, s64 offset, s64 size, s64 nmemb, error *err)
 {
     if (seek(stream, offset, IO_SEEK_SET, err) == -1)
         return -1;
@@ -540,12 +540,12 @@ s64 write_at(file_stream *stream, const void *in, u64 offset, u64 size, u64 nmem
     return write(stream, in, size, nmemb, err);
 }
 
-s64 write_block(file_stream *stream, const void *in, u64 block_size, error *err)
+s64 write_block(file_stream *stream, const void *in, s64 block_size, error *err)
 {
     return write(stream, in, block_size, err);
 }
 
-s64 write_block(file_stream *stream, const void *in, s64 nth_block, u64 block_size, error *err)
+s64 write_block(file_stream *stream, const void *in, s64 nth_block, s64 block_size, error *err)
 {
     if (seek_block_from_start(stream, nth_block, block_size, err) == -1)
         return -1;
@@ -553,12 +553,12 @@ s64 write_block(file_stream *stream, const void *in, s64 nth_block, u64 block_si
     return write(stream, in, block_size, err);
 }
 
-s64 write_blocks(file_stream *stream, const void *in, s64 block_count, u64 block_size, error *err)
+s64 write_blocks(file_stream *stream, const void *in, s64 block_count, s64 block_size, error *err)
 {
     return write(stream, in, block_size, block_count, err);
 }
 
-s64 write_blocks(file_stream *stream, const void *in, s64 nth_block, s64 block_count, u64 block_size, error *err)
+s64 write_blocks(file_stream *stream, const void *in, s64 nth_block, s64 block_count, s64 block_size, error *err)
 {
     if (seek_block_from_start(stream, nth_block, block_size, err) == -1)
         return -1;
