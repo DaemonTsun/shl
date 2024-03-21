@@ -13,7 +13,8 @@ add_lib(shl STATIC
     SOURCES_DIR "${ROOT}/src/"
     GENERATE_TARGET_HEADER "${ROOT}/src/shl/shl_info.hpp"
     CPP_VERSION 20
-    CPP_WARNINGS ALL EXTRA PEDANTIC SANE FATAL -Werror
+    CPP_WARNINGS ALL EXTRA PEDANTIC SANE FATAL
+                 @GNU -Werror
     LIBRARIES
         @Windows mincore.lib # for VirtualAlloc2 in ring_buffer.cpp
     TESTS "${ROOT}/tests"
