@@ -72,6 +72,7 @@ T *reallocate_memory(T *ptr, s64 n_elements)
 void *move_memory(const void *from, void *to, s64 size);
 void *copy_memory(const void *from, void *to, s64 size);
 void free_memory(void *ptr);
+void free_memory(void *ptr, s64 size);
 
 template<typename T>
 void free_memory(T *ptr)

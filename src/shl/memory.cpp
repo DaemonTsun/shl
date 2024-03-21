@@ -34,6 +34,12 @@ void free_memory(void *ptr)
     ::free(ptr);
 }
 
+void free_memory(void *ptr, [[maybe_unused]] s64 size)
+{
+    // TODO: do the thing
+    free_memory(ptr);
+}
+
 void fill_memory(void *ptr, u8 byte, s64 size)
 {
     ::memset(ptr, (int)byte, size);
