@@ -185,6 +185,7 @@ for_array(i, v, *arr) Iterate an array. i will be the index of an element and
 #include "shl/compare.hpp"
 #include "shl/type_functions.hpp"
 #include "shl/number_types.hpp"
+#include "shl/allocator.hpp"
 #include "shl/memory.hpp"
 #include "shl/hash.hpp"
 #include "shl/bits.hpp"

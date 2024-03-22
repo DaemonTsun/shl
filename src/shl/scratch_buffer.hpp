@@ -108,7 +108,7 @@ s64 grow_by(scratch_buffer<N> *buf, s64 factor)
     }
     else
     {
-        buf->data = reallocate_memory<char>(buf->data, nsize);
+        buf->data = (char*)reallocate_memory(buf->data, nsize);
         buf->size = nsize;
     }
 

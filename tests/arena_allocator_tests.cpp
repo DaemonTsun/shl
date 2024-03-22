@@ -1,6 +1,6 @@
 
 #include "t1/t1.hpp"
-#include "shl/arena_allocator.hpp"
+#include "shl/allocator_arena.hpp"
 
 define_test(arena_init_initializes_arena)
 {

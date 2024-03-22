@@ -1916,7 +1916,7 @@ static bool _get_converted_environment_variable(const C *name, s64 namesize, C *
         if (*syssize < Max((s64)64, char_count + 1))
         {
             *syssize = Max((s64)64, char_count + 1);
-            *sysbuf = reallocate_memory<sys_char>(*sysbuf, *syssize);
+            *sysbuf = (sys_char*)reallocate_memory(*sysbuf, (*syssize) * sizeof(sys_char));
             fill_memory((void*)*sysbuf, 0, (*syssize) * sizeof(sys_char));
         }
 
@@ -1934,7 +1934,7 @@ static bool _get_converted_environment_variable(const C *name, s64 namesize, C *
             if (*outsize < Max((s64)64, char_count + 1))
             {
                 *outsize = Max((s64)64, char_count + 1);
-                *outbuf = reallocate_memory<C>(*outbuf, *outsize);
+                *outbuf = (C*)reallocate_memory(*outbuf, *outsize * sizeof(C));
                 fill_memory((void*)*outbuf, 0, *outsize * sizeof(C));
             }
 
@@ -1943,7 +1943,7 @@ static bool _get_converted_environment_variable(const C *name, s64 namesize, C *
         else
         {
             *outsize = Max((s64)64, *outsize);
-            *outbuf = reallocate_memory<C>(*outbuf, *outsize);
+            *outbuf = (C*)reallocate_memory(*outbuf, *outsize * sizeof(C));
             fill_memory((void*)*outbuf, 0, *outsize * sizeof(C));
         }
     }

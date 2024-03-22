@@ -1,12 +1,12 @@
 
 #pragma once
 
-/* arena_allocator.hpp
+/* allocator_arena.hpp
 
 Defines arena and arena_allocator.
 */
 
-#include "shl/memory.hpp"
+#include "shl/allocator.hpp"
 #include "shl/number_types.hpp"
 
 struct arena
