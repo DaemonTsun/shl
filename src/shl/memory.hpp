@@ -58,18 +58,19 @@ T *allocate_memory(s64 n_elements)
     return reinterpret_cast<T*>(allocate_memory(sizeof(T) * n_elements));
 }
 
-void *reallocate_memory(void *ptr, s64 size);
+void *reallocate_memory(void *ptr, s64 old_size, s64 new_size);
+void free_memory(void *ptr, s64 size);
+
+// unfortunately, this must be called _T because otherwise the
+// function infers the type from any pointer passed to it.
+template<typename T>
+void free_memory_T(T *ptr)
+{
+    free_memory(reinterpret_cast<void*>(ptr), sizeof(T));
+}
 
 void *move_memory(const void *from, void *to, s64 size);
 void *copy_memory(const void *from, void *to, s64 size);
-void free_memory(void *ptr);
-void free_memory(void *ptr, s64 size);
-
-template<typename T>
-void free_memory(T *ptr)
-{
-    free_memory(reinterpret_cast<void*>(ptr));
-}
 
 void fill_memory(void *ptr, u8 byte, s64 size);
 

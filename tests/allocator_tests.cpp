@@ -7,13 +7,13 @@ define_test(default_allocator_allocates_and_deallocates_memory)
 {
     allocator a = default_allocator;
     
-    int *x = (int*)a.alloc(a.context, nullptr, 0, sizeof(int));
+    int *x = (int*)a.alloc(a.data, nullptr, 0, sizeof(int));
 
     assert_not_equal(x, nullptr);
     *x = 10;
     assert_equal(*x, 10);
 
-    x = (int*)a.alloc(a.context, x, sizeof(int), 0);
+    x = (int*)a.alloc(a.data, x, sizeof(int), 0);
 
     assert_equal(x, nullptr);
 }

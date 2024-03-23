@@ -9,7 +9,7 @@ define_test(alloc_allocates_memory)
 
     assert_not_equal(x, nullptr);
 
-    free_memory(x);
+    free_memory_T(x);
 }
 
 define_test(fill_memory_sets_memory)
@@ -21,7 +21,7 @@ define_test(fill_memory_sets_memory)
 
     assert_equal(*x, 0);
 
-    free_memory(x);
+    free_memory_T(x);
 }
 
 define_test(fill_memory_sets_memory2)
@@ -33,7 +33,7 @@ define_test(fill_memory_sets_memory2)
 
     assert_equal(*x, 0);
 
-    free_memory(x);
+    free_memory_T(x);
 }
 
 define_default_test_main()

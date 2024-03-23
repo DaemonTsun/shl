@@ -1,37 +1,25 @@
 
-/*
-debug: debugging functions
-v1.1
+/* debug.hpp
 
-Sets preprocessor constant Debug to 1 if NDEBUG is not set.
+Debugging utility.
 
-debug(fmt, ...) Same as printf but does nothing if Debug is not 1.
-trace(fmt, ...) Same as printf but does nothing if Debug is not and TRACE is not set
+The breakpoint() macro may be used to interrupt execution when debugging, with
+the option to continue execution afterwards.
 */
 
 #pragma once
 
 #ifndef NDEBUG
-#define Debug 1
+
+#if __GNUC__
+// TODO: do other architectures
+#define breakpoint() asm ("int3; nop")
+#elif _MSC_VER
+#define breakpoint() __debugbreak()
 #endif
 
-#if Debug
+#else
 
-#include <stdio.h>
+#define breakpoint() ((void)0)
 
-#define MACRO_TO_STRING2(x) #x
-#define MACRO_TO_STRING(x) MACRO_TO_STRING2(x)
-
-#define debug(fmt, ...) printf(fmt __VA_OPT__(,) __VA_ARGS__)
-
-#ifdef TRACE
-#define trace(fmt, ...) printf("[" __FILE__ ":" MACRO_TO_STRING(__LINE__) "] " fmt __VA_OPT__(,) __VA_ARGS__)
-#else // no TRACE
-#define trace(...)
-#endif // end TRACE
-#else // no Debug
-
-#define debug(...)
-#define trace(...)
-
-#endif // end Debug
+#endif // ifndef NDEBUG

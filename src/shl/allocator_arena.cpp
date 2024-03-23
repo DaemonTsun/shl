@@ -91,13 +91,13 @@ static void *_arena_realloc(arena *a, char *ptr, s64 old_size, s64 new_size)
     }
 }
 
-void *arena_alloc(void *context, void *ptr, s64 old_size, s64 new_size)
+void *arena_alloc(void *data, void *ptr, s64 old_size, s64 new_size)
 {
-    assert(context != nullptr);
+    assert(data != nullptr);
     assert(old_size >= 0);
     assert(new_size >= 0);
 
-    arena *a = (arena*)context;
+    arena *a = (arena*)data;
 
     if (ptr == nullptr)
         return _arena_alloc(a, new_size);

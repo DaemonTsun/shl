@@ -99,8 +99,7 @@ struct chunk
     bool used[N];
     T data[N];
 
-          T &operator[](s64 i)       { return data[i]; }
-    const T &operator[](s64 i) const { return data[i]; }
+    T &operator[](s64 i)       { return data[i]; }
 };
 
 template<typename T, s64 N = Default_chunk_size>
@@ -359,7 +358,7 @@ void free(chunk_array<T, N> *arr)
     if constexpr (FreeValues) free_values(arr);
 
     for_array(chnk, &arr->all_chunks)
-        free_memory<chunk<T, N>>(*chnk);
+        free_memory_T<chunk<T, N>>(*chnk);
 
     free(&arr->all_chunks);
     free(&arr->nonfull_chunks);

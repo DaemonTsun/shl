@@ -20,9 +20,9 @@ void free(arena *a);
 
 s64 arena_remaining_size(arena a);
 
-void *arena_alloc(void *context, void *ptr, s64 old_size, s64 new_size);
+void *arena_alloc(void *data, void *ptr, s64 old_size, s64 new_size);
 
 inline static allocator arena_allocator(arena *a)
 {
-    return allocator{.alloc = arena_alloc, .context = (void*)a};
+    return allocator{.alloc = arena_alloc, .data = (void*)a};
 }

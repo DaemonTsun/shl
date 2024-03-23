@@ -40,7 +40,7 @@ const char *_get_exe_name(const char *path)
     }
 }
 
-void _cmdline_to_args(const sys_char *cmd, const sys_char *exe, array<sys_char*> *args)
+void _cmdline_to_args(const sys_char *cmd, const sys_char *exe, array<sys_char*> *args, array<s64> *sizes)
 {
     // TODO: empty arguments, more tests...
     sys_string arg{};
@@ -51,6 +51,7 @@ void _cmdline_to_args(const sys_char *cmd, const sys_char *exe, array<sys_char*>
     {
         set_string(&arg, exe_name);
         add_at_end(args, arg.data);
+        add_at_end(sizes, arg.reserved_size);
         init(&arg);
     }
 
@@ -84,6 +85,7 @@ void _cmdline_to_args(const sys_char *cmd, const sys_char *exe, array<sys_char*>
                 if (arg.size > 0)
                 {
                     add_at_end(args, arg.data);
+                    add_at_end(sizes, arg.reserved_size);
                     init(&arg);
                 }
 
@@ -99,10 +101,12 @@ void _cmdline_to_args(const sys_char *cmd, const sys_char *exe, array<sys_char*>
     if (arg.size > 0)
     {
         add_at_end(args, arg.data);
+        add_at_end(sizes, arg.reserved_size);
         init(&arg);
     }
 
     add_at_end(args, (sys_char*)nullptr);
+    *add_at_end(sizes) = 0;
 }
 #endif
 
@@ -185,7 +189,7 @@ void _free_process_start_info_path(process_start_info *info)
 {
     if (info->_free_exe_path && info->path != nullptr)
     {
-        free_memory((void*)info->path);
+        free_memory((void*)info->path, info->_free_exe_path_size);
         info->path = nullptr;
     }
 }
@@ -195,15 +199,20 @@ void _free_process_start_info_arguments(process_start_info *info)
     if (info->_free_args && info->args != nullptr)
     {
 #if Windows
-        free_memory((void*)info->args);
+        assert(_free_args_sizes.size == 1);
+        free_memory((void*)info->args, *_free_args_sizes);
+        free_memory(_free_args_sizes, sizeof(s64));
 #else
         s64 arg_count = _get_argument_count(info->args);
-        array<sys_char*> _args{.data = (sys_char**)info->args, .size = arg_count, .reserved_size = arg_count, .allocator = default_allocator};
+        array<sys_char*> _args{.data = (sys_char**)info->args, .size = arg_count, .reserved_size = arg_count, .allocator = {}};
+        array<s64> _sizes{.data = (s64*)info->_free_args_sizes, .size = arg_count, .reserved_size = arg_count, .allocator = {}};
 
-        for_array(sstr, &_args)
-            free_memory(*sstr);
+        for_array(i, sstr, &_args)
+            if (*sstr != nullptr)
+                free_memory(*sstr, info->_free_args_sizes[i]);
 
         free(&_args);
+        free(&_sizes);
 #endif
 
         info->args = nullptr;
@@ -252,8 +261,10 @@ void set_process_executable(process *p, const char *exe)
     _free_process_start_info_path(&p->start_info);
 
 #if Windows
-    p->start_info.path = _convert_string(exe, string_length(exe)).data;
+    auto path = _convert_string(exe, string_length(exe));
+    p->start_info.path = path.data;
     p->start_info._free_exe_path = true;
+    p->start_info._free_exe_path_size = path.reserved_size * sizeof(sys_char);
 #else
     p->start_info.path = exe;
     p->start_info._free_exe_path = false;
@@ -270,8 +281,10 @@ void set_process_executable(process *p, const wchar_t *exe)
     p->start_info.path = exe;
     p->start_info._free_exe_path = false;
 #else
-    p->start_info.path = _convert_string(exe, string_length(exe)).data;
+    auto path = _convert_string(exe, string_length(exe));
+    p->start_info.path = path.data;
     p->start_info._free_exe_path = true;
+    p->start_info._free_exe_path_size = path.reserved_size * sizeof(sys_char);
 #endif
 }
 
@@ -292,12 +305,16 @@ void set_process_arguments(process *p, const char *args)
     sys_string cmdline = _convert_string(args, string_length(args));
     p->start_info.args = cmdline.data;
     p->start_info._free_args = true;
+    p->start_info._free_args_sizes = allocate_memory<s64>();
+    *p->start_info._free_args_sizes = _cmdline.reserved_size * sizeof(sys_char);
 #else
     array<sys_char*> _args{};
-    _cmdline_to_args(args, p->start_info.path, &_args);
+    array<s64> _sizes{};
+    _cmdline_to_args(args, p->start_info.path, &_args, &_sizes);
 
     p->start_info.args = (const sys_char**)_args.data;
     p->start_info._free_args = true;
+    p->start_info._free_args_sizes = _sizes.data;
 #endif
 }
 
@@ -319,14 +336,18 @@ void set_process_arguments(process *p, const wchar_t *args)
     sys_string cmdline = copy_string(args);
     p->start_info.args = cmdline.data;
     p->start_info._free_args = true;
+    p->start_info._free_args_sizes = allocate_memory<s64>();
+    *p->start_info._free_args_sizes = _cmdline.reserved_size * sizeof(sys_char);
 #else
     sys_string sargs = _convert_string(args, string_length(args));
     array<sys_char*> _args{};
-    _cmdline_to_args(sargs.data, p->start_info.path, &_args);
+    array<s64> _sizes{};
+    _cmdline_to_args(sargs.data, p->start_info.path, &_args, &_sizes);
 
     p->start_info.args = (const sys_char**)_args.data;
     p->start_info._free_args = true;
-    free_memory(sargs.data);
+    p->start_info._free_args_sizes = _sizes.data;
+    free_memory(sargs.data, sargs.reserved_size);
 #endif
 }
 
@@ -361,23 +382,34 @@ void set_process_arguments(process *p, const char **args, bool raw)
         // arguments are copied and exe name is added at the start.
         // all of it is freed in free(process_start_info*).
         array<sys_char*> _args{};
+        array<s64> _sizes{};
         u64 arg_count = _get_argument_count(args);
 
         // we add the name of the executable
         const char *exe_name = _get_exe_name(p->start_info.path);
 
         if (exe_name != nullptr)
-            add_at_end(&_args, strdup(exe_name));
+        {
+            string e = copy_string(exe_name);
+            add_at_end(&_args, e.data);
+            add_at_end(&_sizes, e.reserved_size);
+        }
 
         for (u64 i = 0; i < arg_count; ++i)
-            add_at_end(&_args, strdup(args[i]));
+        {
+            string e = copy_string(args[i]);
+            add_at_end(&_args, e.data);
+            add_at_end(&_sizes, e.reserved_size);
+        }
 
         if (_args.data != nullptr)
         {
             add_at_end(&_args, (char *)nullptr);
+            *add_at_end(&_sizes) = 0;
 
             p->start_info.args = (const sys_char**)_args.data;
             p->start_info._free_args = true;
+            p->start_info._free_args_sizes = _sizes.data;
         }
         else
         {

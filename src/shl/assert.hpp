@@ -20,6 +20,8 @@ can be disabled by defining the NO_ASSERT_COLORS preprocessor constant.
 */
 #pragma once
 
+#include "shl/debug.hpp"
+
 #ifdef NDEBUG
 #define assert(...) ((void)0)
 #else
@@ -41,12 +43,6 @@ extern void _print_assert_msg(const char *msg, int len);
 #define _A_TERM_COLOR_RESET "\033[0m"
 #endif
 
-#if __GNUC__
-#define _do_break() __builtin_trap()
-#elif _MSC_VER
-#define _do_break() __debugbreak()
-#endif
-
 #if defined(ASSERT_PRINT_MESSAGE)
 #define assert(c, ...) \
     {\
@@ -54,13 +50,13 @@ extern void _print_assert_msg(const char *msg, int len);
         {\
             _print_assert_msg("[" _A_TERM_COLOR_BLUE __FILE__ ":" STRINGIFY(__LINE__) _A_TERM_COLOR_RESET "] assert failed:\n\tassert(" _A_TERM_COLOR_RED STRINGIFY(c) _A_TERM_COLOR_RESET __VA_OPT__(", ") #__VA_ARGS__ ")\n\n",\
                      sizeof("[" _A_TERM_COLOR_BLUE __FILE__ ":" STRINGIFY(__LINE__) _A_TERM_COLOR_RESET "] assert failed:\n\tassert(" _A_TERM_COLOR_RED STRINGIFY(c) _A_TERM_COLOR_RESET __VA_OPT__(", ") #__VA_ARGS__ ")\n\n"));\
-            _do_break();\
+            breakpoint();\
         }\
     } while (0);
 #else
 #define assert(c, ...) \
     {\
-        if (!(c)) _do_break();\
+        if (!(c)) breakpoint();\
     } while (0);
 #endif
 

@@ -26,7 +26,7 @@ void free(memory_stream *stream)
         return;
 
     if (stream->data != nullptr)
-        free_memory(stream->data);
+        free_memory(stream->data, stream->size);
 
     stream->data = nullptr;
     stream->size = 0;

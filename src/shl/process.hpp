@@ -91,7 +91,9 @@ struct process_start_info
     bool inherit_handles; // used only on windows
 
     bool _free_exe_path; // if converted
+    s64 _free_exe_path_size;
     bool _free_args; // if allocated by set_process_arguments or converted
+    s64 *_free_args_sizes;
     process_start_detail detail;
 };
 

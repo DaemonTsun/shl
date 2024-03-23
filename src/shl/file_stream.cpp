@@ -181,7 +181,7 @@ bool init(file_stream *stream, const wchar_t *path, int mode, int permissions, e
     
     bool ok = init(stream, tmp, mode, permissions, err);
 
-    free_memory(tmp);
+    free_memory(tmp, sz);
 
     return ok;
 #endif
