@@ -200,8 +200,7 @@ struct array
     s64 reserved_size;
     ::allocator allocator;
 
-          T &operator[](s64 index)       { return data[index]; }
-    const T &operator[](s64 index) const { return data[index]; }
+    T &operator[](s64 index)       { return data[index]; }
 };
 
 template<typename T>
