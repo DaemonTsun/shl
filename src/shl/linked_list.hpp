@@ -271,7 +271,7 @@ list_node<T> *add_elements(linked_list<T> *list, s64 n_elements)
     {
         assert(list->first == nullptr);
 
-        list->first = allocate_memory<list_node<T>>();
+        list->first = alloc<list_node<T>>();
         list->first->next = nullptr;
         list->first->previous = nullptr;
         list->last = list->first;
@@ -284,7 +284,7 @@ list_node<T> *add_elements(linked_list<T> *list, s64 n_elements)
 
     for (s64 i = 0; i < new_elements_to_add; ++i)
     {
-        list_node<T> *tmp = allocate_memory<list_node<T>>();
+        list_node<T> *tmp = alloc<list_node<T>>();
         tmp->previous = n;
         tmp->next = nullptr;
         n->next = tmp;
@@ -320,7 +320,7 @@ list_node<T> *insert_elements(linked_list<T> *list, s64 index, s64 n_elements)
 
     for (s64 i = 0; i < n_elements; ++i)
     {
-        list_node<T> *tmp = allocate_memory<list_node<T>>();
+        list_node<T> *tmp = alloc<list_node<T>>();
         tmp->previous = n;
         tmp->next = after;
 
@@ -523,7 +523,7 @@ void remove_elements(linked_list<T> *list, s64 index, s64 n_elements)
         list_node<T> *next = node->next;
 
         if constexpr (FreeValues) free(&node->value);
-        free_memory_T<list_node<T>>(node);
+        dealloc_T<list_node<T>>(node);
         node = next;
 
         i++;
@@ -628,7 +628,7 @@ void free(linked_list<T> *list)
 
         if constexpr (FreeValues) free(&n->value);
 
-        free_memory_T<list_node<T>>(n);
+        dealloc_T<list_node<T>>(n);
         n = tmp;
     }
 

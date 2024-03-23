@@ -1917,7 +1917,7 @@ static bool _get_converted_environment_variable(const C *name, s64 namesize, C *
         {
             s64 old_size = *syssize;
             *syssize = Max((s64)64, char_count + 1);
-            *sysbuf = (sys_char*)reallocate_memory(*sysbuf, old_size * sizeof(sys_char), (*syssize) * sizeof(sys_char));
+            *sysbuf = realloc_T<sys_char>(*sysbuf, old_size, *syssize);
             fill_memory((void*)*sysbuf, 0, (*syssize) * sizeof(sys_char));
         }
 
@@ -1936,7 +1936,7 @@ static bool _get_converted_environment_variable(const C *name, s64 namesize, C *
             {
                 s64 old_size = *outsize;
                 *outsize = Max((s64)64, char_count + 1);
-                *outbuf = (C*)reallocate_memory(*outbuf, old_size * sizeof(C), *outsize * sizeof(C));
+                *outbuf = realloc_T<C>(*outbuf, old_size, *outsize);
                 fill_memory((void*)*outbuf, 0, *outsize * sizeof(C));
             }
 
@@ -1946,7 +1946,7 @@ static bool _get_converted_environment_variable(const C *name, s64 namesize, C *
         {
             s64 old_size = *outsize;
             *outsize = Max((s64)64, *outsize);
-            *outbuf = (C*)reallocate_memory(*outbuf, old_size * sizeof(C), *outsize * sizeof(C));
+            *outbuf = realloc_T<C>(*outbuf, old_size, *outsize);
             fill_memory((void*)*outbuf, 0, *outsize * sizeof(C));
         }
     }
@@ -1983,10 +1983,10 @@ static void _resolve_environment_variables(C *str, s64 _size, bool aliases)
         if constexpr (!is_same(C, sys_char))
         {
             if (_val != nullptr)
-                free_memory(_val, _val_buf_size * sizeof(C));
+                dealloc_T<C>(_val, _val_buf_size);
 
             if (_sys_char_buf != nullptr)
-                free_memory(_sys_char_buf, _sys_char_buf_size * sizeof(sys_char));
+                dealloc_T<sys_char>(_sys_char_buf, _sys_char_buf_size);
         }
     };
 
@@ -2069,10 +2069,10 @@ static void _resolve_environment_variables_s(string_base<C> *str, bool aliases)
         if constexpr (!is_same(C, sys_char))
         {
             if (_val != nullptr)
-                free_memory(_val, _val_buf_size * sizeof(C));
+                dealloc_T<C>(_val, _val_buf_size);
 
             if (_sys_char_buf != nullptr)
-                free_memory(_sys_char_buf, _sys_char_buf_size * sizeof(sys_char));
+                dealloc_T<sys_char>(_sys_char_buf, _sys_char_buf_size);
         }
     };
 

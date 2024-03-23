@@ -18,9 +18,12 @@ A replacement library for the standard library, because STDs are no good.
 - [`#if Linux`](src/shl/platform.hpp): better platform preprocessor constants
 - [`#if MSVC`](src/shl/compiler.hpp): better compiler preprocessor constants
 - [`parse_X`](src/shl/parse.hpp): parsing functions to extract basic data types (`bool`, `integer`, `float`, ...) from strings
-- [`parse_object`](src/shl/parse_object.hpp): parsing functions for complex data types
+- [`parse_object`](src/shl/parse_object.hpp): parsing functions for nontrivial data types
 - [`rotl`, `rotr`, `bitmask`, ...](src/shl/bits.hpp): bit manipulation functions and macros
-- [`allocate_memory`, `move_memory`, `copy_memory`](src/shl/memory.hpp): type-safe memory management functions
+- [`alloc`, `dealloc`, `move_memory`, `copy_memory`](src/shl/memory.hpp): type-safe memory management functions
+- [`allocator`](src/shl/allocator.hpp): allocator type for using different types of allocators
+- [`arena_allocator`](src/shl/allocator_arena.hpp): arena allocator
+- [`program_context`](src/shl/program_context.hpp): (per thread) context for setting "global" information, e.g. allocator
 - [`sleep(float seconds)`](src/shl/time.hpp): multiplatform time functions
 - [`start_process`, `stop_process`, ...](src/shl/process.hpp): process management
 - [`pipe`](src/shl/pipe.hpp): OS pipes
@@ -36,8 +39,8 @@ Either clone the repostory and simply include it in CMake like so:
 
 ```cmake
 add_subdirectory(path/to/shl)
-target_link_libraries(your-target PRIVATE shl-0.9)
-target_include_directories(your-target PRIVATE ${shl-0.9_SOURCES_DIR})
+target_link_libraries(your-target PRIVATE shl-0.9.2)
+target_include_directories(your-target PRIVATE ${shl-0.9.2_SOURCES_DIR})
 ```
 
 OR follow the next steps to build and install it and manually link and include it.

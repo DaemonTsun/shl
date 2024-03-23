@@ -11,14 +11,15 @@ set the program context.
 
 struct program_context
 {
-    // s32 thread_id;
-
     ::allocator allocator;
 
     // TODO: logger
+    // s32 thread_id;
 };
 
 const program_context default_context{.allocator = default_allocator};
 
 program_context *get_context_pointer();
+
+// returns the previous context pointer
 program_context *set_context_pointer(program_context *next);

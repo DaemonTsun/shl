@@ -75,7 +75,7 @@ void free(scratch_buffer<N> *buf)
         return;
 
     if (buf->data != buf->stack_buffer && buf->data != nullptr)
-        free_memory(buf->data, buf->size);
+        dealloc_T<char>(buf->data, buf->size);
 
     buf->data = nullptr;
     buf->size = 0;
@@ -103,12 +103,12 @@ s64 grow_by(scratch_buffer<N> *buf, s64 factor)
     if (buf->data == buf->stack_buffer)
     {
         // stack size no longer suffices, allocate more
-        buf->data = allocate_memory<char>(nsize);
+        buf->data = alloc<char>(nsize);
         buf->size = nsize;
     }
     else
     {
-        buf->data = (char*)reallocate_memory(buf->data, buf->size, nsize);
+        buf->data = realloc_T<char>(buf->data, buf->size, nsize);
         buf->size = nsize;
     }
 

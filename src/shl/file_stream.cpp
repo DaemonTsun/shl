@@ -174,14 +174,14 @@ bool init(file_stream *stream, const wchar_t *path, int mode, int permissions, e
 #else
     s64 char_count = _string_len(path);
     s64 sz = (char_count + 1) * sizeof(char);
-    char *tmp = (char*)::allocate_memory(sz);
+    char *tmp = ::alloc<char>(sz);
 
     ::fill_memory((void*)tmp, 0, sz);
     ::wcstombs(tmp, path, char_count * sizeof(wchar_t));
     
     bool ok = init(stream, tmp, mode, permissions, err);
 
-    free_memory(tmp, sz);
+    dealloc_T<char>(tmp, sz);
 
     return ok;
 #endif

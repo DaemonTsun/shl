@@ -20,25 +20,25 @@ void _libc_free(void *ptr)
     ::free(ptr);
 }
 
-void *allocate_memory(s64 size)
+void *alloc(s64 size)
 {
     program_context *ctx = get_context_pointer();   
 
-    return Alloc(ctx->allocator, size);
+    return allocator_alloc(ctx->allocator, size);
 }
 
-void *reallocate_memory(void *ptr, s64 old_size, s64 new_size)
+void *realloc(void *ptr, s64 old_size, s64 new_size)
 {
     program_context *ctx = get_context_pointer();   
 
-    return Realloc(ctx->allocator, ptr, old_size, new_size);
+    return allocator_realloc(ctx->allocator, ptr, old_size, new_size);
 }
 
-void free_memory(void *ptr, s64 size)
+void dealloc(void *ptr, s64 size)
 {
     program_context *ctx = get_context_pointer();   
 
-    Free(ctx->allocator, ptr, size);
+    allocator_dealloc(ctx->allocator, ptr, size);
 }
 
 void *move_memory(const void *from, void *to, s64 size)

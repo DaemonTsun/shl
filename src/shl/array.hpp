@@ -236,7 +236,7 @@ void init(array<T> *arr, s64 n_elements, allocator a = default_allocator)
     if (n_elements < 0)
         n_elements = 0;
 
-    arr->data = AllocT(a, T, n_elements);
+    arr->data = allocator_alloc_T(a, T, n_elements);
     arr->size = n_elements;
     arr->reserved_size = n_elements;
     arr->allocator = a;
@@ -264,7 +264,7 @@ T *add_elements(array<T> *arr, s64 n_elements)
     if (arr->allocator.alloc == nullptr)
         arr->allocator = default_allocator;
 
-    T *n = ReallocT(arr->allocator, arr->data, T, arr->reserved_size, new_reserved_size);
+    T *n = allocator_realloc_T(arr->allocator, arr->data, T, arr->reserved_size, new_reserved_size);
 
     if (n == nullptr)
         return nullptr;
@@ -491,7 +491,7 @@ bool reserve(array<T> *arr, s64 size)
     if (arr->allocator.alloc == nullptr)
         arr->allocator = default_allocator;
 
-    T *n = ReallocT(arr->allocator, arr->data, T, arr->reserved_size, size);
+    T *n = allocator_realloc_T(arr->allocator, arr->data, T, arr->reserved_size, size);
 
     if (n == nullptr)
         return false;
@@ -531,7 +531,7 @@ bool resize(array<T> *arr, s64 size)
     if (arr->allocator.alloc == nullptr)
         arr->allocator = default_allocator;
 
-    T *n = ReallocT(arr->allocator, arr->data, T, arr->reserved_size, size);
+    T *n = allocator_realloc_T(arr->allocator, arr->data, T, arr->reserved_size, size);
 
     if (n == nullptr && size > 0)
         return false;
@@ -554,7 +554,7 @@ bool shrink_to_fit(array<T> *arr)
     if (arr->allocator.alloc == nullptr)
         arr->allocator = default_allocator;
 
-    T *n = ReallocT(arr->allocator, arr->data, T, arr->reserved_size, arr->size);
+    T *n = allocator_realloc_T(arr->allocator, arr->data, T, arr->reserved_size, arr->size);
 
     if (n == nullptr)
         return false;
@@ -655,7 +655,7 @@ void free(array<T> *arr)
         if (arr->allocator.alloc == nullptr)
             arr->allocator = default_allocator;
 
-        arr->data = FreeT(arr->allocator, arr->data, T, arr->reserved_size);
+        arr->data = allocator_dealloc_T(arr->allocator, arr->data, T, arr->reserved_size);
     }
 
     arr->size = 0;

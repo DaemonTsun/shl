@@ -15,7 +15,7 @@ void init(memory_stream *stream, s64 size)
 {
     assert(stream != nullptr);
 
-    stream->data = (char*)allocate_memory(size);
+    stream->data = alloc<char>(size);
     stream->size = size;
     stream->position = 0;
 }
@@ -26,7 +26,7 @@ void free(memory_stream *stream)
         return;
 
     if (stream->data != nullptr)
-        free_memory(stream->data, stream->size);
+        dealloc_T<char>(stream->data, stream->size);
 
     stream->data = nullptr;
     stream->size = 0;

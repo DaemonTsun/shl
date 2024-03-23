@@ -141,7 +141,7 @@ chunk<T, N> *add_chunk(chunk_array<T, N> *arr)
     if (ptr == nullptr)
         return nullptr;
 
-    *ptr = allocate_memory<chunk<T, N>>();
+    *ptr = alloc<chunk<T, N>>();
     chunk<T, N> *ret = *ptr;
 
     add_at_end(&arr->nonfull_chunks, ret);
@@ -358,7 +358,7 @@ void free(chunk_array<T, N> *arr)
     if constexpr (FreeValues) free_values(arr);
 
     for_array(chnk, &arr->all_chunks)
-        free_memory_T<chunk<T, N>>(*chnk);
+        dealloc_T<chunk<T, N>>(*chnk);
 
     free(&arr->all_chunks);
     free(&arr->nonfull_chunks);
@@ -398,7 +398,7 @@ chunk_item_index index_of(const chunk_array<T, N> *arr, const T *key, equality_f
         if (eq(v, key))
             return i;
 
-    return {.chunk_index = (u32)-1, .slot_index = (s32)-1};
+    return {.chunk_index = (s32)-1, .slot_index = (s32)-1};
 }
 
 template<typename T, s64 N>

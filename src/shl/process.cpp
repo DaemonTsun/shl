@@ -116,7 +116,7 @@ string _convert_string(const wchar_t *wcstring, u64 wchar_count)
 {
     string ret{};
     u64 sz = (wchar_count + 1) * sizeof(char);
-    ret.data = (char*)::allocate_memory(sz);
+    ret.data = ::alloc<char>(sz);
 
     ::fill_memory((void*)ret.data, 0, sz);
 
@@ -129,7 +129,7 @@ wstring _convert_string(const char *cstring, u64 char_count)
 {
     wstring ret{};
     u64 sz = (char_count + 1) * sizeof(wchar_t);
-    ret.data = (wchar_t*)::allocate_memory(sz);
+    ret.data = ::alloc<wchar_t>(sz);
     ::fill_memory((void*)ret.data, 0, sz);
 
     [[maybe_unused]] auto err = ::mbstowcs_s(&ret.size, ret.data, sz, cstring, _TRUNCATE);
@@ -189,7 +189,7 @@ void _free_process_start_info_path(process_start_info *info)
 {
     if (info->_free_exe_path && info->path != nullptr)
     {
-        free_memory((void*)info->path, info->_free_exe_path_size);
+        dealloc((void*)info->path, info->_free_exe_path_size);
         info->path = nullptr;
     }
 }
@@ -200,8 +200,8 @@ void _free_process_start_info_arguments(process_start_info *info)
     {
 #if Windows
         assert(_free_args_sizes.size == 1);
-        free_memory((void*)info->args, *_free_args_sizes);
-        free_memory(_free_args_sizes, sizeof(s64));
+        dealloc((void*)info->args, *_free_args_sizes);
+        dealloc(_free_args_sizes, sizeof(s64));
 #else
         s64 arg_count = _get_argument_count(info->args);
         array<sys_char*> _args{.data = (sys_char**)info->args, .size = arg_count, .reserved_size = arg_count, .allocator = {}};
@@ -209,7 +209,7 @@ void _free_process_start_info_arguments(process_start_info *info)
 
         for_array(i, sstr, &_args)
             if (*sstr != nullptr)
-                free_memory(*sstr, info->_free_args_sizes[i]);
+                dealloc(*sstr, info->_free_args_sizes[i]);
 
         free(&_args);
         free(&_sizes);
@@ -305,7 +305,7 @@ void set_process_arguments(process *p, const char *args)
     sys_string cmdline = _convert_string(args, string_length(args));
     p->start_info.args = cmdline.data;
     p->start_info._free_args = true;
-    p->start_info._free_args_sizes = allocate_memory<s64>();
+    p->start_info._free_args_sizes = alloc<s64>();
     *p->start_info._free_args_sizes = _cmdline.reserved_size * sizeof(sys_char);
 #else
     array<sys_char*> _args{};
@@ -336,7 +336,7 @@ void set_process_arguments(process *p, const wchar_t *args)
     sys_string cmdline = copy_string(args);
     p->start_info.args = cmdline.data;
     p->start_info._free_args = true;
-    p->start_info._free_args_sizes = allocate_memory<s64>();
+    p->start_info._free_args_sizes = alloc<s64>();
     *p->start_info._free_args_sizes = _cmdline.reserved_size * sizeof(sys_char);
 #else
     sys_string sargs = _convert_string(args, string_length(args));
@@ -347,7 +347,7 @@ void set_process_arguments(process *p, const wchar_t *args)
     p->start_info.args = (const sys_char**)_args.data;
     p->start_info._free_args = true;
     p->start_info._free_args_sizes = _sizes.data;
-    free_memory(sargs.data, sargs.reserved_size);
+    dealloc(sargs.data, sargs.reserved_size);
 #endif
 }
 

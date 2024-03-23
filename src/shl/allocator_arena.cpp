@@ -7,7 +7,7 @@
 
 void init(arena *a, s64 size)
 {
-    a->start = (char*)allocate_memory(size);
+    a->start = alloc<char>(size);
     a->end = a->start != nullptr ? (a->start + size) : nullptr;
 }
 
@@ -17,7 +17,7 @@ void free(arena *a)
         return;
 
     if (a->start != nullptr)
-        free_memory(a->start, arena_remaining_size(*a));
+        dealloc_T<char>(a->start, arena_remaining_size(*a));
 
     a->start = nullptr;
     a->end = nullptr;
