@@ -34,7 +34,7 @@ realloc_T<T>(Ptr, OldCount, NewCount)
     NewCount * sizeof(T) bytes long.
 
 dealloc(Ptr, Size)      frees Ptr.
-dealloc_T<T>(Ptr)       frees Ptr of type T*, with sizeof(T).
+dealloc<T>(Ptr)         frees Ptr of type T*, with sizeof(T).
 dealloc_T<T>(Ptr, N)    frees Ptr of type T*, with sizeof(T) * N.
                     
 move_memory(From, To, N)    effectively copies N bytes from From to To.
@@ -78,15 +78,15 @@ T *realloc_T(T *ptr, s64 old_count, s64 new_count)
 
 void dealloc(void *ptr, s64 size);
 
-// unfortunately, this must be called _T because otherwise the
-// function infers the type from any pointer passed to it, causing all
-// dealloc calls to free only the size of T.
 template<typename T>
-void dealloc_T(T *ptr)
+void dealloc(T *ptr)
 {
     dealloc(reinterpret_cast<void*>(ptr), sizeof(T));
 }
 
+// unfortunately, this must be called _T because otherwise the
+// function infers the type from any pointer passed to it, causing all
+// dealloc calls to free the size of T.
 template<typename T>
 void dealloc_T(T *ptr, s64 n_elements)
 {

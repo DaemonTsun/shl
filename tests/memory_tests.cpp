@@ -21,7 +21,7 @@ define_test(fill_memory_sets_memory)
 
     assert_equal(*x, 0);
 
-    dealloc_T(x);
+    dealloc(x);
 }
 
 define_test(fill_memory_sets_memory2)
@@ -33,7 +33,7 @@ define_test(fill_memory_sets_memory2)
 
     assert_equal(*x, 0);
 
-    dealloc_T(x);
+    dealloc(x);
 }
 
 define_default_test_main()

@@ -358,7 +358,7 @@ void free(chunk_array<T, N> *arr)
     if constexpr (FreeValues) free_values(arr);
 
     for_array(chnk, &arr->all_chunks)
-        dealloc_T<chunk<T, N>>(*chnk);
+        dealloc<chunk<T, N>>(*chnk);
 
     free(&arr->all_chunks);
     free(&arr->nonfull_chunks);

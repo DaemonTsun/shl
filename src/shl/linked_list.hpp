@@ -523,7 +523,7 @@ void remove_elements(linked_list<T> *list, s64 index, s64 n_elements)
         list_node<T> *next = node->next;
 
         if constexpr (FreeValues) free(&node->value);
-        dealloc_T<list_node<T>>(node);
+        dealloc<list_node<T>>(node);
         node = next;
 
         i++;
@@ -628,7 +628,7 @@ void free(linked_list<T> *list)
 
         if constexpr (FreeValues) free(&n->value);
 
-        dealloc_T<list_node<T>>(n);
+        dealloc<list_node<T>>(n);
         n = tmp;
     }
 
