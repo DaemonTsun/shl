@@ -13,7 +13,8 @@ Example:
     char *data = (char*)alloc(255);
     dealloc(data);
 
-Default implementations of alloc and dealloc are malloc and free respectively, currently.
+Change the context allocator (see shl/program_context.hpp and shl/allocator.hpp) to
+change which allocator alloc, realloc and dealloc use.
 
 alloc(N)   returns a pointer to uninitialized, writable memory
            that is N bytes long.
