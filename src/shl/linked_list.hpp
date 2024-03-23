@@ -155,6 +155,7 @@ for_list(i, v, n, *list) iterate a list. i will be the index of an element and
 #include "shl/macros.hpp"
 #include "shl/type_functions.hpp"
 #include "shl/number_types.hpp"
+#include "shl/program_context.hpp"
 #include "shl/memory.hpp"
 #include "shl/hash.hpp"
 
@@ -178,6 +179,8 @@ struct linked_list
     list_node<T> *first;
     list_node<T> *last;
     s64 size;
+
+    ::allocator allocator;
 
     T &operator[](s64 index)       { return nth_node(this, index)->value; }
 };
@@ -208,6 +211,7 @@ void init(linked_list<T> *list)
     list->first = nullptr;
     list->last = nullptr;
     list->size = 0;
+    list->allocator = get_context_pointer()->allocator;
 }
 
 template<typename T>
@@ -267,11 +271,13 @@ list_node<T> *add_elements(linked_list<T> *list, s64 n_elements)
     list_node<T> *ret = nullptr;
     s64 new_elements_to_add = n_elements;
 
+    _set_allocator_if_not_set(list);
+
     if (list->last == nullptr)
     {
         assert(list->first == nullptr);
 
-        list->first = alloc<list_node<T>>();
+        list->first = (list_node<T>*)allocator_alloc(list->allocator, sizeof(list_node<T>));
         list->first->next = nullptr;
         list->first->previous = nullptr;
         list->last = list->first;
@@ -284,7 +290,7 @@ list_node<T> *add_elements(linked_list<T> *list, s64 n_elements)
 
     for (s64 i = 0; i < new_elements_to_add; ++i)
     {
-        list_node<T> *tmp = alloc<list_node<T>>();
+        list_node<T> *tmp = (list_node<T>*)allocator_alloc(list->allocator, sizeof(list_node<T>));
         tmp->previous = n;
         tmp->next = nullptr;
         n->next = tmp;
@@ -320,7 +326,7 @@ list_node<T> *insert_elements(linked_list<T> *list, s64 index, s64 n_elements)
 
     for (s64 i = 0; i < n_elements; ++i)
     {
-        list_node<T> *tmp = alloc<list_node<T>>();
+        list_node<T> *tmp = (list_node<T>*)allocator_alloc(list->allocator, sizeof(list_node<T>));
         tmp->previous = n;
         tmp->next = after;
 
@@ -517,13 +523,15 @@ void remove_elements(linked_list<T> *list, s64 index, s64 n_elements)
     list_node<T> *node = nth_node(list, index);
     list_node<T> *before_start = node->previous;
 
+    _set_allocator_if_not_set(list);
+
     s64 i = 0;
     while (i < n_elements && node != nullptr)
     {
         list_node<T> *next = node->next;
 
         if constexpr (FreeValues) free(&node->value);
-        dealloc<list_node<T>>(node);
+        allocator_dealloc(list->allocator, node, sizeof(list_node<T>));
         node = next;
 
         i++;
@@ -622,13 +630,15 @@ void free(linked_list<T> *list)
 
     list_node<T> *n = list->last;
 
+    _set_allocator_if_not_set(list);
+
     while (n != nullptr)
     {
         list_node<T> *tmp = n->previous;
 
         if constexpr (FreeValues) free(&n->value);
 
-        dealloc<list_node<T>>(n);
+        allocator_dealloc(list->allocator, n, sizeof(list_node<T>));
         n = tmp;
     }
 

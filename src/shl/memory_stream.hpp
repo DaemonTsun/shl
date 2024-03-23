@@ -7,10 +7,15 @@ v1.2
 add seek_next_alignment
 
 Defines the memory_stream struct and its functions.
-The memory_stream struct contains 3 members:
-    data, a pointer to the data
-    size, the total size of data
-    position, the current stream position
+The memory_stream struct has the following structure:
+
+struct memory_stream
+{
+    char *data;             // pointer to the first byte
+    s64 size;               // size of the stream
+    s64 position;           // current position in the stream
+    ::allocator allocator;  // the allocator of the data
+};
 
 Example:
 
@@ -197,12 +202,14 @@ write_blocks(*Stream, *In, NthBlock, N, Blocksize)
 #include "shl/io.hpp" // IO_SEEK_...
 #include "shl/hash.hpp"
 #include "shl/number_types.hpp"
+#include "shl/allocator.hpp"
 
 struct memory_stream
 {
     char *data;
     s64 size;
     s64 position;
+    ::allocator allocator;
 };
 
 void init(memory_stream *stream, s64 size);

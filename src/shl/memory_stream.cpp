@@ -8,6 +8,7 @@
 #include "shl/assert.hpp"
 #include "shl/bits.hpp"
 #include "shl/math.hpp"
+#include "shl/program_context.hpp"
 #include "shl/memory.hpp"
 #include "shl/memory_stream.hpp"
 
@@ -15,7 +16,8 @@ void init(memory_stream *stream, s64 size)
 {
     assert(stream != nullptr);
 
-    stream->data = alloc<char>(size);
+    stream->allocator = get_context_pointer()->allocator;
+    stream->data = (char*)allocator_alloc(stream->allocator, size);
     stream->size = size;
     stream->position = 0;
 }
@@ -25,8 +27,11 @@ void free(memory_stream *stream)
     if (stream == nullptr)
         return;
 
+    if (stream->allocator.alloc == nullptr)
+        stream->allocator = get_context_pointer()->allocator;
+
     if (stream->data != nullptr)
-        dealloc_T<char>(stream->data, stream->size);
+        allocator_dealloc(stream->allocator, stream->data, stream->size);
 
     stream->data = nullptr;
     stream->size = 0;

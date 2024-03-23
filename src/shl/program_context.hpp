@@ -66,13 +66,18 @@ program_context *get_context_pointer();
 // returns the previous context pointer
 program_context *set_context_pointer(program_context *next);
 
+#ifndef with_context
+
 #define _with_context(NewContextPtr, Line)\
     if constexpr (program_context *_old_ptr##Line = set_context_pointer(NewContextPtr);\
                   defer { set_context_pointer(_old_ptr##Line); })\
     
 #define with_context(NewContextPtr)\
     _with_context(NewContextPtr, __LINE__)
+
+#endif
     
+#ifndef with_allocator
 
 #define _with_allocator(NewAlloc, Line)\
     if constexpr (program_context *_old_ptr##Line = get_context_pointer();\
@@ -86,4 +91,16 @@ program_context *set_context_pointer(program_context *next);
 
 #define with_allocator(NewAlloc)\
     _with_allocator(NewAlloc, __LINE__)
+
+#endif
+
+
+// utility
+#ifndef _set_allocator_if_not_set
+#define _set_allocator_if_not_set(Ptr)\
+    if ((Ptr)->allocator.alloc == nullptr)\
+    {\
+        (Ptr)->allocator = get_context_pointer()->allocator;\
+    }
+#endif
 

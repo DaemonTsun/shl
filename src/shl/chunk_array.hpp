@@ -116,6 +116,8 @@ struct chunk_array
     // number of items in the array
     s64 size;
 
+    ::allocator allocator;
+
     chunk_type &operator[](s64 index)     { return *all_chunks[index]; }
     T &operator[](chunk_item_index index) { return all_chunks[index.chunk_index]->data[index.slot_index]; }
 };
@@ -129,6 +131,7 @@ void init(chunk_array<T, N> *arr)
     init(&arr->nonfull_chunks);
 
     arr->size = 0;
+    arr->allocator = get_context_pointer()->allocator;
 }
 
 template<typename T, s64 N>
@@ -141,7 +144,9 @@ chunk<T, N> *add_chunk(chunk_array<T, N> *arr)
     if (ptr == nullptr)
         return nullptr;
 
-    *ptr = alloc<chunk<T, N>>();
+    _set_allocator_if_not_set(arr);
+
+    *ptr = (chunk<T, N>*)allocator_alloc(arr->allocator, sizeof(chunk<T, N>));
     chunk<T, N> *ret = *ptr;
 
     add_at_end(&arr->nonfull_chunks, ret);
@@ -358,7 +363,7 @@ void free(chunk_array<T, N> *arr)
     if constexpr (FreeValues) free_values(arr);
 
     for_array(chnk, &arr->all_chunks)
-        dealloc<chunk<T, N>>(*chnk);
+        allocator_dealloc(arr->allocator, *chnk, sizeof(chunk<T, N>));
 
     free(&arr->all_chunks);
     free(&arr->nonfull_chunks);

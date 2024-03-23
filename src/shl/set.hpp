@@ -129,11 +129,17 @@ struct set
 {
     typedef T value_type;
 
-    array<T> data;
+    T *data;
+    s64 size;
+    s64 reserved_size;
+    ::allocator allocator;
+
     compare_function_p<T> compare;
 
     T &operator[](s64 index)       { return data[index]; }
 };
+
+#define _as_array_ptr(T, Set) (array<T>*)(Set)
 
 template<typename T>
 bool operator==(const set<T> &lhs, const set<T> &rhs)
@@ -149,7 +155,7 @@ void init(set<T> *st, compare_function_p<T> comp = compare_ascending_p<T>)
     if (comp == nullptr)
         comp = compare_ascending_p<T>;
 
-    init(&st->data);
+    init(_as_array_ptr(T, st));
     st->compare = comp;
 }
 
@@ -159,7 +165,7 @@ void init(set<T> *st, s64 reserve_size, compare_function_p<T> comp = compare_asc
     assert(st != nullptr);
 
     init(st, comp);
-    reserve(&st->data, reserve_size);
+    reserve(_as_array_ptr(T, st), reserve_size);
 }
 
 // binary search the value, then return the index where it
@@ -173,7 +179,7 @@ binary_search_result nearest_index_of(const set<T1> *st, const T2 *val, compare_
     assert(st != nullptr);
     assert(val != nullptr);
 
-    binary_search_result res = binary_search(st->data.data, array_size(st), val, comp); 
+    binary_search_result res = binary_search(st->data, array_size(st), val, comp); 
 
     if (res.last_comparison > 0)
         res.index++;
@@ -214,21 +220,21 @@ T *insert_element(set<T> *st, const T *val)
     if (st->compare == nullptr)
         init(st);
 
-    if (st->data.size == 0)
-        return add_at_end(&st->data, val);
+    if (st->size == 0)
+        return add_at_end(_as_array_ptr(T, st), val);
 
     binary_search_result result = nearest_index_of(st, val);
  
     // if found, just return the one found
     if (result.last_comparison == 0)
-        return st->data.data + result.index;
+        return st->data + result.index;
 
     T *ret = nullptr;
 
-    if (result.index >= st->data.size)
-        ret = add_at_end(&st->data);
+    if (result.index >= st->size)
+        ret = add_at_end(_as_array_ptr(T, st));
     else
-        ret = insert_elements(&st->data, result.index, 1);
+        ret = insert_elements(_as_array_ptr(T, st), result.index, 1);
 
     if (ret != nullptr)
         *ret = *val;
@@ -252,7 +258,7 @@ void remove_element(set<T1> *st, const T2 *val, compare_function_p<T2, T1> comp)
     if (result.index < 0 || result.last_comparison != 0)
         return;
 
-    remove_elements<FreeValues>(&st->data, result.index, 1);
+    remove_elements<FreeValues>(_as_array_ptr(T1, st), result.index, 1);
 }
 
 template<bool FreeValues = false, typename T1, typename T2>
@@ -278,7 +284,7 @@ void remove_elements_at_index(set<T> *st, s64 index, s64 n_elements)
 {
     assert(st != nullptr);
 
-    remove_elements<FreeValues>(&st->data, index, n_elements);
+    remove_elements<FreeValues>(_as_array_ptr(T, st), index, n_elements);
 }
 
 template<typename T>
@@ -286,13 +292,13 @@ bool reserve(set<T> *st, s64 size)
 {
     assert(st != nullptr);
 
-    return reserve(&st->data, size);
+    return reserve(_as_array_ptr(T, st), size);
 }
 
 template<typename T>
 bool reserve_exp2(set<T> *st, s64 size)
 {
-    return reserve_exp2(&st->data, size);
+    return reserve_exp2(_as_array_ptr(T, st), size);
 }
 
 // if size makes set smaller and FreeValues is true, call free() on all
@@ -302,7 +308,7 @@ bool resize(set<T> *st, s64 size)
 {
     assert(st != nullptr);
 
-    return resize<FreeValues>(&st->data, size);
+    return resize<FreeValues>(_as_array_ptr(T, st), size);
 }
 
 template<typename T>
@@ -310,7 +316,7 @@ bool shrink_to_fit(set<T> *st)
 {
     assert(st != nullptr);
 
-    return shrink_to_fit(&st->data);
+    return shrink_to_fit(_as_array_ptr(T, st));
 }
 
 template<typename T>
@@ -334,18 +340,18 @@ template<typename T>
 T *at(set<T> *st, s64 index)
 {
     assert(st != nullptr);
-    assert(index < st->data.size);
+    assert(index < st->size);
 
-    return st->data.data + index;
+    return st->data + index;
 }
 
 template<typename T>
 const T *at(const set<T> *st, s64 index)
 {
     assert(st != nullptr);
-    assert(index < st->data.size);
+    assert(index < st->size);
 
-    return st->data.data + index;
+    return st->data + index;
 }
 
 template<typename T>
@@ -353,7 +359,7 @@ void clear(set<T> *st)
 {
     assert(st != nullptr);
 
-    st->data.size = 0;
+    st->size = 0;
 }
 
 template<typename T>
@@ -361,7 +367,7 @@ T *set_data(set<T> *st)
 {
     assert(st != nullptr);
 
-    return st->data.data;
+    return st->data;
 }
 
 template<typename T>
@@ -369,7 +375,7 @@ const T *set_data(const set<T> *st)
 {
     assert(st != nullptr);
 
-    return st->data.data;
+    return st->data;
 }
 
 template<typename T>
@@ -377,7 +383,7 @@ s64 set_size(const set<T> *st)
 {
     assert(st != nullptr);
 
-    return st->data.size;
+    return st->size;
 }
 
 template<typename T>
@@ -385,7 +391,7 @@ T *array_data(set<T> *st)
 {
     assert(st != nullptr);
 
-    return st->data.data;
+    return st->data;
 }
 
 template<typename T>
@@ -393,7 +399,7 @@ const T *array_data(const set<T> *st)
 {
     assert(st != nullptr);
 
-    return st->data.data;
+    return st->data;
 }
 
 template<typename T>
@@ -401,7 +407,7 @@ s64 array_size(const set<T> *st)
 {
     assert(st != nullptr);
 
-    return st->data.size;
+    return st->size;
 }
 
 template<typename T>
@@ -418,7 +424,7 @@ void free(set<T> *st)
 {
     assert(st != nullptr);
 
-    free<FreeValues>(&st->data);
+    free<FreeValues>(_as_array_ptr(T, st));
     st->compare = nullptr;
 }
 
@@ -431,7 +437,7 @@ T1 *search(const set<T1> *st, const T2 *key, compare_function_p<T2, T1> comp)
     binary_search_result result = nearest_index_of(st, key, comp);
 
     if (result.last_comparison == 0)
-        return st->data.data + result.index;
+        return st->data + result.index;
 
     return nullptr;
 }
@@ -512,5 +518,5 @@ bool contains(const set<T> *st, const T *key)
 template<typename T>
 hash_t hash(const set<T> *st)
 {
-    return hash(&st->data);
+    return hash(_as_array_ptr(T, st));
 }

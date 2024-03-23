@@ -185,7 +185,7 @@ for_array(i, v, *arr) Iterate an array. i will be the index of an element and
 #include "shl/compare.hpp"
 #include "shl/type_functions.hpp"
 #include "shl/number_types.hpp"
-#include "shl/allocator.hpp"
+#include "shl/program_context.hpp"
 #include "shl/memory.hpp"
 #include "shl/hash.hpp"
 #include "shl/bits.hpp"
@@ -218,28 +218,28 @@ bool operator==(const array<T> &lhs, const array<T> &rhs)
 }
 
 template<typename T>
-void init(array<T> *arr, allocator a = default_allocator)
+void init(array<T> *arr)
 {
     assert(arr != nullptr);
 
     arr->data = nullptr;
     arr->size = 0;
     arr->reserved_size = 0;
-    arr->allocator = a;
+    arr->allocator = get_context_pointer()->allocator;
 }
 
 template<typename T>
-void init(array<T> *arr, s64 n_elements, allocator a = default_allocator)
+void init(array<T> *arr, s64 n_elements)
 {
     assert(arr != nullptr);
 
     if (n_elements < 0)
         n_elements = 0;
 
-    arr->data = allocator_alloc_T(a, T, n_elements);
+    arr->allocator = get_context_pointer()->allocator;
+    arr->data = allocator_alloc_T(arr->allocator, T, n_elements);
     arr->size = n_elements;
     arr->reserved_size = n_elements;
-    arr->allocator = a;
 }
 
 template<typename T>
@@ -261,8 +261,7 @@ T *add_elements(array<T> *arr, s64 n_elements)
 
     s64 new_reserved_size = ceil_exp2(arr->reserved_size + n_elements);
 
-    if (arr->allocator.alloc == nullptr)
-        arr->allocator = default_allocator;
+    _set_allocator_if_not_set(arr);
 
     T *n = allocator_realloc_T(arr->allocator, arr->data, T, arr->reserved_size, new_reserved_size);
 
@@ -488,8 +487,7 @@ bool reserve(array<T> *arr, s64 size)
     if (arr->reserved_size >= size)
         return true;
 
-    if (arr->allocator.alloc == nullptr)
-        arr->allocator = default_allocator;
+    _set_allocator_if_not_set(arr);
 
     T *n = allocator_realloc_T(arr->allocator, arr->data, T, arr->reserved_size, size);
 
@@ -528,8 +526,7 @@ bool resize(array<T> *arr, s64 size)
             free(arr->data + i);
     }
 
-    if (arr->allocator.alloc == nullptr)
-        arr->allocator = default_allocator;
+    _set_allocator_if_not_set(arr);
 
     T *n = allocator_realloc_T(arr->allocator, arr->data, T, arr->reserved_size, size);
 
@@ -551,8 +548,7 @@ bool shrink_to_fit(array<T> *arr)
     if (arr->size == arr->reserved_size)
         return true;
 
-    if (arr->allocator.alloc == nullptr)
-        arr->allocator = default_allocator;
+    _set_allocator_if_not_set(arr);
 
     T *n = allocator_realloc_T(arr->allocator, arr->data, T, arr->reserved_size, arr->size);
 
@@ -652,8 +648,7 @@ void free(array<T> *arr)
 
     if (arr->data != nullptr)
     {
-        if (arr->allocator.alloc == nullptr)
-            arr->allocator = default_allocator;
+        _set_allocator_if_not_set(arr);
 
         arr->data = allocator_dealloc_T(arr->allocator, arr->data, T, arr->reserved_size);
     }

@@ -10,7 +10,7 @@ define_test(init_initializes_set)
 
     init(&st);
 
-    assert_equal(st.data.data, nullptr);
+    assert_equal(st.data, nullptr);
     assert_equal(array_size(&st), 0);
 
     free(&st);
@@ -22,8 +22,8 @@ define_test(init_initializes_set2)
 
     init(&st, 10);
 
-    assert_not_equal(st.data.data, nullptr);
-    assert_equal(st.data.reserved_size, 10);
+    assert_not_equal(st.data, nullptr);
+    assert_equal(st.reserved_size, 10);
 
     free(&st);
 }
@@ -32,7 +32,7 @@ define_test(zero_init_initializes_set)
 {
     set<int> st{};
 
-    assert_equal(st.data.data, nullptr);
+    assert_equal(st.data, nullptr);
     assert_equal(array_size(&st), 0);
 
     free(&st);
@@ -42,14 +42,14 @@ define_test(insert_element_inserts_to_empty_set)
 {
     set<int> st{};
 
-    assert_equal(st.data.data, nullptr);
+    assert_equal(st.data, nullptr);
     assert_equal(array_size(&st), 0);
 
     int *ret = insert_element(&st, 1);
 
-    assert_not_equal(st.data.data, nullptr);
+    assert_not_equal(st.data, nullptr);
     assert_not_equal(ret, nullptr);
-    assert_equal(st.data.data, ret);
+    assert_equal(st.data, ret);
     assert_equal(array_size(&st), 1);
     assert_equal(st.data[0], 1);
 
@@ -62,14 +62,14 @@ define_test(insert_element_doesnt_insert_duplicates)
 
     int *ret = insert_element(&st, 1);
 
-    assert_not_equal(st.data.data, nullptr);
+    assert_not_equal(st.data, nullptr);
     assert_not_equal(ret, nullptr);
-    assert_equal(st.data.data, ret);
+    assert_equal(st.data, ret);
     assert_equal(array_size(&st), 1);
     assert_equal(st.data[0], 1);
 
     ret = insert_element(&st, 1);
-    assert_equal(st.data.data, ret);
+    assert_equal(st.data, ret);
     assert_equal(array_size(&st), 1);
     assert_equal(st.data[0], 1);
 
@@ -249,10 +249,10 @@ define_test(search_returns_pointer_to_element_in_set_when_found)
     insert_element(&st, 4);
 
     int *ret = search(&st, 1);
-    assert_equal(ret, st.data.data);
+    assert_equal(ret, st.data);
 
     ret = search(&st, 4);
-    assert_equal(ret, st.data.data + 3);
+    assert_equal(ret, st.data + 3);
 
     free(&st);
 }

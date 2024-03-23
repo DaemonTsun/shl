@@ -47,6 +47,7 @@ the scratch_buffer_data() function to obtain the correct pointer.
 
 #include "shl/assert.hpp"
 #include "shl/number_types.hpp"
+#include "shl/program_context.hpp"
 #include "shl/memory.hpp"
 
 template<s64 N>
@@ -57,6 +58,7 @@ struct scratch_buffer
     char *data;
     s64 size;
     char stack_buffer[N];
+    ::allocator allocator;
 };
 
 template<s64 N>
@@ -66,6 +68,7 @@ void init(scratch_buffer<N> *buf)
 
     buf->data = buf->stack_buffer;
     buf->size = N;
+    buf->allocator = get_context_pointer()->allocator;
 }
 
 template<s64 N>
@@ -74,8 +77,10 @@ void free(scratch_buffer<N> *buf)
     if (buf == nullptr)
         return;
 
+    _set_allocator_if_not_set(buf);
+
     if (buf->data != buf->stack_buffer && buf->data != nullptr)
-        dealloc_T<char>(buf->data, buf->size);
+        allocator_dealloc(buf->allocator, buf->data, buf->size);
 
     buf->data = nullptr;
     buf->size = 0;
@@ -100,15 +105,17 @@ s64 grow_by(scratch_buffer<N> *buf, s64 factor)
         return nsize;
     }
 
+    _set_allocator_if_not_set(buf);
+
     if (buf->data == buf->stack_buffer)
     {
         // stack size no longer suffices, allocate more
-        buf->data = alloc<char>(nsize);
+        buf->data = (char*)allocator_alloc(buf->allocator, nsize);
         buf->size = nsize;
     }
     else
     {
-        buf->data = realloc_T<char>(buf->data, buf->size, nsize);
+        buf->data = (char*)allocator_realloc(buf->allocator, buf->data, buf->size, nsize);
         buf->size = nsize;
     }
 
