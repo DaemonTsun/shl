@@ -9,16 +9,12 @@
     parser p;\
     init(&p, STR, STR == nullptr ? 0 : string_length(static_cast<const char*>(STR)));
 
-#define WSETUP(STR) \
-    wparser p;\
-    init(&p, STR, STR == nullptr ? 0 : string_length(static_cast<const wchar_t*>(STR)));
-
 define_test(parse_object_parses_bool)
 {
     SETUP("true");
 
     parsed_object obj;
-    parse_error<char> err;
+    parse_error err;
     bool success = parse_object(&p, &obj, &err);
 
     assert_equal(success, true);
@@ -39,7 +35,7 @@ define_test(parse_object_parses_identifier)
     SETUP("truee");
 
     parsed_object obj;
-    parse_error<char> err;
+    parse_error err;
     bool success = parse_object(&p, &obj, &err);
 
     assert_equal(success, true);
@@ -60,7 +56,7 @@ define_test(parse_object_parses_string)
     SETUP("   \"hello world\"");
 
     parsed_object obj;
-    parse_error<char> err;
+    parse_error err;
     bool success = parse_object(&p, &obj, &err);
 
     assert_equal(success, true);
@@ -81,7 +77,7 @@ define_test(parse_object_parses_number_over_identifier)
     SETUP(" /* comment */  deadbeef");
 
     parsed_object obj;
-    parse_error<char> err;
+    parse_error err;
     bool success = parse_object(&p, &obj, &err);
 
     assert_equal(success, true);
@@ -101,7 +97,7 @@ define_test(parse_object_parses_object_list)
     SETUP("[1,2,3]");
 
     parsed_object obj;
-    parse_error<char> err;
+    parse_error err;
     bool success = parse_object(&p, &obj, &err);
 
     assert_equal(success, true);
@@ -136,7 +132,7 @@ define_test(parse_object_parses_object_list2)
     SETUP("  [  4, 5,6 /*123*/ ] a");
 
     parsed_object obj;
-    parse_error<char> err;
+    parse_error err;
     bool success = parse_object(&p, &obj, &err);
 
     assert_equal(success, true);
@@ -169,7 +165,7 @@ define_test(parse_object_parses_object_list3)
     SETUP("[1, \"2\", 3]");
 
     parsed_object obj;
-    parse_error<char> err;
+    parse_error err;
     bool success = parse_object(&p, &obj, &err);
 
     assert_equal(success, true);
@@ -202,7 +198,7 @@ define_test(parse_object_parses_object_list4)
     SETUP("[1, \"2\", [[3], true]]");
 
     parsed_object obj;
-    parse_error<char> err;
+    parse_error err;
     bool success = parse_object(&p, &obj, &err);
 
     assert_equal(success, true);
@@ -256,7 +252,7 @@ define_test(parse_object_parses_object_list5)
     SETUP("[]");
 
     parsed_object obj;
-    parse_error<char> err;
+    parse_error err;
     bool success = parse_object(&p, &obj, &err);
 
     assert_equal(success, true);
@@ -278,7 +274,7 @@ define_test(parse_object_yields_error_on_unterminated_list)
     SETUP("[1,2");
 
     parsed_object obj;
-    parse_error<char> err;
+    parse_error err;
     bool success = parse_object(&p, &obj, &err);
 
     assert_equal(success, false);
@@ -298,7 +294,7 @@ define_test(parse_object_yields_error_on_unterminated_list2)
     SETUP("[1,");
 
     parsed_object obj;
-    parse_error<char> err;
+    parse_error err;
     bool success = parse_object(&p, &obj, &err);
 
     assert_equal(success, false);
@@ -318,7 +314,7 @@ define_test(parse_object_yields_error_on_invalid_input)
     SETUP(" ]");
 
     parsed_object obj;
-    parse_error<char> err;
+    parse_error err;
     bool success = parse_object(&p, &obj, &err);
 
     assert_equal(success, false);
@@ -338,7 +334,7 @@ define_test(parse_object_parses_object_table)
     SETUP("{}");
 
     parsed_object obj;
-    parse_error<char> err;
+    parse_error err;
     bool success = parse_object(&p, &obj, &err);
 
     assert_equal(success, true);
@@ -361,7 +357,7 @@ define_test(parse_object_parses_object_table2)
     SETUP("{a:1}");
 
     parsed_object obj;
-    parse_error<char> err;
+    parse_error err;
     bool success = parse_object(&p, &obj, &err);
 
     assert_equal(success, true);
@@ -389,7 +385,7 @@ define_test(parse_object_parses_object_table3)
     SETUP("{a:1, b : \"hello\"}");
 
     parsed_object obj;
-    parse_error<char> err;
+    parse_error err;
     bool success = parse_object(&p, &obj, &err);
 
     assert_equal(success, true);

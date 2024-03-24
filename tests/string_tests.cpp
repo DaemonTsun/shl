@@ -1386,7 +1386,7 @@ define_test(join_joins_strings_by_char)
     split(str, ',', &splits);
 
     string out = ""_s;
-    join(&splits, ';', &out);
+    join(splits.data, splits.size, ';', &out);
 
     assert_equal(string_length(&out), 7);
     assert_equal(out[string_length(&out)], '\0');
@@ -1405,7 +1405,7 @@ define_test(join_joins_strings_by_char2)
     split(str, ',', &splits);
 
     string out = ""_s;
-    join(&splits, ';', &out);
+    join(splits.data, splits.size, ';', &out);
 
     assert_equal(string_length(&out), 11);
     assert_equal(out[string_length(&out)], '\0');
@@ -1444,7 +1444,7 @@ define_test(join_joins_strings_by_string_delim)
     split(str, ',', &splits);
 
     string out = ""_s;
-    join(&splits, "hello", &out);
+    join(splits.data, splits.size, "hello", &out);
 
     assert_equal(string_length(&out), 19);
     assert_equal(out[string_length(&out)], '\0');
@@ -1463,7 +1463,7 @@ define_test(join_joins_strings_by_string_delim2)
     split(str, ',', &splits);
 
     string out = ""_s;
-    join(&splits, "HEY"_cs, &out);
+    join(splits.data, splits.size, "HEY"_cs, &out);
 
     assert_equal(string_length(&out), 17);
     assert_equal(out[string_length(&out)], '\0');
@@ -1482,7 +1482,7 @@ define_test(join_joins_strings_by_string_delim3)
     split(str, ',', &splits);
 
     string out = ""_s;
-    join(&splits, "", &out);
+    join(splits.data, splits.size, "", &out);
 
     assert_equal(string_length(&out), 3);
     assert_equal(out[string_length(&out)], '\0');

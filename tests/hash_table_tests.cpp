@@ -3,12 +3,48 @@
 #include "shl/string.hpp"
 #include "shl/hash_table.hpp"
 
-define_test(hash_table_init_initializes)
+define_test(init_initializes_hash_table)
 {
     hash_table<u32, const char *> table;
     init(&table);
 
     assert_equal(table.size, 0);
+
+    free(&table);
+}
+
+define_test(init_for_n_items_initializes_hash_table)
+{
+    hash_table<int, const char *> table;
+    init_for_n_items(&table, 4);
+
+    s64 start_reserved_size = table.data.size;
+    assert_equal(table.size, 0);
+
+    table[0] = "a";
+
+    assert_equal(table.size, 1);
+    assert_equal(table.data.size, start_reserved_size);
+
+    table[1] = "b";
+
+    assert_equal(table.size, 2);
+    assert_equal(table.data.size, start_reserved_size);
+
+    table[2] = "c";
+
+    assert_equal(table.size, 3);
+    assert_equal(table.data.size, start_reserved_size);
+
+    table[3] = "d";
+
+    assert_equal(table.size, 4);
+    assert_equal(table.data.size, start_reserved_size);
+
+    /*
+    table[5] = "a";
+    from this point on you're not guaranteed that table will or will not resize
+    */
 
     free(&table);
 }
@@ -332,19 +368,19 @@ define_test(add_element_by_key_expands_table)
     init(&table);
 
     assert_equal(table.size, 0);
-    assert_greater_or_equal(table.data.reserved_size, 64);
+    assert_greater_or_equal(table.data.reserved_size, MIN_TABLE_SIZE);
 
-    for (int i = 0; i < 64; ++i)
+    for (int i = 0; i < MIN_TABLE_SIZE; ++i)
         add_element_by_key(&table, &i);
 
-    assert_equal(table.size, 64);
-    assert_greater_or_equal(table.data.reserved_size, 128);
+    assert_equal(table.size, MIN_TABLE_SIZE);
+    assert_greater_or_equal(table.data.reserved_size, MIN_TABLE_SIZE * 2);
 
-    for (int i = 64; i < 128; ++i)
+    for (int i = MIN_TABLE_SIZE; i < (MIN_TABLE_SIZE * 2); ++i)
         add_element_by_key(&table, &i);
 
-    assert_equal(table.size, 128);
-    assert_greater_or_equal(table.data.reserved_size, 256);
+    assert_equal(table.size, MIN_TABLE_SIZE * 2);
+    assert_greater_or_equal(table.data.reserved_size, MIN_TABLE_SIZE * 4);
 
     free(&table);
 }

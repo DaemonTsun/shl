@@ -110,44 +110,23 @@ typedef parsed_object_base<char> parsed_object;
 typedef typename parsed_object_base<char>::list_type object_list;
 typedef typename parsed_object_base<char>::table_type object_table;
 
-typedef parsed_object_base<wchar_t> wparsed_object;
-typedef typename parsed_object_base<wchar_t>::list_type wobject_list;
-typedef typename parsed_object_base<wchar_t>::table_type wobject_table;
-
 void init(parsed_object  *obj);
-void init(wparsed_object *obj);
-
-bool parse_number_object(parser  *p, parsed_object  *obj, parse_error<char>    *err = nullptr);
-bool parse_number_object(wparser *p, wparsed_object *obj, parse_error<wchar_t> *err = nullptr);
-bool parse_number_object(const_string   input, parsed_object  *obj, parse_error<char>    *err = nullptr);
-bool parse_number_object(const_wstring  input, wparsed_object *obj, parse_error<wchar_t> *err = nullptr);
-bool parse_number_object(const string  *input, parsed_object  *obj, parse_error<char>    *err = nullptr);
-bool parse_number_object(const wstring *input, wparsed_object *obj, parse_error<wchar_t> *err = nullptr);
-
-bool parse_object_list(parser  *p, object_list  *out, parse_error<char>    *err = nullptr);
-bool parse_object_list(wparser *p, wobject_list *out, parse_error<wchar_t> *err = nullptr);
-bool parse_object_list(const_string   input, object_list  *obj, parse_error<char>    *err = nullptr);
-bool parse_object_list(const_wstring  input, wobject_list *obj, parse_error<wchar_t> *err = nullptr);
-bool parse_object_list(const string  *input, object_list  *obj, parse_error<char>    *err = nullptr);
-bool parse_object_list(const wstring *input, wobject_list *obj, parse_error<wchar_t> *err = nullptr);
-
-bool parse_object_table(parser  *p, object_table  *out, parse_error<char>    *err = nullptr);
-bool parse_object_table(wparser *p, wobject_table *out, parse_error<wchar_t> *err = nullptr);
-bool parse_object_table(const_string   input, object_table  *obj, parse_error<char>    *err = nullptr);
-bool parse_object_table(const_wstring  input, wobject_table *obj, parse_error<wchar_t> *err = nullptr);
-bool parse_object_table(const string  *input, object_table  *obj, parse_error<char>    *err = nullptr);
-bool parse_object_table(const wstring *input, wobject_table *obj, parse_error<wchar_t> *err = nullptr);
-
-bool parse_object(parser  *p, parsed_object  *out, parse_error<char>    *err = nullptr);
-bool parse_object(wparser *p, wparsed_object *out, parse_error<wchar_t> *err = nullptr);
-
 void free(parsed_object  *obj);
-void free(wparsed_object *obj);
 
+bool parse_number_object(parser  *p, parsed_object  *obj, parse_error *err = nullptr);
+bool parse_number_object(const_string   input, parsed_object  *obj, parse_error *err = nullptr);
+bool parse_number_object(const string  *input, parsed_object  *obj, parse_error *err = nullptr);
+
+bool parse_object_list(parser  *p, object_list  *out, parse_error *err = nullptr);
+bool parse_object_list(const_string   input, object_list  *obj, parse_error *err = nullptr);
+bool parse_object_list(const string  *input, object_list  *obj, parse_error *err = nullptr);
+
+bool parse_object_table(parser  *p, object_table  *out, parse_error *err = nullptr);
+bool parse_object_table(const_string   input, object_table  *obj, parse_error *err = nullptr);
+bool parse_object_table(const string  *input, object_table  *obj, parse_error *err = nullptr);
+
+bool parse_object(parser  *p, parsed_object  *out, parse_error *err = nullptr);
 
 s64 to_string(string  *s, const parsed_object  *x);
 s64 to_string(string  *s, const parsed_object  *x, s64 offset);
 s64 to_string(string  *s, const parsed_object  *x, s64 offset, format_options<char> opt);
-s64 to_string(wstring *s, const wparsed_object *x);
-s64 to_string(wstring *s, const wparsed_object *x, s64 offset);
-s64 to_string(wstring *s, const wparsed_object *x, s64 offset, format_options<wchar_t> opt);

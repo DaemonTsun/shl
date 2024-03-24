@@ -93,7 +93,7 @@ for_hash_table(*key, *value, *entry, *table)
 #include "shl/macros.hpp"
 
 #define TABLE_SIZE_FACTOR 75
-#define MIN_TABLE_SIZE 64
+#define MIN_TABLE_SIZE 32
 #define NULL_HASH 0
 #define REMOVED_HASH 1
 #define FIRST_HASH 2
@@ -151,6 +151,17 @@ void init(hash_table<TKey, TValue> *table, s64 initial_size = MIN_TABLE_SIZE, ha
     table->size = 0;
 }
 
+template<typename TKey, typename TValue>
+inline void init_for_n_items(hash_table<TKey, TValue> *table, s64 n, hash_function<TKey> hasher = hash, equality_function_p<TKey> eq = equals_p<TKey>)
+{
+    s64 count = ceil_exp2((s64)(((n + 2) * 100) / TABLE_SIZE_FACTOR));
+
+    if (count <= 0)
+        count = MIN_TABLE_SIZE;
+
+    init(table, count, hasher, eq);
+}
+
 #define _iterate_table(hash_var, table_var) \
     if (hash_var < FIRST_HASH)\
         hash_var = hash_var + FIRST_HASH;\
@@ -178,7 +189,7 @@ TValue *add_element_by_key(hash_table<TKey, TValue> *table, const TKey *key)
     else
     {
         u64 max_size = table->data.size * TABLE_SIZE_FACTOR;
-        u64 cur_size = (table->size * 2 + 1) * 100;
+        u64 cur_size = (table->size + 1) * 100;
 
         if (cur_size >= max_size)
             expand_table(table);
@@ -272,7 +283,7 @@ void expand_table(hash_table<TKey, TValue> *table)
 
     u64 new_size = table->data.size;
     u64 max_size = table->data.size * TABLE_SIZE_FACTOR;
-    u64 cur_size = (table->size * 2 + 1) * 100;
+    u64 cur_size = (table->size + 1) * 100;
 
     if (cur_size > max_size)
         new_size = new_size * 2;

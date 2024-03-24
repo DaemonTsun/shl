@@ -49,7 +49,6 @@ struct parse_iterator
 
 void init(parse_iterator *it);
 void update_iterator_line_pos(parse_iterator *it);
-// does not advance line counter
 void advance(parse_iterator *it, s64 n = 1);
 void next_line(parse_iterator *it);
 
@@ -62,25 +61,17 @@ struct parser_base
 };
 
 typedef parser_base<char>    parser;
-typedef parser_base<wchar_t> wparser;
 
-void init(parser  *p, const char *input, s64 input_size);
-void init(wparser *p, const wchar_t *input, s64 input_size);
-void init(parser  *p, const_string   input);
-void init(wparser *p, const_wstring  input);
-void init(parser  *p, const string  *input);
-void init(wparser *p, const wstring *input);
+void init(parser *p, const char *input, s64 input_size);
+void init(parser *p, const_string input);
+void init(parser *p, const string *input);
 
-bool is_at_end(const parser  *p);
-bool is_at_end(const wparser *p);
-bool is_at_end(const parser  *p, s64 offset);
-bool is_at_end(const wparser *p, s64 offset);
+bool is_at_end(const parser *p);
+bool is_at_end(const parser *p, s64 offset);
 
-bool is_ok(const parser  *p);
-bool is_ok(const wparser *p);
+bool is_ok(const parser *p);
 
-char current_char(const parser  *p);
-wchar_t current_char(const wparser *p);
+#define parser_current_char(P) ((P)->input[(P)->it.pos])
 
 // parse range
 struct parse_range
@@ -95,7 +86,6 @@ struct parse_range
 s64 range_length(const parse_range *range);
 
 // parse error
-template<typename CharT>
 struct parse_error
 {
     const char *what;
@@ -106,112 +96,74 @@ struct parse_error
 #endif
 
     parse_iterator it;
-    const CharT *input;
+    const char *input;
     s64 input_size;
 };
 
 #ifndef NDEBUG
-#define set_parse_error(C, ERR, Parser, MSG) \
-    do { if ((ERR) != nullptr) { *(ERR) = parse_error<C>{.what = MSG, .file = __FILE__, .line = __LINE__, .it = Parser->it, .input = Parser->input, .input_size = Parser->input_size}; } } while (0)
+#define set_parse_error(ERR, Parser, MSG) \
+    do { if ((ERR) != nullptr) { *(ERR) = parse_error{.what = MSG, .file = __FILE__, .line = __LINE__, .it = Parser->it, .input = Parser->input, .input_size = Parser->input_size}; } } while (0)
 #else
-#define set_parse_error(C, ERR, Parser, MSG) \
-    do { if ((ERR) != nullptr) { *(ERR) = parse_error<C>{.what = MSG, .it = Parser->it, .input = Parser->input, .input_size = Parser->input_size}; } } while (0)
+#define set_parse_error(ERR, Parser, MSG) \
+    do { if ((ERR) != nullptr) { *(ERR) = parse_error{.what = MSG, .it = Parser->it, .input = Parser->input, .input_size = Parser->input_size}; } } while (0)
 #endif
 
-#define format_parse_error(C, ERR, Parser, FMT, ...) \
-    set_parse_error(C, ERR, Parser, format_error_message(FMT __VA_OPT__(,) __VA_ARGS__))
+#define format_parse_error(ERR, Parser, FMT, ...) \
+    set_parse_error(ERR, Parser, format_error_message(FMT __VA_OPT__(,) __VA_ARGS__))
 
 // returns true if at least one whitespace was skipped
-bool skip_whitespace(parser  *p);
-bool skip_whitespace(wparser *p);
+bool skip_whitespace(parser *p);
 
 // if a comment was parsed, returns true and writes comment range to *out
-bool parse_comment(parser  *p, parse_range *out);
-bool parse_comment(wparser *p, parse_range *out);
+bool parse_comment(parser *p, parse_range *out);
 
-bool skip_whitespace_and_comments(parser  *p);
-bool skip_whitespace_and_comments(wparser *p);
+bool skip_whitespace_and_comments(parser *p);
 
 // if string could not be parsed, returns false and writes error to *err
-bool parse_string(parser  *p, parse_range *out, parse_error<char>    *err = nullptr, char delim = '"', bool include_delims = false);
-bool parse_string(wparser *p, parse_range *out, parse_error<wchar_t> *err = nullptr, wchar_t delim = L'"', bool include_delims = false);
+bool parse_string(parser *p, parse_range *out, parse_error *err = nullptr, char delim = '"', bool include_delims = false);
 
-bool parse_bool(parser  *p, parse_range *out, parse_error<char>    *err = nullptr);
-bool parse_bool(wparser *p, parse_range *out, parse_error<wchar_t> *err = nullptr);
 
-bool parse_bool(parser  *p, bool *out, parse_error<char>    *err = nullptr);
-bool parse_bool(wparser *p, bool *out, parse_error<wchar_t> *err = nullptr);
-bool parse_bool(const_string   input, bool *out, parse_error<char>    *err = nullptr);
-bool parse_bool(const_wstring  input, bool *out, parse_error<wchar_t> *err = nullptr);
-bool parse_bool(const string  *input, bool *out, parse_error<char>    *err = nullptr);
-bool parse_bool(const wstring *input, bool *out, parse_error<wchar_t> *err = nullptr);
+#define define_parse_func(Func, TypeToParse)\
+template<typename T>\
+auto Func(T input, TypeToParse *out, parse_error *err = nullptr)\
+    -> decltype(to_const_string(input), true)\
+{\
+    parser p;\
+    init(&p, to_const_string(input));\
+    return Func(&p, out, err);\
+}
 
-bool parse_integer(parser  *p, parse_range *out, parse_error<char>    *err = nullptr);
-bool parse_integer(wparser *p, parse_range *out, parse_error<wchar_t> *err = nullptr);
+bool parse_bool(parser *p, parse_range *out, parse_error *err = nullptr);
 
-bool parse_integer(parser  *p, int *out, parse_error<char>    *err = nullptr);
-bool parse_integer(wparser *p, int *out, parse_error<wchar_t> *err = nullptr);
-bool parse_integer(const_string   input, int *out, parse_error<char>    *err = nullptr);
-bool parse_integer(const_wstring  input, int *out, parse_error<wchar_t> *err = nullptr);
-bool parse_integer(const string  *input, int *out, parse_error<char>    *err = nullptr);
-bool parse_integer(const wstring *input, int *out, parse_error<wchar_t> *err = nullptr);
-bool parse_integer(parser  *p, long *out, parse_error<char>    *err = nullptr);
-bool parse_integer(wparser *p, long *out, parse_error<wchar_t> *err = nullptr);
-bool parse_integer(const_string   input, long *out, parse_error<char>    *err = nullptr);
-bool parse_integer(const_wstring  input, long *out, parse_error<wchar_t> *err = nullptr);
-bool parse_integer(const string  *input, long *out, parse_error<char>    *err = nullptr);
-bool parse_integer(const wstring *input, long *out, parse_error<wchar_t> *err = nullptr);
-bool parse_integer(parser  *p, long long *out, parse_error<char>    *err = nullptr);
-bool parse_integer(wparser *p, long long *out, parse_error<wchar_t> *err = nullptr);
-bool parse_integer(const_string   input, long long *out, parse_error<char>    *err = nullptr);
-bool parse_integer(const_wstring  input, long long *out, parse_error<wchar_t> *err = nullptr);
-bool parse_integer(const string  *input, long long *out, parse_error<char>    *err = nullptr);
-bool parse_integer(const wstring *input, long long *out, parse_error<wchar_t> *err = nullptr);
-bool parse_integer(parser  *p, unsigned int *out, parse_error<char>    *err = nullptr);
-bool parse_integer(wparser *p, unsigned int *out, parse_error<wchar_t> *err = nullptr);
-bool parse_integer(const_string   input, unsigned int *out, parse_error<char>    *err = nullptr);
-bool parse_integer(const_wstring  input, unsigned int *out, parse_error<wchar_t> *err = nullptr);
-bool parse_integer(const string  *input, unsigned int *out, parse_error<char>    *err = nullptr);
-bool parse_integer(const wstring *input, unsigned int *out, parse_error<wchar_t> *err = nullptr);
-bool parse_integer(parser  *p, unsigned long *out, parse_error<char>    *err = nullptr);
-bool parse_integer(wparser *p, unsigned long *out, parse_error<wchar_t> *err = nullptr);
-bool parse_integer(const_string   input, unsigned long *out, parse_error<char>    *err = nullptr);
-bool parse_integer(const_wstring  input, unsigned long *out, parse_error<wchar_t> *err = nullptr);
-bool parse_integer(const string  *input, unsigned long *out, parse_error<char>    *err = nullptr);
-bool parse_integer(const wstring *input, unsigned long *out, parse_error<wchar_t> *err = nullptr);
-bool parse_integer(parser  *p, unsigned long long *out, parse_error<char>    *err = nullptr);
-bool parse_integer(wparser *p, unsigned long long *out, parse_error<wchar_t> *err = nullptr);
-bool parse_integer(const_string   input, unsigned long long *out, parse_error<char>    *err = nullptr);
-bool parse_integer(const_wstring  input, unsigned long long *out, parse_error<wchar_t> *err = nullptr);
-bool parse_integer(const string  *input, unsigned long long *out, parse_error<char>    *err = nullptr);
-bool parse_integer(const wstring *input, unsigned long long *out, parse_error<wchar_t> *err = nullptr);
+bool parse_bool(parser *p, bool *out, parse_error *err = nullptr);
+define_parse_func(parse_bool, bool)
 
-bool parse_decimal(parser  *p, parse_range *out, parse_error<char>    *err = nullptr);
-bool parse_decimal(wparser *p, parse_range *out, parse_error<wchar_t> *err = nullptr);
+bool parse_integer(parser *p, parse_range *out, parse_error *err = nullptr);
 
-bool parse_decimal(parser  *p, float *out, parse_error<char>    *err = nullptr);
-bool parse_decimal(wparser *p, float *out, parse_error<wchar_t> *err = nullptr);
-bool parse_decimal(const_string   input, float *out, parse_error<char>    *err = nullptr);
-bool parse_decimal(const_wstring  input, float *out, parse_error<wchar_t> *err = nullptr);
-bool parse_decimal(const string  *input, float *out, parse_error<char>    *err = nullptr);
-bool parse_decimal(const wstring *input, float *out, parse_error<wchar_t> *err = nullptr);
-bool parse_decimal(parser  *p, double *out, parse_error<char>    *err = nullptr);
-bool parse_decimal(wparser *p, double *out, parse_error<wchar_t> *err = nullptr);
-bool parse_decimal(const_string   input, double *out, parse_error<char>    *err = nullptr);
-bool parse_decimal(const_wstring  input, double *out, parse_error<wchar_t> *err = nullptr);
-bool parse_decimal(const string  *input, double *out, parse_error<char>    *err = nullptr);
-bool parse_decimal(const wstring *input, double *out, parse_error<wchar_t> *err = nullptr);
-bool parse_decimal(parser  *p, long double *out, parse_error<char>    *err = nullptr);
-bool parse_decimal(wparser *p, long double *out, parse_error<wchar_t> *err = nullptr);
-bool parse_decimal(const_string   input, long double *out, parse_error<char>    *err = nullptr);
-bool parse_decimal(const_wstring  input, long double *out, parse_error<wchar_t> *err = nullptr);
-bool parse_decimal(const string  *input, long double *out, parse_error<char>    *err = nullptr);
-bool parse_decimal(const wstring *input, long double *out, parse_error<wchar_t> *err = nullptr);
+bool parse_integer(parser *p, int *out, parse_error *err = nullptr);
+bool parse_integer(parser *p, long *out, parse_error *err = nullptr);
+bool parse_integer(parser *p, long long *out, parse_error *err = nullptr);
+bool parse_integer(parser *p, unsigned int *out, parse_error *err = nullptr);
+bool parse_integer(parser *p, unsigned long *out, parse_error *err = nullptr);
+bool parse_integer(parser *p, unsigned long long *out, parse_error *err = nullptr);
+
+define_parse_func(parse_integer, int)
+define_parse_func(parse_integer, long)
+define_parse_func(parse_integer, long long)
+define_parse_func(parse_integer, unsigned int)
+define_parse_func(parse_integer, unsigned long)
+define_parse_func(parse_integer, unsigned long long)
+
+bool parse_decimal(parser *p, parse_range *out, parse_error *err = nullptr);
+
+bool parse_decimal(parser *p, float *out, parse_error *err = nullptr);
+bool parse_decimal(parser *p, double *out, parse_error *err = nullptr);
+bool parse_decimal(parser *p, long double *out, parse_error *err = nullptr);
+define_parse_func(parse_decimal, float)
+define_parse_func(parse_decimal, double)
+define_parse_func(parse_decimal, long double)
 
 bool is_first_identifier_character(char c);
-bool is_first_identifier_character(wchar_t c);
 bool is_identifier_character(char c);
-bool is_identifier_character(wchar_t c);
 
-bool parse_identifier(parser  *p, parse_range *out, parse_error<char>    *err = nullptr);
-bool parse_identifier(wparser *p, parse_range *out, parse_error<wchar_t> *err = nullptr);
+bool parse_identifier(parser *p, parse_range *out, parse_error *err = nullptr);

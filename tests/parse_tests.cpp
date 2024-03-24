@@ -9,10 +9,6 @@
     parser p;\
     init(&p, STR, STR == nullptr ? 0 : string_length(static_cast<const char*>(STR)));
 
-#define WSETUP(STR) \
-    wparser p;\
-    init(&p, STR, STR == nullptr ? 0 : string_length(static_cast<const wchar_t*>(STR)));
-
 template<typename C>
 const_string_base<C> slice(const C *input, const parse_range *range)
 {
@@ -156,33 +152,6 @@ define_test(parse_comment_parses_block_comment)
     assert_equal(slice(p.input, &out), " abc def "_cs);
 }
 
-define_test(parse_comment_parses_block_comment2)
-{
-    WSETUP(L"/*\nhello world\n*/");
-
-    parse_range out;
-    bool success = parse_comment(&p, &out);
-
-    assert_equal(p.it.pos, 17);
-    assert_equal(p.it.line_start, 15);
-    assert_equal(p.it.line, 3);
-    assert_equal(p.it.line_pos, 3);
-
-    assert_equal(success, true);
-
-    assert_equal(out.start.pos, 2);
-    assert_equal(out.start.line_start, 0);
-    assert_equal(out.start.line, 1);
-    assert_equal(out.start.line_pos, 3);
-
-    assert_equal(out.end.pos, 15);
-    assert_equal(out.end.line_start, 15);
-    assert_equal(out.end.line, 3);
-    assert_equal(out.end.line_pos, 1);
-
-    assert_equal(slice(p.input, &out), L"\nhello world\n"_cs);
-}
-
 define_test(skip_whitespace_and_comments_skips_whitespace)
 {
     SETUP("   abc def");
@@ -218,7 +187,7 @@ define_test(skip_whitespace_and_comments_skips_comments)
 
     assert_equal(p.it.pos, 54);
     assert_equal(p.input[p.it.pos], 'a');
-    assert_equal(current_char(&p), 'a');
+    assert_equal(parser_current_char(&p), 'a');
     assert_equal(p.it.line_start, 46);
     assert_equal(p.it.line, 4);
     assert_equal(p.it.line_pos, 9);
@@ -229,7 +198,7 @@ define_test(parse_string_yields_error_on_invalid_input)
     SETUP("abc");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
     
     bool success = parse_string(&p, &out, &err);
 
@@ -249,7 +218,7 @@ define_test(parse_string_yields_error_on_unterminated_string)
     SETUP("\"abc");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_string(&p, &out, &err);
 
@@ -269,7 +238,7 @@ define_test(parse_string_yields_error_on_unterminated_string2)
     SETUP("\"abc\\\"");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_string(&p, &out, &err);
 
@@ -289,7 +258,7 @@ define_test(parse_string_parses_string)
     SETUP("\"\"");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_string(&p, &out, &err);
 
@@ -318,7 +287,7 @@ define_test(parse_string_parses_string2)
     SETUP("\"abc\"");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_string(&p, &out, &err);
 
@@ -347,7 +316,7 @@ define_test(parse_string_parses_string3)
     SETUP("\"\nabc\n\"");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_string(&p, &out, &err);
 
@@ -376,7 +345,7 @@ define_test(parse_string_parses_string_with_delims)
     SETUP("\"hello\"   ");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_string(&p, &out, &err, '"', true);
 
@@ -405,7 +374,7 @@ define_test(parse_string_parses_string_with_delims2)
     SETUP("\"hello world\\\" \"  ");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_string(&p, &out, &err, '"', true);
 
@@ -434,7 +403,7 @@ define_test(parse_string_parses_string_delims)
     SETUP("x abc XYZ x");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_string(&p, &out, &err, 'x');
 
@@ -463,7 +432,7 @@ define_test(parse_integer_parses_integer)
     SETUP("1234");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_integer(&p, &out, &err);
 
@@ -482,7 +451,7 @@ define_test(parse_integer_parses_integer2)
     SETUP("1234xyz");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_integer(&p, &out, &err);
 
@@ -501,7 +470,7 @@ define_test(parse_integer_parses_integer3)
     SETUP("-0xabc");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_integer(&p, &out, &err);
 
@@ -518,7 +487,7 @@ define_test(parse_int_parses_integer)
     SETUP("1234");
 
     int out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_integer(&p, &out, &err);
 
@@ -537,7 +506,7 @@ define_test(parse_int_parses_integer2)
     SETUP("-5678");
 
     s32 out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_integer(&p, &out, &err);
 
@@ -555,7 +524,7 @@ define_test(parse_integer_parses_unsigned_long_int)
     SETUP("123123123123");
 
     u64 out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_integer(&p, &out, &err);
 
@@ -573,7 +542,7 @@ define_test(parse_integer_parses_unsigned_integer2)
     SETUP("-1");
 
     u64 out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_integer(&p, &out, &err);
 
@@ -591,7 +560,7 @@ define_test(parse_integer_parses_binary_integer)
     SETUP("0b1010");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_integer(&p, &out, &err);
 
@@ -608,7 +577,7 @@ define_test(parse_int_parses_binary_integer)
     SETUP("0b101014");
 
     s32 out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_integer(&p, &out, &err);
 
@@ -625,7 +594,7 @@ define_test(parse_int_parses_octal_integer)
     SETUP("01234");
 
     s32 out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_integer(&p, &out, &err);
 
@@ -642,7 +611,7 @@ define_test(parse_int_parses_octal_integer2)
     SETUP("0123456789");
 
     s32 out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_integer(&p, &out, &err);
 
@@ -659,7 +628,7 @@ define_test(parse_int_parses_hex_integer)
     SETUP("0xff");
 
     s32 out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_integer(&p, &out, &err);
 
@@ -676,7 +645,7 @@ define_test(parse_int_parses_hex_integer2)
     SETUP("0xffghi");
 
     s32 out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_integer(&p, &out, &err);
 
@@ -693,7 +662,7 @@ define_test(parse_int_parses_hex_integer3)
     SETUP("feef");
 
     s32 out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_integer(&p, &out, &err);
 
@@ -710,7 +679,7 @@ define_test(parse_integer_parses_hex_integer)
     SETUP("0xdeAdBEeF");
 
     s64 out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_integer(&p, &out, &err);
 
@@ -727,7 +696,7 @@ define_test(parse_integer_parses_hex_integer2)
     SETUP("-0xdeAdBEeF");
 
     s64 out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_integer(&p, &out, &err);
 
@@ -744,7 +713,7 @@ define_test(parse_integer_yields_error_on_invalid_input)
     SETUP("xyz");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_integer(&p, &out, &err);
 
@@ -758,7 +727,7 @@ define_test(parse_integer_yields_error_on_invalid_input2)
     SETUP("0x");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_integer(&p, &out, &err);
 
@@ -772,7 +741,7 @@ define_test(parse_integer_yields_error_on_invalid_input3)
     SETUP("0b");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_integer(&p, &out, &err);
 
@@ -786,7 +755,7 @@ define_test(parse_integer_yields_error_on_invalid_input4)
     SETUP("0xZ");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_integer(&p, &out, &err);
 
@@ -800,7 +769,7 @@ define_test(parse_integer_yields_error_on_invalid_input5)
     SETUP("+");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_integer(&p, &out, &err);
 
@@ -823,7 +792,7 @@ define_test(parse_decimal_parses_float)
     SETUP("1.0");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -840,7 +809,7 @@ define_test(parse_decimal_parses_float2)
     SETUP("+.06");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -857,7 +826,7 @@ define_test(parse_decimal_parses_float3)
     SETUP("-0.06");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -874,7 +843,7 @@ define_test(parse_decimal_parses_float4)
     SETUP("1.33e+10");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -891,7 +860,7 @@ define_test(parse_decimal_parses_float5)
     SETUP("2.5E-12");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -908,7 +877,7 @@ define_test(parse_decimal_parses_float6)
     SETUP("12341234");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -925,7 +894,7 @@ define_test(parse_decimal_parses_float7)
     SETUP("1234e5");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -942,7 +911,7 @@ define_test(parse_decimal_parses_float8)
     SETUP("1.0");
 
     float out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -960,7 +929,7 @@ define_test(parse_decimal_parses_float9)
 
     float out;
 
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -977,7 +946,7 @@ define_test(parse_decimal_parses_float10)
     SETUP("-0.06");
 
     float out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -994,7 +963,7 @@ define_test(parse_decimal_parses_float11)
     SETUP("1.33e+10");
 
     float out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -1011,7 +980,7 @@ define_test(parse_decimal_parses_float12)
     SETUP("2.5E-12");
 
     float out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -1028,7 +997,7 @@ define_test(parse_decimal_parses_float13)
     SETUP("12341234");
 
     float out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -1045,7 +1014,7 @@ define_test(parse_decimal_parses_float14)
     SETUP("1234e5");
 
     float out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -1062,7 +1031,7 @@ define_test(parse_decimal_parses_double)
     SETUP("1.0");
 
     double out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -1079,7 +1048,7 @@ define_test(parse_decimal_parses_double2)
     SETUP("+.06");
 
     double out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -1096,7 +1065,7 @@ define_test(parse_decimal_parses_double3)
     SETUP("-0.06X");
 
     double out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -1113,7 +1082,7 @@ define_test(parse_decimal_parses_double4)
     SETUP("1.33e+10");
 
     double out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -1130,7 +1099,7 @@ define_test(parse_decimal_parses_double5)
     SETUP("2.5E-12X");
 
     double out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -1147,7 +1116,7 @@ define_test(parse_decimal_parses_double6)
     SETUP("12341234.X");
 
     double out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -1164,7 +1133,7 @@ define_test(parse_decimal_parses_double7)
     SETUP("1234e5X");
 
     double out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -1181,7 +1150,7 @@ define_test(parse_decimal_parses_decimal)
     SETUP("123456789.987654321e10");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -1197,7 +1166,7 @@ define_test(parse_decimal_yields_error_on_invalid_input)
     SETUP("z");
 
     float out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -1210,7 +1179,7 @@ define_test(parse_decimal_yields_error_on_invalid_input2)
     SETUP(".");
 
     float out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -1223,7 +1192,7 @@ define_test(parse_decimal_yields_error_on_invalid_input3)
     SETUP("e");
 
     float out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -1236,7 +1205,7 @@ define_test(parse_decimal_yields_error_on_invalid_input4)
     SETUP("10e");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_decimal(&p, &out, &err);
 
@@ -1258,7 +1227,7 @@ define_test(parse_identifier_throws_on_invalid_first_character)
     SETUP("9abc");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_identifier(&p, &out, &err);
 
@@ -1271,7 +1240,7 @@ define_test(parse_identifier_parses_identifier)
     SETUP("abc");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_identifier(&p, &out, &err);
 
@@ -1288,7 +1257,7 @@ define_test(parse_identifier_parses_identifier2)
     SETUP("def ghi");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_identifier(&p, &out, &err);
 
@@ -1305,7 +1274,7 @@ define_test(parse_identifier_parses_identifier3)
     SETUP("_hello_WORLD");
 
     parse_range out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_identifier(&p, &out, &err);
 
@@ -1322,7 +1291,7 @@ define_test(parse_bool_parses_true)
     SETUP("true");
 
     bool out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_bool(&p, &out, &err);
 
@@ -1339,7 +1308,7 @@ define_test(parse_bool_parses_true2)
     SETUP("tRuE  abc");
 
     bool out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_bool(&p, &out, &err);
 
@@ -1356,7 +1325,7 @@ define_test(parse_bool_parses_false)
     SETUP("false");
 
     bool out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_bool(&p, &out, &err);
 
@@ -1373,7 +1342,7 @@ define_test(parse_bool_parses_false2)
     SETUP("FALse 123");
 
     bool out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_bool(&p, &out, &err);
 
@@ -1390,7 +1359,7 @@ define_test(parse_bool_yields_error_on_invalid_input)
     SETUP("t");
 
     bool out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_bool(&p, &out, &err);
 
@@ -1407,7 +1376,7 @@ define_test(parse_bool_throws_on_invalid_input2)
     SETUP("tr");
 
     bool out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_bool(&p, &out, &err);
 
@@ -1424,7 +1393,7 @@ define_test(parse_bool_throws_on_invalid_input3)
     SETUP("tX");
 
     bool out;
-    parse_error<char> err;
+    parse_error err;
 
     bool success = parse_bool(&p, &out, &err);
 

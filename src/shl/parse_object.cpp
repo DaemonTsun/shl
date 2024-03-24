@@ -22,14 +22,10 @@ void init_slice(string_base<C> *out, const C *input, const parse_range *range)
 #define PARSE_TABLE_OPENING_BRACKET PARSE_TABLE_BRACKETS[0]
 #define PARSE_TABLE_CLOSING_BRACKET PARSE_TABLE_BRACKETS[1]
 
-#define DEFINE_PARSED_IDENTIFIER_EQUALITY_OPERATOR(C)\
-bool operator==(const parsed_identifier<C> &lhs, const parsed_identifier<C> &rhs)\
-{\
-    return lhs.value == rhs.value;\
+bool operator==(const parsed_identifier<char> &lhs, const parsed_identifier<char> &rhs)
+{
+    return lhs.value == rhs.value;
 }
-
-DEFINE_PARSED_IDENTIFIER_EQUALITY_OPERATOR(char);
-DEFINE_PARSED_IDENTIFIER_EQUALITY_OPERATOR(wchar_t);
 
 template<typename C>
 bool _equals(parsed_object_base<C> &lhs, parsed_object_base<C> &rhs)
@@ -65,17 +61,12 @@ bool operator==(parsed_object_base<char> &lhs, parsed_object_base<char> &rhs)
     return _equals(lhs, rhs);
 }
 
-bool operator==(parsed_object_base<wchar_t> &lhs, parsed_object_base<wchar_t> &rhs)
-{
-    return _equals(lhs, rhs);
-}
-
 template<typename C>
-bool _parse_number_object(parser_base<C> *p, parsed_object_base<C> *obj, parse_error<C> *err)
+bool _parse_number_object(parser_base<C> *p, parsed_object_base<C> *obj, parse_error *err)
 {
     if (!is_ok(p))
     {
-        set_parse_error(C, err, p, "input is nullptr or end was reached");
+        set_parse_error(err, p, "input is nullptr or end was reached");
         return false;
     }
 
@@ -83,8 +74,8 @@ bool _parse_number_object(parser_base<C> *p, parsed_object_base<C> *obj, parse_e
     bool dec_success = false;
     parser_base<C> int_p = *p;
     parser_base<C> dec_p = *p;
-    parse_error<C> int_err;
-    parse_error<C> dec_err;
+    parse_error int_err;
+    parse_error dec_err;
 
     typename parsed_object_base<C>::integer_type integer;
     typename parsed_object_base<C>::decimal_type decimal;
@@ -127,13 +118,13 @@ bool _parse_number_object(parser_base<C> *p, parsed_object_base<C> *obj, parse_e
         // both failed to parse, eject the longest error
         if (int_err.it.pos >= dec_err.it.pos)
         {
-            *err = int_err;
+         *err = int_err;
             obj->type = parsed_object_type::None;
             return false;
         }
         else
         {
-            *err = dec_err;
+         *err = dec_err;
             obj->type = parsed_object_type::None;
             return false;
         }
@@ -142,58 +133,41 @@ bool _parse_number_object(parser_base<C> *p, parsed_object_base<C> *obj, parse_e
     return true;
 }
 
-bool parse_number_object(parser *p, parsed_object_base<char> *obj, parse_error<char> *err)
+bool parse_number_object(parser *p, parsed_object_base<char> *obj, parse_error *err)
 {
     return _parse_number_object(p, obj, err);
 }
 
-bool parse_number_object(wparser *p, parsed_object_base<wchar_t> *obj, parse_error<wchar_t> *err)
-{
-    return _parse_number_object(p, obj, err);
-}
-
-bool parse_number_object(const_string   input, parsed_object  *obj, parse_error<char>    *err)
+bool parse_number_object(const_string   input, parsed_object  *obj, parse_error *err)
 {
     parser p;
     init(&p, input);
     return parse_number_object(&p, obj, err);
 }
 
-bool parse_number_object(const_wstring  input, wparsed_object *obj, parse_error<wchar_t> *err)
-{
-    wparser p;
-    init(&p, input);
-    return parse_number_object(&p, obj, err);
-}
-
-bool parse_number_object(const string  *input, parsed_object  *obj, parse_error<char>    *err)
-{
-    return parse_number_object(to_const_string(input), obj, err);
-}
-
-bool parse_number_object(const wstring *input, wparsed_object *obj, parse_error<wchar_t> *err)
+bool parse_number_object(const string  *input, parsed_object  *obj, parse_error *err)
 {
     return parse_number_object(to_const_string(input), obj, err);
 }
 
 template<typename C>
-bool _parse_object_list(parser_base<C> *p, typename parsed_object_base<C>::list_type *out, parse_error<C> *err)
+bool _parse_object_list(parser_base<C> *p, typename parsed_object_base<C>::list_type *out, parse_error *err)
 {
     init(out);
 
     if (!is_ok(p))
     {
-        set_parse_error(C, err, p, "input is nullptr or end was reached");
+        set_parse_error(err, p, "input is nullptr or end was reached");
         return false;
     }
 
     parse_iterator start = p->it;
 
-    C c = current_char(p);
+    C c = parser_current_char(p);
 
     if (c != PARSE_LIST_OPENING_BRACKET)
     {
-        format_parse_error(C, err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in list at " IT_FMT, c, format_it(p->it), PARSE_LIST_OPENING_BRACKET, format_it(start));
+        format_parse_error(err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in list at " IT_FMT, c, format_it(p->it), PARSE_LIST_OPENING_BRACKET, format_it(start));
         return false;
     }
 
@@ -203,12 +177,12 @@ bool _parse_object_list(parser_base<C> *p, typename parsed_object_base<C>::list_
 
     if (is_at_end(p))
     {
-        format_parse_error(C, err, p, "unterminated list starting at " IT_FMT, format_it(start));
+        format_parse_error(err, p, "unterminated list starting at " IT_FMT, format_it(start));
         p->it = start;
         return false;
     }
 
-    c = current_char(p);
+    c = parser_current_char(p);
 
     if (c == PARSE_LIST_CLOSING_BRACKET)
     {
@@ -230,12 +204,12 @@ bool _parse_object_list(parser_base<C> *p, typename parsed_object_base<C>::list_
 
     if (is_at_end(p))
     {
-        format_parse_error(C, err, p, "unterminated list starting at " IT_FMT, format_it(start));
+        format_parse_error(err, p, "unterminated list starting at " IT_FMT, format_it(start));
         p->it = start;
         return false;
     }
 
-    c = current_char(p);
+    c = parser_current_char(p);
 
     while (c == PARSE_LIST_ITEM_DELIM)
     {
@@ -245,7 +219,7 @@ bool _parse_object_list(parser_base<C> *p, typename parsed_object_base<C>::list_
 
         if (is_at_end(p))
         {
-            format_parse_error(C, err, p, "unterminated list starting at " IT_FMT, format_it(start));
+            format_parse_error(err, p, "unterminated list starting at " IT_FMT, format_it(start));
             p->it = start;
             return false;
         }
@@ -262,17 +236,17 @@ bool _parse_object_list(parser_base<C> *p, typename parsed_object_base<C>::list_
 
         if (is_at_end(p))
         {
-            format_parse_error(C, err, p, "unterminated list starting at " IT_FMT, format_it(start));
+            format_parse_error(err, p, "unterminated list starting at " IT_FMT, format_it(start));
             p->it = start;
             return false;
         }
 
-        c = current_char(p);
+        c = parser_current_char(p);
     }
 
     if (c != PARSE_LIST_CLOSING_BRACKET)
     {
-        format_parse_error(C, err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in list at " IT_FMT, c, format_it(p->it), PARSE_LIST_CLOSING_BRACKET, format_it(start));
+        format_parse_error(err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in list at " IT_FMT, c, format_it(p->it), PARSE_LIST_CLOSING_BRACKET, format_it(start));
         p->it = start;
         return false;
     }
@@ -282,58 +256,41 @@ bool _parse_object_list(parser_base<C> *p, typename parsed_object_base<C>::list_
     return true;
 }
 
-bool parse_object_list(parser *p, object_list *out, parse_error<char> *err)
+bool parse_object_list(parser *p, object_list *out, parse_error *err)
 {
     return _parse_object_list(p, out, err);
 }
 
-bool parse_object_list(wparser *p, wobject_list *out, parse_error<wchar_t> *err)
-{
-    return _parse_object_list(p, out, err);
-}
-
-bool parse_object_list(const_string   input, object_list  *obj, parse_error<char>    *err)
+bool parse_object_list(const_string   input, object_list  *obj, parse_error *err)
 {
     parser p;
     init(&p, input);
     return parse_object_list(&p, obj, err);
 }
 
-bool parse_object_list(const_wstring  input, wobject_list *obj, parse_error<wchar_t> *err)
-{
-    wparser p;
-    init(&p, input);
-    return parse_object_list(&p, obj, err);
-}
-
-bool parse_object_list(const string  *input, object_list  *obj, parse_error<char>    *err)
-{
-    return parse_object_list(to_const_string(input), obj, err);
-}
-
-bool parse_object_list(const wstring *input, wobject_list *obj, parse_error<wchar_t> *err)
+bool parse_object_list(const string  *input, object_list  *obj, parse_error *err)
 {
     return parse_object_list(to_const_string(input), obj, err);
 }
 
 template<typename C>
-bool _parse_object_table(parser_base<C> *p, typename parsed_object_base<C>::table_type *out, parse_error<C> *err)
+bool _parse_object_table(parser_base<C> *p, typename parsed_object_base<C>::table_type *out, parse_error *err)
 {
     init(out);
 
     if (!is_ok(p))
     {
-        set_parse_error(C, err, p, "input is nullptr or end was reached");
+        set_parse_error(err, p, "input is nullptr or end was reached");
         return false;
     }
 
     parse_iterator start = p->it;
 
-    C c = current_char(p);
+    C c = parser_current_char(p);
 
     if (c != PARSE_TABLE_OPENING_BRACKET)
     {
-        format_parse_error(C, err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in table at " IT_FMT, c, format_it(p->it), PARSE_TABLE_OPENING_BRACKET, format_it(start));
+        format_parse_error(err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in table at " IT_FMT, c, format_it(p->it), PARSE_TABLE_OPENING_BRACKET, format_it(start));
         return false;
     }
 
@@ -342,12 +299,12 @@ bool _parse_object_table(parser_base<C> *p, typename parsed_object_base<C>::tabl
 
     if (is_at_end(p))
     {
-        format_parse_error(C, err, p, "unterminated table starting at " IT_FMT, format_it(start));
+        format_parse_error(err, p, "unterminated table starting at " IT_FMT, format_it(start));
         p->it = start;
         return false;
     }
 
-    c = current_char(p);
+    c = parser_current_char(p);
 
     if (c == PARSE_TABLE_CLOSING_BRACKET)
     {
@@ -370,16 +327,16 @@ bool _parse_object_table(parser_base<C> *p, typename parsed_object_base<C>::tabl
 
     if (is_at_end(p))
     {
-        format_parse_error(C, err, p, "unexpected EOF at " IT_FMT ", expected '%c' in table at " IT_FMT, format_it(p->it), PARSE_TABLE_KEY_VALUE_DELIM, format_it(start));
+        format_parse_error(err, p, "unexpected EOF at " IT_FMT ", expected '%c' in table at " IT_FMT, format_it(p->it), PARSE_TABLE_KEY_VALUE_DELIM, format_it(start));
         p->it = start;
         return false;
     }
 
-    c = current_char(p);
+    c = parser_current_char(p);
 
     if (c != PARSE_TABLE_KEY_VALUE_DELIM)
     {
-        format_parse_error(C, err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in table at " IT_FMT, c, format_it(p->it), PARSE_TABLE_KEY_VALUE_DELIM, format_it(start));
+        format_parse_error(err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in table at " IT_FMT, c, format_it(p->it), PARSE_TABLE_KEY_VALUE_DELIM, format_it(start));
         p->it = start;
         return false;
     }
@@ -396,7 +353,7 @@ bool _parse_object_table(parser_base<C> *p, typename parsed_object_base<C>::tabl
 
     if (contains(out, &ident.value))
     {
-        format_parse_error(C, err, p, "duplicate key '%s' at " IT_FMT ", in table at " IT_FMT, ident.value.data, format_it(p->it), format_it(start));
+        format_parse_error(err, p, "duplicate key '%s' at " IT_FMT ", in table at " IT_FMT, ident.value.data, format_it(p->it), format_it(start));
         p->it = start;
         return false;
     }
@@ -406,12 +363,12 @@ bool _parse_object_table(parser_base<C> *p, typename parsed_object_base<C>::tabl
 
     if (is_at_end(p))
     {
-        format_parse_error(C, err, p, "unterminated table starting at " IT_FMT, format_it(start));
+        format_parse_error(err, p, "unterminated table starting at " IT_FMT, format_it(start));
         p->it = start;
         return false;
     }
 
-    c = current_char(p);
+    c = parser_current_char(p);
 
     while (c == PARSE_TABLE_ITEM_DELIM)
     {
@@ -420,7 +377,7 @@ bool _parse_object_table(parser_base<C> *p, typename parsed_object_base<C>::tabl
 
         if (is_at_end(p))
         {
-            format_parse_error(C, err, p, "unterminated table starting at " IT_FMT, format_it(start));
+            format_parse_error(err, p, "unterminated table starting at " IT_FMT, format_it(start));
             p->it = start;
             return false;
         }
@@ -438,16 +395,16 @@ bool _parse_object_table(parser_base<C> *p, typename parsed_object_base<C>::tabl
 
         if (is_at_end(p))
         {
-            format_parse_error(C, err, p, "unexpected EOF at " IT_FMT ", expected '%c' in table at " IT_FMT, format_it(p->it), PARSE_TABLE_KEY_VALUE_DELIM, format_it(start));
+            format_parse_error(err, p, "unexpected EOF at " IT_FMT ", expected '%c' in table at " IT_FMT, format_it(p->it), PARSE_TABLE_KEY_VALUE_DELIM, format_it(start));
             p->it = start;
             return false;
         }
 
-        c = current_char(p);
+        c = parser_current_char(p);
 
         if (c != PARSE_TABLE_KEY_VALUE_DELIM)
         {
-            format_parse_error(C, err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in table at " IT_FMT, c, format_it(p->it), PARSE_TABLE_KEY_VALUE_DELIM, format_it(start));
+            format_parse_error(err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in table at " IT_FMT, c, format_it(p->it), PARSE_TABLE_KEY_VALUE_DELIM, format_it(start));
             p->it = start;
             return false;
         }
@@ -462,7 +419,7 @@ bool _parse_object_table(parser_base<C> *p, typename parsed_object_base<C>::tabl
 
         if (contains(out, &ident.value))
         {
-            format_parse_error(C, err, p, "duplicate key '%s' at " IT_FMT ", in table at " IT_FMT, ident.value.data, format_it(p->it), format_it(start));
+            format_parse_error(err, p, "duplicate key '%s' at " IT_FMT ", in table at " IT_FMT, ident.value.data, format_it(p->it), format_it(start));
             p->it = start;
             return false;
         }
@@ -472,17 +429,17 @@ bool _parse_object_table(parser_base<C> *p, typename parsed_object_base<C>::tabl
 
         if (is_at_end(p))
         {
-            format_parse_error(C, err, p, "unterminated table starting at " IT_FMT, format_it(start));
+            format_parse_error(err, p, "unterminated table starting at " IT_FMT, format_it(start));
             p->it = start;
             return false;
         }
 
-        c = current_char(p);
+        c = parser_current_char(p);
     }
 
     if (c != PARSE_TABLE_CLOSING_BRACKET)
     {
-        format_parse_error(C, err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in table at " IT_FMT, c, format_it(p->it), PARSE_TABLE_CLOSING_BRACKET, format_it(start));
+        format_parse_error(err, p, "unexpected '%c' at " IT_FMT ", expected '%c' in table at " IT_FMT, c, format_it(p->it), PARSE_TABLE_CLOSING_BRACKET, format_it(start));
         p->it = start;
         return false;
     }
@@ -492,46 +449,29 @@ bool _parse_object_table(parser_base<C> *p, typename parsed_object_base<C>::tabl
     return true;
 }
 
-bool parse_object_table(parser *p, object_table *out, parse_error<char> *err)
+bool parse_object_table(parser *p, object_table *out, parse_error *err)
 {
     return _parse_object_table(p, out, err);
 }
 
-bool parse_object_table(wparser *p, wobject_table *out, parse_error<wchar_t> *err)
-{
-    return _parse_object_table(p, out, err);
-}
-
-bool parse_object_table(const_string   input, object_table  *obj, parse_error<char>    *err)
+bool parse_object_table(const_string   input, object_table  *obj, parse_error *err)
 {
     parser p;
     init(&p, input);
     return parse_object_table(&p, obj, err);
 }
 
-bool parse_object_table(const_wstring  input, wobject_table *obj, parse_error<wchar_t> *err)
-{
-    wparser p;
-    init(&p, input);
-    return parse_object_table(&p, obj, err);
-}
-
-bool parse_object_table(const string  *input, object_table  *obj, parse_error<char>    *err)
-{
-    return parse_object_table(to_const_string(input), obj, err);
-}
-
-bool parse_object_table(const wstring *input, wobject_table *obj, parse_error<wchar_t> *err)
+bool parse_object_table(const string  *input, object_table  *obj, parse_error *err)
 {
     return parse_object_table(to_const_string(input), obj, err);
 }
 
 template<typename C>
-bool _parse_object(parser_base<C> *p, parsed_object_base<C> *out, parse_error<C> *err)
+bool _parse_object(parser_base<C> *p, parsed_object_base<C> *out, parse_error *err)
 {
     if (!is_ok(p))
     {
-        set_parse_error(C, err, p, "input is nullptr or end was reached");
+        set_parse_error(err, p, "input is nullptr or end was reached");
         out->type = parsed_object_type::None;
         return false;
     }
@@ -541,13 +481,13 @@ bool _parse_object(parser_base<C> *p, parsed_object_base<C> *out, parse_error<C>
 
     if (is_at_end(p))
     {
-        format_parse_error(C, err, p, "no object at " IT_FMT, format_it(start));
+        format_parse_error(err, p, "no object at " IT_FMT, format_it(start));
         out->type = parsed_object_type::None;
         p->it = start;
         return false;
     }
 
-    C c = current_char(p);
+    C c = parser_current_char(p);
 
     parsed_object_base<C> ret;
 
@@ -602,16 +542,16 @@ bool _parse_object(parser_base<C> *p, parsed_object_base<C> *out, parse_error<C>
         // either identifier, boolean or number
         parser_base<C> bool_p = *p;
         parse_range bool_rn;
-        parse_error<C> bool_err;
+        parse_error bool_err;
         bool bool_success = parse_bool(&bool_p, &bool_rn, &bool_err);
         
         parser_base<C> id_p = *p;
         parse_range id_rn;
-        parse_error<C> id_err;
+        parse_error id_err;
         bool id_success = parse_identifier(&id_p, &id_rn, &id_err);
 
         parser_base<C> num_p = *p;
-        parse_error<C> num_err;
+        parse_error num_err;
         parsed_object_base<C> num_obj;
         bool num_success = parse_number_object(&num_p, &num_obj, &num_err);
 
@@ -666,19 +606,19 @@ bool _parse_object(parser_base<C> *p, parsed_object_base<C> *out, parse_error<C>
                  && bool_err.it.pos >= num_err.it.pos)
                 {
                     out->type = parsed_object_type::None;
-                    *err = bool_err;
+                 *err = bool_err;
                     return false;
                 }
                 else if (num_err.it.pos >= id_err.it.pos)
                 {
                     out->type = parsed_object_type::None;
-                    *err = num_err;
+                 *err = num_err;
                     return false;
                 }
                 else
                 {
                     out->type = parsed_object_type::None;
-                    *err = id_err;
+                 *err = id_err;
                     return false;
                 }
             }
@@ -691,36 +631,19 @@ bool _parse_object(parser_base<C> *p, parsed_object_base<C> *out, parse_error<C>
     return true;
 }
 
-bool parse_object(parser *p, parsed_object_base<char> *out, parse_error<char> *err)
+bool parse_object(parser *p, parsed_object_base<char> *out, parse_error *err)
 {
     return _parse_object(p, out, err);
 }
 
-bool parse_object(wparser *p, parsed_object_base<wchar_t> *out, parse_error<wchar_t> *err)
-{
-    return _parse_object(p, out, err);
-}
-
-bool parse_object(const_string   input, parsed_object  *obj, parse_error<char>    *err)
+bool parse_object(const_string   input, parsed_object  *obj, parse_error *err)
 {
     parser p;
     init(&p, input);
     return parse_object(&p, obj, err);
 }
 
-bool parse_object(const_wstring  input, wparsed_object *obj, parse_error<wchar_t> *err)
-{
-    wparser p;
-    init(&p, input);
-    return parse_object(&p, obj, err);
-}
-
-bool parse_object(const string  *input, parsed_object  *obj, parse_error<char>    *err)
-{
-    return parse_object(to_const_string(input), obj, err);
-}
-
-bool parse_object(const wstring *input, wparsed_object *obj, parse_error<wchar_t> *err)
+bool parse_object(const string  *input, parsed_object  *obj, parse_error *err)
 {
     return parse_object(to_const_string(input), obj, err);
 }
@@ -754,11 +677,6 @@ void _free(parsed_object_base<C> *obj)
 }
 
 void free(parsed_object  *obj)
-{
-    _free(obj);
-}
-
-void free(wparsed_object *obj)
 {
     _free(obj);
 }
@@ -952,6 +870,3 @@ s64 _parsed_object_to_string(string_base<C> *s, const parsed_object_base<C> *x, 
 s64 to_string(string  *s, const parsed_object  *x)             to_string_body(_parsed_object_to_string, s, x, 0, default_format_options<char>);
 s64 to_string(string  *s, const parsed_object  *x, s64 offset) to_string_body(_parsed_object_to_string, s, x, offset, default_format_options<char>);
 s64 to_string(string  *s, const parsed_object  *x, s64 offset, format_options<char> opt) to_string_body(_parsed_object_to_string, s, x, offset, opt);
-s64 to_string(wstring *s, const wparsed_object *x)             to_string_body(_parsed_object_to_string, s, x, 0, default_format_options<wchar_t>);
-s64 to_string(wstring *s, const wparsed_object *x, s64 offset) to_string_body(_parsed_object_to_string, s, x, offset, default_format_options<wchar_t>);
-s64 to_string(wstring *s, const wparsed_object *x, s64 offset, format_options<wchar_t> opt) to_string_body(_parsed_object_to_string, s, x, offset, opt);

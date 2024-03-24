@@ -1,6 +1,4 @@
 
-#include <stdio.h>
-
 #include "shl/parse.hpp"
 
 #define SKIP_COND(c, p, COND) \
@@ -9,7 +7,7 @@
         advance(&p->it); \
         if (is_at_end(p)) \
             break; \
-        c = current_char(p); \
+        c = parser_current_char(p); \
     }
 
 void init(parse_iterator *it)
@@ -37,8 +35,7 @@ void next_line(parse_iterator *it)
     it->line_start = it->pos;
 }
 
-template<typename C>
-inline void _init(parser_base<C> *p, const C *input, s64 input_size)
+static void _init(parser_base<char> *p, const char *input, s64 input_size)
 {
     init(&p->it);
     p->input = input;
@@ -50,17 +47,7 @@ void init(parser *p, const char *input, s64 input_size)
     _init(p, input, input_size);
 }
 
-void init(wparser *p, const wchar_t *input, s64 input_size)
-{
-    _init(p, input, input_size);
-}
-
 void init(parser    *p, const_string   input)
-{
-    _init(p, input.c_str, input.size);
-}
-
-void init(wparser *p, const_wstring  input)
 {
     _init(p, input.c_str, input.size);
 }
@@ -70,73 +57,19 @@ void init(parser    *p, const string  *input)
     _init(p, input->data, string_length(input));
 }
 
-void init(wparser *p, const wstring *input)
-{
-    _init(p, input->data, string_length(input));
-}
-
-template<typename C>
-inline bool _is_at_end(const parser_base<C> *p)
+bool is_at_end(const parser *p)
 {
     return p->it.pos >= p->input_size;
 }
 
-bool is_at_end(const parser *p)
-{
-    return _is_at_end(p);
-}
-
-bool is_at_end(const wparser *p)
-{
-    return _is_at_end(p);
-}
-
-template<typename C>
-inline bool _is_at_end(const parser_base<C> *p, s64 offset)
+bool is_at_end(const parser *p, s64 offset)
 {
     return (p->it.pos + offset) >= p->input_size;
 }
 
-bool is_at_end(const parser *p, s64 offset)
-{
-    return _is_at_end(p, offset);
-}
-
-bool is_at_end(const wparser *p, s64 offset)
-{
-    return _is_at_end(p, offset);
-}
-
-template<typename C>
-inline bool _is_ok(const parser_base<C> *p)
-{
-    return (p != nullptr) && (p->input != nullptr) && !is_at_end(p);
-}
-
 bool is_ok(const parser *p)
 {
-    return _is_ok(p);
-}
-
-bool is_ok(const wparser *p)
-{
-    return _is_ok(p);
-}
-
-template<typename C>
-inline C _current_char(const parser_base<C> *p)
-{
-    return p->input[p->it.pos];
-}
-
-char current_char(const parser *p)
-{
-    return _current_char(p);
-}
-
-wchar_t current_char(const wparser *p)
-{
-    return _current_char(p);
+    return (p != nullptr) && (p->input != nullptr) && !is_at_end(p);
 }
 
 s64 range_length(const parse_range *range)
@@ -147,18 +80,17 @@ s64 range_length(const parse_range *range)
 //
 // parsing functions
 //
-template<typename C>
-bool _skip_whitespace(parser_base<C> *p)
+bool _skip_whitespace(parser_base<char> *p)
 {
     if (!is_ok(p))
         return false;
 
-    C c;
+    char c;
     bool skipped = false;
 
     while (!is_at_end(p))
     {
-        c = current_char(p);
+        c = parser_current_char(p);
 
         if (is_newline(c))
         {
@@ -184,13 +116,7 @@ bool skip_whitespace(parser *p)
     return _skip_whitespace(p);
 }
 
-bool skip_whitespace(wparser *p)
-{
-    return _skip_whitespace(p);
-}
-
-template<typename C>
-bool _parse_comment(parser_base<C> *p, parse_range *out)
+static bool _parse_comment(parser_base<char> *p, parse_range *out)
 {
     parse_iterator start = p->it;
     parse_iterator comment_start{};
@@ -199,7 +125,7 @@ bool _parse_comment(parser_base<C> *p, parse_range *out)
     bool has_comment = false;
 
     skip_whitespace(p);
-    C c;
+    char c;
 
     if (!is_ok(p))
     {
@@ -207,7 +133,7 @@ bool _parse_comment(parser_base<C> *p, parse_range *out)
         goto parse_comment_end;
     }
 
-    c = current_char(p);
+    c = parser_current_char(p);
 
     if (c != '/')
     {
@@ -223,7 +149,7 @@ bool _parse_comment(parser_base<C> *p, parse_range *out)
         goto parse_comment_end;
     }
 
-    c = current_char(p);
+    c = parser_current_char(p);
 
     if (c == '/')
     {
@@ -231,7 +157,7 @@ bool _parse_comment(parser_base<C> *p, parse_range *out)
         comment_start = p->it;
 
         // line comment
-        while (!is_at_end(p) && current_char(p) != '\n')
+        while (!is_at_end(p) && parser_current_char(p) != '\n')
             advance(&p->it);
 
         if (is_at_end(p))
@@ -264,7 +190,7 @@ bool _parse_comment(parser_base<C> *p, parse_range *out)
             if (is_at_end(p))
                 break;
 
-            c = current_char(p);
+            c = parser_current_char(p);
 
             if (c == '*')
             {
@@ -273,7 +199,7 @@ bool _parse_comment(parser_base<C> *p, parse_range *out)
                 if (is_at_end(p))
                     break;
 
-                c = current_char(p);
+                c = parser_current_char(p);
 
                 if (c == '/')
                 {
@@ -311,13 +237,7 @@ bool parse_comment(parser *p, parse_range *out)
     return _parse_comment(p, out);
 }
 
-bool parse_comment(wparser *p, parse_range *out)
-{
-    return _parse_comment(p, out);
-}
-
-template<typename C>
-bool _skip_whitespace_and_comments(parser_base<C> *p)
+static bool _skip_whitespace_and_comments(parser_base<char> *p)
 {
     bool ok = false;
 
@@ -335,26 +255,20 @@ bool skip_whitespace_and_comments(parser *p)
     return _skip_whitespace_and_comments(p);
 }
 
-bool skip_whitespace_and_comments(wparser *p)
-{
-    return _skip_whitespace_and_comments(p);
-}
-
-template<typename C>
-bool _parse_string(parser_base<C> *p, parse_range *out, parse_error<C> *err, C delim, bool include_delims)
+static bool _parse_string(parser_base<char> *p, parse_range *out, parse_error *err, char delim, bool include_delims)
 {
     if (!is_ok(p))
     {
-        set_parse_error(C, err, p, "input is nullptr or end was reached");
+        set_parse_error(err, p, "input is nullptr or end was reached");
         return false;
     }
 
     parse_iterator start = p->it;
-    auto c = current_char(p);
+    auto c = parser_current_char(p);
 
     if (c != delim)
     {
-        format_parse_error(C, err, p, "unexpected symbol '%c' at " IT_FMT ", expected '%c'", c, format_it(start), delim);
+        format_parse_error(err, p, "unexpected symbol '%c' at " IT_FMT ", expected '%c'", c, format_it(start), delim);
         return false;
     }
 
@@ -362,12 +276,12 @@ bool _parse_string(parser_base<C> *p, parse_range *out, parse_error<C> *err, C d
 
     if (is_at_end(p))
     {
-        format_parse_error(C, err, p, "unterminated string starting at " IT_FMT, format_it(start));
+        format_parse_error(err, p, "unterminated string starting at " IT_FMT, format_it(start));
         p->it = start;
         return false;
     }
 
-    c = current_char(p);
+    c = parser_current_char(p);
 
     while (c != delim)
     {
@@ -385,12 +299,12 @@ bool _parse_string(parser_base<C> *p, parse_range *out, parse_error<C> *err, C d
         if (is_at_end(p))
             break;
 
-        c = current_char(p);
+        c = parser_current_char(p);
     }
 
     if (c != delim)
     {
-        format_parse_error(C, err, p, "unterminated string starting at " IT_FMT, format_it(start));
+        format_parse_error(err, p, "unterminated string starting at " IT_FMT, format_it(start));
         p->it = start;
         return false;
     }
@@ -416,27 +330,22 @@ bool _parse_string(parser_base<C> *p, parse_range *out, parse_error<C> *err, C d
     return true;
 }
 
-bool parse_string(parser *p, parse_range *out, parse_error<char> *err, char delim, bool include_delims)
-{
-    return _parse_string(p, out, err, delim, include_delims);
-}
-
-bool parse_string(wparser *p, parse_range *out, parse_error<wchar_t> *err, wchar_t delim, bool include_delims)
+bool parse_string(parser *p, parse_range *out, parse_error *err, char delim, bool include_delims)
 {
     return _parse_string(p, out, err, delim, include_delims);
 }
 
 template<typename C>
-bool _parse_bool(parser_base<C> *p, parse_range *out, parse_error<C> *err)
+bool _parse_bool(parser_base<C> *p, parse_range *out, parse_error *err)
 {
     if (!is_ok(p))
     {
-        set_parse_error(C, err, p, "input is nullptr or end was reached");
+        set_parse_error(err, p, "input is nullptr or end was reached");
         return false;
     }
 
     parse_iterator start = p->it;
-    auto c = current_char(p);
+    auto c = parser_current_char(p);
     bool val = true;
     
     if (to_lower(c) == 't')
@@ -444,7 +353,7 @@ bool _parse_bool(parser_base<C> *p, parse_range *out, parse_error<C> *err)
         if (is_at_end(p, 3))
         {
             advance(&p->it, p->input_size - p->it.pos);
-            format_parse_error(C, err, p, "not a boolean at" IT_FMT, format_it(start));
+            format_parse_error(err, p, "not a boolean at" IT_FMT, format_it(start));
             p->it = start;
             return false;
         }
@@ -453,16 +362,16 @@ bool _parse_bool(parser_base<C> *p, parse_range *out, parse_error<C> *err)
         {
             if (is_at_end(p))
             {
-                format_parse_error(C, err, p, "unexpected end of input at " IT_FMT, format_it(p->it));
+                format_parse_error(err, p, "unexpected end of input at " IT_FMT, format_it(p->it));
                 p->it = start;
                 return false;
             }
 
-            c = current_char(p);
+            c = parser_current_char(p);
 
             if (to_lower(c) != "true"[i])
             {
-                format_parse_error(C, err, p, "unexpected symbol '%c' at " IT_FMT, c, format_it(p->it));
+                format_parse_error(err, p, "unexpected symbol '%c' at " IT_FMT, c, format_it(p->it));
                 p->it = start;
                 return false;
             }
@@ -478,7 +387,7 @@ bool _parse_bool(parser_base<C> *p, parse_range *out, parse_error<C> *err)
         if (is_at_end(p, 4))
         {
             advance(&p->it, p->input_size - p->it.pos);
-            format_parse_error(C, err, p, "not a boolean at" IT_FMT, format_it(start));
+            format_parse_error(err, p, "not a boolean at" IT_FMT, format_it(start));
             p->it = start;
             return false;
         }
@@ -487,16 +396,16 @@ bool _parse_bool(parser_base<C> *p, parse_range *out, parse_error<C> *err)
         {
             if (is_at_end(p))
             {
-                format_parse_error(C, err, p, "unexpected end of input at " IT_FMT, format_it(p->it));
+                format_parse_error(err, p, "unexpected end of input at " IT_FMT, format_it(p->it));
                 p->it = start;
                 return false;
             }
 
-            c = current_char(p);
+            c = parser_current_char(p);
 
             if (to_lower(c) != "false"[i])
             {
-                format_parse_error(C, err, p, "unexpected symbol '%c' at " IT_FMT, c, format_it(p->it));
+                format_parse_error(err, p, "unexpected symbol '%c' at " IT_FMT, c, format_it(p->it));
                 p->it = start;
                 return false;
             }
@@ -509,7 +418,7 @@ bool _parse_bool(parser_base<C> *p, parse_range *out, parse_error<C> *err)
     }
     else 
     {
-        format_parse_error(C, err, p, "unexpected symbol '%c' at " IT_FMT, c, format_it(p->it));
+        format_parse_error(err, p, "unexpected symbol '%c' at " IT_FMT, c, format_it(p->it));
         p->it = start;
         return false;
     }
@@ -523,18 +432,13 @@ bool _parse_bool(parser_base<C> *p, parse_range *out, parse_error<C> *err)
     return true;
 }
 
-bool parse_bool(parser *p, parse_range *out, parse_error<char> *err)
-{
-    return _parse_bool(p, out, err);
-}
-
-bool parse_bool(wparser *p, parse_range *out, parse_error<wchar_t> *err)
+bool parse_bool(parser *p, parse_range *out, parse_error *err)
 {
     return _parse_bool(p, out, err);
 }
 
 template<typename C>
-bool _parse_bool_v(parser_base<C> *p, bool *out, parse_error<C> *err)
+bool _parse_bool_v(parser_base<C> *p, bool *out, parse_error *err)
 {
     parse_range range;
     if (!_parse_bool(p, &range, err))
@@ -545,51 +449,22 @@ bool _parse_bool_v(parser_base<C> *p, bool *out, parse_error<C> *err)
     return true;
 }
 
-bool parse_bool(parser *p, bool *out, parse_error<char> *err)
+bool parse_bool(parser *p, bool *out, parse_error *err)
 {
     return _parse_bool_v(p, out, err);
-}
-
-bool parse_bool(wparser *p, bool *out, parse_error<wchar_t> *err)
-{
-    return _parse_bool_v(p, out, err);
-}
-
-bool parse_bool(const_string  input, bool *out, parse_error<char>    *err)
-{
-    parser p;
-    init(&p, input);
-    return parse_bool(&p, out, err);
-}
-
-bool parse_bool(const_wstring input, bool *out, parse_error<wchar_t> *err)
-{
-    wparser p;
-    init(&p, input);
-    return parse_bool(&p, out, err);
-}
-
-bool parse_bool(const string  *input, bool *out, parse_error<char>    *err)
-{
-    return parse_bool(to_const_string(input), out, err);
-}
-
-bool parse_bool(const wstring *input, bool *out, parse_error<wchar_t> *err)
-{
-    return parse_bool(to_const_string(input), out, err);
 }
 
 template<typename C>
-bool _parse_integer(parser_base<C> *p, parse_range *out, parse_error<C> *err)
+bool _parse_integer(parser_base<C> *p, parse_range *out, parse_error *err)
 {
     if (!is_ok(p))
     {
-        format_parse_error(C, err, p, "input is nullptr or end was reached");
+        format_parse_error(err, p, "input is nullptr or end was reached");
         return false;
     }
 
     parse_iterator start = p->it;
-    auto c = current_char(p);
+    auto c = parser_current_char(p);
 
     if (c == '-' || c == '+')
     {
@@ -597,16 +472,16 @@ bool _parse_integer(parser_base<C> *p, parse_range *out, parse_error<C> *err)
 
         if (is_at_end(p))
         {
-            format_parse_error(C, err, p, "not an integer at " IT_FMT, format_it(start));
+            format_parse_error(err, p, "not an integer at " IT_FMT, format_it(start));
             p->it = start;
             return false;
         }
 
-        c = current_char(p);
+        c = parser_current_char(p);
         
         if (!is_digit(c))
         {
-            format_parse_error(C, err, p, "not an integer at " IT_FMT, format_it(start));
+            format_parse_error(err, p, "not an integer at " IT_FMT, format_it(start));
             p->it = start;
             return false;
         }
@@ -618,7 +493,7 @@ bool _parse_integer(parser_base<C> *p, parse_range *out, parse_error<C> *err)
 
         if (!is_at_end(p))
         {
-            c = current_char(p);
+            c = parser_current_char(p);
 
             if (c == 'x' || c == 'X')
             {
@@ -626,16 +501,16 @@ bool _parse_integer(parser_base<C> *p, parse_range *out, parse_error<C> *err)
 
                 if (is_at_end(p))
                 {
-                    format_parse_error(C, err, p, "invalid hex integer at " IT_FMT, format_it(start));
+                    format_parse_error(err, p, "invalid hex integer at " IT_FMT, format_it(start));
                     p->it = start;
                     return false;
                 }
 
-                c = current_char(p);
+                c = parser_current_char(p);
 
                 if (!is_hex_digit(c))
                 {
-                    format_parse_error(C, err, p, "invalid hex digit '%c' at " IT_FMT " in hex integer starting at " IT_FMT, c, format_it(p->it), format_it(start));
+                    format_parse_error(err, p, "invalid hex digit '%c' at " IT_FMT " in hex integer starting at " IT_FMT, c, format_it(p->it), format_it(start));
                     p->it = start;
                     return false;
                 }
@@ -648,16 +523,16 @@ bool _parse_integer(parser_base<C> *p, parse_range *out, parse_error<C> *err)
 
                 if (is_at_end(p))
                 {
-                    format_parse_error(C, err, p, "invalid binary integer at " IT_FMT, format_it(start));
+                    format_parse_error(err, p, "invalid binary integer at " IT_FMT, format_it(start));
                     p->it = start;
                     return false;
                 }
 
-                c = current_char(p);
+                c = parser_current_char(p);
 
                 if (!is_bin_digit(c))
                 {
-                    format_parse_error(C, err, p, "invalid binary digit '%c' at " IT_FMT " in binary integer starting at " IT_FMT, c, format_it(p->it), format_it(start));
+                    format_parse_error(err, p, "invalid binary digit '%c' at " IT_FMT " in binary integer starting at " IT_FMT, c, format_it(p->it), format_it(start));
                     p->it = start;
                     return false;
                 }
@@ -670,16 +545,16 @@ bool _parse_integer(parser_base<C> *p, parse_range *out, parse_error<C> *err)
 
                 if (is_at_end(p))
                 {
-                    format_parse_error(C, err, p, "invalid octal integer at " IT_FMT, format_it(start));
+                    format_parse_error(err, p, "invalid octal integer at " IT_FMT, format_it(start));
                     p->it = start;
                     return false;
                 }
 
-                c = current_char(p);
+                c = parser_current_char(p);
 
                 if (!is_oct_digit(c))
                 {
-                    format_parse_error(C, err, p, "invalid octal digit '%c' at " IT_FMT " in octal integer starting at " IT_FMT, c, format_it(p->it), format_it(start));
+                    format_parse_error(err, p, "invalid octal digit '%c' at " IT_FMT " in octal integer starting at " IT_FMT, c, format_it(p->it), format_it(start));
                     p->it = start;
                     return false;
                 }
@@ -701,7 +576,7 @@ bool _parse_integer(parser_base<C> *p, parse_range *out, parse_error<C> *err)
     }
     else
     {
-        format_parse_error(C, err, p, "invalid integer digit '%c' at " IT_FMT " in integer starting at " IT_FMT, c, format_it(p->it), format_it(start));
+        format_parse_error(err, p, "invalid integer digit '%c' at " IT_FMT " in integer starting at " IT_FMT, c, format_it(p->it), format_it(start));
         p->it = start;
         return false;
     }
@@ -715,28 +590,23 @@ bool _parse_integer(parser_base<C> *p, parse_range *out, parse_error<C> *err)
     return true;
 }
 
-bool parse_integer(parser *p, parse_range *out, parse_error<char> *err)
+bool parse_integer(parser *p, parse_range *out, parse_error *err)
 {
     return _parse_integer(p, out, err);
 }
 
-bool parse_integer(wparser *p, parse_range *out, parse_error<wchar_t> *err)
-{
-    return _parse_integer(p, out, err);
-}
-
-template<typename C, typename OutT = s64>
-bool _parse_integer_t(parser_base<C> *p, parse_iterator *digit_start, int *base, bool *neg, parse_error<C> *err)
+template<typename OutT = s64>
+bool _parse_integer_t(parser_base<char> *p, parse_iterator *digit_start, int *base, bool *neg, parse_error *err)
 {
     if (!is_ok(p))
     {
-        set_parse_error(C, err, p, "input is nullptr or end was reached");
+        set_parse_error(err, p, "input is nullptr or end was reached");
         return false;
     }
 
     parse_iterator start = p->it;
     *digit_start = start;
-    auto c = current_char(p);
+    auto c = parser_current_char(p);
 
     if (c == '-' || c == '+')
     {
@@ -747,16 +617,16 @@ bool _parse_integer_t(parser_base<C> *p, parse_iterator *digit_start, int *base,
 
         if (is_at_end(p))
         {
-            format_parse_error(C, err, p, "not an integer at " IT_FMT, format_it(start));
+            format_parse_error(err, p, "not an integer at " IT_FMT, format_it(start));
             p->it = start;
             return false;
         }
 
-        c = current_char(p);
+        c = parser_current_char(p);
         
         if (!is_digit(c))
         {
-            format_parse_error(C, err, p, "not an integer at " IT_FMT, format_it(start));
+            format_parse_error(err, p, "not an integer at " IT_FMT, format_it(start));
             p->it = start;
             return false;
         }
@@ -770,7 +640,7 @@ bool _parse_integer_t(parser_base<C> *p, parse_iterator *digit_start, int *base,
 
         if (!is_at_end(p))
         {
-            c = current_char(p);
+            c = parser_current_char(p);
 
             if (c == 'x' || c == 'X')
             {
@@ -778,16 +648,16 @@ bool _parse_integer_t(parser_base<C> *p, parse_iterator *digit_start, int *base,
 
                 if (is_at_end(p))
                 {
-                    format_parse_error(C, err, p, "invalid hex integer at " IT_FMT, format_it(start));
+                    format_parse_error(err, p, "invalid hex integer at " IT_FMT, format_it(start));
                     p->it = start;
                     return false;
                 }
 
-                c = current_char(p);
+                c = parser_current_char(p);
 
                 if (!is_hex_digit(c))
                 {
-                    format_parse_error(C, err, p, "invalid hex digit '%c' at " IT_FMT " in hex integer starting at " IT_FMT, c, format_it(p->it), format_it(start));
+                    format_parse_error(err, p, "invalid hex digit '%c' at " IT_FMT " in hex integer starting at " IT_FMT, c, format_it(p->it), format_it(start));
                     p->it = start;
                     return false;
                 }
@@ -803,17 +673,17 @@ bool _parse_integer_t(parser_base<C> *p, parse_iterator *digit_start, int *base,
 
                 if (is_at_end(p))
                 {
-                    format_parse_error(C, err, p, "invalid binary integer at " IT_FMT, format_it(start));
+                    format_parse_error(err, p, "invalid binary integer at " IT_FMT, format_it(start));
                     p->it = start;
                     return false;
                 }
 
 
-                c = current_char(p);
+                c = parser_current_char(p);
 
                 if (!is_bin_digit(c))
                 {
-                    format_parse_error(C, err, p, "invalid binary digit '%c' at " IT_FMT " in binary integer starting at " IT_FMT, c, format_it(p->it), format_it(start));
+                    format_parse_error(err, p, "invalid binary digit '%c' at " IT_FMT " in binary integer starting at " IT_FMT, c, format_it(p->it), format_it(start));
                     p->it = start;
                     return false;
                 }
@@ -829,16 +699,16 @@ bool _parse_integer_t(parser_base<C> *p, parse_iterator *digit_start, int *base,
 
                 if (is_at_end(p))
                 {
-                    format_parse_error(C, err, p, "invalid octal integer at " IT_FMT, format_it(start));
+                    format_parse_error(err, p, "invalid octal integer at " IT_FMT, format_it(start));
                     p->it = start;
                     return false;
                 }
 
-                c = current_char(p);
+                c = parser_current_char(p);
 
                 if (!is_oct_digit(c))
                 {
-                    format_parse_error(C, err, p, "invalid octal digit '%c' at " IT_FMT " in octal integer starting at " IT_FMT, c, format_it(p->it), format_it(start));
+                    format_parse_error(err, p, "invalid octal digit '%c' at " IT_FMT " in octal integer starting at " IT_FMT, c, format_it(p->it), format_it(start));
                     p->it = start;
                     return false;
                 }
@@ -866,7 +736,7 @@ bool _parse_integer_t(parser_base<C> *p, parse_iterator *digit_start, int *base,
     }
     else
     {
-        format_parse_error(C, err, p, "invalid integer digit '%c' at " IT_FMT " in integer starting at " IT_FMT, c, format_it(p->it), format_it(start));
+        format_parse_error(err, p, "invalid integer digit '%c' at " IT_FMT " in integer starting at " IT_FMT, c, format_it(p->it), format_it(start));
         p->it = start;
         return false;
     }
@@ -875,7 +745,7 @@ bool _parse_integer_t(parser_base<C> *p, parse_iterator *digit_start, int *base,
 }
 
 #define DEFINE_PARSE_INTEGER(C, OutT, FUNC)\
-bool parse_integer(parser_base<C> *p, OutT *out, parse_error<C> *err)\
+bool parse_integer(parser_base<char> *p, OutT *out, parse_error *err)\
 {\
     parse_iterator start = p->it;\
     parse_iterator digit_start;\
@@ -890,7 +760,7 @@ bool parse_integer(parser_base<C> *p, OutT *out, parse_error<C> *err)\
 \
     if (len > digit_size - 1)\
     {\
-        format_parse_error(C, err, p, "integer too large at " IT_FMT, format_it(start));\
+        format_parse_error(err, p, "integer too large at " IT_FMT, format_it(start));\
         p->it = start;\
         return false;\
     }\
@@ -910,61 +780,22 @@ bool parse_integer(parser_base<C> *p, OutT *out, parse_error<C> *err)\
 }
 
 DEFINE_PARSE_INTEGER(char, int, to_int);
-DEFINE_PARSE_INTEGER(wchar_t, int, to_int);
 DEFINE_PARSE_INTEGER(char, long, to_long);
-DEFINE_PARSE_INTEGER(wchar_t, long, to_long);
 DEFINE_PARSE_INTEGER(char, long long, to_long_long);
-DEFINE_PARSE_INTEGER(wchar_t, long long, to_long_long);
 DEFINE_PARSE_INTEGER(char, unsigned int, to_unsigned_int);
-DEFINE_PARSE_INTEGER(wchar_t, unsigned int, to_unsigned_int);
 DEFINE_PARSE_INTEGER(char, unsigned long, to_unsigned_long);
-DEFINE_PARSE_INTEGER(wchar_t, unsigned long, to_unsigned_long);
 DEFINE_PARSE_INTEGER(char, unsigned long long, to_unsigned_long_long);
-DEFINE_PARSE_INTEGER(wchar_t, unsigned long long, to_unsigned_long_long);
 
-#define DEFINE_PARSE_INTEGER_FROM_STRING(OutT)\
-bool parse_integer(const_string   input, OutT *out, parse_error<char>    *err)\
-{\
-    parser p;\
-    init(&p, input);\
-    return parse_integer(&p, out, err);\
-}\
-\
-bool parse_integer(const_wstring  input, OutT *out, parse_error<wchar_t> *err)\
-{\
-    wparser p;\
-    init(&p, input);\
-    return parse_integer(&p, out, err);\
-}\
-\
-bool parse_integer(const string  *input, OutT *out, parse_error<char>    *err)\
-{\
-    return parse_integer(to_const_string(input), out, err);\
-}\
-\
-bool parse_integer(const wstring *input, OutT *out, parse_error<wchar_t> *err)\
-{\
-    return parse_integer(to_const_string(input), out, err);\
-}
-
-DEFINE_PARSE_INTEGER_FROM_STRING(int);
-DEFINE_PARSE_INTEGER_FROM_STRING(long);
-DEFINE_PARSE_INTEGER_FROM_STRING(long long);
-DEFINE_PARSE_INTEGER_FROM_STRING(unsigned int);
-DEFINE_PARSE_INTEGER_FROM_STRING(unsigned long);
-DEFINE_PARSE_INTEGER_FROM_STRING(unsigned long long);
-
-template<typename C>
-bool _parse_decimal(parser_base<C> *p, parse_range *out, parse_error<C> *err)
+static bool _parse_decimal(parser_base<char> *p, parse_range *out, parse_error *err)
 {
     if (!is_ok(p))
     {
-        set_parse_error(C, err, p, "input is nullptr or end was reached");
+        set_parse_error(err, p, "input is nullptr or end was reached");
         return false;
     }
 
     parse_iterator start = p->it;
-    auto c = current_char(p);
+    auto c = parser_current_char(p);
     bool has_digits = false;
 
     if (c == '-' || c == '+')
@@ -973,12 +804,12 @@ bool _parse_decimal(parser_base<C> *p, parse_range *out, parse_error<C> *err)
 
         if (is_at_end(p))
         {
-            format_parse_error(C, err, p, "not a decimal number at " IT_FMT, format_it(start));
+            format_parse_error(err, p, "not a decimal number at " IT_FMT, format_it(start));
             p->it = start;
             return false;
         }
 
-        c = current_char(p);
+        c = parser_current_char(p);
     }
 
     while (is_digit(c))
@@ -989,13 +820,13 @@ bool _parse_decimal(parser_base<C> *p, parse_range *out, parse_error<C> *err)
         if (is_at_end(p))
             break;
 
-        c = current_char(p);
+        c = parser_current_char(p);
     }
 
     if (is_at_end(p))
         goto parse_decimal_end;
 
-    c = current_char(p);
+    c = parser_current_char(p);
 
     if (c == '.')
     {
@@ -1007,13 +838,13 @@ bool _parse_decimal(parser_base<C> *p, parse_range *out, parse_error<C> *err)
                 goto parse_decimal_end;
             else
             {
-                format_parse_error(C, err, p, "unexpected end of input at " IT_FMT " in decimal number at " IT_FMT, format_it(p->it), format_it(start));
+                format_parse_error(err, p, "unexpected end of input at " IT_FMT " in decimal number at " IT_FMT, format_it(p->it), format_it(start));
                 p->it = start;
                 return false;
             }
         }
 
-        c = current_char(p);
+        c = parser_current_char(p);
 
         while (is_digit(c))
         {
@@ -1023,7 +854,7 @@ bool _parse_decimal(parser_base<C> *p, parse_range *out, parse_error<C> *err)
             if (is_at_end(p))
                 break;
 
-            c = current_char(p);
+            c = parser_current_char(p);
         }
     }
 
@@ -1031,7 +862,7 @@ bool _parse_decimal(parser_base<C> *p, parse_range *out, parse_error<C> *err)
     {
         if (!has_digits)
         {
-            format_parse_error(C, err, p, "unexpected symbol '%c' at " IT_FMT " in decimal number at " IT_FMT, c, format_it(p->it), format_it(start));
+            format_parse_error(err, p, "unexpected symbol '%c' at " IT_FMT " in decimal number at " IT_FMT, c, format_it(p->it), format_it(start));
             p->it = start;
             return false;
         }
@@ -1040,12 +871,12 @@ bool _parse_decimal(parser_base<C> *p, parse_range *out, parse_error<C> *err)
 
         if (is_at_end(p))
         {
-            format_parse_error(C, err, p, "exponent at requires a value at " IT_FMT " in decimal number at " IT_FMT, format_it(p->it), format_it(start));
+            format_parse_error(err, p, "exponent at requires a value at " IT_FMT " in decimal number at " IT_FMT, format_it(p->it), format_it(start));
             p->it = start;
             return false;
         }
 
-        c = current_char(p);
+        c = parser_current_char(p);
 
         if (c == '+' || c == '-')
         {
@@ -1053,12 +884,12 @@ bool _parse_decimal(parser_base<C> *p, parse_range *out, parse_error<C> *err)
 
             if (is_at_end(p))
             {
-                format_parse_error(C, err, p, "exponent at requires a value at " IT_FMT " in decimal number at " IT_FMT, format_it(p->it), format_it(start));
+                format_parse_error(err, p, "exponent at requires a value at " IT_FMT " in decimal number at " IT_FMT, format_it(p->it), format_it(start));
                 p->it = start;
                 return false;
             }
 
-            c = current_char(p);
+            c = parser_current_char(p);
         }
 
         while (is_digit(c))
@@ -1069,13 +900,13 @@ bool _parse_decimal(parser_base<C> *p, parse_range *out, parse_error<C> *err)
             if (is_at_end(p))
                 break;
 
-            c = current_char(p);
+            c = parser_current_char(p);
         }
     }
 
     if (!has_digits)
     {
-        format_parse_error(C, err, p, "not a decimal number at " IT_FMT, format_it(start));
+        format_parse_error(err, p, "not a decimal number at " IT_FMT, format_it(start));
         p->it = start;
         return false;
     }
@@ -1091,30 +922,25 @@ parse_decimal_end:
     return true;
 }
 
-bool parse_decimal(parser *p, parse_range *out, parse_error<char> *err)
-{
-    return _parse_decimal(p, out, err);
-}
-
-bool parse_decimal(wparser *p, parse_range *out, parse_error<wchar_t> *err)
+bool parse_decimal(parser *p, parse_range *out, parse_error *err)
 {
     return _parse_decimal(p, out, err);
 }
 
 // ok a double can have like 1024 digits, but this will suffice for simple things.
 #define DEFINE_PARSE_DECIMAL(C, OutT, FUNC)\
-bool parse_decimal(parser_base<C> *p, OutT *out, parse_error<C> *err)\
+bool parse_decimal(parser_base<C> *p, OutT *out, parse_error *err)\
 {\
     if (!is_ok(p))\
     {\
-        set_parse_error(C, err, p, "input is nullptr or end was reached");\
+        set_parse_error(err, p, "input is nullptr or end was reached");\
         return false;\
     }\
 \
     parse_iterator start = p->it;\
     parse_range range;\
     \
-    if (!parse_decimal(p, &range, err))\
+    if (!_parse_decimal(p, &range, err))\
         return false;\
 \
     constexpr const s64 digit_size = 128;\
@@ -1122,7 +948,7 @@ bool parse_decimal(parser_base<C> *p, OutT *out, parse_error<C> *err)\
 \
     if (len > digit_size - 1)\
     {\
-        format_parse_error(C, err, p, "floating point number too large at " IT_FMT, format_it(start));\
+        format_parse_error(err, p, "floating point number too large at " IT_FMT, format_it(start));\
         p->it = start;\
         return false;\
     }\
@@ -1137,49 +963,12 @@ bool parse_decimal(parser_base<C> *p, OutT *out, parse_error<C> *err)\
 }
 
 DEFINE_PARSE_DECIMAL(char, float, to_float);
-DEFINE_PARSE_DECIMAL(wchar_t, float, to_float);
 DEFINE_PARSE_DECIMAL(char, double, to_double);
-DEFINE_PARSE_DECIMAL(wchar_t, double, to_double);
 DEFINE_PARSE_DECIMAL(char, long double, to_long_double);
-DEFINE_PARSE_DECIMAL(wchar_t, long double, to_long_double);
-
-#define DEFINE_PARSE_DECIMAL_FROM_STRING(OutT)\
-bool parse_decimal(const_string   input, OutT *out, parse_error<char>    *err)\
-{\
-    parser p;\
-    init(&p, input);\
-    return parse_decimal(&p, out, err);\
-}\
-\
-bool parse_decimal(const_wstring  input, OutT *out, parse_error<wchar_t> *err)\
-{\
-    wparser p;\
-    init(&p, input);\
-    return parse_decimal(&p, out, err);\
-}\
-\
-bool parse_decimal(const string  *input, OutT *out, parse_error<char>    *err)\
-{\
-    return parse_decimal(to_const_string(input), out, err);\
-}\
-\
-bool parse_decimal(const wstring *input, OutT *out, parse_error<wchar_t> *err)\
-{\
-    return parse_decimal(to_const_string(input), out, err);\
-}
-
-DEFINE_PARSE_DECIMAL_FROM_STRING(float);
-DEFINE_PARSE_DECIMAL_FROM_STRING(double);
-DEFINE_PARSE_DECIMAL_FROM_STRING(long double);
 
 bool is_first_identifier_character(char c)
 {
     return c == '_' || is_alpha(c);
-}
-
-bool is_first_identifier_character(wchar_t c)
-{
-    return c == L'_' || is_alpha(c);
 }
 
 bool is_identifier_character(char c)
@@ -1187,26 +976,20 @@ bool is_identifier_character(char c)
     return c == '_' || is_alphanum(c);
 }
 
-bool is_identifier_character(wchar_t c)
-{
-    return c == L'_' || is_alphanum(c);
-}
-
-template<typename C>
-bool _parse_identifier(parser_base<C> *p, parse_range *out, parse_error<C> *err)
+static bool _parse_identifier(parser_base<char> *p, parse_range *out, parse_error *err)
 {
     if (!is_ok(p))
     {
-        set_parse_error(C, err, p, "input is nullptr or end was reached");
+        set_parse_error(err, p, "input is nullptr or end was reached");
         return false;
     }
 
     parse_iterator start = p->it;
-    auto c = current_char(p);
+    auto c = parser_current_char(p);
 
     if (!is_first_identifier_character(c))
     {
-        format_parse_error(C, err, p, "unexpected symbol '%c' at " IT_FMT " in identifier starting at " IT_FMT, c, format_it(p->it), format_it(start));
+        format_parse_error(err, p, "unexpected symbol '%c' at " IT_FMT " in identifier starting at " IT_FMT, c, format_it(p->it), format_it(start));
         p->it = start;
         return false;
     }
@@ -1222,12 +1005,8 @@ bool _parse_identifier(parser_base<C> *p, parse_range *out, parse_error<C> *err)
     return true;
 }
 
-bool parse_identifier(parser *p, parse_range *out, parse_error<char> *err)
+bool parse_identifier(parser *p, parse_range *out, parse_error *err)
 {
     return _parse_identifier(p, out, err);
 }
 
-bool parse_identifier(wparser *p, parse_range *out, parse_error<wchar_t> *err)
-{
-    return _parse_identifier(p, out, err);
-}

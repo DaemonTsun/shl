@@ -1,7 +1,7 @@
 
 #include <stdarg.h>
 #include <string.h>
-#include <stdio.h>
+#include <stdio.h> // vsnprintf
 
 #include "shl/platform.hpp"
 #include "shl/error.hpp"

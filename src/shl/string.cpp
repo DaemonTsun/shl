@@ -1709,66 +1709,6 @@ void join(const string *strings, s64 count, const string *delim, string *out)
     _join(strings, count, to_const_string(delim), out);
 }
 
-void join(const array<const char*>    *arr, char          delim, string *out)
-{
-    join(arr->data, arr->size, delim, out);
-}
-
-void join(const array<const char*>    *arr, const char   *delim, string *out)
-{
-    join(arr->data, arr->size, to_const_string(delim), out);
-}
-
-void join(const array<const char*>    *arr, const_string  delim, string *out)
-{
-    join(arr->data, arr->size, delim, out);
-}
-
-void join(const array<const char*>    *arr, const string *delim, string *out)
-{
-    join(arr->data, arr->size, to_const_string(delim), out);
-}
-
-void join(const array<const_string>   *arr, char          delim, string *out)
-{
-    join(arr->data, arr->size, delim, out);
-}
-
-void join(const array<const_string>   *arr, const char   *delim, string *out)
-{
-    join(arr->data, arr->size, to_const_string(delim), out);
-}
-
-void join(const array<const_string>   *arr, const_string  delim, string *out)
-{
-    join(arr->data, arr->size, delim, out);
-}
-
-void join(const array<const_string>   *arr, const string *delim, string *out)
-{
-    join(arr->data, arr->size, to_const_string(delim), out);
-}
-
-void join(const array<string>         *arr, char          delim, string *out)
-{
-    join(arr->data, arr->size, delim, out);
-}
-
-void join(const array<string>         *arr, const char   *delim, string *out)
-{
-    join(arr->data, arr->size, to_const_string(delim), out);
-}
-
-void join(const array<string>         *arr, const_string  delim, string *out)
-{
-    join(arr->data, arr->size, delim, out);
-}
-
-void join(const array<string>         *arr, const string *delim, string *out)
-{
-    join(arr->data, arr->size, to_const_string(delim), out);
-}
-
 void join(const wchar_t  **strings, s64 count, wchar_t          delim, wstring *out)
 {
     _join_c(strings, count, delim, out);
@@ -1827,66 +1767,6 @@ void join(const wstring *strings, s64 count, const_wstring  delim, wstring *out)
 void join(const wstring *strings, s64 count, const wstring *delim, wstring *out)
 {
     _join(strings, count, to_const_string(delim), out);
-}
-
-void join(const array<const wchar_t*>    *arr, wchar_t          delim, wstring *out)
-{
-    join(arr->data, arr->size, delim, out);
-}
-
-void join(const array<const wchar_t*>    *arr, const wchar_t   *delim, wstring *out)
-{
-    join(arr->data, arr->size, to_const_string(delim), out);
-}
-
-void join(const array<const wchar_t*>    *arr, const_wstring  delim, wstring *out)
-{
-    join(arr->data, arr->size, delim, out);
-}
-
-void join(const array<const wchar_t*>    *arr, const wstring *delim, wstring *out)
-{
-    join(arr->data, arr->size, to_const_string(delim), out);
-}
-
-void join(const array<const_wstring>   *arr, wchar_t          delim, wstring *out)
-{
-    join(arr->data, arr->size, delim, out);
-}
-
-void join(const array<const_wstring>   *arr, const wchar_t   *delim, wstring *out)
-{
-    join(arr->data, arr->size, to_const_string(delim), out);
-}
-
-void join(const array<const_wstring>   *arr, const_wstring  delim, wstring *out)
-{
-    join(arr->data, arr->size, delim, out);
-}
-
-void join(const array<const_wstring>   *arr, const wstring *delim, wstring *out)
-{
-    join(arr->data, arr->size, to_const_string(delim), out);
-}
-
-void join(const array<wstring>         *arr, wchar_t          delim, wstring *out)
-{
-    join(arr->data, arr->size, delim, out);
-}
-
-void join(const array<wstring>         *arr, const wchar_t   *delim, wstring *out)
-{
-    join(arr->data, arr->size, to_const_string(delim), out);
-}
-
-void join(const array<wstring>         *arr, const_wstring  delim, wstring *out)
-{
-    join(arr->data, arr->size, delim, out);
-}
-
-void join(const array<wstring>         *arr, const wstring *delim, wstring *out)
-{
-    join(arr->data, arr->size, to_const_string(delim), out);
 }
 
 static inline s64 _convert_str(char *dst, const wchar_t *src, s64 n)
