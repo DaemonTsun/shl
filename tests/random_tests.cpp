@@ -2,7 +2,7 @@
 #include "shl/random.hpp"
 #include "t1/t1.hpp"
 
-#define LU(X) LONG_UINT_LIT(X)
+#define LU(X) U64_LIT(X)
 
 #define SEED64 LU(0x3243f6a8885a308d)
 
@@ -37,22 +37,14 @@ define_test(mt19937_tests)
     }
 }
 
-define_test(seed_rng_seeds_thread_local_rng)
+define_test(next_random_int_gets_next_int)
 {
-    seed_rng(SEED64);
+    mt19937 mt;
+    init(&mt, SEED64);
 
-    assert_equal(next_random_int(), LU(0x26a7369ee2256e41));
-    assert_equal(next_random_int(), LU(0x186de3f44b532d15));
-    assert_equal(next_random_int(), LU(0x62500624544ebcda));
-}
-
-define_test(next_random_int_gets_next_int_from_thread_local_rng)
-{
-    seed_rng(SEED64);
-
-    assert_equal(next_random_int(), LU(0x26a7369ee2256e41));
-    assert_equal(next_random_int(), LU(0x186de3f44b532d15));
-    assert_equal(next_random_int(), LU(0x62500624544ebcda));
+    assert_equal(next_random_int(&mt), LU(0x26a7369ee2256e41));
+    assert_equal(next_random_int(&mt), LU(0x186de3f44b532d15));
+    assert_equal(next_random_int(&mt), LU(0x62500624544ebcda));
 }
 
 template<typename T>
@@ -61,17 +53,25 @@ T abs(T x)
     return x < ((T)0) ? -x : x;
 }
 
-#include "shl/file_stream.hpp"
-
-define_test(next_random_decimal_gets_next_decimal_from_thread_local_rng)
+define_test(next_random_decimal_gets_next_decimal)
 {
-    seed_rng(SEED64);
+    mt19937 mt;
+    init(&mt, SEED64);
 
 #define assert_almost_equal(X, Y) assert_less(abs(abs(X) - abs(Y)), 0.0000001)
 
-    assert_almost_equal(next_random_decimal(), 0.150988973417);
-    assert_almost_equal(next_random_decimal(), 0.0954267951);
-    assert_almost_equal(next_random_decimal(), 0.3840335692);
+    assert_almost_equal(next_random_decimal(&mt), 0.150988973417);
+    assert_almost_equal(next_random_decimal(&mt), 0.0954267951);
+    assert_almost_equal(next_random_decimal(&mt), 0.3840335692);
+}
+
+define_test(seed_rng_seeds_thread_local_rng)
+{
+    seed_rng(LU(0x853c49e6748fea9b));
+
+    assert_equal(next_random_int(), LU(13499640503520517996));
+    assert_equal(next_random_int(), LU(6775828892400545392));
+    assert_equal(next_random_int(), LU(4981977414620091798));
 }
 
 define_default_test_main()

@@ -37,11 +37,11 @@ works fine.
 #endif
 
 #if WORDSIZE == 64 && !defined(_MSC_VER)
-#define LONG_INT_LIT(c)  c ## L
-#define LONG_UINT_LIT(c) c ## UL
+#define S64_LIT(c) c ## L
+#define U64_LIT(c) c ## UL
 #else
-#define LONG_INT_LIT(c)  c ## LL
-#define LONG_UINT_LIT(c) c ## ULL
+#define S64_LIT(c) c ## LL
+#define U64_LIT(c) c ## ULL
 #endif
 
 #if defined(_MSC_VER)
@@ -84,17 +84,17 @@ typedef   signed long long int s64;
 #define  S8_MIN (-128)
 #define S16_MIN (-32768)
 #define S32_MIN (-2147483647 - 1)
-#define S64_MIN (-LONG_INT_LIT(9223372036854775807) - 1)
+#define S64_MIN (-S64_LIT(9223372036854775807) - 1)
 
 #define  S8_MAX (127)
 #define S16_MAX (32767)
 #define S32_MAX (2147483647)
-#define S64_MAX (LONG_INT_LIT(9223372036854775807))
+#define S64_MAX (S64_LIT(9223372036854775807))
 
 #define  U8_MAX (255)
 #define U16_MAX (65535)
 #define U32_MAX (4294967295u)
-#define U64_MAX (LONG_UINT_LIT(18446744073709551615))
+#define U64_MAX (U64_LIT(18446744073709551615))
 
 template<typename T> struct _max_value { };
 #define define_max_value(T, Val) template<> struct _max_value<T>     { static constexpr T value = Val; };
