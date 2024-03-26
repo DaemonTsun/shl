@@ -46,19 +46,19 @@ u64 next_random_int(pcg64 *gen);
 u64 next_bounded_int(u64 max);
 
 template<typename TGen>
-auto next_bounded_int(TGen *gen, u64 bound)
+auto next_bounded_int(TGen *gen, u64 max)
     -> decltype(next_random_int(gen))
 {
-    assert(bound > 0);
+    assert(max > 0);
 
-    u64 nbound = (-bound) % bound;
+    u64 nmax = (-max) % max;
 
     while (true)
     {
         u64 ret = next_random_int(gen);
 
-        if (ret >= nbound)
-            return ret % bound;
+        if (ret >= nmax)
+            return ret % max;
     }
 }
 
@@ -74,7 +74,7 @@ auto next_bounded_int(TGen *gen, u64 min, u64 max)
     if (min == max)
         return min;
 
-    return next_bounded_int(((max + 1) - min)) + min;
+    return next_bounded_int((max - min) + 1) + min;
 }
 
 // range [0, 1]
@@ -87,3 +87,23 @@ auto next_random_decimal(TGen *gen)
     return next_random_int(gen) / max_u64_double;
 }
 
+// range [0, max]
+double next_bounded_decimal(double max);
+
+template<typename TGen>
+auto next_bounded_decimal(TGen *gen, double max)
+    -> decltype(next_random_decimal(gen))
+{
+    return next_random_decimal(gen) * max;
+}
+
+// range [min, max]
+double next_bounded_decimal(double min, double max);
+
+template<typename TGen>
+auto next_bounded_decimal(TGen *gen, double min, double max)
+    -> decltype(next_random_decimal(gen))
+{
+    assert(min <= max);
+    return next_bounded_decimal(gen, max - min) + min;
+}

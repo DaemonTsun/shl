@@ -8,6 +8,10 @@
 
 #define BOUND_TEST_COUNT 100000
 
+// lol these work for these tests its fine
+#define MAX_DOUBLE 18446744073709551615.0
+#define MIN_DOUBLE -18446744073709551615.0
+
 define_test(mt19937_tests)
 {
     // https://raw.githubusercontent.com/skeeto/scratch/master/mt19937/test.c
@@ -82,9 +86,11 @@ define_test(next_bounded_int_gets_int_within_bound)
 
     u64 val;
     u64 bound = 0;
+    u64 max_value_found = 0;
 
-#define test_bound(Bound)\
+#define test_int_bound(Bound)\
     bound = Bound;\
+    max_value_found = 0;\
 \
     for (int i = 0; i < BOUND_TEST_COUNT; ++i)\
     {\
@@ -95,13 +101,17 @@ define_test(next_bounded_int_gets_int_within_bound)
             assert_less(val, bound);\
             break;\
         }\
-    }
+        \
+        if (val > max_value_found) max_value_found = val;\
+    }\
+    \
+    printf("In range [0, %llu[, max value found: %llu\n", Bound, max_value_found);
 
-    test_bound(1);
-    test_bound(100);
-    test_bound(256);
-    test_bound(4096);
-    test_bound(1ul << 32ul);
+    test_int_bound(1);
+    test_int_bound(100);
+    test_int_bound(256);
+    test_int_bound(4096);
+    test_int_bound(1ul << 32ul);
 }
 
 define_test(next_bounded_int_gets_int_within_bound2)
@@ -112,9 +122,14 @@ define_test(next_bounded_int_gets_int_within_bound2)
     u64 lower_bound = 0;
     u64 upper_bound = 0;
 
-#define test_upper_lower_bound(Lower, Upper)\
+    u64 min_value_found = max_value(u64);
+    u64 max_value_found = 0;
+
+#define test_int_upper_lower_bound(Lower, Upper)\
     lower_bound = Lower;\
     upper_bound = Upper;\
+    min_value_found = max_value(u64);\
+    max_value_found = 0;\
 \
     for (int i = 0; i < BOUND_TEST_COUNT; ++i)\
     {\
@@ -130,21 +145,136 @@ define_test(next_bounded_int_gets_int_within_bound2)
             assert_less_or_equal(val, upper_bound);\
             break;\
         }\
-    }
+        \
+        if (val < min_value_found) min_value_found = val;\
+        if (val > max_value_found) max_value_found = val;\
+    }\
+    \
+    printf("In range [%llu, %llu], min & max values found: %llu, %llu\n", Lower, Upper, min_value_found, max_value_found);
 
-    test_upper_lower_bound(0, 1);
-    test_upper_lower_bound(0, 100);
-    test_upper_lower_bound(0, 256);
-    test_upper_lower_bound(0, 4096);
+    test_int_upper_lower_bound(0, 1);
+    test_int_upper_lower_bound(0, 100);
+    test_int_upper_lower_bound(0, 256);
+    test_int_upper_lower_bound(0, 4096);
 
-    test_upper_lower_bound(1, 1);
-    test_upper_lower_bound(1, 100);
-    test_upper_lower_bound(1, 256);
-    test_upper_lower_bound(1, 4096);
+    test_int_upper_lower_bound(1, 1);
+    test_int_upper_lower_bound(1, 100);
+    test_int_upper_lower_bound(1, 256);
+    test_int_upper_lower_bound(1, 4096);
 
-    test_upper_lower_bound(100, 100);
-    test_upper_lower_bound(100, 256);
-    test_upper_lower_bound(100, 4096);
+    test_int_upper_lower_bound(100, 100);
+    test_int_upper_lower_bound(100, 256);
+    test_int_upper_lower_bound(100, 4096);
+}
+
+define_test(next_bounded_decimal_gets_decimal_within_bound)
+{
+    seed_rng(LU(0x853c49e6748fea9b));
+
+    double val;
+    double bound = 0;
+    double min_value_found = MAX_DOUBLE;
+    double max_value_found = MIN_DOUBLE;
+
+#define test_decimal_bound(Bound)\
+    bound = Bound;\
+    min_value_found = MAX_DOUBLE;\
+    max_value_found = MIN_DOUBLE;\
+\
+    for (int i = 0; i < BOUND_TEST_COUNT; ++i)\
+    {\
+        val = next_bounded_decimal(bound);\
+\
+        if (bound >= 0)\
+        {\
+            if (val > bound)\
+            {\
+                assert_less_or_equal(val, bound);\
+                break;\
+            }\
+        }\
+        else\
+        {\
+            if (val < bound)\
+            {\
+                assert_greater_or_equal(val, bound);\
+                break;\
+            }\
+        }\
+        \
+        if (val < min_value_found) min_value_found = val;\
+        if (val > max_value_found) max_value_found = val;\
+    }\
+    \
+    if (Bound >= 0)\
+        printf("In range [0, %f], min & max value found: %f, %f\n", Bound, min_value_found, max_value_found);\
+    else\
+        printf("In range [%f, 0], min & max value found: %f, %f\n", Bound, min_value_found, max_value_found);
+
+    test_decimal_bound(1.0);
+    test_decimal_bound(100.0);
+    test_decimal_bound(256.0);
+    test_decimal_bound(4096.0);
+    test_decimal_bound((double)(1ul << 32ul));
+
+    test_decimal_bound(-1.0);
+}
+
+define_test(next_bounded_decimal_gets_decimal_within_bound2)
+{
+    seed_rng(LU(0x853c49e6748fea9b));
+
+    double val;
+    double lower = 0;
+    double upper = 0;
+    double min_value_found = MAX_DOUBLE;
+    double max_value_found = MIN_DOUBLE;
+
+#define test_decimal_upper_lower_bound(Lower, Upper)\
+    lower = Lower;\
+    upper = Upper;\
+    min_value_found = MAX_DOUBLE;\
+    max_value_found = MIN_DOUBLE;\
+\
+    for (int i = 0; i < BOUND_TEST_COUNT; ++i)\
+    {\
+        val = next_bounded_decimal(lower, upper);\
+\
+        if (val < Lower)\
+        {\
+            assert_greater_or_equal(val, Lower);\
+            break;\
+        }\
+        \
+        if (val > Upper)\
+        {\
+            assert_less_or_equal(val, Upper);\
+            break;\
+        }\
+        \
+        if (val < min_value_found) min_value_found = val;\
+        if (val > max_value_found) max_value_found = val;\
+    }\
+    \
+    printf("In range [%f, %f], min & max value found: %f, %f\n", Lower, Upper, min_value_found, max_value_found);
+
+    test_decimal_upper_lower_bound(0.0, 1.0);
+    test_decimal_upper_lower_bound(0.0, 100.0);
+    test_decimal_upper_lower_bound(0.0, 256.0);
+    test_decimal_upper_lower_bound(0.0, 4096.0);
+
+    test_decimal_upper_lower_bound(1.0, 1.0);
+    test_decimal_upper_lower_bound(1.0, 100.0);
+    test_decimal_upper_lower_bound(1.0, 256.0);
+    test_decimal_upper_lower_bound(1.0, 4096.0);
+
+    test_decimal_upper_lower_bound(100.0, 100.0);
+    test_decimal_upper_lower_bound(100.0, 256.0);
+    test_decimal_upper_lower_bound(100.0, 4096.0);
+
+    test_decimal_upper_lower_bound(-100.0, 0.0);
+    test_decimal_upper_lower_bound(-100.0, -50.0);
+    test_decimal_upper_lower_bound(-100.0, 50.0);
 }
 
 define_default_test_main()

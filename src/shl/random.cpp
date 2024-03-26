@@ -109,3 +109,14 @@ double next_random_decimal()
 {
     return next_random_decimal(_get_rng_pointer());
 }
+
+double next_bounded_decimal(double max)
+{
+    return next_bounded_decimal(_get_rng_pointer(), max);
+}
+
+double next_bounded_decimal(double min, double max)
+{
+    return next_bounded_decimal(_get_rng_pointer(), min, max);
+}
+
