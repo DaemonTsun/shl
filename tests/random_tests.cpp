@@ -6,6 +6,8 @@
 
 #define SEED64 LU(0x3243f6a8885a308d)
 
+#define BOUND_TEST_COUNT 100000
+
 define_test(mt19937_tests)
 {
     // https://raw.githubusercontent.com/skeeto/scratch/master/mt19937/test.c
@@ -72,6 +74,77 @@ define_test(seed_rng_seeds_thread_local_rng)
     assert_equal(next_random_int(), LU(13499640503520517996));
     assert_equal(next_random_int(), LU(6775828892400545392));
     assert_equal(next_random_int(), LU(4981977414620091798));
+}
+
+define_test(next_bounded_int_gets_int_within_bound)
+{
+    seed_rng(LU(0x853c49e6748fea9b));
+
+    u64 val;
+    u64 bound = 0;
+
+#define test_bound(Bound)\
+    bound = Bound;\
+\
+    for (int i = 0; i < BOUND_TEST_COUNT; ++i)\
+    {\
+        val = next_bounded_int(bound);\
+\
+        if (val >= bound)\
+        {\
+            assert_less(val, bound);\
+            break;\
+        }\
+    }
+
+    test_bound(1);
+    test_bound(100);
+    test_bound(256);
+    test_bound(4096);
+    test_bound(1ul << 32ul);
+}
+
+define_test(next_bounded_int_gets_int_within_bound2)
+{
+    seed_rng(LU(0x853c49e6748fea9b));
+
+    u64 val;
+    u64 lower_bound = 0;
+    u64 upper_bound = 0;
+
+#define test_upper_lower_bound(Lower, Upper)\
+    lower_bound = Lower;\
+    upper_bound = Upper;\
+\
+    for (int i = 0; i < BOUND_TEST_COUNT; ++i)\
+    {\
+        val = next_bounded_int(lower_bound, upper_bound);\
+\
+        if (val < lower_bound)\
+        {\
+            assert_greater_or_equal(val, lower_bound);\
+            break;\
+        }\
+        else if (val > upper_bound)\
+        {\
+            assert_less_or_equal(val, upper_bound);\
+            break;\
+        }\
+    }
+
+    test_upper_lower_bound(0, 1);
+    test_upper_lower_bound(0, 100);
+    test_upper_lower_bound(0, 256);
+    test_upper_lower_bound(0, 4096);
+
+    test_upper_lower_bound(1, 1);
+    test_upper_lower_bound(1, 100);
+    test_upper_lower_bound(1, 256);
+    test_upper_lower_bound(1, 4096);
+
+    test_upper_lower_bound(100, 100);
+    test_upper_lower_bound(100, 256);
+    test_upper_lower_bound(100, 4096);
 }
 
 define_default_test_main()

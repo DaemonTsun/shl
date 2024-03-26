@@ -1,10 +1,7 @@
 
 // credit https://github.com/skeeto/scratch/blob/master/mt19937/mt19937_64.h
 
-#include "shl/assert.hpp"
 #include "shl/random.hpp"
-
-#define max_u64_double 18446744073709551615.0
 
 void init(mt19937 *gen, u64 seed)
 {
@@ -97,20 +94,18 @@ u64 next_random_int(pcg64 *gen)
     return pcg64_next(gen);
 }
 
+u64 next_bounded_int(u64 max)
+{
+    return next_bounded_int(_get_rng_pointer(), max);
+}
+
+u64 next_bounded_int(u64 min, u64 max)
+{
+    return next_bounded_int(_get_rng_pointer(), min, max);
+}
+
 // range [0, 1]
 double next_random_decimal()
 {
     return next_random_decimal(_get_rng_pointer());
-}
-
-double next_random_decimal(mt19937 *gen)
-{
-    u64 val = next_random_int(gen);
-    return val / max_u64_double;
-}
-
-double next_random_decimal(pcg64 *gen)
-{
-    u64 val = next_random_int(gen);
-    return val / max_u64_double;
 }
