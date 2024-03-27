@@ -120,3 +120,20 @@ double next_bounded_decimal(double min, double max)
     return next_bounded_decimal(_get_rng_pointer(), min, max);
 }
 
+// DISTRIBUTIONS
+discrete_distribution get_discrete_distribution(double *weights, u64 weight_count)
+{
+    discrete_distribution ret;
+    ret.weights = weights;
+    ret.weight_count = weight_count;
+
+    for (u64 i = 0; i < weight_count; ++i)
+        ret.weight_sum += weights[i];
+
+    return ret;
+}
+
+u64 distribute(discrete_distribution dist)
+{
+    return distribute(_get_rng_pointer(), dist);
+}

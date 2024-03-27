@@ -107,6 +107,8 @@ define_test(next_bounded_int_gets_int_within_bound)
     \
     printf("In range [0, %llu[, max value found: %llu\n", Bound, max_value_found);
 
+    printf("\n");
+
     test_int_bound(1);
     test_int_bound(100);
     test_int_bound(256);
@@ -151,6 +153,8 @@ define_test(next_bounded_int_gets_int_within_bound2)
     }\
     \
     printf("In range [%llu, %llu], min & max values found: %llu, %llu\n", Lower, Upper, min_value_found, max_value_found);
+
+    printf("\n");
 
     test_int_upper_lower_bound(0, 1);
     test_int_upper_lower_bound(0, 100);
@@ -211,6 +215,8 @@ define_test(next_bounded_decimal_gets_decimal_within_bound)
     else\
         printf("In range [%f, 0], min & max value found: %f, %f\n", Bound, min_value_found, max_value_found);
 
+    printf("\n");
+
     test_decimal_bound(1.0);
     test_decimal_bound(100.0);
     test_decimal_bound(256.0);
@@ -258,6 +264,8 @@ define_test(next_bounded_decimal_gets_decimal_within_bound2)
     \
     printf("In range [%f, %f], min & max value found: %f, %f\n", Lower, Upper, min_value_found, max_value_found);
 
+    printf("\n");
+
     test_decimal_upper_lower_bound(0.0, 1.0);
     test_decimal_upper_lower_bound(0.0, 100.0);
     test_decimal_upper_lower_bound(0.0, 256.0);
@@ -275,6 +283,25 @@ define_test(next_bounded_decimal_gets_decimal_within_bound2)
     test_decimal_upper_lower_bound(-100.0, 0.0);
     test_decimal_upper_lower_bound(-100.0, -50.0);
     test_decimal_upper_lower_bound(-100.0, 50.0);
+}
+
+define_test(discrete_distribution_distributes_numbers_by_weights)
+{
+    seed_rng(LU(0x853c49e6748fea9b));
+
+    constexpr u64 weight_count = 4;
+    double weights[weight_count] = {0.25, 0.5, 0.0, 0.25};
+    discrete_distribution dist = get_discrete_distribution(weights, 4);
+
+    u64 results[weight_count] = {0};
+
+    for (u64 i = 0; i < BOUND_TEST_COUNT; ++i)
+        results[distribute(dist)] += 1;
+
+    printf("\n");
+
+    for (u64 i = 0; i < weight_count; ++i)
+        printf("%d: %llu\n", i, results[i]);
 }
 
 define_default_test_main()

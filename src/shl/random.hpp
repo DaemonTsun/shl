@@ -46,8 +46,7 @@ u64 next_random_int(pcg64 *gen);
 u64 next_bounded_int(u64 max);
 
 template<typename TGen>
-auto next_bounded_int(TGen *gen, u64 max)
-    -> decltype(next_random_int(gen))
+auto next_bounded_int(TGen *gen, u64 max) -> decltype(next_random_int(gen))
 {
     assert(max > 0);
 
@@ -66,8 +65,7 @@ auto next_bounded_int(TGen *gen, u64 max)
 u64 next_bounded_int(u64 min, u64 max);
 
 template<typename TGen>
-auto next_bounded_int(TGen *gen, u64 min, u64 max)
-    -> decltype(next_random_int(gen))
+auto next_bounded_int(TGen *gen, u64 min, u64 max) -> decltype(next_random_int(gen))
 {
     assert(min <= max);
 
@@ -81,8 +79,7 @@ auto next_bounded_int(TGen *gen, u64 min, u64 max)
 double next_random_decimal();
 
 template<typename TGen>
-auto next_random_decimal(TGen *gen)
-    -> decltype(next_random_int(gen) / max_u64_double) 
+auto next_random_decimal(TGen *gen) -> decltype(next_random_int(gen) / max_u64_double) 
 {
     return next_random_int(gen) / max_u64_double;
 }
@@ -91,8 +88,7 @@ auto next_random_decimal(TGen *gen)
 double next_bounded_decimal(double max);
 
 template<typename TGen>
-auto next_bounded_decimal(TGen *gen, double max)
-    -> decltype(next_random_decimal(gen))
+auto next_bounded_decimal(TGen *gen, double max) -> decltype(next_random_decimal(gen))
 {
     return next_random_decimal(gen) * max;
 }
@@ -101,9 +97,44 @@ auto next_bounded_decimal(TGen *gen, double max)
 double next_bounded_decimal(double min, double max);
 
 template<typename TGen>
-auto next_bounded_decimal(TGen *gen, double min, double max)
-    -> decltype(next_random_decimal(gen))
+auto next_bounded_decimal(TGen *gen, double min, double max) -> decltype(next_random_decimal(gen))
 {
     assert(min <= max);
     return next_bounded_decimal(gen, max - min) + min;
+}
+
+// DISTRIBUTIONS
+struct discrete_distribution
+{
+    double *weights;
+    u64 weight_count;
+    double weight_sum;
+};
+
+discrete_distribution get_discrete_distribution(double *weights, u64 weight_count);
+
+// uses thread local rng
+u64 distribute(discrete_distribution dist);
+
+template<typename TGen>
+auto distribute(TGen *gen, discrete_distribution dist) -> decltype(next_bounded_decimal(gen, 0.0), U64_LIT(0))
+{
+    double x = next_bounded_decimal(gen, dist.weight_sum);
+    double acc = 0.0;
+    u64 i;
+
+    // This could be optimized with a binary search of the calculated subtotals,
+    // but like this implementation is fine until you run into very large weight
+    // counts, at which point you'd have to wonder if discrete distribution is
+    // even worth it.
+    // Also this implementation allocates 0 (zero) memory and doesn't normalize
+    // any values.
+    for (i = 0; i < dist.weight_count; ++i)
+    {
+        acc += dist.weights[i];
+        if (x <= acc)
+            return i;
+    }
+
+    return dist.weight_count - 1;
 }
