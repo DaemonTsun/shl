@@ -1,7 +1,10 @@
 
 // credit https://github.com/skeeto/scratch/blob/master/mt19937/mt19937_64.h
 
+#include "shl/assert.hpp"
 #include "shl/random.hpp"
+
+#define max_u64_double 18446744073709551615.0
 
 void init(mt19937 *gen, u64 seed)
 {
@@ -99,10 +102,43 @@ u64 next_bounded_int(u64 max)
     return next_bounded_int(_get_rng_pointer(), max);
 }
 
+#define define_next_bounded_int(TGen)    \
+u64 next_bounded_int(TGen *gen, u64 max) \
+{                                        \
+    assert(max > 0);                     \
+                                         \
+    u64 nmax = (-max) % max;             \
+                                         \
+    while (true)                         \
+    {                                    \
+        u64 ret = next_random_int(gen);  \
+                                         \
+        if (ret >= nmax)                 \
+            return ret % max;            \
+    }                                    \
+}
+
+define_next_bounded_int(mt19937);
+define_next_bounded_int(pcg64);
+
 u64 next_bounded_int(u64 min, u64 max)
 {
     return next_bounded_int(_get_rng_pointer(), min, max);
 }
+
+#define define_next_bounded_int2(TGen)                      \
+u64 next_bounded_int(TGen *gen, u64 min, u64 max)           \
+{                                                           \
+    assert(min <= max);                                     \
+                                                            \
+    if (min == max)                                         \
+        return min;                                         \
+                                                            \
+    return next_bounded_int(gen, (max - min) + 1) + min;    \
+}
+
+define_next_bounded_int2(mt19937);
+define_next_bounded_int2(pcg64);
 
 // range [0, 1]
 double next_random_decimal()
@@ -110,30 +146,91 @@ double next_random_decimal()
     return next_random_decimal(_get_rng_pointer());
 }
 
+#define define_next_random_decimal(TGen)          \
+double next_random_decimal(TGen *gen)             \
+{                                                 \
+    return next_random_int(gen) / max_u64_double; \
+}
+
+define_next_random_decimal(mt19937);
+define_next_random_decimal(pcg64);
+
 double next_bounded_decimal(double max)
 {
     return next_bounded_decimal(_get_rng_pointer(), max);
 }
+
+#define define_next_bounded_decimal(TGen)           \
+double next_bounded_decimal(TGen *gen, double max)  \
+{                                                   \
+    return next_random_decimal(gen) * max;          \
+}
+
+define_next_bounded_decimal(mt19937);
+define_next_bounded_decimal(pcg64);
 
 double next_bounded_decimal(double min, double max)
 {
     return next_bounded_decimal(_get_rng_pointer(), min, max);
 }
 
+#define define_next_bounded_decimal2(TGen)                      \
+double next_bounded_decimal(TGen *gen, double min, double max)  \
+{                                                               \
+    assert(min <= max);                                         \
+    return next_bounded_decimal(gen, max - min) + min;          \
+}
+
+define_next_bounded_decimal2(mt19937);
+define_next_bounded_decimal2(pcg64);
+
 // DISTRIBUTIONS
-discrete_distribution get_discrete_distribution(double *weights, u64 weight_count)
+void init(discrete_distribution *dist, double *weights, u64 weight_count)
 {
-    discrete_distribution ret;
-    ret.weights = weights;
-    ret.weight_count = weight_count;
+    assert(dist != nullptr);
+
+    dist->weights = weights;
+    dist->weight_count = weight_count;
+    dist->weight_sum = 0;
 
     for (u64 i = 0; i < weight_count; ++i)
-        ret.weight_sum += weights[i];
-
-    return ret;
+        dist->weight_sum += weights[i];
 }
 
 u64 distribute(discrete_distribution dist)
 {
     return distribute(_get_rng_pointer(), dist);
 }
+
+// rand_float is within [0, dist.weight_sum]
+static inline u64 _discrete_distribute_random_float(double rand_float, discrete_distribution dist)
+{
+    double acc = 0.0;
+    u64 i;
+
+    // This could be optimized with a binary search of the calculated subtotals,
+    // but like this implementation is fine until you run into very large weight
+    // counts, at which point you'd have to wonder if discrete distribution is
+    // even worth it.
+    // Also this implementation allocates 0 (zero) memory and doesn't normalize
+    // any values.
+    for (i = 0; i < dist.weight_count; ++i)
+    {
+        acc += dist.weights[i];
+        if (rand_float <= acc)
+            return i;
+    }
+
+    return dist.weight_count - 1;
+}
+
+#define define_discrete_distribute(TGen)                                        \
+u64 distribute(TGen *gen, discrete_distribution dist)                           \
+{                                                                               \
+    double rand_within_sum = next_bounded_decimal(gen, dist.weight_sum);        \
+                                                                                \
+    return _discrete_distribute_random_float(rand_within_sum, dist); \
+}
+
+define_discrete_distribute(mt19937);
+define_discrete_distribute(pcg64);

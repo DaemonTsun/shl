@@ -291,17 +291,31 @@ define_test(discrete_distribution_distributes_numbers_by_weights)
 
     constexpr u64 weight_count = 4;
     double weights[weight_count] = {0.25, 0.5, 0.0, 0.25};
-    discrete_distribution dist = get_discrete_distribution(weights, 4);
+    discrete_distribution dist;
+	init(&dist, weights, 4);
 
-    u64 results[weight_count] = {0};
+    int results[weight_count] = {0};
 
-    for (u64 i = 0; i < BOUND_TEST_COUNT; ++i)
+    for (u64 i = 0; i < 100000; ++i)
         results[distribute(dist)] += 1;
 
     printf("\n");
 
     for (u64 i = 0; i < weight_count; ++i)
+	{
         printf("%d: %llu\n", i, results[i]);
+	}
+
+	assert_greater(results[0], 24000);
+	assert_less(results[0],    26000);
+
+	assert_greater(results[1], 49000);
+	assert_less(results[1],    51000);
+
+	assert_equal(results[2],   0);
+
+	assert_greater(results[3], 24000);
+	assert_less(results[3],    26000);
 }
 
 define_default_test_main()
