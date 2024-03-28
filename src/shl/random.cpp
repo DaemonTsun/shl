@@ -2,9 +2,51 @@
 // credit https://github.com/skeeto/scratch/blob/master/mt19937/mt19937_64.h
 
 #include "shl/assert.hpp"
+#include "shl/platform.hpp"
+#include "shl/time.hpp"
 #include "shl/random.hpp"
 
+#if Linux
+#include "shl/file_stream.hpp"
+#endif
+
+#include <math.h> // sqrt, log
+
 #define max_u64_double 18446744073709551615.0
+
+u64 generate_seed()
+{
+    // We probably could cache these resources so they're not loaded
+    // each time, or even make a "hardware_rng" generator, but
+    // most of the time you only need a hardware generator to seed
+    // pseudo RNGs instead, so for now the API can stay like this.
+
+    u64 ret = 0;
+
+#if Windows
+    // TODO: use RtlGenRandom or something
+#else
+    file_stream randstream;
+
+    if (init(&randstream, "/dev/urandom", MODE_READ))
+    {
+        bool ok = read(&randstream, &ret, sizeof(u64));
+        free(&randstream);
+
+        if (ok)
+            return ret;
+        // else: use time below
+    }
+#endif
+
+    // fallback: if platform hardware rng didn't work, maybe time will.
+    timespan t;
+    get_time(&t);
+    
+    ret = (u64)(t.seconds ^ t.nanoseconds);
+
+    return ret;
+}
 
 void init(mt19937 *gen, u64 seed)
 {
@@ -234,3 +276,37 @@ u64 distribute(TGen *gen, discrete_distribution dist)                           
 
 define_discrete_distribute(mt19937);
 define_discrete_distribute(pcg64);
+
+void init(normal_distribution *dist, double mean, double deviation)
+{
+    dist->mean = mean;
+    dist->deviation = deviation;
+}
+
+// uses thread local rng
+double distribute(normal_distribution dist)
+{
+    return distribute(_get_rng_pointer(), dist);
+}
+
+#define define_normal_distribute(TGen)                  \
+double distribute(TGen *gen, normal_distribution dist)  \
+{                                                       \
+    double u;                                           \
+    double v;                                           \
+    double s = 2.0;                                     \
+                                                        \
+    while (s >= 1 || s == 0.0)                          \
+    {                                                   \
+        u = next_bounded_decimal(gen, -1.0, 1.0);       \
+        v = next_bounded_decimal(gen, -1.0, 1.0);       \
+        s = u*u + v*v;                                  \
+    }                                                   \
+                                                        \
+    v = u * sqrt((-2 * log(s)) / s);                    \
+                                                        \
+    return dist.mean + dist.deviation * v;              \
+}
+
+define_normal_distribute(mt19937);
+define_normal_distribute(pcg64);

@@ -299,7 +299,7 @@ define_test(discrete_distribution_distributes_numbers_by_weights)
     for (u64 i = 0; i < 100000; ++i)
         results[distribute(dist)] += 1;
 
-    printf("\n");
+    printf("\ndiscrete_distribution:\n");
 
     for (u64 i = 0; i < weight_count; ++i)
 	{
@@ -316,6 +316,64 @@ define_test(discrete_distribution_distributes_numbers_by_weights)
 
 	assert_greater(results[3], 24000);
 	assert_less(results[3],    26000);
+}
+
+define_test(normal_distribution_distributes_normal)
+{
+    seed_rng(LU(0x853c49e6748fea9b));
+
+    constexpr int max_hits = 32;
+    double hits[max_hits] = {0.0};
+
+	normal_distribution dist;
+
+	// mean 10, deviation 2
+	init(&dist, 10, 2);
+
+	for (int i = 0; i < 1000000; ++i)
+    {
+        double res = distribute(dist);
+
+        if (res < 0 || res >= max_hits)
+            continue;
+
+		hits[(int)(res + 0.5)] += 1.0;
+    }
+
+    // normalize results
+    double max = 0;
+    int mosthits_index = -1;
+    
+    for (int i = 0; i < max_hits; ++i)
+    {
+        if (hits[i] > max)
+        {
+            max = hits[i];
+            mosthits_index = i;
+        }
+    }
+
+    for (int i = 0; i < max_hits; ++i)
+        hits[i] = hits[i] / max;
+
+    printf("\nnormal_distribution:\n");
+
+    for (int i = 0; i < max_hits; ++i)
+    {
+        double hit = hits[i];
+
+        if (hit == 0.0)
+            continue;
+
+        printf("% 3d: ", i);
+
+        for (int j = 0; j < (int)(hit * 10); ++j)
+            printf("*");
+
+        printf(" (%d hits)\n", (int)(hit * max));
+    }
+
+    assert_equal(mosthits_index, 10);
 }
 
 define_default_test_main()
