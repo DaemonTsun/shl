@@ -42,6 +42,7 @@ set_context_pointer(*ctx)
 */
 
 #include "shl/allocator.hpp"
+#include "shl/macros.hpp"
 #include "shl/defer.hpp"
 
 struct program_context
@@ -68,29 +69,29 @@ program_context *set_context_pointer(program_context *next);
 
 #ifndef with_context
 
-#define _with_context(NewContextPtr, Line)\
-    if constexpr (program_context *_old_ptr##Line = set_context_pointer(NewContextPtr);\
-                  defer { set_context_pointer(_old_ptr##Line); })\
+#define __with_context(NewContextPtr, Line)\
+    if constexpr (program_context *JOIN(_old_ptr, Line) = set_context_pointer(NewContextPtr); true)\
+    if constexpr (defer { set_context_pointer(JOIN(_old_ptr, Line)); }; true)
     
-#define with_context(NewContextPtr)\
-    _with_context(NewContextPtr, __LINE__)
+#define _with_context(NewContextPtr, Line) __with_context(NewContextPtr, Line)
+#define with_context(NewContextPtr) _with_context(NewContextPtr, __LINE__)
 
 #endif
     
 #ifndef with_allocator
 
-#define _with_allocator(NewAlloc, Line)\
-    if constexpr (program_context *_old_ptr##Line = get_context_pointer();\
-                    defer { set_context_pointer(_old_ptr##Line); })\
-    if constexpr (program_context _nctx##Line = program_context{\
-            .thread_id = _old_ptr##Line->thread_id,\
-            .user_data = _old_ptr##Line->user_data,\
+#define __with_allocator(NewAlloc, Line)\
+    if constexpr (program_context *JOIN(_old_ptr, Line) = get_context_pointer(); true)\
+    if constexpr (defer { set_context_pointer(JOIN(_old_ptr, Line)); }; true)\
+    if constexpr (program_context JOIN(_nctx, Line) = program_context{\
+            .thread_id = JOIN(_old_ptr, Line)->thread_id,\
+            .user_data = JOIN(_old_ptr, Line)->user_data,\
             .allocator = (NewAlloc)\
         }; true)\
-    if constexpr ([[maybe_unused]] program_context *_toss##Line = set_context_pointer(&_nctx##Line); true)
+    if constexpr ([[maybe_unused]] program_context *_toss##Line = set_context_pointer(&JOIN(_nctx, Line)); true)
 
-#define with_allocator(NewAlloc)\
-    _with_allocator(NewAlloc, __LINE__)
+#define _with_allocator(NewAlloc, Line) __with_allocator(NewAlloc, Line)
+#define with_allocator(NewAlloc) _with_allocator(NewAlloc, __LINE__)
 
 #endif
 

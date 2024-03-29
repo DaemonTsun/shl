@@ -191,7 +191,7 @@ double next_random_decimal()
 #define define_next_random_decimal(TGen)          \
 double next_random_decimal(TGen *gen)             \
 {                                                 \
-    return next_random_int(gen) / max_u64_double; \
+    return ((double)next_random_int(gen)) / max_u64_double; \
 }
 
 define_next_random_decimal(mt19937);
@@ -292,8 +292,8 @@ double distribute(normal_distribution dist)
 #define define_normal_distribute(TGen)                  \
 double distribute(TGen *gen, normal_distribution dist)  \
 {                                                       \
-    double u;                                           \
-    double v;                                           \
+    double u = 0.0;                                     \
+    double v = 0.0;                                     \
     double s = 2.0;                                     \
                                                         \
     while (s >= 1 || s == 0.0)                          \

@@ -113,7 +113,7 @@ define_test(next_bounded_int_gets_int_within_bound)
     test_int_bound(100);
     test_int_bound(256);
     test_int_bound(4096);
-    test_int_bound(1ul << 32ul);
+    test_int_bound(LU(1) << LU(32));
 }
 
 define_test(next_bounded_int_gets_int_within_bound2)
@@ -210,7 +210,7 @@ define_test(next_bounded_decimal_gets_decimal_within_bound)
         if (val > max_value_found) max_value_found = val;\
     }\
     \
-    if (Bound >= 0)\
+    if (bound >= 0)\
         printf("In range [0, %f], min & max value found: %f, %f\n", Bound, min_value_found, max_value_found);\
     else\
         printf("In range [%f, 0], min & max value found: %f, %f\n", Bound, min_value_found, max_value_found);
@@ -221,7 +221,7 @@ define_test(next_bounded_decimal_gets_decimal_within_bound)
     test_decimal_bound(100.0);
     test_decimal_bound(256.0);
     test_decimal_bound(4096.0);
-    test_decimal_bound((double)(1ul << 32ul));
+    test_decimal_bound((double)(LU(1) << LU(32)));
 
     test_decimal_bound(-1.0);
 }

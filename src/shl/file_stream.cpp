@@ -61,14 +61,14 @@ bool init(file_stream *stream, const char *path, int mode, int permissions, erro
 #if Windows
     s64 char_count = _string_len(path);
     s64 sz = (char_count + 1) * sizeof(wchar_t);
-    wchar_t *tmp = (wchar_t*)::allocate_memory(sz);
+    wchar_t *tmp = (wchar_t*)::alloc(sz);
 
     ::fill_memory((void*)tmp, 0, sz);
     ::mbstowcs(tmp, path, char_count * sizeof(char));
     
     bool ok = init(stream, tmp, mode, permissions, err);
 
-    free_memory(tmp);
+    ::dealloc(tmp);
 
     return ok;
 #else

@@ -132,7 +132,7 @@ wstring _convert_string(const char *cstring, u64 char_count)
     ret.data = ::alloc<wchar_t>(sz);
     ::fill_memory((void*)ret.data, 0, sz);
 
-    [[maybe_unused]] auto err = ::mbstowcs_s(&ret.size, ret.data, sz, cstring, _TRUNCATE);
+    [[maybe_unused]] auto err = ::mbstowcs_s((u64*)&ret.size, ret.data, sz, cstring, _TRUNCATE);
 
     assert(err == 0);
 
@@ -199,9 +199,9 @@ void _free_process_start_info_arguments(process_start_info *info)
     if (info->_free_args && info->args != nullptr)
     {
 #if Windows
-        assert(_free_args_sizes.size == 1);
-        dealloc((void*)info->args, *_free_args_sizes);
-        dealloc(_free_args_sizes, sizeof(s64));
+        assert(info->_free_args_sizes != nullptr);
+        dealloc((void*)info->args, *info->_free_args_sizes);
+        dealloc(info->_free_args_sizes, sizeof(s64));
 #else
         s64 arg_count = _get_argument_count(info->args);
         array<sys_char*> _args{.data = (sys_char**)info->args, .size = arg_count, .reserved_size = arg_count, .allocator = {}};
@@ -306,7 +306,7 @@ void set_process_arguments(process *p, const char *args)
     p->start_info.args = cmdline.data;
     p->start_info._free_args = true;
     p->start_info._free_args_sizes = alloc<s64>();
-    *p->start_info._free_args_sizes = _cmdline.reserved_size * sizeof(sys_char);
+    *p->start_info._free_args_sizes = cmdline.reserved_size * sizeof(sys_char);
 #else
     array<sys_char*> _args{};
     array<s64> _sizes{};
@@ -337,7 +337,7 @@ void set_process_arguments(process *p, const wchar_t *args)
     p->start_info.args = cmdline.data;
     p->start_info._free_args = true;
     p->start_info._free_args_sizes = alloc<s64>();
-    *p->start_info._free_args_sizes = _cmdline.reserved_size * sizeof(sys_char);
+    *p->start_info._free_args_sizes = cmdline.reserved_size * sizeof(sys_char);
 #else
     sys_string sargs = _convert_string(args, string_length(args));
     array<sys_char*> _args{};
@@ -351,7 +351,7 @@ void set_process_arguments(process *p, const wchar_t *args)
 #endif
 }
 
-void set_process_arguments(process *p, const char **args, bool raw)
+void set_process_arguments(process *p, const char **args, [[maybe_unused]] bool raw)
 {
     assert(p != nullptr);
 
@@ -369,6 +369,8 @@ void set_process_arguments(process *p, const char **args, bool raw)
     sys_string cmdline = _convert_string(_cmdline.data, _cmdline.size);
     p->start_info.args = cmdline.data;
     p->start_info._free_args = true;
+    p->start_info._free_args_sizes = alloc<s64>();
+    *p->start_info._free_args_sizes = cmdline.reserved_size * sizeof(sys_char);
 
     free(&_cmdline);
 #else
@@ -436,6 +438,8 @@ void set_process_arguments(process *p, const wchar_t **args)
     _args_to_cmdline(args, &cmdline);
     p->start_info.args = cmdline.data;
     p->start_info._free_args = true;
+    p->start_info._free_args_sizes = alloc<s64>();
+    *p->start_info._free_args_sizes = cmdline.reserved_size * sizeof(sys_char);
 #else
     array<sys_char*> _args{};
     u64 arg_count = _get_argument_count(args);

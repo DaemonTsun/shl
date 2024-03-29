@@ -49,9 +49,9 @@ const allocator default_allocator{.alloc = default_alloc, .data = nullptr};
     static_assert(false && "allocator_dealloc_T takes at least 3 arguments: allocator, pointer, type [, count]");
 
 #define _allocator_dealloc_T(A, Ptr, Type)\
-    (reinterpret_cast<typeof(Ptr)>(allocator_dealloc((A), (Ptr), sizeof(Type))))
+    (reinterpret_cast<decltype(Ptr)>(allocator_dealloc((A), (Ptr), sizeof(Type))))
 
 #define _allocator_dealloc_TCount(A, Ptr, Type, Count)\
-    (reinterpret_cast<typeof(Ptr)>(allocator_dealloc((A), (Ptr), sizeof(Type) * (Count))))
+    (reinterpret_cast<decltype(Ptr)>(allocator_dealloc((A), (Ptr), sizeof(Type) * (Count))))
 
 #define allocator_dealloc_T(...) GET_MACRO3(__VA_ARGS__, _allocator_dealloc_TCount, _allocator_dealloc_T, _allocator_dealloc_TNotEnoughArgs)(__VA_ARGS__)

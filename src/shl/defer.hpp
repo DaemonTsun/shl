@@ -29,8 +29,9 @@ template <class F> struct _deferrer
         f();
     }
 
-    // so that defer can be used in "if constexpr" on either side
-    constexpr operator bool() { return true; }
+    // so that defer can be used in "if constexpr" on either side.
+    // UPDATE: MSVC doesn't support this. I'm not surprised.
+    // constexpr operator bool() { return true; }
 };
 #if defined(_WIN32) || defined(_WIN64)
 #pragma warning(pop) 

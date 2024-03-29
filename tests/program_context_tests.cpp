@@ -39,6 +39,8 @@ define_test(with_context_changes_context_for_block)
 
     // x should be deallocated since it used the generic global allocator
     dealloc(x);
+
+    get_context_pointer();
 }
 
 define_test(with_allocator_changes_allocator_for_block)

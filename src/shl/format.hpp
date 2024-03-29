@@ -307,8 +307,8 @@ s64 _format(s64 i, s64 written, C *s, s64 ssize, s64 offset, const_string_base<C
                 return -1;
         }
 #define case_int_base(Lower, Upper, Base)\
-        case Lower:\
-        case Upper:\
+        case Lower: [[fallthrough]];\
+        case Upper: \
         {\
             integer_format_options iopt = default_integer_options;\
             iopt.base = Base;\
@@ -329,7 +329,7 @@ s64 _format(s64 i, s64 written, C *s, s64 ssize, s64 offset, const_string_base<C
         case_int_base('o', 'O', 8);
         case_int_base('x', 'X', 16);
 #undef case_int_base
-        case 'c':
+        case 'c': 
         case 's':
         case 'd':
         case 'u':
