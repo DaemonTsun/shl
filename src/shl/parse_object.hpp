@@ -41,14 +41,12 @@ to check whether an object holds a given type, use the .has_value method.
 #include "shl/format.hpp"
 #include "shl/parse.hpp"
 
-template<typename C = char>
 struct parsed_identifier
 {
-    string_base<C> value;
+    const_string value;
 };
 
-bool operator==(const parsed_identifier<char> &lhs, const parsed_identifier<char> &rhs);
-bool operator==(const parsed_identifier<wchar_t> &lhs, const parsed_identifier<wchar_t> &rhs);
+bool operator==(const parsed_identifier &lhs, const parsed_identifier &rhs);
 
 enum class parsed_object_type : u8
 {
@@ -62,16 +60,15 @@ enum class parsed_object_type : u8
     Table
 };
 
-template<typename C = char>
-struct parsed_object_base
+struct parsed_object
 {
     typedef bool bool_type;
     typedef s64 integer_type;
     typedef double decimal_type;
-    typedef string_base<C> string_type;
-    typedef parsed_identifier<C> identifier_type;
-    typedef linked_list<parsed_object_base<C>> list_type;
-    typedef hash_table<string_type, parsed_object_base<C>> table_type;
+    typedef const_string string_type;
+    typedef parsed_identifier identifier_type;
+    typedef linked_list<parsed_object> list_type;
+    typedef hash_table<string_type, parsed_object> table_type;
 
     parsed_object_type type;
 
@@ -86,47 +83,37 @@ struct parsed_object_base
         table_type      _table;
     } data;
 
-    parsed_object_base<C> &operator[](s64 n) 
-    { return data._list[n]; }
+    parsed_object &operator[](s64 n) { return data._list[n]; }
 
-    const parsed_object_base<C> &operator[](s64 n) const
-    { return data._list[n]; }
-
-    parsed_object_base<C> &operator[](const C *i) { return this->operator[](to_const_string(i)); }
-    parsed_object_base<C> &operator[](const_string i) { return *search_by_hash(&data._table, hash(&i)); }
-    parsed_object_base<C> &operator[](const string_type &i) { return data._table[i]; }
-    parsed_object_base<C> &operator[](const string_type *i) { return data._table[i]; }
-
-    const parsed_object_base<C> &operator[](const C *i) const { return this->operator[](to_const_string(i)); }
-    const parsed_object_base<C> &operator[](const_string i) const { return *search_by_hash(&data._table, hash(&i)); }
-    const parsed_object_base<C> &operator[](const string_type &i) const { return *search(&data._table, &i); }
-    const parsed_object_base<C> &operator[](const string_type *i) const { return *search(&data._table, i); }
+    parsed_object &operator[](const char *i) { return this->operator[](to_const_string(i)); }
+    parsed_object &operator[](string_type i) { return *search_by_hash(&data._table, hash(&i)); }
 };
 
-bool operator==(parsed_object_base<char> &lhs, parsed_object_base<char> &rhs);
-bool operator==(parsed_object_base<wchar_t> &lhs, parsed_object_base<wchar_t> &rhs);
+bool operator==(parsed_object &lhs, parsed_object &rhs);
+bool operator==(parsed_object &lhs, parsed_object &rhs);
 
-typedef parsed_object_base<char> parsed_object;
-typedef typename parsed_object_base<char>::list_type object_list;
-typedef typename parsed_object_base<char>::table_type object_table;
+typedef typename parsed_object::list_type  object_list;
+typedef typename parsed_object::table_type object_table;
 
 void init(parsed_object  *obj);
 void free(parsed_object  *obj);
 
 bool parse_number_object(parser  *p, parsed_object  *obj, parse_error *err = nullptr);
-bool parse_number_object(const_string   input, parsed_object  *obj, parse_error *err = nullptr);
-bool parse_number_object(const string  *input, parsed_object  *obj, parse_error *err = nullptr);
+bool parse_number_object(const_string  input, parsed_object *obj, parse_error *err = nullptr);
+bool parse_number_object(const string *input, parsed_object *obj, parse_error *err = nullptr);
 
 bool parse_object_list(parser  *p, object_list  *out, parse_error *err = nullptr);
-bool parse_object_list(const_string   input, object_list  *obj, parse_error *err = nullptr);
-bool parse_object_list(const string  *input, object_list  *obj, parse_error *err = nullptr);
+bool parse_object_list(const_string  input, object_list *obj, parse_error *err = nullptr);
+bool parse_object_list(const string *input, object_list *obj, parse_error *err = nullptr);
 
 bool parse_object_table(parser  *p, object_table  *out, parse_error *err = nullptr);
-bool parse_object_table(const_string   input, object_table  *obj, parse_error *err = nullptr);
-bool parse_object_table(const string  *input, object_table  *obj, parse_error *err = nullptr);
+bool parse_object_table(const_string  input, object_table *obj, parse_error *err = nullptr);
+bool parse_object_table(const string *input, object_table *obj, parse_error *err = nullptr);
 
 bool parse_object(parser  *p, parsed_object  *out, parse_error *err = nullptr);
+bool parse_object(const_string  input, parsed_object *obj, parse_error *err = nullptr);
+bool parse_object(const string *input, parsed_object *obj, parse_error *err = nullptr);
 
-s64 to_string(string  *s, const parsed_object  *x);
-s64 to_string(string  *s, const parsed_object  *x, s64 offset);
-s64 to_string(string  *s, const parsed_object  *x, s64 offset, format_options<char> opt);
+s64 to_string(string *s, const parsed_object *x);
+s64 to_string(string *s, const parsed_object *x, s64 offset);
+s64 to_string(string *s, const parsed_object *x, s64 offset, format_options<char> opt);

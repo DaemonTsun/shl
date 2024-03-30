@@ -2,12 +2,18 @@
 #include "shl/string.hpp"
 #include "shl/parse_object.hpp"
 
-template<typename C>
-void init_slice(string_base<C> *out, const C *input, const parse_range *range)
+void init_slice(const_string *out, const char *input, const parse_range *range)
 {
     s64 len = range_length(range);
-    init(out, len);
-    copy_string(const_string_base<C>{input + range->start.pos, len}, out, len);
+    char *buf = alloc<char>(len);
+    out->c_str = buf;
+    out->size = len;
+    copy_string(input + range->start.pos, buf, len);
+}
+
+static void free(const_string *str)
+{
+    dealloc((char*)str->c_str, str->size);
 }
 
 #define PARSE_STRING_DELIM '"'
@@ -22,47 +28,32 @@ void init_slice(string_base<C> *out, const C *input, const parse_range *range)
 #define PARSE_TABLE_OPENING_BRACKET PARSE_TABLE_BRACKETS[0]
 #define PARSE_TABLE_CLOSING_BRACKET PARSE_TABLE_BRACKETS[1]
 
-bool operator==(const parsed_identifier<char> &lhs, const parsed_identifier<char> &rhs)
+bool operator==(const parsed_identifier &lhs, const parsed_identifier &rhs)
 {
     return lhs.value == rhs.value;
 }
 
-template<typename C>
-bool _equals(parsed_object_base<C> &lhs, parsed_object_base<C> &rhs)
+bool operator==(parsed_object &lhs, parsed_object &rhs)
 {
     if (lhs.type != rhs.type)
         return false;
 
     switch (lhs.type)
     {
-    case parsed_object_type::None:
-        return true;
-    case parsed_object_type::Bool:
-        return lhs.data._bool == rhs.data._bool;
-    case parsed_object_type::Integer:
-        return lhs.data._integer == rhs.data._integer;
-    case parsed_object_type::Decimal:
-        return lhs.data._decimal == rhs.data._decimal;
-    case parsed_object_type::String:
-        return lhs.data._string == rhs.data._string;
-    case parsed_object_type::Identifier:
-        return lhs.data._identifier.value == rhs.data._identifier.value;
-    case parsed_object_type::List:
-        return lhs.data._list == rhs.data._list;
-    case parsed_object_type::Table:
-        return lhs.data._table == rhs.data._table;
+    case parsed_object_type::None:       return true;
+    case parsed_object_type::Bool:       return lhs.data._bool == rhs.data._bool;
+    case parsed_object_type::Integer:    return lhs.data._integer == rhs.data._integer;
+    case parsed_object_type::Decimal:    return lhs.data._decimal == rhs.data._decimal;
+    case parsed_object_type::String:     return lhs.data._string == rhs.data._string;
+    case parsed_object_type::Identifier: return lhs.data._identifier.value == rhs.data._identifier.value;
+    case parsed_object_type::List:       return lhs.data._list == rhs.data._list;
+    case parsed_object_type::Table:      return lhs.data._table == rhs.data._table;
     }
 
     return false;
 }
 
-bool operator==(parsed_object_base<char> &lhs, parsed_object_base<char> &rhs)
-{
-    return _equals(lhs, rhs);
-}
-
-template<typename C>
-bool _parse_number_object(parser_base<C> *p, parsed_object_base<C> *obj, parse_error *err)
+bool parse_number_object(parser *p, parsed_object *obj, parse_error *err)
 {
     if (!is_ok(p))
     {
@@ -72,13 +63,13 @@ bool _parse_number_object(parser_base<C> *p, parsed_object_base<C> *obj, parse_e
 
     bool int_success = false;
     bool dec_success = false;
-    parser_base<C> int_p = *p;
-    parser_base<C> dec_p = *p;
+    parser int_p = *p;
+    parser dec_p = *p;
     parse_error int_err;
     parse_error dec_err;
 
-    typename parsed_object_base<C>::integer_type integer;
-    typename parsed_object_base<C>::decimal_type decimal;
+    typename parsed_object::integer_type integer;
+    typename parsed_object::decimal_type decimal;
 
     int_success = parse_integer(&int_p, &integer, &int_err);
     dec_success = parse_decimal(&dec_p, &decimal, &dec_err);
@@ -133,11 +124,6 @@ bool _parse_number_object(parser_base<C> *p, parsed_object_base<C> *obj, parse_e
     return true;
 }
 
-bool parse_number_object(parser *p, parsed_object_base<char> *obj, parse_error *err)
-{
-    return _parse_number_object(p, obj, err);
-}
-
 bool parse_number_object(const_string   input, parsed_object  *obj, parse_error *err)
 {
     parser p;
@@ -150,8 +136,7 @@ bool parse_number_object(const string  *input, parsed_object  *obj, parse_error 
     return parse_number_object(to_const_string(input), obj, err);
 }
 
-template<typename C>
-bool _parse_object_list(parser_base<C> *p, typename parsed_object_base<C>::list_type *out, parse_error *err)
+bool parse_object_list(parser *p, object_list *out, parse_error *err)
 {
     init(out);
 
@@ -163,7 +148,7 @@ bool _parse_object_list(parser_base<C> *p, typename parsed_object_base<C>::list_
 
     parse_iterator start = p->it;
 
-    C c = parser_current_char(p);
+    char c = parser_current_char(p);
 
     if (c != PARSE_LIST_OPENING_BRACKET)
     {
@@ -190,7 +175,7 @@ bool _parse_object_list(parser_base<C> *p, typename parsed_object_base<C>::list_
         return true;
     }
 
-    parsed_object_base<C> obj;
+    parsed_object obj;
 
     if (!parse_object(p, &obj, err))
     {
@@ -256,11 +241,6 @@ bool _parse_object_list(parser_base<C> *p, typename parsed_object_base<C>::list_
     return true;
 }
 
-bool parse_object_list(parser *p, object_list *out, parse_error *err)
-{
-    return _parse_object_list(p, out, err);
-}
-
 bool parse_object_list(const_string   input, object_list  *obj, parse_error *err)
 {
     parser p;
@@ -273,8 +253,7 @@ bool parse_object_list(const string  *input, object_list  *obj, parse_error *err
     return parse_object_list(to_const_string(input), obj, err);
 }
 
-template<typename C>
-bool _parse_object_table(parser_base<C> *p, typename parsed_object_base<C>::table_type *out, parse_error *err)
+bool parse_object_table(parser *p, object_table *out, parse_error *err)
 {
     init(out);
 
@@ -286,7 +265,7 @@ bool _parse_object_table(parser_base<C> *p, typename parsed_object_base<C>::tabl
 
     parse_iterator start = p->it;
 
-    C c = parser_current_char(p);
+    char c = parser_current_char(p);
 
     if (c != PARSE_TABLE_OPENING_BRACKET)
     {
@@ -312,7 +291,7 @@ bool _parse_object_table(parser_base<C> *p, typename parsed_object_base<C>::tabl
         return true;
     }
 
-    typename parsed_object_base<C>::identifier_type ident;
+    typename parsed_object::identifier_type ident;
     parse_range rn;
     
     if (!parse_identifier(p, &rn, err))
@@ -343,7 +322,7 @@ bool _parse_object_table(parser_base<C> *p, typename parsed_object_base<C>::tabl
 
     advance(&p->it);
 
-    parsed_object_base<C> obj;
+    parsed_object obj;
 
     if (!parse_object(p, &obj, err))
     {
@@ -353,7 +332,7 @@ bool _parse_object_table(parser_base<C> *p, typename parsed_object_base<C>::tabl
 
     if (contains(out, &ident.value))
     {
-        format_parse_error(err, p, "duplicate key '%s' at " IT_FMT ", in table at " IT_FMT, ident.value.data, format_it(p->it), format_it(start));
+        format_parse_error(err, p, "duplicate key '%s' at " IT_FMT ", in table at " IT_FMT, ident.value.c_str, format_it(p->it), format_it(start));
         p->it = start;
         return false;
     }
@@ -419,7 +398,7 @@ bool _parse_object_table(parser_base<C> *p, typename parsed_object_base<C>::tabl
 
         if (contains(out, &ident.value))
         {
-            format_parse_error(err, p, "duplicate key '%s' at " IT_FMT ", in table at " IT_FMT, ident.value.data, format_it(p->it), format_it(start));
+            format_parse_error(err, p, "duplicate key '%s' at " IT_FMT ", in table at " IT_FMT, ident.value.c_str, format_it(p->it), format_it(start));
             p->it = start;
             return false;
         }
@@ -449,11 +428,6 @@ bool _parse_object_table(parser_base<C> *p, typename parsed_object_base<C>::tabl
     return true;
 }
 
-bool parse_object_table(parser *p, object_table *out, parse_error *err)
-{
-    return _parse_object_table(p, out, err);
-}
-
 bool parse_object_table(const_string   input, object_table  *obj, parse_error *err)
 {
     parser p;
@@ -466,8 +440,7 @@ bool parse_object_table(const string  *input, object_table  *obj, parse_error *e
     return parse_object_table(to_const_string(input), obj, err);
 }
 
-template<typename C>
-bool _parse_object(parser_base<C> *p, parsed_object_base<C> *out, parse_error *err)
+bool parse_object(parser *p, parsed_object *out, parse_error *err)
 {
     if (!is_ok(p))
     {
@@ -487,9 +460,9 @@ bool _parse_object(parser_base<C> *p, parsed_object_base<C> *out, parse_error *e
         return false;
     }
 
-    C c = parser_current_char(p);
+    char c = parser_current_char(p);
 
-    parsed_object_base<C> ret;
+    parsed_object ret;
 
     if (c == PARSE_STRING_DELIM)
     {
@@ -540,19 +513,19 @@ bool _parse_object(parser_base<C> *p, parsed_object_base<C> *out, parse_error *e
     else
     {
         // either identifier, boolean or number
-        parser_base<C> bool_p = *p;
+        parser bool_p = *p;
         parse_range bool_rn;
         parse_error bool_err;
         bool bool_success = parse_bool(&bool_p, &bool_rn, &bool_err);
         
-        parser_base<C> id_p = *p;
+        parser id_p = *p;
         parse_range id_rn;
         parse_error id_err;
         bool id_success = parse_identifier(&id_p, &id_rn, &id_err);
 
-        parser_base<C> num_p = *p;
+        parser num_p = *p;
         parse_error num_err;
-        parsed_object_base<C> num_obj;
+        parsed_object num_obj;
         bool num_success = parse_number_object(&num_p, &num_obj, &num_err);
 
         if (bool_success)
@@ -612,13 +585,13 @@ bool _parse_object(parser_base<C> *p, parsed_object_base<C> *out, parse_error *e
                 else if (num_err.it.pos >= id_err.it.pos)
                 {
                     out->type = parsed_object_type::None;
-                 *err = num_err;
+                    *err = num_err;
                     return false;
                 }
                 else
                 {
                     out->type = parsed_object_type::None;
-                 *err = id_err;
+                    *err = id_err;
                     return false;
                 }
             }
@@ -629,11 +602,6 @@ bool _parse_object(parser_base<C> *p, parsed_object_base<C> *out, parse_error *e
     out->data = ret.data;
 
     return true;
-}
-
-bool parse_object(parser *p, parsed_object_base<char> *out, parse_error *err)
-{
-    return _parse_object(p, out, err);
 }
 
 bool parse_object(const_string   input, parsed_object  *obj, parse_error *err)
@@ -648,8 +616,7 @@ bool parse_object(const string  *input, parsed_object  *obj, parse_error *err)
     return parse_object(to_const_string(input), obj, err);
 }
 
-template<typename C>
-void _free(parsed_object_base<C> *obj)
+void free(parsed_object  *obj)
 {
     assert(obj != nullptr);
 
@@ -676,13 +643,7 @@ void _free(parsed_object_base<C> *obj)
     }
 }
 
-void free(parsed_object  *obj)
-{
-    _free(obj);
-}
-
-template<typename C>
-s64 _parsed_object_to_string(string_base<C> *s, const parsed_object_base<C> *x, s64 offset, format_options<C> opt)
+static s64 _parsed_object_to_string(string *s, const parsed_object *x, s64 offset, format_options<char> opt)
 {
     s64 written = 0;
 
@@ -704,13 +665,13 @@ s64 _parsed_object_to_string(string_base<C> *s, const parsed_object_base<C> *x, 
 
     case parsed_object_type::String:
     {
-        s64 len = string_length(&x->data._string);
+        s64 len = string_length(x->data._string);
         string_reserve(s, offset + 2 + len);
 
         s->data[offset] = PARSE_STRING_DELIM;
         written++;
 
-        copy_string(&x->data._string, s, len, written + offset);
+        copy_string(x->data._string, s, len, written + offset);
         written += len;
 
         s->data[offset + written] = PARSE_STRING_DELIM;
@@ -720,10 +681,10 @@ s64 _parsed_object_to_string(string_base<C> *s, const parsed_object_base<C> *x, 
 
     case parsed_object_type::Identifier:
     {
-        s64 len = string_length(&x->data._string);
+        s64 len = string_length(x->data._string);
         string_reserve(s, offset + len);
 
-        copy_string(&x->data._string, s, len, written + offset);
+        copy_string(x->data._string, s, len, written + offset);
         written += len;
         break;
     }
