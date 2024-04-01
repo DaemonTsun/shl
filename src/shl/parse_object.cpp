@@ -750,7 +750,7 @@ static s64 _parsed_object_to_string(string *s, const parsed_object *x, s64 offse
 
             if (node->hash >= FIRST_HASH)
             {
-                written += to_string(s, &node->key, offset + written);
+                written += to_string(s, node->key, offset + written);
                 string_reserve(s, offset + written + 3);
 
                 s->data[offset + written] = ' ';
@@ -781,7 +781,7 @@ static s64 _parsed_object_to_string(string *s, const parsed_object *x, s64 offse
                     s->data[offset + written] = ' ';
                     written++;
 
-                    written += to_string(s, &node->key, offset + written);
+                    written += to_string(s, node->key, offset + written);
                     string_reserve(s, offset + written + 3);
 
                     s->data[offset + written] = ' ';

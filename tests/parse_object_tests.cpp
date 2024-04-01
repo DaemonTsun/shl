@@ -9,7 +9,6 @@
     parser p;\
     init(&p, STR, STR == nullptr ? 0 : string_length(static_cast<const char*>(STR)));
 
-/*
 define_test(parse_object_parses_bool)
 {
     SETUP("true");
@@ -75,9 +74,7 @@ define_test(parse_object_parses_string)
 
 define_test(parse_object_parses_number_over_identifier)
 {
-*/
-//    SETUP(" /* comment */  deadbeef");
-/*
+    SETUP(" /* comment */  deadbeef");
 
     parsed_object obj;
     parse_error err;
@@ -132,9 +129,7 @@ define_test(parse_object_parses_object_list)
 
 define_test(parse_object_parses_object_list2)
 {
-*/
-//    SETUP("  [  4, 5,6 /*123*/ ] a");
-/*
+    SETUP("  [  4, 5,6 /*123*/ ] a");
 
     parsed_object obj;
     parse_error err;
@@ -433,7 +428,6 @@ define_test(parsed_object_equality_test)
     free(&obj1);
     free(&obj2);
 }
-*/
 
 define_test(parsed_object_equality_test2)
 {
@@ -458,9 +452,10 @@ define_test(parsed_object_equality_test2)
     parsed_object obj2{};
 
     parse_object(&p, &obj1, nullptr);
-    /*
     init(&p.it);
     parse_object(&p, &obj2, nullptr);
+
+    assert_equal(obj1, obj2);
 
     string objstr;
     init(&objstr);
@@ -474,12 +469,11 @@ define_test(parsed_object_equality_test2)
     parse_object(&p, &obj2, nullptr);
 
     assert_equal(obj1, obj2);
-    */
 
     free(&obj1);
     free(&obj2);
 
-    // free(&objstr);
+    free(&objstr);
 }
 
 define_default_test_main();
