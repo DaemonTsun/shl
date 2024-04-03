@@ -11,15 +11,23 @@ the option to continue execution afterwards.
 
 #ifndef NDEBUG
 
+#include "shl/architecture.hpp"
+
 #if __GNUC__
-// TODO: do other architectures
-#define breakpoint() asm ("int3; nop")
-#elif _MSC_VER
-#define breakpoint() __debugbreak()
+
+#  if Architecture == ARCH_x86_64
+#    define breakpoint() asm ("int3; nop")
+#  elif Architecture == ARCH_aarch64
+#    define breakpoint() asm ("trap")
+#  endif
+
+#elif _MSC_VER // Compiler check
+#  define breakpoint() __debugbreak()
 #endif
 
 #else
 
-#define breakpoint() ((void)0)
+#  define breakpoint() ((void)0)
 
 #endif // ifndef NDEBUG
+       // e1b4b8b

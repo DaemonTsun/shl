@@ -4,12 +4,12 @@ if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ext/better-cmake/cmake/betterConfig.
 endif()
 find_package(better REQUIRED PATHS ext/better-cmake/cmake)
 
-project(shl)
+project(shl CXX ASM)
 project_author("DaemonTsun")
 
 # library
 add_lib(shl STATIC
-    VERSION 0.9.2
+    VERSION 0.9.3
     SOURCES_DIR "${ROOT}/src/"
     GENERATE_TARGET_HEADER "${ROOT}/src/shl/shl_info.hpp"
     CPP_VERSION 20
@@ -19,6 +19,8 @@ add_lib(shl STATIC
         @Windows mincore.lib # for VirtualAlloc2 in ring_buffer.cpp
     TESTS "${ROOT}/tests"
     )
+
+include(cmake/ASM.cmake)
 
 exit_if_included()
 
