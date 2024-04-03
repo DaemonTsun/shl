@@ -6,7 +6,7 @@
 struct timespan
 {
     s64 seconds;
-    s64 nanoseconds;
+    s64 nanoseconds; // might also be microseconds
 };
 
 void get_time(timespan *t);

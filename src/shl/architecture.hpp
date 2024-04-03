@@ -3,10 +3,12 @@
 
 CPU Architecture header.
 
-Defines the Architecture preprocessor constant to hold the architecture of the system.
+Defines the 'Architecture' preprocessor constant to hold the architecture of the system.
 Individual architecture values may be accessed with the ARCH_xxx preprocessor constants,
 where "xxx" is the value returned by "uname -m" on modern Linux systems, for instance
 on a 64 bit Intel / AMD CPU, Architecture == ARCH_x86_64 will evaulate to true.
+
+Also sets the 'Wordsize' preprocessor constant to the platform wordsize.
 */
 
 #pragma once
@@ -31,4 +33,10 @@ on a 64 bit Intel / AMD CPU, Architecture == ARCH_x86_64 will evaulate to true.
 */
 #else
 #define Architecture 0
+#endif
+
+#if !defined __ILP32__ && (Architecture == ARCH_x86_64 || Architecture == ARCH_aarch64)
+#define Wordsize 64
+#else
+#define Wordsize 32
 #endif

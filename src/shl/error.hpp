@@ -60,6 +60,14 @@ const char *_windows_error_message(int errcode);
 #define set_GetLastError_error(Err) \
     do { if ((Err) != nullptr) { int _errcode = (int)GetLastError(); *(Err) = ::error{.error_code = _errcode, .what = _windows_error_message(_errcode), .file = __FILE__, .line = __LINE__}; } } while (0)
 
+#  if Windows
+#define set_error_by_code(Err, Code) \
+    do { if ((Err) != nullptr) { int _errcode = (int)(Code); *(Err) = ::error{.error_code = _errcode, .what = _windows_error_message(_errcode), .file = __FILE__, .line = __LINE__}; } } while (0)
+#  else // Linux
+#define set_error_by_code(Err, Code) \
+    do { if ((Err) != nullptr) { int _errcode = (int)(Code); *(Err) = ::error{.error_code = _errcode, .what = ::_errno_error_message(_errcode), .file = __FILE__, .line = __LINE__}; } } while (0)
+#  endif
+
 #else
 // release
 #define set_error(Err, Code, Msg) \
@@ -70,6 +78,14 @@ const char *_windows_error_message(int errcode);
 
 #define set_GetLastError_error(Err) \
     do { if ((Err) != nullptr) { int _errcode = (int)GetLastError(); *(Err) = ::error{.error_code = _errcode, .what = _windows_error_message(_errcode) }; } } while (0)
+
+#  if Windows
+#define set_GetLastError_error(Err, Code) \
+    do { if ((Err) != nullptr) { int _errcode = (int)(Code); *(Err) = ::error{.error_code = _errcode, .what = _windows_error_message(_errcode) }; } } while (0)
+#  else // Linux
+#define set_error_by_code(Err, Code) \
+    do { if ((Err) != nullptr) { int _errcode = (int)(Code); *(Err) = ::error{.error_code = _errcode, .what = ::_errno_error_message(_errcode) }; } } while (0)
+#  endif
 
 #endif
 

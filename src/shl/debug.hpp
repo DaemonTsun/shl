@@ -18,7 +18,7 @@ the option to continue execution afterwards.
 #  if Architecture == ARCH_x86_64
 #    define breakpoint() asm ("int3; nop")
 #  elif Architecture == ARCH_aarch64
-#    define breakpoint() asm ("trap")
+#    define breakpoint() asm ("brk #0x01")
 #  endif
 
 #elif _MSC_VER // Compiler check
@@ -30,4 +30,3 @@ the option to continue execution afterwards.
 #  define breakpoint() ((void)0)
 
 #endif // ifndef NDEBUG
-       // e1b4b8b

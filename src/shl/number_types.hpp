@@ -28,15 +28,14 @@ e.g.
     if constexpr (123 < max_value(u8)) { ... }
 works fine.
 
+Also mostly just used in syscalls, this header defines the 'sys_int' and 'sys_uint'
+types which are of the size of the architecture, expected in syscalls.
+
 */
 
-#if (defined(__x86_64__) || defined(_M_X64)) && !defined __ILP32__
-#define WORDSIZE 64
-#else
-#define WORDSIZE 32
-#endif
+#include "shl/architecture.hpp"
 
-#if WORDSIZE == 64 && !defined(_MSC_VER)
+#if Wordsize == 64 && !defined(_MSC_VER)
 #define S64_LIT(c) c ## L
 #define U64_LIT(c) c ## UL
 #else
@@ -45,25 +44,27 @@ works fine.
 #endif
 
 #if defined(_MSC_VER)
-#if (_MSC_VER >= 1300)
+#  if (_MSC_VER >= 1300)
 typedef unsigned __int8     u8;
 typedef unsigned __int16    u16;
 typedef unsigned __int32    u32;
 typedef   signed __int8     s8;
 typedef   signed __int16    s16;
 typedef   signed __int32    s32;
-#else // old MSVC
+#  else // old MSVC
 typedef unsigned char       u8;
 typedef unsigned short      u16;
 typedef unsigned int        u32;
 typedef   signed char       s8;
 typedef   signed short      s16;
 typedef   signed int        s32;
-#endif
+#  endif
 
 typedef unsigned __int64    u64;
 typedef   signed __int64    s64;
 #else // not MSVC
+
+// Linux
 typedef unsigned char       u8;
 typedef unsigned short      u16;
 typedef unsigned int        u32;
@@ -71,13 +72,22 @@ typedef   signed char       s8;
 typedef   signed short      s16;
 typedef   signed int        s32;
 
-#if WORDSIZE == 64
+#  if Wordsize == 64
 typedef unsigned long int   u64;
 typedef   signed long int   s64;
-#else
+#  else
 typedef unsigned long long int u64;
 typedef   signed long long int s64;
+#  endif
 #endif
+
+// sysint
+#if Wordsize == 64
+typedef s64 sys_int;
+typedef u64 sys_uint;
+#else
+typedef s32 sys_int;
+typedef u32 sys_uint;
 #endif
 
 // max & min values

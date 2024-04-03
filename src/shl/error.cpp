@@ -49,6 +49,7 @@ void _error_buffer_cleanup()
 
 const char *_errno_error_message(int error_code)
 {
+    // TODO: get rid of this
     return strerror(error_code);
 }
 

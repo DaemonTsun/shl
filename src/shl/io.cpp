@@ -2,12 +2,11 @@
 #include "shl/io.hpp"
 
 #if Linux
-#include <unistd.h>
-#include <errno.h>
-#include <sys/select.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h> // ioctl
-#include <fcntl.h>
+#include <fcntl.h> // AT_EMPTY_PATH
+#include "shl/impl/linux/syscalls.hpp"
+#include "shl/impl/linux/statx.hpp"
+#include "shl/impl/linux/select.hpp"
+#include "shl/time.hpp" // timespan
 #endif
 
 io_handle stdin_handle()
@@ -15,7 +14,7 @@ io_handle stdin_handle()
 #if Windows
     return GetStdHandle(STD_INPUT_HANDLE);
 #else
-    return STDIN_FILENO;
+    return 0; // STDIN_FILENO;
 #endif
 }
 
@@ -24,7 +23,7 @@ io_handle stdout_handle()
 #if Windows
     return GetStdHandle(STD_OUTPUT_HANDLE);
 #else
-    return STDOUT_FILENO;
+    return 1; // STDOUT_FILENO;
 #endif
 }
 
@@ -33,7 +32,7 @@ io_handle stderr_handle()
 #if Windows
     return GetStdHandle(STD_ERROR_HANDLE);
 #else
-    return STDERR_FILENO;
+    return 2; // STDERR_FILENO;
 #endif
 }
 
@@ -67,11 +66,14 @@ s64 io_read(io_handle h, char *buf, u64 size, error *err)
         return -1;
     }
 #else
-    ret = read(h, buf, size);
+    ret = (sys_int)linux_syscall3(SYS_read,
+                                  (void*)(sys_int)h,
+                                  (void*)buf,
+                                  (void*)size);
 
-    if (ret == -1)
+    if (ret < 0)
     {
-        set_errno_error(err);
+        set_error_by_code(err, -ret);
         return -1;
     }
 #endif
@@ -90,11 +92,14 @@ s64 io_write(io_handle h, const char *buf, u64 size, error *err)
         return -1;
     }
 #else
-    ret = write(h, buf, size);
+    ret = (sys_int)linux_syscall3(SYS_write,
+                                  (void*)(sys_int)h,
+                                  (void*)buf,
+                                  (void*)size);
 
-    if (ret == -1)
+    if (ret < 0)
     {
-        set_errno_error(err);
+        set_error_by_code(err, -ret);
         return -1;
     }
 #endif
@@ -117,11 +122,14 @@ s64 io_seek(io_handle h, s64 offset, int whence, error *err)
     }
 
 #else
-    ret = lseek(h, offset, whence);
+    ret = (sys_int)linux_syscall3(SYS_lseek,
+                                  (void*)(sys_int)h,
+                                  (void*)offset,
+                                  (void*)(sys_int)whence);
 
-    if (ret == -1)
+    if (ret < 0)
     {
-        set_errno_error(err);
+        set_error_by_code(err, -ret);
         return -1;
     }
 #endif
@@ -135,19 +143,19 @@ s64 io_tell(io_handle h, error *err)
 }
 
 #if Linux
-void _set_timeval(u32 ms, struct timeval *t)
+static void _set_timeval(u32 ms, timespan *t)
 {
-    u64 usec = (u64)ms * 1000;
+    s64 usec = (s64)ms * 1000;
 
     if (usec > 1000000)
     {
-        t->tv_sec  = usec / 1000000;
-        t->tv_usec = usec % 1000000;
+        t->seconds  = usec / 1000000;
+        t->nanoseconds = usec % 1000000;
     }
     else
     {
-        t->tv_sec = 0;
-        t->tv_usec = usec;
+        t->seconds = 0;
+        t->nanoseconds = usec;
     }
 }
 #endif
@@ -165,22 +173,21 @@ bool io_poll_read(io_handle h, u32 timeout_ms, error *err)
 
     return ret > 0;
 #else
-    struct timeval t;
+    timespan t;
     _set_timeval(timeout_ms, &t);
 
-    fd_set set;
-    FD_ZERO(&set);
+    fd_set set = {};
     FD_SET(h, &set);
 
-    int r = select(h + 1, &set, nullptr, nullptr, &t);
+    s64 ret = select(h + 1, &set, nullptr, nullptr, &t);
 
     // timeout
-    if (r == 0)
+    if (ret == 0)
         return false;
 
-    if (r == -1)
+    if (ret < 0)
     {
-        set_errno_error(err);
+        set_error_by_code(err, -ret);
         return false;
     }
 
@@ -193,22 +200,21 @@ bool io_poll_write(io_handle h, u32 timeout_ms, error *err)
 #if Windows
     // is there such a thing?
 #else
-    struct timeval t;
+    timespan t;
     _set_timeval(timeout_ms, &t);
 
-    fd_set set;
-    FD_ZERO(&set);
+    fd_set set{};
     FD_SET(h, &set);
 
-    int r = select(h + 1, nullptr, &set, nullptr, &t);
+    s64 ret = select(h + 1, nullptr, &set, nullptr, &t);
 
     // timeout
-    if (r == 0)
+    if (ret == 0)
         return false;
 
-    if (r == -1)
+    if (ret < 0)
     {
-        set_errno_error(err);
+        set_error_by_code(err, -ret);
         return false;
     }
 #endif
@@ -231,15 +237,22 @@ s64 io_size(io_handle h, error *err)
 
         return ret;
 #else
+#define FIONREAD 0x541B
+        s64 size = 0;
         s64 ret = 0;
 
-        if (ioctl(h, FIONREAD, &ret) == -1)
+        ret = (sys_int)linux_syscall3(SYS_ioctl,
+                                      (void*)(sys_int)h,
+                                      (void*)FIONREAD,
+                                      (void*)&size);
+
+        if (ret < 0)
         {
-            set_errno_error(err);
+            set_error_by_code(err, -ret);
             return -1;
         }
 
-        return ret;
+        return size;
 #endif
     }
     else
@@ -259,9 +272,11 @@ s64 io_size(io_handle h, error *err)
 #elif Linux
         struct statx info;
 
-        if (::statx(h, "", AT_EMPTY_PATH, STATX_SIZE, &info) != 0)
+        s64 ret = ::statx(h, "", AT_EMPTY_PATH, STATX_SIZE, &info);
+
+        if (ret < 0)
         {
-            set_errno_error(err);
+            set_error_by_code(err, -ret);
             return -1;
         }
 
