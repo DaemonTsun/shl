@@ -80,7 +80,7 @@ const char *_windows_error_message(int errcode);
     do { if ((Err) != nullptr) { int _errcode = (int)GetLastError(); *(Err) = ::error{.error_code = _errcode, .what = _windows_error_message(_errcode) }; } } while (0)
 
 #  if Windows
-#define set_GetLastError_error(Err, Code) \
+#define set_error_by_code(Err, Code) \
     do { if ((Err) != nullptr) { int _errcode = (int)(Code); *(Err) = ::error{.error_code = _errcode, .what = _windows_error_message(_errcode) }; } } while (0)
 #  else // Linux
 #define set_error_by_code(Err, Code) \
