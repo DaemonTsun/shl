@@ -13,12 +13,12 @@ typedef string_base<sys_char> sys_string;
 #if Windows
 #include <tlhelp32.h> // CreateToolhelp32Snapshot
 #else
-#define pipe __original_pipe
-#include <unistd.h> // fork, pid_t, _exit, ...
 #include <string.h>
 #include <errno.h>
-#include <signal.h>
-#undef pipe
+#include "shl/impl/linux/exit.hpp"
+#include "shl/impl/linux/process.hpp"
+#include "shl/impl/linux/signal.hpp"
+
 
 const char *_get_exe_name(const char *path)
 {
@@ -519,27 +519,27 @@ bool start_process(process *p, error *err)
         return false;
     }
 #else
-    pid_t id = fork();
+    int id = fork();
+
+    if (id < 0)
+    {
+        set_error_by_code(err, -id);
+        return false;
+    }
 
     switch (id)
     {
-    case -1:
-    {
-        set_errno_error(err);
-        return false;
-    }
     case 0:
     {
         // child process
+        if (int nfd = dup2(p->start_info.detail.std_in,  0); nfd < 0) exit_group(-nfd);
+        if (int nfd = dup2(p->start_info.detail.std_out, 1); nfd < 0) exit_group(-nfd);
+        if (int nfd = dup2(p->start_info.detail.std_err, 2); nfd < 0) exit_group(-nfd);
 
-        if (dup2(p->start_info.detail.std_in,  STDIN_FILENO)  == -1) _exit(errno);
-        if (dup2(p->start_info.detail.std_out, STDOUT_FILENO) == -1) _exit(errno);
-        if (dup2(p->start_info.detail.std_err, STDERR_FILENO) == -1) _exit(errno);
-
-        execve(p->start_info.path, (char * const*)p->start_info.args, (char * const*)p->start_info.environment);
+        int ret = execve((char*)p->start_info.path, (char**)p->start_info.args, (char**)p->start_info.environment);
 
         // on success, execve does not return to here.
-        _exit(errno);
+        exit_group(-ret);
     }
     default:
     {
@@ -602,9 +602,9 @@ bool stop_process(int pid, error *err)
         return false;
     }
 
-    if (::kill(pid, SIGKILL) == -1)
+    if (s64 ret = kill(pid, SIGKILL); ret < 0)
     {
-        set_errno_error(err);
+        set_error_by_code(err, -ret);
         return false;
     }
 #endif

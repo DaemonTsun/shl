@@ -6,9 +6,20 @@
 #include <namedpipeapi.h>
 #include "shl/format.hpp"
 #else
-#include <errno.h>
+#include "shl/impl/linux/syscalls.hpp"
 
-#include <unistd.h> // pipe2
+static inline sys_int pipe2(int *pipefds, int flags)
+{
+    return (sys_int)linux_syscall2(SYS_pipe2,
+                                   (void*)pipefds,
+                                   (void*)(sys_int)flags);
+}
+
+static inline sys_int close(int fd)
+{
+    return (sys_int)linux_syscall1(SYS_close,
+                                   (void*)(sys_int)fd);
+}
 #endif
 
 bool init(pipe_t *p, error *err)
@@ -95,9 +106,11 @@ bool init(pipe_t *p, int flags, [[maybe_unused]] bool inherit, error *err)
         return false;
     }
 #else
-    if (pipe2((int*)p, flags) == -1)
+    s64 ret = pipe2((int*)p, flags);
+
+    if (ret < 0)
     {
-        set_errno_error(err);
+        set_error_by_code(err, -ret);
         return false;
     }
 #endif
@@ -127,18 +140,24 @@ bool free(pipe_t *p, error *err)
     p->write = nullptr;
 
 #else
-    if (p->read != -1 && close(p->read) == -1)
+    if (p->read != -1)
     {
-        set_errno_error(err);
-        return false;
+        if (s64 ret = close(p->read); ret < 0)
+        {
+            set_error_by_code(err, -ret);
+            return false;
+        }
     }
 
     p->read = -1;
 
-    if (p->write != -1 && close(p->write) == -1)
+    if (p->write != -1)
     {
-        set_errno_error(err);
-        return false;
+        if (s64 ret = close(p->write); ret < 0)
+        {
+            set_error_by_code(err, -ret);
+            return false;
+        }
     }
 
     p->write = -1;

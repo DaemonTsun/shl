@@ -1,19 +1,19 @@
 
-
 #include "shl/assert.hpp"
 #include "shl/platform.hpp"
 #include "shl/number_types.hpp"
 
 #if Linux
 #include <sys/mman.h>
-#include <sys/syscall.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
 
+#include "shl/impl/linux/syscalls.hpp"
+
 static int _memfd_create(const char *name, u32 flags)
 {
-    return syscall(SYS_memfd_create, name, flags);
+    return (int)(sys_int)linux_syscall2(SYS_memfd_create, (void*)name, (void*)(sys_int)flags);
 }
 
 #elif Windows
@@ -44,9 +44,9 @@ bool init(ring_buffer *buf, s64 min_size, s32 mapping_count, error *err)
 #if Linux
     int anonfd = _memfd_create("ringbuf", 0);
 
-    if (anonfd == -1)
+    if (anonfd < 0)
     {
-        set_errno_error(err);
+        set_error_by_code(err, -anonfd);
         return false;
     }
 
@@ -208,12 +208,19 @@ bool resize(ring_buffer *buf, s64 min_size, s32 mapping_count, error *err)
 
 s64 get_system_pagesize()
 {
-#if Windows
-    SYSTEM_INFO info;
-    GetSystemInfo(&info);
+    static s64 pagesize = -1;
 
-    return (s64)info.dwAllocationGranularity;
+#if Windows
+    if (pagesize < 0)
+    {
+        SYSTEM_INFO info;
+        GetSystemInfo(&info);
+        pagesize = (s64)info.dwAllocationGranularity;
+    }
 #else
-    return (s64)sysconf(_SC_PAGESIZE);
+    if (pagesize < 0)
+        pagesize = (s64)sysconf(_SC_PAGESIZE);
 #endif
+
+    return pagesize;
 }

@@ -17,8 +17,13 @@
 #if Windows
 #include <windows.h>
 #else
-#include <fcntl.h>
-#include <unistd.h> // close
+#include <fcntl.h> // O_CREAT, ...
+#include "shl/impl/linux/syscalls.hpp"
+
+static sys_int close(sys_int fd)
+{
+    return (sys_int)linux_syscall1(SYS_close, (void*)fd);
+}
 #endif
 
 #include "shl/file_stream.hpp"

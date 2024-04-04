@@ -2,10 +2,10 @@
 #include "shl/io.hpp"
 
 #if Linux
-#include <fcntl.h> // AT_EMPTY_PATH
 #include "shl/impl/linux/syscalls.hpp"
 #include "shl/impl/linux/statx.hpp"
 #include "shl/impl/linux/select.hpp"
+#include "shl/impl/linux/at.hpp"
 #include "shl/time.hpp" // timespan
 #endif
 
@@ -173,13 +173,13 @@ bool io_poll_read(io_handle h, u32 timeout_ms, error *err)
 
     return ret > 0;
 #else
-    timespan t;
+    timespan t{};
     _set_timeval(timeout_ms, &t);
 
     fd_set set = {};
     FD_SET(h, &set);
 
-    s64 ret = select(h + 1, &set, nullptr, nullptr, &t);
+    s64 ret = pselect6(h + 1, &set, 0, 0, &t, nullptr);
 
     // timeout
     if (ret == 0)
@@ -200,13 +200,13 @@ bool io_poll_write(io_handle h, u32 timeout_ms, error *err)
 #if Windows
     // is there such a thing?
 #else
-    timespan t;
+    timespan t{};
     _set_timeval(timeout_ms, &t);
 
     fd_set set{};
     FD_SET(h, &set);
 
-    s64 ret = select(h + 1, nullptr, &set, nullptr, &t);
+    s64 ret = pselect6(h + 1, 0, &set, 0, &t, nullptr);
 
     // timeout
     if (ret == 0)

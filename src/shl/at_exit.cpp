@@ -8,7 +8,7 @@ typedef array<exit_function_t> _exit_function_container;
 
 _exit_function_container *_get_exit_functions(bool free_functions);
 
-void _atexit_callback()
+static void _atexit_callback()
 {
     _exit_function_container *funcs = _get_exit_functions(false);
 
@@ -19,7 +19,7 @@ void _atexit_callback()
     _get_exit_functions(true);
 }
 
-void _register_atexit_callback()
+static void _register_atexit_callback()
 {
     static bool _registered = false;
 

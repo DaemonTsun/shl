@@ -1,5 +1,5 @@
 
-// credit https://github.com/skeeto/scratch/blob/master/mt19937/mt19937_64.h
+// mt19937 credit https://github.com/skeeto/scratch/blob/master/mt19937/mt19937_64.h
 
 #include "shl/assert.hpp"
 #include "shl/platform.hpp"
@@ -7,7 +7,7 @@
 #include "shl/random.hpp"
 
 #if Linux
-#include "shl/file_stream.hpp"
+#include "shl/file_stream.hpp" // for reading /dev/urandom
 #endif
 
 #include <math.h> // sqrt, log

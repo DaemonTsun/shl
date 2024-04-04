@@ -30,6 +30,7 @@ void *linux_syscall2(sys_int number, void *arg1, void *arg2);
 void *linux_syscall3(sys_int number, void *arg1, void *arg2, void *arg3);
 void *linux_syscall4(sys_int number, void *arg1, void *arg2, void *arg3, void *arg4);
 void *linux_syscall5(sys_int number, void *arg1, void *arg2, void *arg3, void *arg4, void *arg5);
+void *linux_syscall6(sys_int number, void *arg1, void *arg2, void *arg3, void *arg4, void *arg5, void *arg6);
 }
 
 #endif // Linux

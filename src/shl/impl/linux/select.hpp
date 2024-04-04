@@ -1,15 +1,18 @@
 
 /* select.hpp
 
-Linux system calls 'select' and 'pselect'.
+Linux system calls 'select' and 'pselect6'.
 
 */
 #pragma once
+
+#include "shl/number_types.hpp"
 
 struct fd_set;
 struct timespan; // in shl/time.hpp
 
 extern "C" sys_int select(int fd_count, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, timespan *timeout);
+extern "C" sys_int pselect6(int fd_count, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, timespan *timeout, void *sigmask);
 
 typedef long int fd_mask;
 #define FD_MaxFDs 1024 
