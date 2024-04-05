@@ -22,7 +22,6 @@ add_lib(shl STATIC
     )
 
 include(cmake/ASM.cmake)
-message("${shl_SOURCES}")
 
 exit_if_included()
 
