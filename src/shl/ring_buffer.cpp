@@ -4,12 +4,12 @@
 #include "shl/number_types.hpp"
 
 #if Linux
-#include <sys/mman.h>
 #include <errno.h>
-#include <string.h>
 #include <unistd.h>
 
 #include "shl/impl/linux/syscalls.hpp"
+#include "shl/impl/linux/memory.hpp" // mmap
+#include "shl/memory.hpp" // copy_memory
 
 static int _memfd_create(const char *name, u32 flags)
 {
@@ -66,29 +66,29 @@ bool init(ring_buffer *buf, s64 min_size, s32 mapping_count, error *err)
         bool all_ranges_mapped = true;
 
         // find an address that works
-        ptr = ::mmap(nullptr, total_size, PROT_NONE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+        ptr = mmap(nullptr, total_size, PROT_NONE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
 
-        if (ptr == MAP_FAILED)
+        if (MMAP_IS_ERROR(ptr))
         {
             // no pointer found
-            set_errno_error(err);
+            set_error_by_code(err, -(sys_int)ptr);
             return false;
         }
 
         for (s32 i = 0; i < mapping_count; ++i)
         {
-            void *mapped_ptr = ::mmap(((char*)ptr) + (i * actual_size), actual_size,
+            void *mapped_ptr = mmap(((char*)ptr) + (i * actual_size), actual_size,
                                       PROT_READ | PROT_WRITE,
                                       MAP_FIXED | MAP_SHARED,
                                       anonfd, 0);
 
-            if (mapped_ptr == MAP_FAILED)
+            if (MMAP_IS_ERROR(mapped_ptr))
             {
                 // un-roll
                 for (s32 j = 0; j < i; ++j)
-                if (::munmap(((char*)ptr) + (j * actual_size), actual_size) != 0)
+                if (sys_int ret = munmap(((char*)ptr) + (j * actual_size), actual_size); ret < 0)
                 {
-                    set_errno_error(err);
+                    set_error_by_code(err, -ret);
                     return false;
                 }
 
@@ -161,9 +161,9 @@ bool free(ring_buffer *buf, error *err)
 
 #if Linux
     for (s32 i = 0; i < buf->mapping_count; ++i)
-    if (::munmap(buf->data + (i * buf->size), buf->size) != 0)
+    if (sys_int ret = munmap(buf->data + (i * buf->size), buf->size); ret < 0)
     {
-        set_errno_error(err);
+        set_error_by_code(err, -ret);
         return false;
     }
 
@@ -199,7 +199,7 @@ bool resize(ring_buffer *buf, s64 min_size, s32 mapping_count, error *err)
 
     s64 size_to_copy = Min(buf->size, nbuf.size);
 
-    memcpy(nbuf.data, buf->data, size_to_copy);
+    copy_memory(buf->data, nbuf.data, size_to_copy);
     free(buf);
     *buf = nbuf;
 

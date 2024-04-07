@@ -9,43 +9,27 @@ Linux threads and utility functions.
 #include "shl/number_types.hpp"
 #include "shl/error.hpp"
 
-void *thread_stack_create(s64 size, error *err = nullptr);
-void  thread_stack_destroy(void *stack, error *err = nullptr);
-
-struct thread_stack_head;
-
-typedef void (*clone_entry)(thread_stack_head *s);
-typedef void *(*thread_entry)(void *arg);
-
-struct __attribute((aligned(16))) thread_stack_head
+struct clone_args
 {
-    clone_entry setup;
-    thread_entry entry;
-    void *argument;
-    void *result;
-    s64 join_futex;
-
-    struct clone_args
-    {
-        u64 flags;
-        u64 pidfd;          // cast to int*
-        u64 child_tid;      // cast to sys_int*
-        u64 parent_tid;     // cast to sys_int*
-        u64 exit_signal;
-        u64 stack;          // cast to void*
-        s64 stack_size;
-        u64 tls;            // cast to void*
-        u64 set_tid;        // pid_t array??
-        u64 set_tid_size;
-        u64 cgroup;
-    } clone_args;
+    u64 flags;
+    u64 pidfd;          // cast to int*
+    u64 child_tid;      // cast to sys_int*
+    u64 parent_tid;     // cast to sys_int*
+    u64 exit_signal;
+    u64 stack;          // cast to void*, START of stack ("low end")
+    s64 stack_size;     // This one is weirder. you should write the 
+    // thread entry point somewhere near the end of the stack, then set this stack size
+    // to <address of where you wrote the entry point> - stack (the field before).
+    // This makes sure the entry point is the next thing in the threads stack, executing
+    // it on start.
+    u64 tls;            // cast to void*
+    u64 set_tid;        // pid_t array??
+    u64 set_tid_size;
+    u64 cgroup;
 };
 
-thread_stack_head *get_thread_stack_head(void *stack, s64 size);
-
-void default_clone_entry(thread_stack_head *s);
-
-sys_int linux_thread_start(thread_stack_head *head, error *err);
+// You probably don't want this, as this gets the clone_args as argument.
+extern "C" sys_int clone3(clone_args *args, s64 arg_size = sizeof(clone_args));
 
 #ifndef CLONE_VM
 #  define CSIGNAL               0x000000ff
@@ -75,3 +59,35 @@ sys_int linux_thread_start(thread_stack_head *head, error *err);
 #  define CLONE_NEWNET          0x40000000
 #  define CLONE_IO              0x80000000
 #endif
+
+#define CLONE_DEFAULT_FLAGS (CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_PARENT | CLONE_THREAD | CLONE_IO)
+
+// everything below here is utility
+void *thread_stack_create(s64 size, error *err = nullptr);
+bool  thread_stack_destroy(void *stack, s64 size, error *err = nullptr);
+
+struct thread_stack_head;
+
+typedef void (*clone_entry)(thread_stack_head *head);
+typedef void *(*thread_entry)(void *argument);
+
+// also adjust asm/<arch>/linux_thread.S when changing the size of this struct.
+struct __attribute((aligned(16))) thread_stack_head
+{
+    clone_entry entry;
+    thread_entry user_function;
+    void *user_function_argument;
+    void *user_function_result;
+    void *extra_data; // pointer to extra data on stack
+    s64 extra_data_size;
+    s64 tid;
+    s64 futex;
+
+    ::clone_args clone_args;
+};
+
+thread_stack_head *get_thread_stack_head(void *stack, s64 size, s64 extra_size = 0);
+
+void default_clone_entry(thread_stack_head *head);
+
+sys_int linux_thread_start(thread_stack_head *head, error *err = nullptr);

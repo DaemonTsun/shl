@@ -2,7 +2,7 @@
 #include "shl/impl/linux/syscalls.hpp"
 #include "shl/impl/linux/memory.hpp"
 
-extern "C" void *mmap(void *address, sys_int length, sys_int protection, sys_int flags)
+void *mmap(void *address, sys_int length, sys_int protection, sys_int flags)
 {
     return linux_syscall6(SYS_mmap,
                           address,
@@ -14,7 +14,7 @@ extern "C" void *mmap(void *address, sys_int length, sys_int protection, sys_int
                           );
 }
 
-extern "C" void *fmmap(void *address, sys_int length, sys_int protection, sys_int flags, int fd, sys_int offset)
+void *mmap(void *address, sys_int length, sys_int protection, sys_int flags, int fd, sys_int offset)
 {
     return linux_syscall6(SYS_mmap,
                           address,
@@ -26,7 +26,7 @@ extern "C" void *fmmap(void *address, sys_int length, sys_int protection, sys_in
                           );
 }
 
-extern "C" sys_int munmap(void *address, sys_int length)
+sys_int munmap(void *address, sys_int length)
 {
     return (sys_int)linux_syscall2(SYS_munmap,
                                    address,

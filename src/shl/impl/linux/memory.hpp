@@ -8,14 +8,12 @@ Linux mmap and other memory relevant syscalls and constants.
 
 #include "shl/number_types.hpp"
 
-extern "C"
-{
 void *mmap(void *address, sys_int length, sys_int protection, sys_int flags);
-void *fmmap(void *address, sys_int length, sys_int protection, sys_int flags, int fd, sys_int offset);
+void *mmap(void *address, sys_int length, sys_int protection, sys_int flags, int fd, sys_int offset);
+
+#define MMAP_IS_ERROR(Addr) ((u64)(Addr) == 0 || (u64)(Addr) > -4096ul)
 
 sys_int munmap(void *address, sys_int length);
-}
-
 
 #ifndef PROT_READ
 #  define PROT_NONE       0x0
