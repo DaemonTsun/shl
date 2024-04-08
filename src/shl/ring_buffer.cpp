@@ -2,6 +2,7 @@
 #include "shl/assert.hpp"
 #include "shl/platform.hpp"
 #include "shl/number_types.hpp"
+#include "shl/memory.hpp" // copy_memory
 
 #if Linux
 #include <errno.h>
@@ -9,7 +10,6 @@
 
 #include "shl/impl/linux/syscalls.hpp"
 #include "shl/impl/linux/memory.hpp" // mmap
-#include "shl/memory.hpp" // copy_memory
 
 static int _memfd_create(const char *name, u32 flags)
 {
