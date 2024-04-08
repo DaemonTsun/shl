@@ -9,6 +9,7 @@
 #include "shl/impl/linux/thread.hpp"
 #include "shl/print.hpp"
 #include "shl/time.hpp"
+#include <valgrind/valgrind.h>
 
 typedef void (*clone_function)(clone_args* arg);
 void clone_thread_func(clone_args *arg)
@@ -71,6 +72,8 @@ void *linux_thread_func(void *arg)
     thread_stack_head *head = (thread_stack_head*)arg;
 
     assert(((u64*)head->extra_data)[0] == 0x0102030405060708ul);
+    sleep_ms(2000);
+    put("linux_thread_start_test: hello from thread after sleep\n");
 
     return arg;
 }
@@ -106,14 +109,17 @@ void linux_thread_start_test()
 
     put("linux_thread_start_test: hello from main\n");
 
-    sys_int tid = linux_thread_start(head);
+    sys_int tid = linux_thread_start(head, &err);
     assert(tid > 0);
+    assert(err.error_code == 0);
 
     tprint("linux_thread_start_test: hello from main after thread start, child thread id: %\n", tid);
 
-    sleep_ms(2000);
+    bool join_ok = linux_thread_join(head, nullptr, &err);
+    assert(join_ok);
+    assert(err.error_code == 0);
 
-    put("linux_thread_start_test: hello from main after wait\n");
+    put("linux_thread_start_test: hello from main after join\n");
 
     assert(head->user_function_result == (void*)head);
     thread_stack_destroy(stack, stack_size);
@@ -123,6 +129,9 @@ int main(int argc, char **argv)
 {
     (void)argc;
     (void)argv;
+
+    if (RUNNING_ON_VALGRIND)
+        return 0;
 
     // clone_test();
     linux_thread_start_test();

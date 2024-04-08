@@ -4,8 +4,8 @@
 
 #include "shl/impl/linux/exit.hpp"
 #include "shl/impl/linux/memory.hpp"
-#include "shl/impl/linux/thread.hpp"
 #include "shl/impl/linux/syscalls.hpp"
+#include "shl/impl/linux/thread.hpp"
 
 extern "C" sys_int clone3(clone_args *args, s64 arg_size)
 {
@@ -73,6 +73,9 @@ void default_clone_entry(thread_stack_head *head)
 {
     head->user_function_result = head->user_function(head->user_function_argument);
 
+    // __atomic_store_n(&head->join_futex, 1, __ATOMIC_SEQ_CST);
+    head->done = 1;
+    futex_wake(&head->join_futex);
     exit(0);
 }
 
@@ -84,4 +87,17 @@ sys_int linux_thread_start(thread_stack_head *head, error *err)
         set_error_by_code(err, -ret);
 
     return ret;
+}
+
+bool linux_thread_join(thread_stack_head *head, timespan *timeout, error *err)
+{
+    sys_int ret = futex_wait(&head->join_futex, 0, timeout);
+
+    if (ret < 0)
+    {
+        set_error_by_code(err, -ret);
+        return false;
+    }
+
+    return true;
 }

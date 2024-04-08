@@ -8,6 +8,7 @@ Linux threads and utility functions.
 
 #include "shl/number_types.hpp"
 #include "shl/error.hpp"
+#include "shl/impl/linux/futex.hpp"
 
 struct clone_args
 {
@@ -81,7 +82,8 @@ struct __attribute((aligned(16))) thread_stack_head
     void *extra_data; // pointer to extra data on stack
     s64 extra_data_size;
     s64 tid;
-    s64 futex;
+    s32 join_futex;
+    s32 done;
 
     ::clone_args clone_args;
 };
@@ -91,3 +93,6 @@ thread_stack_head *get_thread_stack_head(void *stack, s64 size, s64 extra_size =
 void default_clone_entry(thread_stack_head *head);
 
 sys_int linux_thread_start(thread_stack_head *head, error *err = nullptr);
+// bool    linux_thread_is_done(thread_stack_head *head);
+#define linux_thread_is_done(Head) (__atomic_load_n(&(Head)->done, __ATOMIC_SEQ_CST) != 0)
+bool    linux_thread_join(thread_stack_head *head, timespan *timeout = nullptr, error *err = nullptr);
