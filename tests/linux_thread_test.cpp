@@ -9,7 +9,6 @@
 #include "shl/impl/linux/thread.hpp"
 #include "shl/print.hpp"
 #include "shl/time.hpp"
-#include <valgrind/valgrind.h>
 
 typedef void (*clone_function)(clone_args* arg);
 void clone_thread_func(clone_args *arg)
@@ -129,9 +128,6 @@ int main(int argc, char **argv)
 {
     (void)argc;
     (void)argv;
-
-    if (RUNNING_ON_VALGRIND)
-        return 0;
 
     // clone_test();
     linux_thread_start_test();

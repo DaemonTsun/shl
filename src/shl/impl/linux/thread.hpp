@@ -23,7 +23,7 @@ struct clone_args
     // to <address of where you wrote the entry point> - stack (the field before).
     // This makes sure the entry point is the next thing in the threads stack, executing
     // it on start.
-    u64 tls;            // cast to void*
+    u64 tls;
     u64 set_tid;        // pid_t array??
     u64 set_tid_size;
     u64 cgroup;
