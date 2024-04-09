@@ -45,7 +45,6 @@ bool thread_stack_destroy(void *stack, s64 size, error *err)
 
 thread_stack_head *get_thread_stack_head(void *stack, s64 size, s64 extra_size)
 {
-    size = ceil_multiple2(size, 4096);
     extra_size = ceil_multiple2(extra_size, 4096);
 
     if ((size - extra_size) < (s64)sizeof(thread_stack_head))
@@ -57,8 +56,10 @@ thread_stack_head *get_thread_stack_head(void *stack, s64 size, s64 extra_size)
     fill_memory(ret, 0);
 
     ret->entry = default_clone_entry;
+    ret->original_stack_size = size;
     ret->extra_data = (void*)((char*)stack + size - extra_size);
     ret->extra_data_size = extra_size;
+    ret->state = THREAD_STATE_READY;
     ret->clone_args.flags = CLONE_DEFAULT_FLAGS | CLONE_CHILD_SETTID;
     ret->clone_args.child_tid = (u64)&ret->tid;
     ret->clone_args.stack = (u64)stack;
@@ -71,10 +72,12 @@ extern "C" void *_linux_thread_start(thread_stack_head *head);
 
 void default_clone_entry(thread_stack_head *head)
 {
+    // this is within the new thread
+    __atomic_store_n(&head->state, THREAD_STATE_RUNNING, __ATOMIC_SEQ_CST);
     head->user_function_result = head->user_function(head->user_function_argument);
+    __atomic_store_n(&head->state, THREAD_STATE_STOPPED, __ATOMIC_SEQ_CST);
 
     // __atomic_store_n(&head->join_futex, 1, __ATOMIC_SEQ_CST);
-    head->done = 1;
     futex_wake(&head->join_futex);
     exit(0);
 }

@@ -63,6 +63,12 @@ extern "C" sys_int clone3(clone_args *args, s64 arg_size = sizeof(clone_args));
 
 #define CLONE_DEFAULT_FLAGS (CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_PARENT | CLONE_THREAD | CLONE_IO)
 
+#ifndef THREAD_STATE_READY
+#  define THREAD_STATE_READY      0x00
+#  define THREAD_STATE_RUNNING    0x01
+#  define THREAD_STATE_STOPPED    0x02
+#endif
+
 // everything below here is utility
 void *thread_stack_create(s64 size, error *err = nullptr);
 bool  thread_stack_destroy(void *stack, s64 size, error *err = nullptr);
@@ -79,11 +85,12 @@ struct __attribute((aligned(16))) thread_stack_head
     thread_entry user_function;
     void *user_function_argument;
     void *user_function_result;
+    s64 original_stack_size; // stack size in clone_args is different.
     void *extra_data; // pointer to extra data on stack
     s64 extra_data_size;
     s64 tid;
     s32 join_futex;
-    s32 done;
+    s32 state;
 
     ::clone_args clone_args;
 };
@@ -93,6 +100,12 @@ thread_stack_head *get_thread_stack_head(void *stack, s64 size, s64 extra_size =
 void default_clone_entry(thread_stack_head *head);
 
 sys_int linux_thread_start(thread_stack_head *head, error *err = nullptr);
-// bool    linux_thread_is_done(thread_stack_head *head);
-#define linux_thread_is_done(Head) (__atomic_load_n(&(Head)->done, __ATOMIC_SEQ_CST) != 0)
-bool    linux_thread_join(thread_stack_head *head, timespan *timeout = nullptr, error *err = nullptr);
+
+#define _check_linux_thread_state(Head, State)\
+    (__atomic_load_n(&(Head)->state, __ATOMIC_SEQ_CST) == State)
+
+#define linux_thread_is_ready(Head)   _check_linux_thread_state(Head, THREAD_STATE_READY)
+#define linux_thread_is_running(Head) _check_linux_thread_state(Head, THREAD_STATE_RUNNING)
+#define linux_thread_is_stopped(Head) _check_linux_thread_state(Head, THREAD_STATE_STOPPED)
+
+bool linux_thread_join(thread_stack_head *head, timespan *timeout = nullptr, error *err = nullptr);

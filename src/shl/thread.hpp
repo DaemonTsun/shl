@@ -2,6 +2,7 @@
 #pragma once
 
 #include "shl/error.hpp"
+#include "shl/time.hpp"
 #include "shl/program_context.hpp"
 
 typedef void *(*thread_function)(void *arg);
@@ -12,11 +13,14 @@ struct thread
     thread_function starting_function;
     void *argument;
     program_context *starting_context;
+    void *os_thread_data;
 };
 
-void init(thread *t, thread_function func, void *argument = nullptr, program_context *ctx = nullptr);
+bool thread_create(thread *t, thread_function func, void *argument = nullptr, program_context *ctx = nullptr, error *err = nullptr);
+bool thread_destroy(thread *t, error *err = nullptr);
 
 bool thread_start(thread *t, error *err = nullptr);
-bool thread_is_done(thread *t);
-bool thread_stop(thread *t, error *err = nullptr);
-bool thread_destroy(thread *t, error *err = nullptr);
+bool thread_is_ready(thread *t);
+bool thread_is_running(thread *t);
+bool thread_is_stopped(thread *t);
+bool thread_stop(thread *t, timespan *wait_timeout = nullptr, error *err = nullptr);
