@@ -13,7 +13,7 @@ define_test(thread_create_creates_thread)
     thread t{};
     error err{};
 
-    bool ok = thread_create(&t, empty_thread_func, nullptr, nullptr, &err);
+    bool ok = thread_create(&t, empty_thread_func, nullptr, &err);
 
     assert_equal(ok, true);
     assert_equal(err.error_code, 0);
@@ -32,7 +32,7 @@ define_test(thread_create_recreates_destroyed_thread)
     thread t{};
     error err{};
 
-    bool ok = thread_create(&t, empty_thread_func, nullptr, nullptr, &err);
+    bool ok = thread_create(&t, empty_thread_func, nullptr, &err);
 
     assert_equal(ok, true);
     assert_equal(err.error_code, 0);
@@ -43,7 +43,7 @@ define_test(thread_create_recreates_destroyed_thread)
     assert_equal(ok, true);
     assert_equal(err.error_code, 0);
 
-    ok = thread_create(&t, empty_thread_func, nullptr, nullptr, &err);
+    ok = thread_create(&t, empty_thread_func, nullptr, &err);
 
     assert_equal(ok, true);
     assert_equal(err.error_code, 0);
@@ -73,9 +73,12 @@ void *test_thread_func(void *_arg)
     program_context *nctx = get_context_pointer();
     assert_not_equal_within_thread(&nctx->thread_id, 0);
 
+    s64 *ret = allocator_alloc_T(nctx->thread_storage_allocator, s64);
+    *ret = 0xbeefdead;
+
     sleep_ms(500);
 
-    return _arg;
+    return (void*)ret;
 }
 
 define_test(thread_full_test)
@@ -84,7 +87,7 @@ define_test(thread_full_test)
     error err{};
 
     s64 arg = 0xdeadbeef;
-    bool ok = thread_create(&t, test_thread_func, &arg, nullptr, &err);
+    bool ok = thread_create(&t, test_thread_func, &arg, &err);
 
     assert_equal(ok, true);
     assert_equal(err.error_code, 0);
@@ -111,13 +114,21 @@ define_test(thread_full_test)
     assert_equal(thread_is_running(&t), false);
     assert_equal(thread_is_stopped(&t), true);
 
+    // thread result is accessible as long as thread is not destroyed / recreated.
+    s64 *result = (s64*)thread_result(&t);
+    assert_not_equal(result, nullptr);
+    assert_equal(*result, 0xbeefdead);
+
     // recreate
-    ok = thread_create(&t, test_thread_func, &arg, nullptr, &err);
+    ok = thread_create(&t, test_thread_func, &arg, &err);
     assert_equal(ok, true);
     assert_equal(err.error_code, 0);
     assert_equal(thread_is_ready(&t), true);
     assert_equal(thread_is_running(&t), false);
     assert_equal(thread_is_stopped(&t), false);
+
+    thread_start(&t);
+    thread_stop(&t);
 
     thread_destroy(&t, &err);
 }

@@ -5,6 +5,7 @@
 #include "shl/impl/linux/exit.hpp"
 #include "shl/impl/linux/memory.hpp"
 #include "shl/impl/linux/syscalls.hpp"
+#include "shl/impl/linux/sysinfo.hpp"
 #include "shl/impl/linux/thread.hpp"
 
 extern "C" sys_int clone3(clone_args *args, s64 arg_size)
@@ -45,7 +46,8 @@ bool thread_stack_destroy(void *stack, s64 size, error *err)
 
 thread_stack_head *get_thread_stack_head(void *stack, s64 size, s64 extra_size)
 {
-    extra_size = ceil_multiple2(extra_size, 4096);
+    static s64 pagesize = get_pagesize();
+    extra_size = ceil_multiple2(extra_size, pagesize);
 
     if ((size - extra_size) < (s64)sizeof(thread_stack_head))
         return nullptr;

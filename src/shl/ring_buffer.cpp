@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #include "shl/impl/linux/syscalls.hpp"
+#include "shl/impl/linux/sysinfo.hpp"
 #include "shl/impl/linux/memory.hpp" // mmap
 
 static int _memfd_create(const char *name, u32 flags)
@@ -219,7 +220,7 @@ s64 get_system_pagesize()
     }
 #else
     if (pagesize < 0)
-        pagesize = (s64)sysconf(_SC_PAGESIZE);
+        pagesize = get_pagesize();
 #endif
 
     return pagesize;

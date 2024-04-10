@@ -23,6 +23,7 @@ struct allocator
 void *default_alloc(void *data, void *ptr, s64 old_size, s64 new_size);
 
 const allocator default_allocator{.alloc = default_alloc, .data = nullptr};
+const allocator null_allocator{.alloc = (alloc_function)nullptr, .data = nullptr};
 
 // helpers
 #define allocator_alloc(A, Size)\
