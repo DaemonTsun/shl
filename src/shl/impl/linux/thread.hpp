@@ -8,6 +8,7 @@ Linux threads and utility functions.
 
 #include "shl/number_types.hpp"
 #include "shl/error.hpp"
+#include "shl/impl/thread_common.hpp"
 #include "shl/impl/linux/futex.hpp"
 
 struct clone_args
@@ -62,12 +63,6 @@ extern "C" sys_int clone3(clone_args *args, s64 arg_size = sizeof(clone_args));
 #endif
 
 #define CLONE_DEFAULT_FLAGS (CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_PARENT | CLONE_THREAD | CLONE_IO)
-
-#ifndef THREAD_STATE_READY
-#  define THREAD_STATE_READY      0x00
-#  define THREAD_STATE_RUNNING    0x01
-#  define THREAD_STATE_STOPPED    0x02
-#endif
 
 // everything below here is utility
 void *thread_stack_create(s64 size, error *err = nullptr);

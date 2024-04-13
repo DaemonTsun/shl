@@ -27,5 +27,6 @@ bool thread_is_stopped(thread *t);
 
 bool thread_stop(thread *t, timespan *wait_timeout = nullptr, error *err = nullptr);
 
-// make sure thread is stopped and not destroyed 
+// make sure thread is stopped and not destroyed for these
 void *thread_result(thread *t);
+void thread_storage(thread *t, void **out_data, s64 *out_size);
