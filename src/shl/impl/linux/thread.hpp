@@ -2,6 +2,11 @@
 /* linux/thread.hpp
 
 Linux threads and utility functions.
+
+Defines clone_args and clone3, but clone3 should probably be avoided.
+Use thread_stack_head and linux_thread_start instead.
+
+See tests/linux_thread_tests.cpp for an example.
 */
 
 #pragma once
@@ -30,7 +35,8 @@ struct clone_args
     u64 cgroup;
 };
 
-// You probably don't want this, as this gets the clone_args as argument.
+// You probably don't want this, as this gets the clone_args as argument, which is not
+// that useful.
 extern "C" sys_int clone3(clone_args *args, s64 arg_size = sizeof(clone_args));
 
 #ifndef CLONE_VM

@@ -5,7 +5,40 @@
 
 Defines the allocator type, alloc function type and the default allocator.
 
-TODO: finish docs
+Example usage:
+
+    allocator a = default_allocator;
+    
+    int *x = (int*)allocator_alloc(a, sizeof(int));
+    int *y = allocator_alloc_T(a, int);
+
+    // realloc must have old size
+    x = allocator_realloc(a, x, sizeof(int), sizeof(int) * 2);
+    y = allocator_realloc_T(a, y, int, 1, 2);
+
+    // dealloc must have size
+    allocator_dealloc(a, x, sizeof(int) * 2);
+    allocator_dealloc_T(a, y, int, 2);
+
+
+Typedefs and Structs
+
+alloc_function is the generic allocation function type used to allocate,
+deallocate and reallocate memory.
+
+allocator is a struct with an alloc_function and a user data pointer which
+is passed to the alloc function.
+
+default_alloc is an alloc_function that uses the default global heap allocator,
+currently malloc.
+
+default_allocator is an allocator that uses default_alloc as allocation function.
+null_allocator is an allocator that uses no allocation function, causing a crash
+when used.
+
+Other Allocators
+
+arena_allocator (defined in shl/allocator_arena.hpp) - stack-like allocator.
 */
 
 #include "shl/macros.hpp"

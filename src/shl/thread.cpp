@@ -451,7 +451,6 @@ bool thread_is_stopped(thread *t)
     thread_stack_head *head = (thread_stack_head*)t->os_thread_data;
     return linux_thread_is_stopped(head);
 #else
-    // TODO: implement
     return false;
 #endif
 }

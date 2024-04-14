@@ -31,6 +31,7 @@ Example:
     free(&a);
     dealloc(data1, 64);
 
+
 get_context_pointer()
     Returns a pointer to the current program_context.
     If no context pointer was set, a default context is returned.
