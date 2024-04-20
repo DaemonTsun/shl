@@ -13,6 +13,7 @@ A replacement library for the standard library, because STDs are no good.
 - [`put`, `tprint`](src/shl/print.hpp): I/O writing and formatting, specifically a better "printf" that doesn't use `stdio.h`
 - [`debug(fmt, ...)` and `trace(fmt, ...)`](src/shl/debug.hpp): debugging printf with file and line information which only execute on debug builds
 - [`hash_t`](src/shl/hash.hpp): fast hashing of arbitrary data
+- [`mt19937`, `pcg64`, `next_random_int`, ...](src/shl/random.hpp): random number generation and distrubution 
 - [`__FILE_HASH__` and `__LINE_HASH__`](src/shl/murmur_hash.hpp): constexpr implementation of Murmur Hash 3, with a macro to provide a unique hash for the current line in the current file
 - [`error`](src/shl/error.hpp): alternative to `std::exception`
 - [`#if Linux`](src/shl/platform.hpp): better platform preprocessor constants
@@ -26,9 +27,11 @@ A replacement library for the standard library, because STDs are no good.
 - [`program_context`](src/shl/program_context.hpp): (per thread) context for setting "global" information, e.g. allocator
 - [`sleep(float seconds)`](src/shl/time.hpp): multiplatform time functions
 - [`start_process`, `stop_process`, ...](src/shl/process.hpp): process management
+- [`thread_create`, `thread_start`, ...](src/shl/thread.hpp): thread management
 - [`pipe`](src/shl/pipe.hpp): OS pipes
 - [`scratch_buffer`](src/shl/scratch_buffer.hpp): a buffer with a fixed part on the stack, which may grow onto the heap
 - [`ring_buffer`](src/shl/ring_buffer.hpp): a circular buffer using virtual addresses
+- [`linux_syscall`](src/shl/impl/linux/syscalls.hpp): syscalls without libc
 - and more
 
 See individual header files for documentation.
@@ -39,8 +42,8 @@ Either clone the repostory and simply include it in CMake like so:
 
 ```cmake
 add_subdirectory(path/to/shl)
-target_link_libraries(your-target PRIVATE shl-0.9.2)
-target_include_directories(your-target PRIVATE ${shl-0.9.2_SOURCES_DIR})
+target_link_libraries(your-target PRIVATE shl-0.9.3)
+target_include_directories(your-target PRIVATE ${shl-0.9.3_SOURCES_DIR})
 ```
 
 OR follow the next steps to build and install it and manually link and include it.
