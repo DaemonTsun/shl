@@ -16,9 +16,10 @@ Example usage:
     process_start(&p);
 
 Functions:
-init(*process)  initializes the process struct with default values.
-free(*process)  deallocates any memory used by the process struct internally
-                and makes the process struct available to be init'd again.
+process_create(*process)   Initializes the process struct with default values.
+process_destroy(*process)
+    Deallocates any memory used by the process struct internally
+    and makes the process struct available to be process_create'd again.
 
 set_process_executable(*process, Exe)   sets the executable to be run for the
     process to Exe.
@@ -37,19 +38,22 @@ set_process_io(*process, In, Out, Err)  sets the io_handles of the process
 
 get_process_io(*process, In, Out, Err)  gets the io_handles of the process.
 
-start_process(*process[, err])  starts the process with the parameters set
+process_start(*process[, err])
+    Starts the process with the parameters set
     and returns whether or not starting was successful.
 
-stop_process(*process[, err])   stops the given process that is associated
+process_stop(*process[, err])
+    Stops the given process that is associated
     with the *process struct and returns whether or not stopping was
     successful.
 
-stop_process(Pid[, err])    stops the process that has the given process Id
+process_stop(Pid[, err])
+    Stops the process that has the given process Id
     Pid and returns whether or not stopping was successful.
 
-get_pid()   gets the process ID of the currently running process.
-get_pid(*process)  gets the process ID of the given process.
-get_parent_pid()   gets the parent process ID of the currently running process.
+get_process_id()   gets the process ID of the currently running process.
+get_process_id(*process)  gets the process ID of the given process.
+get_parent_process_id()   gets the parent process ID of the currently running process.
 */
 
 #include "shl/platform.hpp"

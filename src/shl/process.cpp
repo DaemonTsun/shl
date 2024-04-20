@@ -637,7 +637,7 @@ int get_parent_process_id()
     HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     PROCESSENTRY32 entry{};
 
-    int current_pid = get_pid();
+    int current_pid = get_process_id();
     
     if (!Process32First(snapshot, &entry))
     {
