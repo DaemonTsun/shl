@@ -227,7 +227,7 @@ void free(process_start_info *info)
     _free_process_start_info_arguments(info);
 }
 
-void init(process *p)
+void process_create(process *p)
 {
     assert(p != nullptr);
 
@@ -235,7 +235,7 @@ void init(process *p)
     init(&p->start_info);
 }
 
-void free(process *p)
+void process_destroy(process *p)
 {
     if (p == nullptr)
         return;
@@ -499,7 +499,7 @@ void get_process_io(process *p, io_handle *in, io_handle *out, io_handle *err_ou
 #endif
 }
 
-bool start_process(process *p, error *err)
+bool process_start(process *p, error *err)
 {
     assert(p != nullptr);
 
@@ -554,7 +554,7 @@ bool start_process(process *p, error *err)
     return true;
 }
 
-bool stop_process(process *p, error *err)
+bool process_stop(process *p, error *err)
 {
     assert(p != nullptr);
 
@@ -565,7 +565,7 @@ bool stop_process(process *p, error *err)
         return false;
     }
 #else
-    if (!stop_process(p->detail.pid, err))
+    if (!process_stop(p->detail.pid, err))
         return false;
 #endif
 
@@ -574,7 +574,7 @@ bool stop_process(process *p, error *err)
     return true;
 }
 
-bool stop_process(int pid, error *err)
+bool process_stop(int pid, error *err)
 {
 #if Windows
     HANDLE h = OpenProcess(PROCESS_TERMINATE, true, pid);
@@ -612,7 +612,7 @@ bool stop_process(int pid, error *err)
     return true;
 }
 
-int get_pid()
+int get_process_id()
 {
 #if Windows
     return GetCurrentProcessId();
@@ -622,7 +622,7 @@ int get_pid()
 }
 
 // given process
-int get_pid(const process *p)
+int get_process_id(const process *p)
 {
 #if Windows
     return GetProcessId((HANDLE)p->detail.hProcess);
@@ -631,7 +631,7 @@ int get_pid(const process *p)
 #endif
 }
 
-int get_parent_pid()
+int get_parent_process_id()
 {
 #if Windows
     HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);

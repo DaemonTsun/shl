@@ -13,7 +13,7 @@
 define_test(process_arguments_test)
 {
     process p{};
-    init(&p);
+    process_create(&p);
 
     set_process_arguments(&p, SYS_CHAR(R"=(echo "hello world"   a\\b\"c\")="));
 
@@ -49,7 +49,7 @@ define_test(process_arguments_test)
 define_test(process_test)
 {
     process p;
-    init(&p);
+    process_create(&p);
     error err{};
 
     bool ok;
@@ -62,13 +62,13 @@ define_test(process_test)
     set_process_arguments(&p, "hello world");
 #endif
 
-    ok = start_process(&p, &err);
+    ok = process_start(&p, &err);
 
     assert_equal(ok, true);
     assert_equal(err.error_code, 0);
 
-    free(&p);
-    init(&p);
+    process_destroy(&p);
+    process_create(&p);
 
 #if Windows
     set_process_executable(&p, WIN_CMD);
@@ -95,20 +95,20 @@ define_test(process_test)
     set_process_arguments(&p, args);
 #endif
 
-    ok = start_process(&p, &err);
+    ok = process_start(&p, &err);
 
     assert_equal(ok, true);
     assert_equal(err.error_code, 0);
 
-    free(&p);
+    process_destroy(&p);
 }
 
 define_test(process_pipe_test)
 {
     process p{};
-    error err{};
+    process_create(&p);
 
-    init(&p);
+    error err{};
 
     pipe_t out_pipe{};
     init(&out_pipe);
@@ -128,13 +128,12 @@ define_test(process_pipe_test)
 
     set_process_io(&p, stdin_handle(), out_pipe.write, out_pipe.write);
 
-    bool ok = start_process(&p, &err);
+    bool ok = process_start(&p, &err);
     assert_equal(ok, true);
-    assert_not_equal(get_pid(&p), 0);
-    assert_not_equal(get_pid(&p), get_pid());
+    assert_not_equal(get_process_id(&p), 0);
+    assert_not_equal(get_process_id(&p), get_process_id());
 
     char buf[64] = {};
-
     s64 bytes_read = io_read(out_pipe.read, (char*)buf, 63, &err);
 
     assert_equal(err.error_code, 0);
@@ -148,14 +147,15 @@ define_test(process_pipe_test)
 #endif
 
     free(&out_pipe);
-    free(&p);
+    process_destroy(&p);
 }
 
-define_test(stop_process_stops_process)
+define_test(process_stop_stops_process)
 {
     process p{};
+    process_create(&p);
+
     error err{};
-    init(&p);
 
 #if Windows
     const sys_char *cmd = WIN_CMD;
@@ -172,14 +172,14 @@ define_test(stop_process_stops_process)
     set_process_executable(&p, cmd);
     set_process_arguments(&p, args);
 
-    assert_equal(start_process(&p, &err), true);
-    assert_equal(stop_process(&p, &err), true);
+    assert_equal(process_start(&p, &err), true);
+    assert_equal(process_stop(&p, &err), true);
     assert_equal(err.error_code, 0);
-    assert_equal(stop_process(&p, &err), false);
+    assert_equal(process_stop(&p, &err), false);
     assert_not_equal(err.error_code, 0);
 
     free(&pip);
-    free(&p);
+    process_destroy(&p);
 }
 
 define_default_test_main();

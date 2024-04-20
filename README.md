@@ -26,7 +26,7 @@ A replacement library for the standard library, because STDs are no good.
 - [`arena_allocator`](src/shl/allocator_arena.hpp): arena allocator
 - [`program_context`](src/shl/program_context.hpp): (per thread) context for setting "global" information, e.g. allocator
 - [`sleep(float seconds)`](src/shl/time.hpp): multiplatform time functions
-- [`start_process`, `stop_process`, ...](src/shl/process.hpp): process management
+- [`process_create`, `process_start`, ...](src/shl/process.hpp): process management
 - [`thread_create`, `thread_start`, ...](src/shl/thread.hpp): thread management
 - [`pipe`](src/shl/pipe.hpp): OS pipes
 - [`scratch_buffer`](src/shl/scratch_buffer.hpp): a buffer with a fixed part on the stack, which may grow onto the heap

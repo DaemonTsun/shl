@@ -8,12 +8,12 @@ Process header. Defines structs and functions to work with processes.
 Example usage:
 
     process p;
-    init(&p);
+    process_create(&p);
 
     set_process_executable(&p, "/usr/bin/echo");
     set_process_arguments(&p, "hello world");
 
-    start_process(&p);
+    process_start(&p);
 
 Functions:
 init(*process)  initializes the process struct with default values.
@@ -88,10 +88,10 @@ struct process_start_info
 #endif
 
     const sys_char **environment;
-    bool inherit_handles; // used only on windows
+    bool  inherit_handles; // used only on windows
 
     bool _free_exe_path; // if converted
-    s64 _free_exe_path_size;
+    s64  _free_exe_path_size;
     bool _free_args; // if allocated by set_process_arguments or converted
     s64 *_free_args_sizes;
     process_start_detail detail;
@@ -108,28 +108,26 @@ struct process
     process_detail detail;
 };
 
-void init(process *p);
-void free(process *p);
+void process_create (process *p);
+void process_destroy(process *p);
 
 void set_process_executable(process *p, const char    *exe);
 void set_process_executable(process *p, const wchar_t *exe);
-void set_process_arguments(process *p, const char    *args);
-void set_process_arguments(process *p, const wchar_t *args);
-void set_process_arguments(process *p, const char    **args, bool raw = false);
-void set_process_arguments(process *p, const wchar_t **args);
+void set_process_arguments (process *p, const char    *args);
+void set_process_arguments (process *p, const wchar_t *args);
+void set_process_arguments (process *p, const char    **args, bool raw = false);
+void set_process_arguments (process *p, const wchar_t **args);
 
-void set_process_io(process *p, io_handle in, io_handle out, io_handle err_out);
+void set_process_io(process *p, io_handle  in, io_handle  out, io_handle  err_out);
 void get_process_io(process *p, io_handle *in, io_handle *out, io_handle *err_out);
 
-bool start_process(process *p, error *err);
-bool stop_process(process *p, error *err);
-bool stop_process(int pid, error *err);
+bool process_start(process *p, error *err);
+bool process_stop (process *p, error *err);
+bool process_stop (int pid, error *err);
 
-// current process
-int get_pid();
-// given process
-int get_pid(const process *p);
+int get_process_id();
+int get_process_id(const process *p);
 
-int get_parent_pid();
+int get_parent_process_id();
 
 
