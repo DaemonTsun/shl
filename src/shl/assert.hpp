@@ -23,28 +23,31 @@ can be disabled by defining the NO_ASSERT_COLORS preprocessor constant.
 #include "shl/debug.hpp"
 
 #ifdef NDEBUG
-#define assert(...) ((void)0)
+#  ifndef assert
+#    define assert(...) ((void)0)
+#  endif
 #else
 
 extern void _print_assert_msg(const char *msg, int len);
 
 #ifndef STRINGIFY
-#define STRINGIFY2(x) #x
-#define STRINGIFY(x)  STRINGIFY2(x)
+#  define STRINGIFY2(x) #x
+#  define STRINGIFY(x)  STRINGIFY2(x)
 #endif
 
 #if defined(_MSC_VER) || defined(NO_ASSERT_COLORS)
-#define _A_TERM_COLOR_RED   ""
-#define _A_TERM_COLOR_BLUE  ""
-#define _A_TERM_COLOR_RESET ""
+#  define _A_TERM_COLOR_RED   ""
+#  define _A_TERM_COLOR_BLUE  ""
+#  define _A_TERM_COLOR_RESET ""
 #else
-#define _A_TERM_COLOR_RED   "\033[31m"
-#define _A_TERM_COLOR_BLUE  "\033[36m"
-#define _A_TERM_COLOR_RESET "\033[0m"
+#  define _A_TERM_COLOR_RED   "\033[31m"
+#  define _A_TERM_COLOR_BLUE  "\033[36m"
+#  define _A_TERM_COLOR_RESET "\033[0m"
 #endif
 
-#if defined(ASSERT_PRINT_MESSAGE)
-#define assert(c, ...) \
+#ifndef assert
+#  if defined(ASSERT_PRINT_MESSAGE)
+#    define assert(c, ...) \
     {\
         if (!(c))\
         {\
@@ -53,11 +56,12 @@ extern void _print_assert_msg(const char *msg, int len);
             breakpoint();\
         }\
     } while (0);
-#else
-#define assert(c, ...) \
+#  else
+#    define assert(c, ...) \
     {\
         if (!(c)) breakpoint();\
     } while (0);
+#  endif
 #endif
 
 #endif
