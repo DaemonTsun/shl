@@ -125,6 +125,40 @@ define_test(equals_operator_returns_if_strings_are_equal)
     free(&str);
 }
 
+define_test(equals_operator_returns_if_strings_are_equal2)
+{
+    string str = "hello"_s;
+    const_string cstr = "hello"_cs;
+
+    assert_equal(str  == "hello"_cs, true);
+    assert_equal(cstr == "hello"_cs, true);
+    assert_equal(str  == "hellow"_cs, false);
+    assert_equal(cstr == "hellow"_cs, false);
+    assert_equal(str  == "hell"_cs, false);
+    assert_equal(cstr == "hell"_cs, false);
+    assert_equal(str  == "hello", true);
+    assert_equal(cstr == "hello", true);
+    assert_equal(str  == "hellow", false);
+    assert_equal(cstr == "hellow", false);
+    assert_equal(str  == "hell", false);
+    assert_equal(cstr == "hell", false);
+
+    assert_equal("hello"_cs  == str , true);
+    assert_equal("hello"_cs  == cstr, true);
+    assert_equal("hellow"_cs == str , false);
+    assert_equal("hellow"_cs == cstr, false);
+    assert_equal("hell"_cs   == str , false);
+    assert_equal("hell"_cs   == cstr, false);
+    assert_equal("hello"     == str , true);
+    assert_equal("hello"     == cstr, true);
+    assert_equal("hellow"    == str , false);
+    assert_equal("hellow"    == cstr, false);
+    assert_equal("hell"      == str , false);
+    assert_equal("hell"      == cstr, false);
+
+    free(&str);
+}
+
 define_test(is_space_returns_true_if_character_is_whitespace)
 {
     assert_equal(is_space(' '), true);
@@ -1499,7 +1533,8 @@ define_test(resolve_environment_variables_resolves_c_string_environment_variable
 
     resolve_environment_variables(buf, 13);
 
-    assert_equal(to_const_string(buf), "hello WORLD\n"_cs);
+    const_string s = to_const_string(buf);
+    assert_equal(buf, "hello WORLD\n"_cs);
 }
 
 define_test(resolve_environment_variables_cuts_off_too_long_variables)
@@ -1509,7 +1544,7 @@ define_test(resolve_environment_variables_cuts_off_too_long_variables)
 
     resolve_environment_variables(buf, 14);
 
-    assert_equal(to_const_string(buf), "hello Somebody"_cs);
+    assert_equal(buf, "hello Somebody"_cs);
 }
 
 define_test(resolve_environment_variables_cuts_off_too_long_variables2)
@@ -1519,7 +1554,7 @@ define_test(resolve_environment_variables_cuts_off_too_long_variables2)
 
     resolve_environment_variables(buf, 14);
 
-    assert_equal(to_const_string(buf), L"hello Somebody"_cs);
+    assert_equal(buf, L"hello Somebody"_cs);
 }
 
 define_test(resolve_environment_variables_resolves_nonexistent_variables_as_empty_strings)
@@ -1528,7 +1563,7 @@ define_test(resolve_environment_variables_resolves_nonexistent_variables_as_empt
 
     resolve_environment_variables(buf, 31);
 
-    assert_equal(to_const_string(buf), "world  xyz  WORLD\n"_cs);
+    assert_equal(buf, "world  xyz  WORLD\n"_cs);
 }
 
 define_test(resolve_environment_variables_doesnt_resolve_escaped_variables)
@@ -1537,7 +1572,7 @@ define_test(resolve_environment_variables_doesnt_resolve_escaped_variables)
 
     resolve_environment_variables(buf, 13);
 
-    assert_equal(to_const_string(buf), R"(hello $world)"_cs);
+    assert_equal(buf, R"(hello $world)"_cs);
 }
 
 define_test(resolve_environment_variables_doesnt_resolve_escaped_variables2)
@@ -1546,7 +1581,7 @@ define_test(resolve_environment_variables_doesnt_resolve_escaped_variables2)
 
     resolve_environment_variables(buf, 15);
 
-    assert_equal(to_const_string(buf), R"(hello \\$world)"_cs);
+    assert_equal(buf, R"(hello \\$world)"_cs);
 }
 
 define_test(resolve_environment_variables_doesnt_resolve_escaped_variables3)
@@ -1555,7 +1590,7 @@ define_test(resolve_environment_variables_doesnt_resolve_escaped_variables3)
 
     resolve_environment_variables(buf, 16);
 
-    assert_equal(to_const_string(buf), LR"(hello \\\$world)"_cs);
+    assert_equal(buf, LR"(hello \\\$world)"_cs);
 }
 
 define_test(resolve_environment_variables_does_nothing_on_strings_without_variables)
@@ -1564,7 +1599,7 @@ define_test(resolve_environment_variables_does_nothing_on_strings_without_variab
 
     resolve_environment_variables(buf, 12);
 
-    assert_equal(to_const_string(buf), "hello world\n"_cs);
+    assert_equal(buf, "hello world\n"_cs);
 }
 
 define_test(resolve_environment_variables_resolves_string_environment_variables)
@@ -1575,7 +1610,7 @@ define_test(resolve_environment_variables_resolves_string_environment_variables)
 
     resolve_environment_variables(&str);
 
-    assert_equal(to_const_string(str), "hello WORLD\n"_cs);
+    assert_equal(str, "hello WORLD\n"_cs);
     assert_equal(str.size, 12);
 }
 
@@ -1587,7 +1622,7 @@ define_test(resolve_environment_variables_expands_string)
 
     resolve_environment_variables(&str);
 
-    assert_equal(to_const_string(str), "hello Somebody once told me the world is g\n"_cs);
+    assert_equal(str, "hello Somebody once told me the world is g\n"_cs);
     assert_equal(str.size, 43);
 }
 
@@ -1598,7 +1633,7 @@ define_test(resolve_environment_variables_resolves_wide_strings)
 
     resolve_environment_variables(&str);
 
-    assert_equal(to_const_string(str), L"hello WORLD\n"_cs);
+    assert_equal(str, L"hello WORLD\n"_cs);
     assert_equal(str.size, 12);
 }
 

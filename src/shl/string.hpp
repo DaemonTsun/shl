@@ -290,11 +290,14 @@ inline const_string_base<C> to_const_string(const C *s, s64 n)
     return const_string_base<C>{s, n};
 }
 
+/* breaks to_const_string(const C *s)
+ * thanks C
 template<typename C, s64 N>
-inline const_string_base<C> to_const_string(const C s[N])
+inline const_string_base<C> to_const_string(const C (&s)[N])
 {
-    return const_string_base<C>{s, N};
+    return const_string_base<C>{s, N-1}; // -1 because string literals count null terminating char 
 }
+*/
 
 template<typename C>
 inline const_string_base<C> to_const_string(const string_base<C> *s)
@@ -659,26 +662,21 @@ hash_t hash(const const_wstring *str);
 hash_t hash(const string  *str);
 hash_t hash(const wstring *str);
 
-template<typename C>
-inline bool operator==(const_string_base<C> a, const_string_base<C> b)
-{
-    return compare_strings(a, b) == 0;
-}
+#define define_comparison_operators(T1, T2)\
+    static inline bool operator==(T1 a, T2 b)\
+    {\
+        return compare_strings(a, b) == 0;\
+    }\
+    \
+    static inline bool operator!=(T1 a, T2 b)\
+    {\
+        return compare_strings(a, b) != 0;\
+    }
 
-template<typename C>
-inline bool operator!=(const_string_base<C> a, const_string_base<C> b)
-{
-    return compare_strings(a, b) != 0;
-}
+define_comparison_operators(const_string,  const_string);
+define_comparison_operators(const_wstring, const_wstring);
 
-template<typename C>
-inline bool operator==(const string_base<C> &a, const string_base<C> &b)
-{
-    return compare_strings(a, b) == 0;
-}
-
-template<typename C>
-inline bool operator!=(const string_base<C> &a, const string_base<C> &b)
-{
-    return compare_strings(a, b) != 0;
-}
+define_comparison_operators(const_string,  const char*);
+define_comparison_operators(const char*,   const_string);
+define_comparison_operators(const_wstring,  const wchar_t*);
+define_comparison_operators(const wchar_t*, const_wstring);
