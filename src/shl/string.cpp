@@ -656,26 +656,6 @@ DEFINE_DECIMAL_BODY(double, to_double, strtod, wcstod);
 DEFINE_DECIMAL_BODY(long double, to_long_double, strtold, wcstold);
 
 // manip
-void set_string(string  *dst, const char    *src)
-{
-    set_string(dst, to_const_string(src));
-}
-
-void set_string(wstring *dst, const wchar_t *src)
-{
-    set_string(dst, to_const_string(src));
-}
-
-void set_string(string  *dst, const char    *src, s64 n)
-{
-    set_string(dst, to_const_string(src, n));
-}
-
-void set_string(wstring *dst, const wchar_t *src, s64 n)
-{
-    set_string(dst, to_const_string(src, n));
-}
-
 template<typename C>
 void _set_string(string_base<C> *dst, const_string_base<C> src)
 {
@@ -691,12 +671,17 @@ void _set_string(string_base<C> *dst, const_string_base<C> src)
     dst->data[dst->size] = '\0';
 }
 
-void set_string(string  *dst, const_string   src)
+void set_string(string  *dst, const char    *src)
 {
-    _set_string(dst, src);
+    set_string(dst, to_const_string(src));
 }
 
-void set_string(wstring *dst, const_wstring  src)
+void set_string(string  *dst, const char    *src, s64 n)
+{
+    set_string(dst, to_const_string(src, n));
+}
+
+void set_string(string  *dst, const_string   src)
 {
     _set_string(dst, src);
 }
@@ -706,11 +691,71 @@ void set_string(string  *dst, const string  *src)
     set_string(dst, to_const_string(src));
 }
 
+void set_string(string  *dst, const wchar_t    *src)
+{
+    set_string(dst, to_const_string(src));
+}
+
+void set_string(string  *dst, const wchar_t    *src, s64 n)
+{
+    set_string(dst, to_const_string(src, n));
+}
+
+void set_string(string  *dst, const_wstring   src)
+{
+    string_reserve(dst, src.size);
+    ::fill_memory((void*)dst->data, 0, dst->reserved_size * sizeof(char));
+
+    dst->size = ::wcstombs(dst->data, src.c_str, src.size * sizeof(wchar_t));
+}
+
+void set_string(string  *dst, const wstring  *src)
+{
+    set_string(dst, to_const_string(src));
+}
+
+void set_string(wstring *dst, const wchar_t *src)
+{
+    set_string(dst, to_const_string(src));
+}
+
+void set_string(wstring *dst, const wchar_t *src, s64 n)
+{
+    set_string(dst, to_const_string(src, n));
+}
+
+void set_string(wstring *dst, const_wstring  src)
+{
+    _set_string(dst, src);
+}
+
 void set_string(wstring *dst, const wstring *src)
 {
     set_string(dst, to_const_string(src));
 }
 
+void set_string(wstring *dst, const char *src)
+{
+    set_string(dst, to_const_string(src));
+}
+
+void set_string(wstring *dst, const char *src, s64 n)
+{
+    set_string(dst, to_const_string(src, n));
+}
+
+void set_string(wstring *dst, const_string  src)
+{
+    string_reserve(dst, src.size);
+    ::fill_memory((void*)dst->data, 0, dst->reserved_size * sizeof(wchar_t));
+
+    dst->size = ::mbstowcs(dst->data, src.c_str, src.size * sizeof(char));
+}
+
+void set_string(wstring *dst, const string *src)
+{
+    set_string(dst, to_const_string(src));
+}
 
 char *copy_string(const char *src, char *dst)
 {

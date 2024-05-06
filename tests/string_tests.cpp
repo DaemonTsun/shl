@@ -430,7 +430,7 @@ define_test(to_double_converts_to_double)
     assert_equal(to_double("500"), 500.0);
 }
 
-define_test(set_string_empty_string)
+define_test(set_string_empties_string)
 {
     string dst{};
 
@@ -469,6 +469,36 @@ define_test(set_string_overwrites_string2)
 
     assert_equal(compare_strings(dst.data, "lorem ipsum abc def"), 0);
     assert_equal(dst.size, 19);
+
+    free(&dst);
+}
+
+define_test(set_string_converts_char_types)
+{
+    string dst{};
+
+    assert_equal(dst.data, nullptr);
+    assert_equal(dst.size, 0);
+
+    set_string(&dst, L"hello");
+
+    assert_equal(dst, "hello");
+    assert_equal(dst.size, 5);
+
+    free(&dst);
+}
+
+define_test(set_string_converts_char_types2)
+{
+    wstring dst{};
+
+    assert_equal(dst.data, nullptr);
+    assert_equal(dst.size, 0);
+
+    set_string(&dst, "hello");
+
+    assert_equal(dst, L"hello");
+    assert_equal(dst.size, 5);
 
     free(&dst);
 }

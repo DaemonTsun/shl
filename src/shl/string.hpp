@@ -82,6 +82,7 @@ to_float(s)         converts the string to a float
 ...
 
 set_string(dest, src)      sets dest to a copy of src
+                           can also convert between char types 
 
 copy_string(src, dest)           copies one string to another
 copy_string(src, dest, n)        copies one string to another, up to n characters
@@ -387,15 +388,23 @@ DEFINE_DECIMAL_SIGNATURE(long double, to_long_double);
 
 // string manipulation
 
-// sets dst to src, discarding all previous data in dst
-void set_string(string  *dst, const char    *src);
-void set_string(wstring *dst, const wchar_t *src);
-void set_string(string  *dst, const char    *src, s64 n);
-void set_string(wstring *dst, const wchar_t *src, s64 n);
-void set_string(string  *dst, const_string   src);
-void set_string(wstring *dst, const_wstring  src);
-void set_string(string  *dst, const string  *src);
-void set_string(wstring *dst, const wstring *src);
+// sets dst to src, discarding all previous data in dst.
+void set_string(string  *dst, const char     *src);
+void set_string(string  *dst, const char     *src, s64 n);
+void set_string(string  *dst, const_string    src);
+void set_string(string  *dst, const string   *src);
+void set_string(string  *dst, const wchar_t  *src);
+void set_string(string  *dst, const wchar_t  *src, s64 n);
+void set_string(string  *dst, const_wstring   src);
+void set_string(string  *dst, const wstring  *src);
+void set_string(wstring  *dst, const char     *src);
+void set_string(wstring  *dst, const char     *src, s64 n);
+void set_string(wstring  *dst, const_string    src);
+void set_string(wstring  *dst, const string   *src);
+void set_string(wstring  *dst, const wchar_t  *src);
+void set_string(wstring  *dst, const wchar_t  *src, s64 n);
+void set_string(wstring  *dst, const_wstring   src);
+void set_string(wstring  *dst, const wstring  *src);
 
 char    *copy_string(const char    *src, char    *dst);
 wchar_t *copy_string(const wchar_t *src, wchar_t *dst);
