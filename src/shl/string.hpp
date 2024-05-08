@@ -409,6 +409,8 @@ void set_string(wstring  *dst, const wstring  *src);
 char    *copy_string(const char    *src, char    *dst);
 wchar_t *copy_string(const wchar_t *src, wchar_t *dst);
 char    *copy_string(const char    *src, char    *dst, s64 n);
+wchar_t *copy_string(const char    *src, wchar_t *dst, s64 n);
+char    *copy_string(const wchar_t *src, char    *dst, s64 n);
 wchar_t *copy_string(const wchar_t *src, wchar_t *dst, s64 n);
 
 // allocates more memory in dst if dst is not large enough to store src

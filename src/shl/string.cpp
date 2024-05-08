@@ -772,6 +772,26 @@ char *copy_string(const char *src, char *dst, s64 n)
     return stpncpy(dst, src, n);
 }
 
+wchar_t *copy_string(const char    *src, wchar_t *dst, s64 n)
+{
+    s64 written = mbstowcs(dst, src, n);
+
+    if (written < 0)
+        return dst;
+
+    return dst + written;
+}
+
+char    *copy_string(const wchar_t *src, char    *dst, s64 n)
+{
+    s64 written = wcstombs(dst, src, n);
+
+    if (written < 0)
+        return dst;
+
+    return dst + written;
+}
+
 wchar_t *copy_string(const wchar_t *src, wchar_t *dst, s64 n)
 {
     return wcpncpy(dst, src, n);
