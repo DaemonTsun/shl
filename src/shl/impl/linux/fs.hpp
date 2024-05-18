@@ -43,9 +43,12 @@ sys_int write(int fd, const void *buf, sys_int size);
 #  define S_IREAD    0400
 #  define S_IWRITE   0200
 #  define S_IEXEC    0100
-#  define S_ISUID    04000
-#  define S_ISGID    02000
-#  define S_ISVTX    01000
+#endif
+
+#ifndef S_ISUID
+#  define S_ISUID     00004000
+#  define S_ISGID     00002000
+#  define S_ISVTX     00001000
 #endif
 
 #ifndef S_IRUSR
