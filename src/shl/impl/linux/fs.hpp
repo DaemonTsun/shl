@@ -139,7 +139,7 @@ sys_int ftruncate(int fd, sys_int size);
 #endif
 
 // getdents
-struct dirent64
+struct linux_dirent64
 {
     u64  inode;
     s64  offset;

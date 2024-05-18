@@ -1,0 +1,34 @@
+
+// include this after compat_stdlib.hpp
+#undef chown      
+#undef fchown     
+#undef fchownat   
+#undef chdir      
+#undef fchdir     
+#undef getcwd     
+#undef link       
+#undef linkat     
+#undef symlink    
+#undef symlinkat  
+#undef readlink   
+#undef readlinkat 
+#undef unlink     
+#undef unlinkat   
+#undef rmdir      
+#undef chroot     
+#undef fsync      
+#undef fdatasync  
+#undef sync       
+#undef truncate   
+#undef ftruncate  
+#undef pwrite64
+#undef pread64
+#undef write
+#undef read
+#undef open
+#undef close
+#undef access
+#undef renameat2
+#undef renameat
+#undef rename
+#undef printf
