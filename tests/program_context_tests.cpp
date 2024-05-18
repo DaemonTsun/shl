@@ -1,10 +1,9 @@
 
-#define t1_use_stdlib 1
 #include "shl/program_context.hpp"
 #include "shl/allocator_arena.hpp"
 #include "shl/memory.hpp"
 
-#include <t1/t1.hpp>
+#include "t1/t1.hpp"
 
 define_test(with_context_changes_context_for_block)
 {

@@ -1,5 +1,4 @@
 
-#define t1_use_stdlib 1
 #include <string.h>
 #include <stdlib.h>
 #include <t1/t1.hpp>

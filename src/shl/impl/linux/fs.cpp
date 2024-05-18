@@ -338,23 +338,6 @@ sys_int umask(int mask)
         (void*)(sys_int)mask);
 }
 
-sys_int mknod(const char *path, int mode, sys_int dev)
-{
-    return (sys_int)::linux_syscall3(SYS_mknod,
-        (void*)path,
-        (void*)(sys_int)mode,
-        (void*)dev);
-}
-
-sys_int mknodat(int fd, const char *path, int mode, sys_int dev)
-{
-    return (sys_int)::linux_syscall4(SYS_mknodat,
-        (void*)(sys_int)fd,
-        (void*)path,
-        (void*)(sys_int)mode,
-        (void*)dev);
-}
-
 sys_int chroot(const char *path)
 {
     return (sys_int)::linux_syscall1(SYS_chroot,

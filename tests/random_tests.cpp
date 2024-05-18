@@ -1,5 +1,4 @@
 
-#define t1_use_stdlib 1
 #include "shl/random.hpp"
 #include "t1/t1.hpp"
 

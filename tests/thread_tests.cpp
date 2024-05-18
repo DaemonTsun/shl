@@ -1,6 +1,5 @@
 
-#define t1_use_stdlib 1
-#include <t1/t1.hpp>
+#include "t1/t1.hpp"
 #include "shl/thread.hpp"
 #include "shl/time.hpp"
 

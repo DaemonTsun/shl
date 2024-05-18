@@ -1,5 +1,7 @@
 
-#define t1_use_stdlib 1
+#include <iostream>
+#include <string.h>
+
 #include <t1/t1.hpp>
 #include "shl/hash.hpp"
 

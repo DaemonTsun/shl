@@ -43,12 +43,9 @@ sys_int write(int fd, const void *buf, sys_int size);
 #  define S_IREAD    0400
 #  define S_IWRITE   0200
 #  define S_IEXEC    0100
-#endif
-
-#ifndef S_ISUID
-#  define S_ISUID     00004000
-#  define S_ISGID     00002000
-#  define S_ISVTX     00001000
+#  define S_ISUID    04000
+#  define S_ISGID    02000
+#  define S_ISVTX    01000
 #endif
 
 #ifndef S_IRUSR
@@ -194,22 +191,6 @@ sys_int fchown(int fd, int owner, int group);
 sys_int fchownat(int fd, const char *path, int owner, int group, int flags);
 
 sys_int umask(int mask);
-
-// types
-#ifndef S_IFMT
-#  define S_IFMT    00170000
-#  define S_IFDIR   0040000
-#  define S_IFCHR   0020000
-#  define S_IFBLK   0060000
-#  define S_IFREG   0100000
-#  define S_IFIFO   0010000
-#  define S_IFLNK   0120000
-#  define S_IFSOCK  0140000
-#endif
-
-sys_int mknod(const char *path, int mode, sys_int dev);
-sys_int mknodat(int fd, const char *path, int mode, sys_int dev);
-
 sys_int chroot(const char *path);
 
 #ifndef UTIME_NOW
