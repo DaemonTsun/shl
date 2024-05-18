@@ -18,6 +18,7 @@ typedef string_base<sys_char> sys_string;
 #include "shl/impl/linux/exit.hpp"
 #include "shl/impl/linux/process.hpp"
 #include "shl/impl/linux/signal.hpp"
+#include "shl/impl/linux/fs.hpp"
 
 
 const char *_get_exe_name(const char *path)

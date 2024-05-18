@@ -26,24 +26,3 @@ extern "C" int getppid()
     return (int)(sys_int)linux_syscall(SYS_getppid);
 }
 
-extern "C" int dup(int oldfd)
-{
-    return (int)(sys_int)linux_syscall1(SYS_dup,
-                                        (void*)(sys_int)oldfd);
-}
-
-extern "C" int dup2(int oldfd, int newfd)
-{
-    return (int)(sys_int)linux_syscall2(SYS_dup2,
-                                        (void*)(sys_int)oldfd,
-                                        (void*)(sys_int)newfd);
-}
-
-extern "C" int dup3(int oldfd, int newfd, int flags)
-{
-    return (int)(sys_int)linux_syscall3(SYS_dup2,
-                                        (void*)(sys_int)oldfd,
-                                        (void*)(sys_int)newfd,
-                                        (void*)(sys_int)flags);
-}
-
