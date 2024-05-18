@@ -57,6 +57,9 @@ struct statx
 #  define S_IFDIR     00040000
 #  define S_IFCHR     00020000
 #  define S_IFIFO     00010000
+#endif
+
+#ifndef S_ISUID
 #  define S_ISUID     00004000
 #  define S_ISGID     00002000
 #  define S_ISVTX     00001000
