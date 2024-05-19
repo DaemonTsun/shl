@@ -8,6 +8,23 @@ Linux statx struct and syscall.
 
 #include "shl/number_types.hpp"
 
+// AT* definitions and flags
+#ifndef AT_FDCWD
+#  define AT_FDCWD              -100
+#  define AT_SYMLINK_NOFOLLOW   0x100
+#  define AT_REMOVEDIR          0x200
+#  define AT_SYMLINK_FOLLOW     0x400
+#  define AT_NO_AUTOMOUNT       0x800
+#  define AT_EMPTY_PATH         0x1000
+#  define AT_STATX_SYNC_AS_STAT 0x0000
+#  define AT_STATX_FORCE_SYNC   0x2000
+#  define AT_STATX_DONT_SYNC    0x4000
+#  define AT_STATX_SYNC_TYPE    0x6000
+#  define AT_RECURSIVE          0x8000
+
+#  define AT_EACCESS            0x200
+#endif
+
 struct statx;
 
 extern "C" sys_int statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *out);

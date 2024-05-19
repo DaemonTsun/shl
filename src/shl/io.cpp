@@ -5,7 +5,7 @@
 #include "shl/impl/linux/syscalls.hpp"
 #include "shl/impl/linux/statx.hpp"
 #include "shl/impl/linux/select.hpp"
-#include "shl/impl/linux/at.hpp"
+#include "shl/impl/linux/io.hpp"
 #include "shl/time.hpp" // timespan
 #endif
 
@@ -66,10 +66,7 @@ s64 io_read(io_handle h, char *buf, u64 size, error *err)
         return -1;
     }
 #else
-    ret = (sys_int)linux_syscall3(SYS_read,
-                                  (void*)(sys_int)h,
-                                  (void*)buf,
-                                  (void*)size);
+    ret = read(h, buf, size);
 
     if (ret < 0)
     {
@@ -92,10 +89,7 @@ s64 io_write(io_handle h, const char *buf, u64 size, error *err)
         return -1;
     }
 #else
-    ret = (sys_int)linux_syscall3(SYS_write,
-                                  (void*)(sys_int)h,
-                                  (void*)buf,
-                                  (void*)size);
+    ret = write(h, buf, size);
 
     if (ret < 0)
     {
@@ -122,10 +116,7 @@ s64 io_seek(io_handle h, s64 offset, int whence, error *err)
     }
 
 #else
-    ret = (sys_int)linux_syscall3(SYS_lseek,
-                                  (void*)(sys_int)h,
-                                  (void*)offset,
-                                  (void*)(sys_int)whence);
+    ret = lseek(h, offset, whence);
 
     if (ret < 0)
     {

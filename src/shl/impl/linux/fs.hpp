@@ -10,83 +10,6 @@ Linux filesystem syscalls, structs and constants.
 
 extern "C"
 {
-sys_int read(int fd, void *buf, sys_int size);
-sys_int write(int fd, const void *buf, sys_int size);
-
-// open flags
-#ifndef O_RDONLY
-#  define O_RDONLY    00
-#  define O_WRONLY    01
-#  define O_RDWR      02
-#  define O_CREAT     0100
-#  define O_EXCL      0200
-#  define O_NOCTTY    0400
-#  define O_TRUNC     01000
-#  define O_APPEND    02000
-#  define O_NONBLOCK  04000
-#  define O_SYNC      04010000
-#  define O_FSYNC     04010000
-#  define O_DSYNC     010000
-#  define O_ASYNC     020000
-#  define O_DIRECT    040000
-#  define O_LARGEFILE 0100000
-#  define O_DIRECTORY 0200000
-#  define O_NOFOLLOW  0400000
-#  define O_NOATIME   01000000
-#  define O_CLOEXEC   02000000
-#  define O_PATH      010000000
-#  define O_TMPFILE   (020000000 | O_DIRECTORY)
-#endif
-
-// mode
-#ifndef S_IREAD
-#  define S_IREAD    0400
-#  define S_IWRITE   0200
-#  define S_IEXEC    0100
-#endif
-
-#ifndef S_ISUID
-#  define S_ISUID     00004000
-#  define S_ISGID     00002000
-#  define S_ISVTX     00001000
-#endif
-
-#ifndef S_IRUSR
-// user
-#  define S_IRWXU 00700
-#  define S_IRUSR 00400
-#  define S_IWUSR 00200
-#  define S_IXUSR 00100
-
-// group
-#  define S_IRWXG 00070
-#  define S_IRGRP 00040
-#  define S_IWGRP 00020
-#  define S_IXGRP 00010
-
-// other
-#  define S_IRWXO 00007
-#  define S_IROTH 00004
-#  define S_IWOTH 00002
-#  define S_IXOTH 00001
-#endif
-
-sys_int open(const char *path, int flags, int mode);
-sys_int openat(int dir_fd, const char *path, int flags, int mode);
-sys_int close(int fd);
-
-#ifndef SEEK_SET
-#  define SEEK_SET  0
-#  define SEEK_CUR  1
-#  define SEEK_END  2
-#  define SEEK_DATA 3
-#  define SEEK_HOLE 4
-#endif
-
-sys_int lseek(int fd, sys_int offset, int origin);
-sys_int pread64(int fd, void *buf, sys_int size, sys_int offset);
-sys_int pwrite64(int fd, const void *buf, sys_int size, sys_int offset);
-
 // mode to check with access
 #ifndef F_OK
 #  define F_OK  0
@@ -116,15 +39,6 @@ sys_int access(const char *path, int mode);
 #endif
 
 sys_int faccessat2(int fd, const char *path, int mode, int flags);
-
-int dup(int oldfd);
-int dup2(int oldfd, int newfd);
-int dup3(int oldfd, int newfd, int flags); // can specify O_CLOEXEC
-
-sys_int sendfile(int out_fd, int in_fd, sys_int *offset, sys_int count);
-sys_int fsync(int fd);
-sys_int fdatasync(int fd);
-sys_int sync();
 
 sys_int truncate(const char *path, sys_int size);
 sys_int ftruncate(int fd, sys_int size);
