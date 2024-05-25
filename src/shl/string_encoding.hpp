@@ -17,56 +17,28 @@ sizes.
 #define UTF8_2_MAX  0x7ff
 #define UTF8_3_MAX  0xffff
 #define UTF8_4_MAX  0x10ffff
-#define UTF16_MAX   0xffff
+#define UTF16_1_MAX 0xffff
 
-static constexpr char utf8_lengths[] = {
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0
-};
+#define UTF16_SURROGATE_HIGH_LOW_MASK   0xfc00
+#define UTF16_SURROGATE_MASK            0xf800
+#define UTF16_SURROGATE_HIGH            0xd800
+#define UTF16_SURROGATE_LOW             0xdc00
+#define UTF16_CODEPOINT_OFFSET          0x10000
+#define UTF16_CODEPOINT_MASK            0x03ff
 
-// strings must be zero padded to four bytes
-const char *utf8_decode (const char *str, u32 *cp, int *error)
-{
-    // https://nullprogram.com/blog/2017/10/06/
-    static constexpr const s32 masks[]  = {0x00, 0x7f, 0x1f, 0x0f, 0x07};
-    static constexpr const u32 mins[]   = {4194304, 0, 128, 2048, 65536};
-    static constexpr const s32 shiftc[] = {0, 18, 12, 6, 0};
-    static constexpr const s32 shifte[] = {0, 6, 4, 2, 0};
+const char *utf8_decode (const char *str, u32 *cp, int *error);
+const u16  *utf16_decode(const u16  *str, u32 *cp, int *error);
 
-    const u8 *s = (const u8 *)str;
-    int len = utf8_lengths[s[0] >> 3];
-    const u8 *next = s + len + !len;
+// u8str/u16str must be zero padded to a multiple of four bytes.
+// str_buf_size is the total number of elements in the string, regardless
+// of encoding or code points.
+// Returns the number of codepoints (u32) written to out.
+s64 utf8_decode_string (const char *u8str, s64 str_buf_size, u32 *out, s64 out_size);
+s64 utf16_decode_string(const u16 *u16str, s64 str_buf_size, u32 *out, s64 out_size);
 
-    /* Assume a four-byte character and load four bytes. Unused bits are
-     * shifted out.
-     */
-    *cp  = (u32)(s[0] & masks[len]) << 18;
-    *cp |= (u32)(s[1] & 0x3f) << 12;
-    *cp |= (u32)(s[2] & 0x3f) <<  6;
-    *cp |= (u32)(s[3] & 0x3f) <<  0;
-    *cp >>= shiftc[len];
-
-    /* Accumulate the various error conditions. */
-    *error  = (*cp < mins[len]) << 6; // non-canonical encoding
-    *error |= ((*cp >> 11) == 0x1b) << 7;  // surrogate half?
-    *error |= (*cp > 0x10FFFF) << 8;  // out of range?
-    *error |= (s[1] & 0xc0) >> 2;
-    *error |= (s[2] & 0xc0) >> 4;
-    *error |= (s[3]       ) >> 6;
-    *error ^= 0x2a; // top two bits of each tail byte correct?
-    *error >>= shifte[len];
-
-    return (const char*)next;
-}
-
-/*
-static inline const u16  *utf16_decode(const u16  *str, u32 *cp)
-{
-    // TODO: implement
-    (void)cp;
-    return str;
-}
-*/
+// Same as above, but u8str/u16str don't have to be zero padded.
+s64 utf8_decode_string_safe (const char *u8str, s64 str_buf_size, u32 *out, s64 out_size);
+s64 utf16_decode_string_safe(const u16 *u16str, s64 str_buf_size, u32 *out, s64 out_size);
 
 // length of a single unicode codepoint if it were encoded as utf8/utf16
 static inline s32 codepoint_utf8_length (u32 cp)
@@ -79,6 +51,6 @@ static inline s32 codepoint_utf8_length (u32 cp)
 
 static inline s32 codepoint_utf16_length(u32 cp)
 {
-    if (cp <= UTF16_MAX)    return 1;
+    if (cp <= UTF16_1_MAX)  return 1;
     else                    return 2;
 }
