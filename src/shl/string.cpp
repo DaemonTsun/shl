@@ -21,7 +21,7 @@
 
 #if Windows
 // https://stackoverflow.com/a/52989329
-void* memmem(const void* haystack, size_t haystack_len,
+static inline void* memmem(const void* haystack, size_t haystack_len,
     const void* const needle, const size_t needle_len)
 {
     if (haystack == NULL) return NULL; // or assert(haystack != NULL);
@@ -40,7 +40,7 @@ void* memmem(const void* haystack, size_t haystack_len,
 }
 
 template<typename T>
-T *stpncpy(T *dst, const T *src, s64 len)
+static inline T *stpncpy(T *dst, const T *src, s64 len)
 {
     if (memcpy(dst, src, len * sizeof(T)) == nullptr)
         return nullptr;
@@ -48,18 +48,18 @@ T *stpncpy(T *dst, const T *src, s64 len)
     return dst + len;
 }
 
-wchar_t *wcpncpy(wchar_t *dst, const wchar_t *src, s64 len)
+static inline wchar_t *wcpncpy(wchar_t *dst, const wchar_t *src, s64 len)
 {
     return stpncpy<wchar_t>(dst, src, len);
 }
 
 template<typename T>
-T *stpcpy(T *dst, const T *src)
+static inline T *stpcpy(T *dst, const T *src)
 {
     return stpncpy(dst, src, string_length(src));
 }
 
-wchar_t *wcpcpy(wchar_t *dst, const wchar_t *src)
+static inline wchar_t *wcpcpy(wchar_t *dst, const wchar_t *src)
 {
     return stpcpy<wchar_t>(dst, src);
 }
@@ -90,7 +90,7 @@ wstring operator ""_s(const wchar_t *str, u64 n)
 }
 
 template<typename C>
-void _init(string_base<C> *str)
+static inline void _init(string_base<C> *str)
 {
     assert(str != nullptr);
 
@@ -98,7 +98,7 @@ void _init(string_base<C> *str)
 }
 
 template<typename C>
-void _init(string_base<C> *str, s64 size)
+static inline void _init(string_base<C> *str, s64 size)
 {
     assert(str != nullptr);
 
@@ -108,13 +108,13 @@ void _init(string_base<C> *str, s64 size)
 }
 
 template<typename C>
-void _init(string_base<C> *str, const C *c)
+static inline void _init(string_base<C> *str, const C *c)
 {
     init(str, const_string_base<C>{c, string_length(c)});
 }
 
 template<typename C>
-void _init(string_base<C> *str, const C *c, s64 size)
+static inline void _init(string_base<C> *str, const C *c, s64 size)
 {
     assert(str != nullptr);
 
@@ -122,7 +122,7 @@ void _init(string_base<C> *str, const C *c, s64 size)
 }
 
 template<typename C>
-void _init(string_base<C> *str, const_string_base<C> cs)
+static inline void _init(string_base<C> *str, const_string_base<C> cs)
 {
     assert(str != nullptr);
 
@@ -183,7 +183,7 @@ void init(wstring *str, const_wstring s)
 }
 
 template<typename C>
-bool _string_reserve(string_base<C> *s, s64 size)
+static inline bool _string_reserve(string_base<C> *s, s64 size)
 {
     // +1 for \0
     if (s->reserved_size < size + 1)
@@ -337,7 +337,7 @@ bool is_lower(wchar_t c)
 }
 
 template<typename C>
-bool _is_empty(const C *s)
+static inline bool _is_empty(const C *s)
 {
     return (s != nullptr) && (*s == '\0');
 }
@@ -353,7 +353,7 @@ bool is_empty(const wchar_t *s)
 }
 
 template<typename C>
-bool _is_empty_cs(const_string_base<C> s)
+static inline bool _is_empty_cs(const_string_base<C> s)
 {
     return (s.c_str != nullptr) && (s.size == 0);
 }
@@ -381,7 +381,7 @@ bool is_empty(const wstring *s)
 }
 
 template<typename C>
-bool _is_null_or_empty(const C *s)
+static inline bool _is_null_or_empty(const C *s)
 {
     return (s == nullptr) || (*s == '\0');
 }
@@ -397,7 +397,7 @@ bool is_null_or_empty(const wchar_t *s)
 }
 
 template<typename C>
-bool _is_null_or_empty_cs(const_string_base<C> s)
+static inline bool _is_null_or_empty_cs(const_string_base<C> s)
 {
     return (s.c_str == nullptr) || (s.size == 0);
 }
@@ -425,7 +425,7 @@ bool is_null_or_empty(const wstring *s)
 }
 
 template<typename C>
-bool _is_blank(const C *s)
+static inline bool _is_blank(const C *s)
 {
     if (s == nullptr)
         return true;
@@ -452,7 +452,7 @@ bool is_blank(const wchar_t *s)
 }
 
 template<typename C>
-bool _is_blank_cs(const_string_base<C> s)
+static inline bool _is_blank_cs(const_string_base<C> s)
 {
     s64 i = 0;
     s64 size = s.size;
@@ -536,7 +536,7 @@ s64 string_length(const wstring *s)
 }
 
 template<typename C>
-int _compare_strings_cs(const_string_base<C> s1, const_string_base<C> s2, s64 n)
+static inline int _compare_strings_cs(const_string_base<C> s1, const_string_base<C> s2, s64 n)
 {
     int res = 0;
     s64 i = 0;
@@ -590,7 +590,7 @@ template<> bool equals_p(const wstring *s1, const wstring *s2)
 }
 
 template<typename C>
-bool _begins_with_cs(const_string_base<C> s, const_string_base<C> prefix)
+static inline bool _begins_with_cs(const_string_base<C> s, const_string_base<C> prefix)
 {
     return compare_strings(prefix, s, string_length(prefix)) == 0;
 }
@@ -606,7 +606,7 @@ bool _begins_with(const_wstring s, const_wstring prefix)
 }
 
 template<typename C>
-bool _ends_with_cs(const_string_base<C> s, const_string_base<C> suffix)
+static inline bool _ends_with_cs(const_string_base<C> s, const_string_base<C> suffix)
 {
     s64 str_length = string_length(s);
     s64 suffix_length = string_length(suffix);
@@ -657,7 +657,7 @@ DEFINE_DECIMAL_BODY(long double, to_long_double, strtold, wcstold);
 
 // manip
 template<typename C>
-void _set_string(string_base<C> *dst, const_string_base<C> src)
+static inline void _set_string(string_base<C> *dst, const_string_base<C> src)
 {
     assert(dst != nullptr);
 
@@ -798,7 +798,7 @@ wchar_t *copy_string(const wchar_t *src, wchar_t *dst, s64 n)
 }
 
 template<typename C>
-void _copy_string_cs_s(const_string_base<C> src, string_base<C> *dst, s64 n, s64 dst_offset)
+static inline void _copy_string_cs_s(const_string_base<C> src, string_base<C> *dst, s64 n, s64 dst_offset)
 {
     assert(dst != nullptr);
 
@@ -839,7 +839,7 @@ void _copy_string(const_wstring src, wstring *dst, s64 n, s64 dst_offset)
 }
 
 template<typename C>
-string_base<C> _copy_new_string(const_string_base<C> src, s64 n)
+static inline string_base<C> _copy_new_string(const_string_base<C> src, s64 n)
 {
     string_base<C> ret;
     init(&ret);
@@ -859,7 +859,7 @@ wstring _copy_string(const_wstring  src, s64 n)
 }
 
 template<typename C>
-void _append_string_cs(string_base<C> *dst, const_string_base<C> other)
+static inline void _append_string_cs(string_base<C> *dst, const_string_base<C> other)
 {
     assert(dst != nullptr);
 
@@ -901,7 +901,7 @@ void _append_string(wstring *dst, const_wstring other)
 }
 
 template<typename C>
-void _prepend_string_cs(string_base<C> *dst, const_string_base<C> other)
+static inline void _prepend_string_cs(string_base<C> *dst, const_string_base<C> other)
 {
     assert(dst != nullptr);
 
@@ -934,7 +934,7 @@ void _prepend_string(wstring *dst, const_wstring other)
 }
 
 template<typename C>
-s64 _index_of_c(const_string_base<C> str, C needle, s64 offset)
+static inline s64 _index_of_c(const_string_base<C> str, C needle, s64 offset)
 {
     if (offset < 0)
         return -1;
@@ -960,7 +960,7 @@ s64 _index_of(const_wstring str, wchar_t needle, s64 offset)
 }
 
 template<typename C>
-s64 _index_of_s(const_string_base<C> str, const_string_base<C> needle, s64 offset)
+static inline s64 _index_of_s(const_string_base<C> str, const_string_base<C> needle, s64 offset)
 {
     if (offset < 0)
         return -1;
@@ -1015,7 +1015,7 @@ s64 _index_of(const_wstring str, const_wstring needle, s64 offset)
 }
 
 template<typename C>
-s64 _last_index_of_c(const_string_base<C> str, C needle, s64 offset)
+static inline s64 _last_index_of_c(const_string_base<C> str, C needle, s64 offset)
 {
     if (offset < 0)
         return -1;
@@ -1041,7 +1041,7 @@ s64 _last_index_of(const_wstring str, wchar_t needle, s64 offset)
 }
 
 template<typename C>
-s64 _last_index_of_s(const_string_base<C> str, const_string_base<C> needle, s64 offset)
+static inline s64 _last_index_of_s(const_string_base<C> str, const_string_base<C> needle, s64 offset)
 {
     if (offset < 0)
         return -1;
@@ -1086,7 +1086,7 @@ s64 _last_index_of(const_wstring str, const_wstring needle, s64 offset)
 }
 
 template<typename C>
-void _trim_left(string_base<C> *s)
+static inline void _trim_left(string_base<C> *s)
 {
     assert(s != nullptr);
 
@@ -1122,7 +1122,7 @@ void trim_left(wstring *s)
 }
 
 template<typename C>
-void _trim_right(string_base<C> *s)
+static inline void _trim_right(string_base<C> *s)
 {
     assert(s != nullptr);
 
@@ -1160,7 +1160,7 @@ void trim_right(wstring *s)
 }
 
 template<typename C>
-inline void _trim(string_base<C> *s)
+static inline void _trim(string_base<C> *s)
 {
     _trim_left(s);
     _trim_right(s);
@@ -1187,7 +1187,7 @@ wchar_t to_upper(wchar_t c)
 }
 
 template<typename C>
-inline void _to_upper(C *s)
+static inline void _to_upper(C *s)
 {
     while (*s)
     {
@@ -1207,7 +1207,7 @@ void to_upper(wchar_t *s)
 }
 
 template<typename C>
-inline void _to_upper_s(string_base<C> *s)
+static inline void _to_upper_s(string_base<C> *s)
 {
     assert(s != nullptr);
 
@@ -1236,7 +1236,7 @@ wchar_t to_lower(wchar_t c)
 }
 
 template<typename C>
-inline void _to_lower(C *s)
+static inline void _to_lower(C *s)
 {
     while (*s)
     {
@@ -1256,7 +1256,7 @@ void to_lower(wchar_t *s)
 }
 
 template<typename C>
-inline void _to_lower_s(string_base<C> *s)
+static inline void _to_lower_s(string_base<C> *s)
 {
     assert(s != nullptr);
 
@@ -1277,7 +1277,7 @@ void to_lower(wstring *s)
 }
 
 template<typename C>
-const_string_base<C> _substring_nocopy(const_string_base<C> str, s64 start, s64 length)
+static inline const_string_base<C> _substring_nocopy(const_string_base<C> str, s64 start, s64 length)
 {
     if (start >= str.size)
     {
@@ -1301,7 +1301,7 @@ const_wstring _substring(const_wstring s, s64 start, s64 length)
 }
 
 template<typename C>
-void _substring_c_str(const C *s, s64 start, s64 length, C *out, s64 out_offset)
+static inline void _substring_c_str(const C *s, s64 start, s64 length, C *out, s64 out_offset)
 {
     copy_string(s + start, out + out_offset, length);
 }
@@ -1317,7 +1317,7 @@ void substring(const wchar_t *s, s64 start, s64 length, wchar_t *out, s64 out_of
 }
 
 template<typename C>
-void _substring_copy(const_string_base<C> s, s64 start, s64 length, string_base<C> *out, s64 out_offset)
+static inline void _substring_copy(const_string_base<C> s, s64 start, s64 length, string_base<C> *out, s64 out_offset)
 {
     assert(out != nullptr);
 
@@ -1351,7 +1351,7 @@ void _substring(const_wstring s, s64 start, s64 length, wstring *out, s64 out_of
 }
 
 template<typename C>
-void _replace_c(string_base<C> *s, C needle, C replacement, s64 offset)
+static inline void _replace_c(string_base<C> *s, C needle, C replacement, s64 offset)
 {
     s64 idx = index_of(s, needle, offset);
 
@@ -1362,7 +1362,7 @@ void _replace_c(string_base<C> *s, C needle, C replacement, s64 offset)
 }
 
 template<typename C>
-void _replace_s(string_base<C> *s, const_string_base<C> needle, const_string_base<C> replacement, s64 offset)
+static inline void _replace_s(string_base<C> *s, const_string_base<C> needle, const_string_base<C> replacement, s64 offset)
 {
     if (needle.size == 0)
         return;
@@ -1418,7 +1418,7 @@ void _replace(wstring *s, const_wstring needle, const_wstring replacement, s64 o
 }
 
 template<typename C>
-void _replace_all_c(string_base<C> *s, C needle, C replacement, s64 offset)
+static inline void _replace_all_c(string_base<C> *s, C needle, C replacement, s64 offset)
 {
     s64 idx = index_of(s, needle, offset);
 
@@ -1430,7 +1430,7 @@ void _replace_all_c(string_base<C> *s, C needle, C replacement, s64 offset)
 }
 
 template<typename C>
-void _replace_all_s(string_base<C> *s, const_string_base<C> needle, const_string_base<C> replacement, s64 offset)
+static inline void _replace_all_s(string_base<C> *s, const_string_base<C> needle, const_string_base<C> replacement, s64 offset)
 {
     if (needle.size == 0)
         return;
@@ -1488,7 +1488,7 @@ void _replace_all(wstring *s, const_wstring needle, const_wstring replacement, s
 }
 
 template<typename C>
-s64 _split_c(const_string_base<C> s, C delim, array<const_string_base<C>> *out)
+static inline s64 _split_c(const_string_base<C> s, C delim, array<const_string_base<C>> *out)
 {
     s64 split_count = 0;
     out->size = 0;
@@ -1541,7 +1541,7 @@ s64 _split_c(const_string_base<C> s, C delim, array<const_string_base<C>> *out)
 }
 
 template<typename C>
-s64 _split_s(const_string_base<C> s, const_string_base<C> delim, array<const_string_base<C>> *out)
+static inline s64 _split_s(const_string_base<C> s, const_string_base<C> delim, array<const_string_base<C>> *out)
 {
     if (delim.size == 0)
         return 0;
@@ -1624,7 +1624,7 @@ template<typename C> inline s64 _string_length(const_string_base<C> *s) { return
 template<typename C> inline s64 _string_length(const string_base<C> *s) { return string_length(s); }
 
 template<typename Str, typename C>
-void _join_c(Str *strings, s64 count, C delim, string_base<C> *out)
+static inline void _join_c(Str *strings, s64 count, C delim, string_base<C> *out)
 {
     if (count == 0)
         return;
@@ -1669,7 +1669,7 @@ void _join_c(Str *strings, s64 count, C delim, string_base<C> *out)
 }
 
 template<typename Str, typename C>
-void _join(Str *strings, s64 count, const_string_base<C> delim, string_base<C> *out)
+static inline void _join(Str *strings, s64 count, const_string_base<C> delim, string_base<C> *out)
 {
     if (count == 0)
         return;
@@ -1845,7 +1845,7 @@ static inline s64 _convert_str(wchar_t *dst, const char *src, s64 n)
 }
 
 template<typename C>
-static bool _get_converted_environment_variable(const C *name, s64 namesize, C **outbuf, s64 *outsize, sys_char **sysbuf, s64 *syssize)
+static inline bool _get_converted_environment_variable(const C *name, s64 namesize, C **outbuf, s64 *outsize, sys_char **sysbuf, s64 *syssize)
 {
     if constexpr (is_same(C, sys_char))
     {
@@ -1900,7 +1900,7 @@ static bool _get_converted_environment_variable(const C *name, s64 namesize, C *
 }
 
 template<typename C>
-static void _alias_environment_variables([[maybe_unused]] const_string_base<C> *str)
+static inline void _alias_environment_variables([[maybe_unused]] const_string_base<C> *str)
 {
 #if Windows
     if (*str == LIT(C, "HOME"_cs))
@@ -1911,7 +1911,7 @@ static void _alias_environment_variables([[maybe_unused]] const_string_base<C> *
 }
 
 template<typename C>
-static void _resolve_environment_variables(C *str, s64 _size, bool aliases)
+static inline void _resolve_environment_variables(C *str, s64 _size, bool aliases)
 {
     // this converts variables inside the string and environment variables
     // on the fly. I wonder if converting the entire string, resolving
@@ -2001,7 +2001,7 @@ void resolve_environment_variables(wchar_t *str, s64 size, bool aliases)
 }
 
 template<typename C>
-static void _resolve_environment_variables_s(string_base<C> *str, bool aliases)
+static inline void _resolve_environment_variables_s(string_base<C> *str, bool aliases)
 {
     s64 i = 0;
 
@@ -2092,7 +2092,7 @@ void resolve_environment_variables(wstring *str, bool aliases)
 }
 
 template<typename C>
-hash_t _hash(const_string_base<C> str)
+static inline hash_t _hash(const_string_base<C> str)
 {
     return hash_data(str.c_str, str.size);
 }
@@ -2108,7 +2108,7 @@ hash_t hash(const_wstring str)
 }
 
 template<typename C>
-hash_t _hash(const const_string_base<C> *str)
+static inline hash_t _hash(const const_string_base<C> *str)
 {
     return hash_data(str->c_str, str->size);
 }

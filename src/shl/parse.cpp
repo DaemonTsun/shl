@@ -35,7 +35,7 @@ void next_line(parse_iterator *it)
     it->line_start = it->pos;
 }
 
-static void _init(parser_base<char> *p, const char *input, s64 input_size)
+static inline void _init(parser_base<char> *p, const char *input, s64 input_size)
 {
     init(&p->it);
     p->input = input;
@@ -80,7 +80,7 @@ s64 range_length(const parse_range *range)
 //
 // parsing functions
 //
-bool _skip_whitespace(parser_base<char> *p)
+static inline bool _skip_whitespace(parser_base<char> *p)
 {
     if (!is_ok(p))
         return false;
@@ -116,7 +116,7 @@ bool skip_whitespace(parser *p)
     return _skip_whitespace(p);
 }
 
-static bool _parse_comment(parser_base<char> *p, parse_range *out)
+static inline bool _parse_comment(parser_base<char> *p, parse_range *out)
 {
     parse_iterator start = p->it;
     parse_iterator comment_start{};
@@ -237,7 +237,7 @@ bool parse_comment(parser *p, parse_range *out)
     return _parse_comment(p, out);
 }
 
-static bool _skip_whitespace_and_comments(parser_base<char> *p)
+static inline bool _skip_whitespace_and_comments(parser_base<char> *p)
 {
     bool ok = false;
 
@@ -255,7 +255,7 @@ bool skip_whitespace_and_comments(parser *p)
     return _skip_whitespace_and_comments(p);
 }
 
-static bool _parse_string(parser_base<char> *p, parse_range *out, parse_error *err, char delim, bool include_delims)
+static inline bool _parse_string(parser_base<char> *p, parse_range *out, parse_error *err, char delim, bool include_delims)
 {
     if (!is_ok(p))
     {
@@ -336,7 +336,7 @@ bool parse_string(parser *p, parse_range *out, parse_error *err, char delim, boo
 }
 
 template<typename C>
-bool _parse_bool(parser_base<C> *p, parse_range *out, parse_error *err)
+static inline bool _parse_bool(parser_base<C> *p, parse_range *out, parse_error *err)
 {
     if (!is_ok(p))
     {
@@ -438,7 +438,7 @@ bool parse_bool(parser *p, parse_range *out, parse_error *err)
 }
 
 template<typename C>
-bool _parse_bool_v(parser_base<C> *p, bool *out, parse_error *err)
+static inline bool _parse_bool_v(parser_base<C> *p, bool *out, parse_error *err)
 {
     parse_range range;
     if (!_parse_bool(p, &range, err))
@@ -455,7 +455,7 @@ bool parse_bool(parser *p, bool *out, parse_error *err)
 }
 
 template<typename C>
-bool _parse_integer(parser_base<C> *p, parse_range *out, parse_error *err)
+static inline bool _parse_integer(parser_base<C> *p, parse_range *out, parse_error *err)
 {
     if (!is_ok(p))
     {
@@ -596,7 +596,7 @@ bool parse_integer(parser *p, parse_range *out, parse_error *err)
 }
 
 template<typename OutT = s64>
-bool _parse_integer_t(parser_base<char> *p, parse_iterator *digit_start, int *base, bool *neg, parse_error *err)
+static inline bool _parse_integer_t(parser_base<char> *p, parse_iterator *digit_start, int *base, bool *neg, parse_error *err)
 {
     if (!is_ok(p))
     {
@@ -786,7 +786,7 @@ DEFINE_PARSE_INTEGER(char, unsigned int, to_unsigned_int);
 DEFINE_PARSE_INTEGER(char, unsigned long, to_unsigned_long);
 DEFINE_PARSE_INTEGER(char, unsigned long long, to_unsigned_long_long);
 
-static bool _parse_decimal(parser_base<char> *p, parse_range *out, parse_error *err)
+static inline bool _parse_decimal(parser_base<char> *p, parse_range *out, parse_error *err)
 {
     if (!is_ok(p))
     {
@@ -976,7 +976,7 @@ bool is_identifier_character(char c)
     return c == '_' || is_alphanum(c);
 }
 
-static bool _parse_identifier(parser_base<char> *p, parse_range *out, parse_error *err)
+static inline bool _parse_identifier(parser_base<char> *p, parse_range *out, parse_error *err)
 {
     if (!is_ok(p))
     {
