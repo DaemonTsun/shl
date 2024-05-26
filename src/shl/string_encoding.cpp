@@ -218,4 +218,58 @@ s64 utf16_encode(u32 cp, u16 *out)
 
     return -1;
 }
+
+s64 utf8_encode_string(u32 *cps, s64 cp_count, char *out, s64 out_size)
+{
+    s64 i = 0;
+    s64 size_left = out_size;
+    s64 size_required = 0;
+    char *start = out;
+    u32 cp = 0;
+
+    while (i < cp_count)
+    {
+        cp = cps[i];
+        size_required = codepoint_utf8_length(cp);
+
+        if (size_left < size_required)
+            break;
+
+        if (utf8_encode(cp, out) != size_required)
+            return -1;
+
+        i += 1;
+        size_left -= size_required;
+        out += size_required;
+    }
+
+    return (s64)(out - start);
+}
+
+s64 utf16_encode_string(u32 *cps, s64 cp_count, u16 *out, s64 out_size)
+{
+    s64 i = 0;
+    s64 size_left = out_size;
+    s64 size_required = 0;
+    u16 *start = out;
+    u32 cp = 0;
+
+    while (i < cp_count)
+    {
+        cp = cps[i];
+        size_required = codepoint_utf16_length(cp);
+
+        if (size_left < size_required)
+            break;
+
+        if (utf16_encode(cp, out) != size_required)
+            return -1;
+
+        i += 1;
+        size_left -= size_required;
+        out += size_required;
+    }
+
+    return (s64)(out - start);
+}
 } // extern C

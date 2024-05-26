@@ -184,4 +184,49 @@ define_test(utf16_encode_encodes_codepoint_as_utf16_2)
     assert_equal((u16)conv[2], (u16)0x7f7f);
 }
 
+define_test(utf8_encode_string_encodes_codepoints_as_utf8_string)
+{
+    const char *_text = u8"hello 彁 Привет";
+    u32 input[32] = {0};
+    s64 input_length = utf8_decode_string_safe(_text, strlen(_text), input, 31);
+
+    char conv[32] = {0};
+
+    s64 count = utf8_encode_string(input, input_length, conv, 32);
+
+    assert_equal(count, 22);
+    assert_equal(conv[6], (char)0xe5);
+    assert_equal(conv[7], (char)0xbd);
+    assert_equal(conv[8], (char)0x81);
+    assert_equal(conv[9], ' ');
+    assert_equal(conv[22], '\0');
+
+    fill_memory(conv, 0, 32);
+
+    // 8 = one less character than is required for 彁, meaning the character
+    // will not be written at all.
+    count = utf8_encode_string(input, input_length, conv, 8);
+
+    assert_equal(count, 6);
+    assert_equal(conv[4], 'o');
+    assert_equal(conv[5], ' ');
+    assert_equal(conv[6], '\0');
+}
+
+define_test(utf16_encode_string_encodes_codepoints_as_utf8_string)
+{
+    const u16 *_text = (const u16*)u"hello 彁 Привет";
+    u32 input[32] = {0};
+    s64 input_length = utf16_decode_string_safe(_text, 14, input, 31);
+
+    u16 conv[32] = {0};
+
+    s64 count = utf16_encode_string(input, input_length, conv, 32);
+
+    assert_equal(count, 14);
+    assert_equal(conv[6], (u16)0x5f41);
+    assert_equal(conv[7], ' ');
+    assert_equal(conv[14], '\0');
+}
+
 define_default_test_main();

@@ -47,8 +47,8 @@ s64 utf16_decode_string_safe(const u16 *u16str, s64 str_buf_size, u32 *out, s64 
 s64 utf8_encode(u32 cp, char *out);
 s64 utf16_encode(u32 cp, u16 *out);
 
-// TODO: utf8_encode_string
-// TODO: utf16_encode_string
+s64 utf8_encode_string (u32 *cps, s64 cp_count, char *out, s64 out_size);
+s64 utf16_encode_string(u32 *cps, s64 cp_count, u16  *out, s64 out_size);
 
 // TODO: utf8_to_utf16
 // TODO: utf16_to_utf8
@@ -68,3 +68,6 @@ static inline s32 codepoint_utf16_length(u32 cp)
     else                    return 2;
 }
 }
+
+// TODO: string_convert(const char *u8str, s64 u8str_size, wchar_t *wcstr, s64 wcstr_size);
+// TODO: string_convert(const wchar_t *wcstr, s64 wcstr_size, char *u8str, s64 u8str_size);
