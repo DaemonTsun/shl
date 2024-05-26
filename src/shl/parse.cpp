@@ -346,7 +346,6 @@ static inline bool _parse_bool(parser_base<C> *p, parse_range *out, parse_error 
 
     parse_iterator start = p->it;
     auto c = parser_current_char(p);
-    bool val = true;
     
     if (to_lower(c) == 't')
     {
@@ -379,8 +378,6 @@ static inline bool _parse_bool(parser_base<C> *p, parse_range *out, parse_error 
             advance(&p->it);
             ++i;
         }
-
-        val = true;
     }
     else if (to_lower(c) == 'f')
     {
@@ -413,8 +410,6 @@ static inline bool _parse_bool(parser_base<C> *p, parse_range *out, parse_error 
             advance(&p->it);
             ++i;
         }
-
-        val = false;
     }
     else 
     {

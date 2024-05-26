@@ -26,6 +26,8 @@ sizes.
 #define UTF16_CODEPOINT_OFFSET          0x10000
 #define UTF16_CODEPOINT_MASK            0x03ff
 
+extern "C"
+{
 const char *utf8_decode (const char *str, u32 *cp, int *error);
 const u16  *utf16_decode(const u16  *str, u32 *cp, int *error);
 
@@ -40,6 +42,17 @@ s64 utf16_decode_string(const u16 *u16str, s64 str_buf_size, u32 *out, s64 out_s
 s64 utf8_decode_string_safe (const char *u8str, s64 str_buf_size, u32 *out, s64 out_size);
 s64 utf16_decode_string_safe(const u16 *u16str, s64 str_buf_size, u32 *out, s64 out_size);
 
+// returns the number of bytes written, or -1 on error.
+// out must have space for 4 bytes.
+s64 utf8_encode(u32 cp, char *out);
+s64 utf16_encode(u32 cp, u16 *out);
+
+// TODO: utf8_encode_string
+// TODO: utf16_encode_string
+
+// TODO: utf8_to_utf16
+// TODO: utf16_to_utf8
+
 // length of a single unicode codepoint if it were encoded as utf8/utf16
 static inline s32 codepoint_utf8_length (u32 cp)
 {
@@ -53,4 +66,5 @@ static inline s32 codepoint_utf16_length(u32 cp)
 {
     if (cp <= UTF16_1_MAX)  return 1;
     else                    return 2;
+}
 }

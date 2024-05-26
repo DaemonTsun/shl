@@ -28,6 +28,10 @@ bitmask_between_values(From, To) bitmask between binary values
 
 bitrange(X, From, To) gets the bits of X in the range From to To
 
+popcnt(x) number of bits set to 1 in a 32 bit unsigned integer
+clz(x)    counts the number of leading zeroes in a 32 bit unsigned integer
+ctz(x)    counts the number of trailing zeroes in a 32 bit unsigned integer
+
  */
 
 #include "shl/number_types.hpp"
@@ -219,4 +223,29 @@ template<typename T>
 constexpr inline bool is_pow2(T val)
 {
     return (val != 0) && ((val & (val - 1)) == 0);
+}
+
+static constexpr inline u32 popcnt(u32 x)
+{
+    x -= ((x >> 1) & 0x55555555);
+    x = (((x >> 2) & 0x33333333) + (x & 0x33333333));
+    x = (((x >> 4) + x) & 0x0f0f0f0f);
+    x += (x >> 8);
+    x += (x >> 16);
+    return x & 0x0000003f;
+}
+
+static constexpr inline u32 clz(u32 x)
+{
+    x |= (x >> 1);
+    x |= (x >> 2);
+    x |= (x >> 4);
+    x |= (x >> 8);
+    x |= (x >> 16);
+    return 32 - popcnt(x);
+}
+
+static constexpr inline u32 ctz(u32 x)
+{
+    return popcnt((x & -x) - 1);
 }

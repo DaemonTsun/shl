@@ -6,6 +6,8 @@ static constexpr char utf8_lengths[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0
 };
 
+extern "C"
+{
 // strings must be zero padded to four bytes
 const char *utf8_decode (const char *str, u32 *cp, int *error)
 {
@@ -49,11 +51,11 @@ const u16  *utf16_decode(const u16  *str, u32 *cp, int *error)
     if ((high & UTF16_SURROGATE_MASK) != UTF16_SURROGATE_HIGH)
     {
         *cp = (u32)high & 0x0000ffff;
-        return str + 1; 
+        return str + 1;
     }
 
     *error = ((high & UTF16_SURROGATE_HIGH_LOW_MASK) ^ UTF16_SURROGATE_HIGH);
-    
+
     u16 low = *(str + 1);
 
     *error |= ((low & UTF16_SURROGATE_HIGH_LOW_MASK) ^ UTF16_SURROGATE_LOW);
@@ -61,7 +63,7 @@ const u16  *utf16_decode(const u16  *str, u32 *cp, int *error)
     *cp =  (high & UTF16_CODEPOINT_MASK) << 10;
     *cp |= (low & UTF16_CODEPOINT_MASK);
     *cp += UTF16_CODEPOINT_OFFSET;
-    
+
     return str + 2;
 }
 
@@ -76,7 +78,7 @@ s64 utf8_decode_string(const char *u8str, s64 str_buf_size, u32 *out, s64 out_le
         s = utf8_decode(s, out + i, &err);
         i += 1;
     }
-    
+
     if (err != 0)
         return -1;
 
@@ -94,7 +96,7 @@ s64 utf16_decode_string(const u16 *u16str, s64 str_buf_size, u32 *out, s64 out_l
         s = utf16_decode(s, out + i, &err);
         i += 1;
     }
-    
+
     if (err != 0)
         return -1;
 
@@ -163,3 +165,57 @@ s64 utf16_decode_string_safe(const u16 *u16str, s64 str_buf_size, u32 *out, s64 
 
     return ret + 1;
 }
+
+s64 utf8_encode(u32 cp, char *out)
+{
+    if (cp <= UTF8_1_MAX)
+    {
+        out[0] = (char)cp;
+        return 1;
+    }
+    else if (cp <= UTF8_2_MAX)
+    {
+        out[0] = (char)(((cp >> 6) & 0x1f) | 0xc0);
+        out[1] = (char)(((cp >> 0) & 0x3f) | 0x80);
+        return 2;
+    }
+    else if (cp <= UTF8_3_MAX)
+    {
+        out[0] = (char)(((cp >> 12) & 0x0f) | 0xe0);
+        out[1] = (char)(((cp >>  6) & 0x3f) | 0x80);
+        out[2] = (char)(((cp >>  0) & 0x3f) | 0x80);
+        return 3;
+    }
+    else if (cp <= UTF8_4_MAX)
+    {
+        out[0] = (char)(((cp >> 18) & 0x07) | 0xf0);
+        out[1] = (char)(((cp >> 12) & 0x3f) | 0x80);
+        out[2] = (char)(((cp >>  6) & 0x3f) | 0x80);
+        out[3] = (char)(((cp >>  0) & 0x3f) | 0x80);
+        return 4;
+    }
+
+    // error
+    return -1;
+}
+
+s64 utf16_encode(u32 cp, u16 *out)
+{
+    if (cp <= 0x0000ffff)
+    {
+        out[0] = (u16)cp;
+        return 1;
+    }
+    else if (cp <= 0x0010ffff)
+    {
+        cp -= UTF16_CODEPOINT_OFFSET;
+
+        out[0] = (u16)((cp >> 10) & UTF16_CODEPOINT_MASK) | UTF16_SURROGATE_HIGH;
+        out[1] = (u16)(cp         & UTF16_CODEPOINT_MASK) | UTF16_SURROGATE_LOW;
+
+        return 2;
+    };
+
+    return -1;
+}
+} // extern C
