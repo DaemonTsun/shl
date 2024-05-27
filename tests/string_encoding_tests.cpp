@@ -170,7 +170,7 @@ define_test(utf16_encode_encodes_codepoint_as_utf16)
 
 define_test(utf16_encode_encodes_codepoint_as_utf16_2)
 {
-    u32 input = 0x0001f34c; // 🍌 (banana)
+    u32 input = 0x0001f34c;
     u16 conv[3] = {0x7f7f, 0x7f7f, 0x7f7f};
 
     s64 count = utf16_encode(input, conv);
@@ -227,6 +227,46 @@ define_test(utf16_encode_string_encodes_codepoints_as_utf8_string)
     assert_equal(conv[6], (u16)0x5f41);
     assert_equal(conv[7], ' ');
     assert_equal(conv[14], '\0');
+}
+
+define_test(utf8_to_utf16_encodes_utf8_string_to_utf16)
+{
+    const char *input = u8"hello 彁 Привет";
+    u16 conv[32] = {0};
+
+    s64 count = utf8_to_utf16(input, 22, conv, 32);
+
+    assert_equal(count, 14);
+    assert_equal(conv[14], 0);
+    assert_equal(memcmp(conv, u"hello 彁 Привет", 14 * 2), 0);
+}
+
+define_test(utf16_to_utf8_encodes_utf16_string_to_utf8)
+{
+    const u16 *input = (const u16*)u"hello 彁 Привет";
+    char conv[32] = {0};
+
+    s64 count = utf16_to_utf8(input, 14, conv, 32);
+
+    assert_equal(count, 22);
+    assert_equal(conv[22], 0);
+    assert_equal(memcmp(conv, u8"hello 彁 Привет", 22), 0);
+}
+
+define_test(utf16_bytes_required_from_utf8_returns_numbers_of_utf16_bytes_required_to_store_utf8_string)
+{
+    assert_equal(utf16_bytes_required_from_utf8(u8"hello 彁 Привет", 22), 14 * 2);
+    assert_equal(utf16_bytes_required_from_utf8(u8"hello 🍌 Привет", 23), 15 * 2);
+    assert_equal(utf16_bytes_required_from_utf8(u8"", 0), 0);
+    assert_equal(utf16_bytes_required_from_utf8(u8"", 255), 0);
+}
+
+define_test(utf8_bytes_required_from_utf16_returns_numbers_of_utf8_bytes_required_to_store_utf16_string)
+{
+    assert_equal(utf8_bytes_required_from_utf16((const u16*)u"hello 彁 Привет", 14), 22);
+    assert_equal(utf8_bytes_required_from_utf16((const u16*)u"hello 🍌 Привет", 15), 23);
+    assert_equal(utf8_bytes_required_from_utf16((const u16*)u"", 0), 0);
+    assert_equal(utf8_bytes_required_from_utf16((const u16*)u"", 255), 0);
 }
 
 define_default_test_main();

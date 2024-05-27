@@ -219,7 +219,7 @@ s64 utf16_encode(u32 cp, u16 *out)
     return -1;
 }
 
-s64 utf8_encode_string(u32 *cps, s64 cp_count, char *out, s64 out_size)
+s64 utf8_encode_string(const u32 *cps, s64 cp_count, char *out, s64 out_size)
 {
     s64 i = 0;
     s64 size_left = out_size;
@@ -230,6 +230,10 @@ s64 utf8_encode_string(u32 *cps, s64 cp_count, char *out, s64 out_size)
     while (i < cp_count)
     {
         cp = cps[i];
+
+        if (cp == 0)
+            break;
+
         size_required = codepoint_utf8_length(cp);
 
         if (size_left < size_required)
@@ -246,7 +250,7 @@ s64 utf8_encode_string(u32 *cps, s64 cp_count, char *out, s64 out_size)
     return (s64)(out - start);
 }
 
-s64 utf16_encode_string(u32 *cps, s64 cp_count, u16 *out, s64 out_size)
+s64 utf16_encode_string(const u32 *cps, s64 cp_count, u16 *out, s64 out_size)
 {
     s64 i = 0;
     s64 size_left = out_size;
@@ -257,6 +261,10 @@ s64 utf16_encode_string(u32 *cps, s64 cp_count, u16 *out, s64 out_size)
     while (i < cp_count)
     {
         cp = cps[i];
+
+        if (cp == 0)
+            break;
+
         size_required = codepoint_utf16_length(cp);
 
         if (size_left < size_required)
@@ -272,4 +280,158 @@ s64 utf16_encode_string(u32 *cps, s64 cp_count, u16 *out, s64 out_size)
 
     return (s64)(out - start);
 }
+
+s64 utf8_to_utf16(const char *u8str, s64 u8str_size,  u16  *out, s64 out_size)
+{
+    s64 size_required = 0;
+    s64 u16_index = 0;
+    int err = 0;
+    const char *s = u8str;
+
+    u32 cp = 0;
+
+    while (true)
+    {
+        if (s == nullptr || (s64)(s - u8str) >= u8str_size)
+            break;
+
+        if (*s == '\0')
+            break;
+
+        if (u16_index >= out_size)
+            break;
+
+        s = utf8_decode(s, &cp, &err);
+
+        if (err != 0)
+            break;
+
+        size_required = codepoint_utf16_length(cp);
+
+        if (out_size - u16_index < size_required)
+            break;
+
+        if (utf16_encode(cp, out + u16_index) != size_required)
+        {
+            err = 1;
+            break;
+        }
+
+        u16_index += size_required;
+    }
+
+    if (err != 0)
+        return -1;
+
+    return u16_index;
+}
+
+s64 utf16_to_utf8(const u16 *u16str, s64 u16str_size, char *out, s64 out_size)
+{
+    s64 size_required = 0;
+    s64 u8_index = 0;
+    int err = 0;
+    const u16 *s = u16str;
+
+    u32 cp = 0;
+
+    while (true)
+    {
+        if (s == nullptr || (s64)(s - u16str) >= u16str_size)
+            break;
+
+        if (*s == 0)
+            break;
+
+        if (u8_index >= out_size)
+            break;
+
+        s = utf16_decode(s, &cp, &err);
+
+        if (err != 0)
+            break;
+
+        size_required = codepoint_utf8_length(cp);
+
+        if (out_size - u8_index < size_required)
+            break;
+
+        if (utf8_encode(cp, out + u8_index) != size_required)
+        {
+            err = 1;
+            break;
+        }
+
+        u8_index += size_required;
+    }
+
+    if (err != 0)
+        return -1;
+
+    return u8_index;
+}
+
+s64 utf16_bytes_required_from_utf8(const char *u8str, s64 u8str_size)
+{
+    s64 sz = 0;
+
+    while (u8str_size > 0 && *u8str != '\0')
+    {
+        if ((u8)(*u8str) - 0x80u >= 0x40u) sz += 1;
+        if ((u8)(*u8str) >= 0xf0u)         sz += 1;
+
+        u8str_size -= 1;
+        u8str++;
+    }
+
+    return sz * 2; // 2 because utf16 is 2 bytes per codepoint
+}
+
+s64 utf8_bytes_required_from_utf16(const u16 *u16str, s64 u16str_size)
+{
+    s64 sz = 0;
+    u16 high = 0;
+
+    while (u16str_size > 0 && *u16str != 0)
+    {
+        high = *u16str;
+
+        if ((high & UTF16_SURROGATE_MASK) != UTF16_SURROGATE_HIGH)
+        {
+            if      (high <= UTF8_1_MAX) sz += 1;
+            else if (high <= UTF8_2_MAX) sz += 2;
+            else                         sz += 3;
+
+            u16str += 1;
+            u16str_size -= 1;
+        }
+        else
+        {
+            sz += 4;
+            u16str += 2;
+            u16str_size -= 2;
+        }
+    }
+
+    return sz;
+}
+
 } // extern C
+
+// because wchar_t is trash and can be different sizes (its 4 byte on linux, 2 byte on windows),
+// we have to check what size it is before converting.
+s64 string_convert(const char *u8str, s64 u8str_size, wchar_t *wcstr, s64 wcstr_size)
+{
+    if constexpr (sizeof(wchar_t) == 2)
+        return utf8_to_utf16(u8str, u8str_size, (u16*)wcstr, wcstr_size);
+    else
+        return utf8_decode_string_safe(u8str, u8str_size, (u32*)wcstr, wcstr_size);
+}
+
+s64 string_convert(const wchar_t *wcstr, s64 wcstr_size, char *u8str, s64 u8str_size)
+{
+    if constexpr (sizeof(wchar_t) == 2)
+        return utf16_to_utf8((u16*)wcstr, wcstr_size, u8str, u8str_size);
+    else
+        return utf8_encode_string((const u32*)wcstr, wcstr_size, u8str, u8str_size);
+}

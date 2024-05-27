@@ -5,6 +5,8 @@ Handle different string encodings.
 u32 is used as the type for Unicode codepoints.
 u16* is used for UTF-16 strings, since wchar_t is trash that can have variable
 sizes.
+
+TODO: docs
 */
 
 #pragma once
@@ -47,11 +49,16 @@ s64 utf16_decode_string_safe(const u16 *u16str, s64 str_buf_size, u32 *out, s64 
 s64 utf8_encode(u32 cp, char *out);
 s64 utf16_encode(u32 cp, u16 *out);
 
-s64 utf8_encode_string (u32 *cps, s64 cp_count, char *out, s64 out_size);
-s64 utf16_encode_string(u32 *cps, s64 cp_count, u16  *out, s64 out_size);
+s64 utf8_encode_string (const u32 *cps, s64 cp_count, char *out, s64 out_size);
+s64 utf16_encode_string(const u32 *cps, s64 cp_count, u16  *out, s64 out_size);
 
-// TODO: utf8_to_utf16
-// TODO: utf16_to_utf8
+// returns the number of elements written such that
+// out + return value = directly after written content.
+s64 utf8_to_utf16(const char *u8str, s64 u8str_size,  u16  *out, s64 out_size);
+s64 utf16_to_utf8(const u16 *u16str, s64 u16str_size, char *out, s64 out_size);
+
+s64 utf16_bytes_required_from_utf8(const char *u8str, s64 u8str_size);
+s64 utf8_bytes_required_from_utf16(const u16 *u16str, s64 u16str_size);
 
 // length of a single unicode codepoint if it were encoded as utf8/utf16
 static inline s32 codepoint_utf8_length (u32 cp)
@@ -69,5 +76,5 @@ static inline s32 codepoint_utf16_length(u32 cp)
 }
 }
 
-// TODO: string_convert(const char *u8str, s64 u8str_size, wchar_t *wcstr, s64 wcstr_size);
-// TODO: string_convert(const wchar_t *wcstr, s64 wcstr_size, char *u8str, s64 u8str_size);
+s64 string_convert(const char *u8str, s64 u8str_size, wchar_t *wcstr, s64 wcstr_size);
+s64 string_convert(const wchar_t *wcstr, s64 wcstr_size, char *u8str, s64 u8str_size);
