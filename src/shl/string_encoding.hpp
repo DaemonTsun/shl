@@ -58,9 +58,11 @@ s64 utf8_to_utf16(const char *u8str, s64 u8str_size,  u16  *out, s64 out_size);
 s64 utf16_to_utf8(const u16 *u16str, s64 u16str_size, char *out, s64 out_size);
 
 s64 utf16_bytes_required_from_utf8(const char *u8str, s64 u8str_size);
+s64 utf16_bytes_required_from_codepoints(const u32 *cps, s64 cp_count);
 s64 utf8_bytes_required_from_utf16(const u16 *u16str, s64 u16str_size);
+s64 utf8_bytes_required_from_codepoints(const u32 *cps, s64 cp_count);
 
-// length of a single unicode codepoint if it were encoded as utf8/utf16
+// length (bytes) of a single unicode codepoint if it were encoded as utf8/utf16
 static inline s32 codepoint_utf8_length (u32 cp)
 {
     if      (cp <= UTF8_1_MAX)  return 1;
@@ -78,3 +80,5 @@ static inline s32 codepoint_utf16_length(u32 cp)
 
 s64 string_convert(const char *u8str, s64 u8str_size, wchar_t *wcstr, s64 wcstr_size);
 s64 string_convert(const wchar_t *wcstr, s64 wcstr_size, char *u8str, s64 u8str_size);
+s64 string_to_wide_string_conversion_bytes_required(const char *u8str, s64 u8str_size);
+s64 wide_string_to_string_conversion_bytes_required(const wchar_t *wcstr, s64 wcstr_size);

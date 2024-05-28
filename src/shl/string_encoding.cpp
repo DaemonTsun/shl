@@ -387,6 +387,20 @@ s64 utf16_bytes_required_from_utf8(const char *u8str, s64 u8str_size)
     return sz * 2; // 2 because utf16 is 2 bytes per codepoint
 }
 
+s64 utf16_bytes_required_from_codepoints(const u32 *cps, s64 cp_count)
+{
+    s64 sz = 0;
+
+    while (cp_count > 0 && *cps != 0)
+    {
+        sz += codepoint_utf16_length(*cps);
+        cp_count -= 1;
+        cps++;
+    }
+
+    return sz;
+}
+
 s64 utf8_bytes_required_from_utf16(const u16 *u16str, s64 u16str_size)
 {
     s64 sz = 0;
@@ -416,6 +430,20 @@ s64 utf8_bytes_required_from_utf16(const u16 *u16str, s64 u16str_size)
     return sz;
 }
 
+s64 utf8_bytes_required_from_codepoints(const u32 *cps, s64 cp_count)
+{
+    s64 sz = 0;
+
+    while (cp_count > 0 && *cps != 0)
+    {
+        sz += codepoint_utf8_length(*cps);
+        cp_count -= 1;
+        cps++;
+    }
+
+    return sz;
+}
+
 } // extern C
 
 // because wchar_t is trash and can be different sizes (its 4 byte on linux, 2 byte on windows),
@@ -431,7 +459,37 @@ s64 string_convert(const char *u8str, s64 u8str_size, wchar_t *wcstr, s64 wcstr_
 s64 string_convert(const wchar_t *wcstr, s64 wcstr_size, char *u8str, s64 u8str_size)
 {
     if constexpr (sizeof(wchar_t) == 2)
-        return utf16_to_utf8((u16*)wcstr, wcstr_size, u8str, u8str_size);
+        return utf16_to_utf8((const u16*)wcstr, wcstr_size, u8str, u8str_size);
     else
         return utf8_encode_string((const u32*)wcstr, wcstr_size, u8str, u8str_size);
+}
+
+s64 string_to_wide_string_conversion_bytes_required(const char *u8str, s64 u8str_size)
+{
+    if constexpr (sizeof(wchar_t) == 2)
+        return utf16_bytes_required_from_utf8(u8str, u8str_size);
+    else
+    {
+        s64 sz = 0;
+        const u8 *start = (const u8*)u8str;
+        const u8 *s = start;
+        int len = 0;
+
+        while ((s64)(s - start) < u8str_size && *s != 0u)
+        {
+            len = utf8_lengths[s[0] >> 3];
+            s = s + len + !len;
+            sz += sizeof(wchar_t);
+        }
+
+        return sz;
+    }
+}
+
+s64 wide_string_to_string_conversion_bytes_required(const wchar_t *wcstr, s64 wcstr_size)
+{
+    if constexpr (sizeof(wchar_t) == 2)
+        return utf8_bytes_required_from_utf16((const u16*)wcstr, wcstr_size);
+    else
+        return utf8_bytes_required_from_codepoints((const u32*)wcstr, wcstr_size);
 }

@@ -269,4 +269,13 @@ define_test(utf8_bytes_required_from_utf16_returns_numbers_of_utf8_bytes_require
     assert_equal(utf8_bytes_required_from_utf16((const u16*)u"", 255), 0);
 }
 
+// nice test name
+define_test(string_to_wide_string_conversion_bytes_required_returns_bytes_required_to_convert_utf8_string_to_wchar_t_string)
+{
+    assert_equal(string_to_wide_string_conversion_bytes_required(u8"hello 彁 Привет", 22), 14 * (s64)sizeof(wchar_t));
+    assert_equal(string_to_wide_string_conversion_bytes_required(u8"hello 彁 Привет", 5), 5 * (s64)sizeof(wchar_t));
+    assert_equal(string_to_wide_string_conversion_bytes_required(u8"hello 彁 Привет", 0), 0);
+    assert_equal(string_to_wide_string_conversion_bytes_required(u8"0", 0), 0);
+}
+
 define_default_test_main();
