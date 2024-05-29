@@ -1,5 +1,5 @@
 
-#include <stdlib.h> // wcstombs
+#include "shl/string_encoding.hpp"
 #include "shl/print.hpp"
 
 s64 put(io_handle h, char c, error *err)
@@ -22,7 +22,7 @@ s64 _put(io_handle h, const_wstring s, error *err)
     internal::tformat_buffer *buf = internal::_get_tformat_buffer_char();
 
     char *start = buf->buffer.data + buf->offset;
-    s64 bytes_written = wcstombs(start, s.c_str, buf->buffer.size);
+    s64 bytes_written = string_convert(s.c_str, s.size, start, buf->buffer.size);
 
     if (bytes_written < 0)
         return -1;

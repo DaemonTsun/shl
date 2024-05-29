@@ -67,7 +67,7 @@ const u16  *utf16_decode(const u16  *str, u32 *cp, int *error)
     return str + 2;
 }
 
-s64 utf8_decode_string(const char *u8str, s64 str_buf_size, u32 *out, s64 out_length)
+static inline s64 _utf8_decode_string(const char *u8str, const char **end, s64 str_buf_size, u32 *out, s64 out_length)
 {
     s64 i = 0;
     int err = 0;
@@ -82,10 +82,18 @@ s64 utf8_decode_string(const char *u8str, s64 str_buf_size, u32 *out, s64 out_le
     if (err != 0)
         return -1;
 
+    if (end != nullptr)
+        *end = s;
+
     return i;
 }
 
-s64 utf16_decode_string(const u16 *u16str, s64 str_buf_size, u32 *out, s64 out_length)
+s64 utf8_decode_string(const char *u8str, s64 str_buf_size, u32 *out, s64 out_length)
+{
+    return _utf8_decode_string(u8str, nullptr, str_buf_size, out, out_length);
+}
+
+static inline s64 _utf16_decode_string(const u16 *u16str, const u16 **end, s64 str_buf_size, u32 *out, s64 out_length)
 {
     s64 i = 0;
     int err = 0;
@@ -100,70 +108,101 @@ s64 utf16_decode_string(const u16 *u16str, s64 str_buf_size, u32 *out, s64 out_l
     if (err != 0)
         return -1;
 
+    if (end != nullptr)
+        *end = s;
+
     return i;
+}
+
+s64 utf16_decode_string(const u16 *u16str, s64 str_buf_size, u32 *out, s64 out_length)
+{
+    return _utf16_decode_string(u16str, nullptr, str_buf_size, out, out_length);
 }
 
 s64 utf8_decode_string_safe (const char *u8str, s64 str_buf_size, u32 *out, s64 out_size)
 {
-    s64 str_buf_size4 = str_buf_size & S64_LIT(-4);
-    s64 diff = str_buf_size - str_buf_size4;
-    s64 ret = utf8_decode_string(u8str, str_buf_size4, out, out_size);
+    s64 ret = 0;
 
-    if (ret < 0)
-        return ret;
+    if (str_buf_size > 4)
+    {
+        const char *start = u8str;
+        ret = _utf8_decode_string(start, &u8str, str_buf_size - 4, out, out_size);
 
-    if (diff == 0)
-        return ret;
+        if (ret < 0)
+            return ret;
 
-    if (out_size - ret <= 0)
-        return ret;
+        str_buf_size -= (s64)(u8str - start);
 
-    out += ret;
-    out_size -= ret;
+        if (str_buf_size == 0)
+            return ret;
 
-    char rest_to_decode[4] = {0};
-    u8str += str_buf_size4;
+        if (out_size - ret <= 0)
+            return ret;
 
-    for (s64 i = 0; i < diff; ++i)
-        rest_to_decode[i] = u8str[i];
+        out += ret;
+        out_size -= ret;
+    }
 
+    char _rest_to_decode[8] = {0};
+    const char *rest_to_decode = _rest_to_decode;
     int err = 0;
-    utf8_decode(rest_to_decode, out, &err);
+
+    for (int i = 0; i < str_buf_size; ++i)
+        _rest_to_decode[i] = u8str[i];
+
+    while (*rest_to_decode != '\0' && err == 0)
+    {
+        rest_to_decode = utf8_decode(rest_to_decode, out++, &err);
+        ret++;
+    }
 
     if (err != 0)
         return -1;
 
-    return ret + 1;
+    return ret;
 }
 
 s64 utf16_decode_string_safe(const u16 *u16str, s64 str_buf_size, u32 *out, s64 out_size)
 {
-    // -2 because u16 is 2 bytes, 2*2 = 4
-    s64 str_buf_size4 = str_buf_size & S64_LIT(-2);
-    s64 diff = str_buf_size - str_buf_size4;
-    s64 ret = utf16_decode_string(u16str, str_buf_size4, out, out_size);
+    s64 ret = 0;
 
-    if (ret < 0)
-        return ret;
+    if (str_buf_size > 4)
+    {
+        const u16 *start = u16str;
+        ret = _utf16_decode_string(start, &u16str, str_buf_size - 2, out, out_size);
 
-    if (diff == 0)
-        return ret;
+        if (ret < 0)
+            return ret;
 
-    if (out_size - ret <= 0)
-        return ret;
+        str_buf_size -= (s64)(u16str - start);
 
-    out += ret;
-    out_size -= ret;
+        if (str_buf_size == 0)
+            return ret;
 
-    u16 rest_to_decode[2] = {u16str[str_buf_size4], 0};
+        if (out_size - ret <= 0)
+            return ret;
+
+        out += ret;
+        out_size -= ret;
+    }
+
+    u16 _rest_to_decode[4] = {0};
+    const u16 *rest_to_decode = _rest_to_decode;
     int err = 0;
 
-    utf16_decode(rest_to_decode, out, &err);
+    for (int i = 0; i < str_buf_size; ++i)
+        _rest_to_decode[i] = u16str[i];
+
+    while (*rest_to_decode != '\0' && err == 0)
+    {
+        rest_to_decode = utf16_decode(rest_to_decode, out++, &err);
+        ret++;
+    }
 
     if (err != 0)
         return -1;
 
-    return ret + 1;
+    return ret;
 }
 
 s64 utf8_encode(u32 cp, char *out)
@@ -464,7 +503,17 @@ s64 string_convert(const wchar_t *wcstr, s64 wcstr_size, char *u8str, s64 u8str_
         return utf8_encode_string((const u32*)wcstr, wcstr_size, u8str, u8str_size);
 }
 
-s64 string_to_wide_string_conversion_bytes_required(const char *u8str, s64 u8str_size)
+s64 string_conversion_chars_required(const char *u8str, s64 u8str_size)
+{
+    return string_conversion_bytes_required(u8str, u8str_size) / sizeof(wchar_t);
+}
+
+s64 string_conversion_chars_required(const wchar_t *wcstr, s64 wcstr_size)
+{
+    return string_conversion_bytes_required(wcstr, wcstr_size);
+}
+
+s64 string_conversion_bytes_required(const char *u8str, s64 u8str_size)
 {
     if constexpr (sizeof(wchar_t) == 2)
         return utf16_bytes_required_from_utf8(u8str, u8str_size);
@@ -486,7 +535,7 @@ s64 string_to_wide_string_conversion_bytes_required(const char *u8str, s64 u8str
     }
 }
 
-s64 wide_string_to_string_conversion_bytes_required(const wchar_t *wcstr, s64 wcstr_size)
+s64 string_conversion_bytes_required(const wchar_t *wcstr, s64 wcstr_size)
 {
     if constexpr (sizeof(wchar_t) == 2)
         return utf8_bytes_required_from_utf16((const u16*)wcstr, wcstr_size);

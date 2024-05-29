@@ -12,6 +12,7 @@
 #include "shl/defer.hpp"
 #include "shl/platform.hpp"
 #include "shl/environment.hpp"
+#include "shl/string_encoding.hpp"
 #include "shl/string.hpp"
 
 #define LIT(C, Literal)\
@@ -703,10 +704,12 @@ void set_string(string  *dst, const wchar_t    *src, s64 n)
 
 void set_string(string  *dst, const_wstring   src)
 {
-    string_reserve(dst, src.size);
+    s64 required_size = string_conversion_bytes_required(src.c_str, src.size);
+
+    string_reserve(dst, required_size);
     ::fill_memory((void*)dst->data, 0, dst->reserved_size * sizeof(char));
 
-    dst->size = ::wcstombs(dst->data, src.c_str, src.size * sizeof(wchar_t));
+    dst->size = ::string_convert(src.c_str, src.size, dst->data, dst->reserved_size);
 }
 
 void set_string(string  *dst, const wstring  *src)
@@ -746,10 +749,12 @@ void set_string(wstring *dst, const char *src, s64 n)
 
 void set_string(wstring *dst, const_string  src)
 {
-    string_reserve(dst, src.size);
+    s64 required_size = string_conversion_bytes_required(src.c_str, src.size);
+
+    string_reserve(dst, required_size / sizeof(wchar_t));
     ::fill_memory((void*)dst->data, 0, dst->reserved_size * sizeof(wchar_t));
 
-    dst->size = ::mbstowcs(dst->data, src.c_str, src.size * sizeof(char));
+    dst->size = ::string_convert(src.c_str, src.size, dst->data, dst->reserved_size);
 }
 
 void set_string(wstring *dst, const string *src)
@@ -770,26 +775,6 @@ wchar_t *copy_string(const wchar_t *src, wchar_t *dst)
 char *copy_string(const char *src, char *dst, s64 n)
 {
     return stpncpy(dst, src, n);
-}
-
-wchar_t *copy_string(const char    *src, wchar_t *dst, s64 n)
-{
-    s64 written = mbstowcs(dst, src, n);
-
-    if (written < 0)
-        return dst;
-
-    return dst + written;
-}
-
-char    *copy_string(const wchar_t *src, char    *dst, s64 n)
-{
-    s64 written = wcstombs(dst, src, n);
-
-    if (written < 0)
-        return dst;
-
-    return dst + written;
 }
 
 wchar_t *copy_string(const wchar_t *src, wchar_t *dst, s64 n)
@@ -1834,16 +1819,6 @@ void join(const wstring *strings, s64 count, const wstring *delim, wstring *out)
     _join(strings, count, to_const_string(delim), out);
 }
 
-static inline s64 _convert_str(char *dst, const wchar_t *src, s64 n)
-{
-    return wcstombs(dst, src, n);
-}
-
-static inline s64 _convert_str(wchar_t *dst, const char *src, s64 n)
-{
-    return mbstowcs(dst, src, n);
-}
-
 template<typename C>
 static inline bool _get_converted_environment_variable(const C *name, s64 namesize, C **outbuf, s64 *outsize, sys_char **sysbuf, s64 *syssize)
 {
@@ -1853,9 +1828,9 @@ static inline bool _get_converted_environment_variable(const C *name, s64 namesi
     }
     else
     {
-        s64 char_count = _convert_str(nullptr, name, namesize);
+        s64 char_count = string_conversion_chars_required(name, namesize);
 
-        if (char_count == -1)
+        if (char_count < 0)
             return false;
 
         if (*syssize < Max((s64)64, char_count + 1))
@@ -1866,15 +1841,16 @@ static inline bool _get_converted_environment_variable(const C *name, s64 namesi
             fill_memory((void*)*sysbuf, 0, (*syssize) * sizeof(sys_char));
         }
 
-        _convert_str(*sysbuf, name, char_count);
+        string_convert(name, namesize, *sysbuf, *syssize);
 
         const sys_char *envvar = get_environment_variable(*sysbuf, namesize);
+        s64 envvar_size = string_length(envvar);
 
         if (envvar != nullptr)
         {
-            char_count = _convert_str(nullptr, envvar, 0);
+            char_count = string_conversion_chars_required(envvar, envvar_size);
 
-            if (char_count == -1)
+            if (char_count < 0)
                 return false;
 
             if (*outsize < Max((s64)64, char_count + 1))
@@ -1885,7 +1861,7 @@ static inline bool _get_converted_environment_variable(const C *name, s64 namesi
                 fill_memory((void*)*outbuf, 0, *outsize * sizeof(C));
             }
 
-            _convert_str(*outbuf, envvar, char_count);
+            string_convert(envvar, envvar_size, *outbuf, *outsize);
         }
         else
         {

@@ -80,5 +80,7 @@ static inline s32 codepoint_utf16_length(u32 cp)
 
 s64 string_convert(const char *u8str, s64 u8str_size, wchar_t *wcstr, s64 wcstr_size);
 s64 string_convert(const wchar_t *wcstr, s64 wcstr_size, char *u8str, s64 u8str_size);
-s64 string_to_wide_string_conversion_bytes_required(const char *u8str, s64 u8str_size);
-s64 wide_string_to_string_conversion_bytes_required(const wchar_t *wcstr, s64 wcstr_size);
+s64 string_conversion_chars_required(const char *u8str, s64 u8str_size);
+s64 string_conversion_chars_required(const wchar_t *wcstr, s64 wcstr_size);
+s64 string_conversion_bytes_required(const char *u8str, s64 u8str_size);
+s64 string_conversion_bytes_required(const wchar_t *wcstr, s64 wcstr_size);

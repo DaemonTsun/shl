@@ -1,5 +1,5 @@
 
-#include <stdlib.h> // wcstombs
+#include "shl/string_encoding.hpp"
 #include "shl/at_exit.hpp"
 #include "shl/bits.hpp"
 #include "shl/format.hpp"
@@ -285,16 +285,6 @@ static inline s64 _string_to_string(string_base<C> *s, const_string_base<C> x, s
 s64 _to_string(string  *s, const_string   x, s64 offset, format_options<char> opt)    _to_string_s_body(_string_to_string, s, x, offset, opt)
 s64 _to_string(wstring *s, const_wstring  x, s64 offset, format_options<wchar_t> opt) _to_string_s_body(_string_to_string, s, x, offset, opt)
 
-static inline s64 _convert_str(char *dst, const wchar_t *src, s64 n)
-{
-    return wcstombs(dst, src, n);
-}
-
-static inline s64 _convert_str(wchar_t *dst, const char *src, s64 n)
-{
-    return mbstowcs(dst, src, n);
-}
-
 // different chars
 template<typename C1, typename C2>
 static inline s64 _encoding_to_c_string(C1    *s, s64 ssize, const_string_base<C2> x, s64 offset, format_options<C1>    opt)
@@ -307,7 +297,7 @@ static inline s64 _encoding_to_c_string(C1    *s, s64 ssize, const_string_base<C
     written += pad_string(s, ssize, opt.pad_char, opt.pad_length - x.size, offset);
 
     s64 chars_left = ssize - (offset + written);
-    written += _convert_str(s + offset + written, x.c_str, chars_left);
+    written += string_convert(x.c_str, x.size, s + offset + written, chars_left);
 
     return written;
 }

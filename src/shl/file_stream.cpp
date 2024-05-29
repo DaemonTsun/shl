@@ -4,12 +4,9 @@
 // v1.1
 // add seek_next_alignment
 
-#include <string.h>
-#include <errno.h>
-#include <stdlib.h> // wcstombs
-
 #include "shl/assert.hpp"
 #include "shl/platform.hpp"
+#include "shl/string_encoding.hpp"
 #include "shl/memory.hpp"
 #include "shl/bits.hpp"
 #include "shl/math.hpp"
@@ -17,19 +14,14 @@
 #if Windows
 #include <windows.h>
 #else
-#include <fcntl.h> // O_CREAT, ...
 #include "shl/impl/linux/syscalls.hpp"
-
-static sys_int close(sys_int fd)
-{
-    return (sys_int)linux_syscall1(SYS_close, (void*)fd);
-}
+#include "shl/impl/linux/io.hpp"
 #endif
 
 #include "shl/file_stream.hpp"
 
 template<typename C>
-s64 _string_len(const C *str)
+static inline s64 _string_len(const C *str)
 {
     s64 ret = 0;
 
@@ -65,15 +57,15 @@ bool init(file_stream *stream, const char *path, int mode, int permissions, erro
 
 #if Windows
     s64 char_count = _string_len(path);
-    s64 sz = (char_count + 1) * sizeof(wchar_t);
-    wchar_t *tmp = (wchar_t*)::alloc(sz);
+    s64 wchar_count = string_conversion_chars_required(path, char_count);
+    wchar_t *tmp = ::alloc<wchar_t>(wchar_count);
 
-    ::fill_memory((void*)tmp, 0, sz);
-    ::mbstowcs(tmp, path, char_count * sizeof(char));
+    ::fill_memory((void*)tmp, 0, wchar_count * sizeof(wchar_t));
+    ::string_convert(path, char_count, tmp, wchar_count);
     
     bool ok = init(stream, tmp, mode, permissions, err);
 
-    ::dealloc(tmp);
+    dealloc_T(tmp, wchar_count);
 
     return ok;
 #else
@@ -100,9 +92,9 @@ bool init(file_stream *stream, const char *path, int mode, int permissions, erro
 
     int fd = open(path, _flags, _mode);
 
-    if (fd == -1)
+    if (fd < 0)
     {
-        set_errno_error(err);
+        set_error_by_code(err, -fd);
         return false;
     }
 
@@ -177,16 +169,16 @@ bool init(file_stream *stream, const wchar_t *path, int mode, int permissions, e
 
     return true;
 #else
-    s64 char_count = _string_len(path);
-    s64 sz = (char_count + 1) * sizeof(char);
-    char *tmp = ::alloc<char>(sz);
+    s64 wchar_count = _string_len(path);
+    s64 char_count = string_conversion_chars_required(path, wchar_count) + 1;
+    char *tmp = ::alloc<char>(char_count);
 
-    ::fill_memory((void*)tmp, 0, sz);
-    ::wcstombs(tmp, path, char_count * sizeof(wchar_t));
+    ::fill_memory((void*)tmp, 0, char_count);
+    string_convert(path, wchar_count, tmp, char_count);
     
     bool ok = init(stream, tmp, mode, permissions, err);
 
-    dealloc_T<char>(tmp, sz);
+    dealloc_T<char>(tmp, char_count);
 
     return ok;
 #endif
@@ -206,9 +198,10 @@ bool free(file_stream *stream, error *err)
 
     stream->handle = nullptr;
 #else
-    if (stream->handle != -1 && close(stream->handle) == -1)
+    if (stream->handle != -1)
+    if (sys_int ret = close(stream->handle); ret < 0)
     {
-        set_errno_error(err);
+        set_error_by_code(err, -ret);
         return false;
     }
 

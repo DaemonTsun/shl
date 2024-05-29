@@ -1,5 +1,6 @@
 
 #include "t1/t1.hpp"
+#include "shl/memory.hpp"
 #include "shl/string_encoding.hpp"
 #include "shl/print.hpp"
 
@@ -96,6 +97,58 @@ define_test(utf8_decode_string_safe_decodes_utf8_to_32bit_string)
     assert_equal(conv[6], (u32)L'彁');
     assert_equal(conv[8], (u32)L'П');
     assert_equal(conv[14], (u32)L'\0');
+}
+
+define_test(utf8_decode_string_safe_decodes_utf8_to_32bit_string2)
+{
+    char *input = (char*)alloc(36);
+    copy_memory("Somebody once told me the world is g", input, 36);
+    u32 conv[64] = {0};
+
+    s64 count = utf8_decode_string_safe(input, 36, conv, 63);
+
+    assert_not_equal(count, -1);
+    assert_equal(count, 36);
+    assert_equal(conv[0],  (u32)L'S');
+    assert_equal(conv[35], (u32)L'g');
+    assert_equal(conv[36], (u32)L'\0');
+    
+    dealloc(input);
+}
+
+define_test(utf8_decode_string_safe_decodes_utf8_to_32bit_string3)
+{
+    char *input = (char*)alloc(4);
+    copy_memory("Some", input, 4);
+    u32 conv[64] = {0};
+
+    s64 count = utf8_decode_string_safe(input, 4, conv, 63);
+
+    assert_not_equal(count, -1);
+    assert_equal(count, 4);
+    assert_equal(conv[0], (u32)L'S');
+    assert_equal(conv[3], (u32)L'e');
+    assert_equal(conv[4], (u32)L'\0');
+    
+    dealloc(input);
+}
+
+define_test(utf8_decode_string_safe_decodes_utf8_to_32bit_string4)
+{
+    char *input = (char*)alloc(5);
+    copy_memory("Some1", input, 5);
+    u32 conv[64] = {0};
+
+    s64 count = utf8_decode_string_safe(input, 5, conv, 63);
+
+    assert_not_equal(count, -1);
+    assert_equal(count, 5);
+    assert_equal(conv[0], (u32)L'S');
+    assert_equal(conv[3], (u32)L'e');
+    assert_equal(conv[4], (u32)L'1');
+    assert_equal(conv[5], (u32)L'\0');
+    
+    dealloc(input);
 }
 
 define_test(utf16_decode_string_safe_decodes_utf16_to_32bit_string)
@@ -270,12 +323,12 @@ define_test(utf8_bytes_required_from_utf16_returns_numbers_of_utf8_bytes_require
 }
 
 // nice test name
-define_test(string_to_wide_string_conversion_bytes_required_returns_bytes_required_to_convert_utf8_string_to_wchar_t_string)
+define_test(string_conversion_bytes_required_returns_bytes_required_to_convert_utf8_string_to_wchar_t_string)
 {
-    assert_equal(string_to_wide_string_conversion_bytes_required(u8"hello 彁 Привет", 22), 14 * (s64)sizeof(wchar_t));
-    assert_equal(string_to_wide_string_conversion_bytes_required(u8"hello 彁 Привет", 5), 5 * (s64)sizeof(wchar_t));
-    assert_equal(string_to_wide_string_conversion_bytes_required(u8"hello 彁 Привет", 0), 0);
-    assert_equal(string_to_wide_string_conversion_bytes_required(u8"0", 0), 0);
+    assert_equal(string_conversion_bytes_required(u8"hello 彁 Привет", 22), 14 * (s64)sizeof(wchar_t));
+    assert_equal(string_conversion_bytes_required(u8"hello 彁 Привет", 5), 5 * (s64)sizeof(wchar_t));
+    assert_equal(string_conversion_bytes_required(u8"hello 彁 Привет", 0), 0);
+    assert_equal(string_conversion_bytes_required(u8"0", 0), 0);
 }
 
 define_default_test_main();
