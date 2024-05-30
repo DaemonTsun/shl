@@ -21,7 +21,8 @@ define_test(utf8_decode_decodes_utf8_to_32bit_codepoints)
 
 define_test(utf8_decode_decodes_utf8_to_32bit_codepoints2)
 {
-    char input[] = {(char)0xd0, (char)0x9f};
+    u8 _input[] = {(u8)0xd0, (u8)0x9f};
+    const char *input = (const char*)_input;
     u32 cp = 0;
     int error = 0;
     const char *next = utf8_decode(input, &cp, &error);
@@ -64,7 +65,7 @@ define_test(utf16_decode_decodes_utf16_to_32bit_codepoints)
     assert_equal(cp, (u32)L'彁'); // 0x5f41
     assert_equal(cp, (u32)0x00005f41);
     assert_equal(error, 0);
-    assert_equal(next, input + 1); // 彁 is 2 bytes (1 u16) long in UTF-16
+    assert_equal((void*)next, (void*)(input + 1)); // 彁 is 2 bytes (1 u16) long in UTF-16
 }
 
 define_test(utf16_decode_string_decodes_utf16_to_32bit_string)
@@ -156,7 +157,7 @@ define_test(utf16_decode_string_safe_decodes_utf16_to_32bit_string)
     const u16 *input = (const u16*)u"hello 彁 Привет";
     u32 conv[32] = {0};
 
-    s64 count = utf16_decode_string_safe(input, 22, conv, 31);
+    s64 count = utf16_decode_string_safe(input, 14, conv, 31);
 
     assert_not_equal(count, -1);
     assert_equal(count, 14);
@@ -171,7 +172,7 @@ define_test(utf16_decode_string_safe_decodes_utf16_to_32bit_string)
 
 define_test(utf8_encode_encodes_codepoint_as_utf8)
 {
-    u32 input = L'彁';
+    u32 input = 0x00005f41;// 彁
     char conv[5] = {0};
     fill_memory(conv, (char)0x7f, 5);
 
@@ -179,12 +180,12 @@ define_test(utf8_encode_encodes_codepoint_as_utf8)
 
     assert_not_equal(count, 0);
     assert_equal(count, 3);
-    assert_equal(conv[0], (char)0xe5);
-    assert_equal(conv[1], (char)0xbd);
-    assert_equal(conv[2], (char)0x81);
+    assert_equal((u8)conv[0], (u8)0xe5);
+    assert_equal((u8)conv[1], (u8)0xbd);
+    assert_equal((u8)conv[2], (u8)0x81);
 
     // outside of written data
-    assert_equal(conv[3], (char)0x7f);
+    assert_equal((u8)conv[3], (u8)0x7f);
 }
 
 define_test(utf8_encode_encodes_codepoint_as_utf8_2)
@@ -197,18 +198,18 @@ define_test(utf8_encode_encodes_codepoint_as_utf8_2)
 
     assert_not_equal(count, 0);
     assert_equal(count, 4);
-    assert_equal(conv[0], (char)0xf0);
-    assert_equal(conv[1], (char)0x9f);
-    assert_equal(conv[2], (char)0x8d);
-    assert_equal(conv[3], (char)0x8c);
+    assert_equal((u8)conv[0], (u8)0xf0);
+    assert_equal((u8)conv[1], (u8)0x9f);
+    assert_equal((u8)conv[2], (u8)0x8d);
+    assert_equal((u8)conv[3], (u8)0x8c);
 
     // outside of written data
-    assert_equal(conv[4], (char)0x7f);
+    assert_equal(conv[4], (u8)0x7f);
 }
 
 define_test(utf16_encode_encodes_codepoint_as_utf16)
 {
-    u32 input = L'彁';
+    u32 input = 0x00005f41;// 彁
     u16 conv[3] = {0x7f7f, 0x7f7f, 0x7f7f};
 
     s64 count = utf16_encode(input, conv);
@@ -248,9 +249,9 @@ define_test(utf8_encode_string_encodes_codepoints_as_utf8_string)
     s64 count = utf8_encode_string(input, input_length, conv, 32);
 
     assert_equal(count, 22);
-    assert_equal(conv[6], (char)0xe5);
-    assert_equal(conv[7], (char)0xbd);
-    assert_equal(conv[8], (char)0x81);
+    assert_equal((u8)conv[6], (u8)0xe5);
+    assert_equal((u8)conv[7], (u8)0xbd);
+    assert_equal((u8)conv[8], (u8)0x81);
     assert_equal(conv[9], ' ');
     assert_equal(conv[22], '\0');
 

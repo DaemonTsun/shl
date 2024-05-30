@@ -166,7 +166,7 @@ s64 utf16_decode_string_safe(const u16 *u16str, s64 str_buf_size, u32 *out, s64 
 {
     s64 ret = 0;
 
-    if (str_buf_size > 4)
+    if (str_buf_size > 2)
     {
         const u16 *start = u16str;
         ret = _utf16_decode_string(start, &u16str, str_buf_size - 2, out, out_size);
