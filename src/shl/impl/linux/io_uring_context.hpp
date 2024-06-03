@@ -77,5 +77,4 @@ void io_uring_cmd_write(io_uring_context *ctx, io_uring_task *task, int fd, void
 bool io_uring_submit_commands(io_uring_context *ctx, s32 wait_for_entries = 0, error *err = nullptr);
 
 void io_uring_process_open_completion_queue(io_uring_context *ctx);
-bool io_uring_task_is_done(io_uring_context *ctx, io_uring_task *task);
 bool io_uring_task_await(io_uring_context *ctx, io_uring_task *task, error *err = nullptr);
