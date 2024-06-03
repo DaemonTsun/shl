@@ -28,7 +28,7 @@ u64 generate_seed()
 #else
     file_stream randstream;
 
-    if (init(&randstream, "/dev/urandom", MODE_READ))
+    if (init(&randstream, "/dev/urandom", OPEN_MODE_READ))
     {
         bool ok = read(&randstream, &ret, sizeof(u64));
         free(&randstream);

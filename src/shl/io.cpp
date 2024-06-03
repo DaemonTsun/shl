@@ -1,4 +1,6 @@
 
+#include "shl/string_encoding.hpp"
+#include "shl/memory.hpp"
 #include "shl/io.hpp"
 
 #if Linux
@@ -8,6 +10,17 @@
 #include "shl/impl/linux/io.hpp"
 #include "shl/time.hpp" // timespan
 #endif
+
+template<typename C>
+static inline s64 _string_len(const C *str)
+{
+    s64 ret = 0;
+
+    while (*str++ != '\0')
+        ret++;
+
+    return ret;
+}
 
 io_handle stdin_handle()
 {
@@ -52,6 +65,215 @@ bool set_handle_inheritance(io_handle handle, bool inherit, error *err)
 #endif
 
     return true;
+}
+
+#if Windows
+struct _CreateFile_params
+{
+    int access;
+    int share;
+    int creation;
+    int flags;
+};
+
+static void _get_CreateFile_params(_CreateFile_params *out, int flags, int mode, int permissions)
+{
+    out->_access = 0;
+    out->_share = 0;
+    out->_creation = 0;
+    out->_flags = FILE_ATTRIBUTE_NORMAL;
+    bool _rd = mode & OPEN_MODE_READ;
+    bool _wr = (mode & OPEN_MODE_WRITE) || (mode & OPEN_MODE_WRITE_TRUNC);
+
+    if (permissions & OPEN_PERMISSION_READ)    out->_access |= GENERIC_READ;
+    if (permissions & OPEN_PERMISSION_WRITE)   out->_access |= GENERIC_WRITE;
+    if (permissions & OPEN_PERMISSION_EXECUTE) out->_access |= GENERIC_EXECUTE;
+
+    if (_rd && _wr)
+    {
+        out->_access |= GENERIC_READ | GENERIC_WRITE;
+        out->_share = 0;
+    }
+    else if (_rd)
+    {
+        out->_access = GENERIC_READ;
+        out->_share = FILE_SHARE_READ;
+        out->_creation = OPEN_EXISTING;
+    }
+    else if (_wr)
+    {
+        out->_access = GENERIC_WRITE;
+        out->_share = 0;
+    }
+
+    if (mode & OPEN_MODE_WRITE)
+    {
+        out->_creation = OPEN_ALWAYS;
+    }
+    else if (mode & OPEN_MODE_WRITE_TRUNC)
+    {
+        out->_creation = CREATE_ALWAYS;
+    }
+
+    if (flags & OPEN_FLAGS_DIRECT)
+    {
+        out->_flags |= FILE_FLAG_NO_BUFFERING;
+
+        if (_wr)
+            out->_flags |= FILE_FLAG_WRITE_THROUGH;
+    }
+
+    if (flags & OPEN_FLAGS_ASYNC)
+    {
+        out->_flags |= FILE_FLAG_OVERLAPPED;
+    }
+}
+#endif
+
+io_handle io_open(const char *path, error *err)
+{
+    return io_open(path, OPEN_FLAGS_DEFAULT, OPEN_MODE_DEFAULT, OPEN_PERMISSION_DEFAULT, err);
+}
+
+io_handle io_open(const char *path, int flags, error *err)
+{
+    return io_open(path, flags, OPEN_MODE_DEFAULT, OPEN_PERMISSION_DEFAULT, err);
+}
+
+io_handle io_open(const char *path, int flags, int mode, error *err)
+{
+    return io_open(path, flags, mode, OPEN_PERMISSION_DEFAULT, err);
+}
+
+io_handle io_open(const char *path, int flags, int mode, int permissions, error *err)
+{
+#if Windows
+    _CreateFile_params p{};
+    _get_CreateFile_params(&p, flags, mode, permissions);
+
+    io_handle h = CreateFileA(path,
+                              p._access,
+                              p._share,
+                              nullptr,
+                              p._creation,
+                              p._flags,
+                              nullptr);
+
+    if (h == INVALID_HANDLE_VALUE)
+        set_GetLastError_error(err);
+
+    return h;
+#else
+    int _flags = 0;
+    int _mode = 0;
+    bool _rd = mode & OPEN_MODE_READ;
+    bool _wr = (mode & OPEN_MODE_WRITE) || (mode & OPEN_MODE_WRITE_TRUNC);
+
+    if (_wr)
+        _flags |= O_CREAT;
+
+    if (mode & OPEN_MODE_WRITE_TRUNC)
+        _flags |= O_TRUNC;
+
+    if (_rd && _wr) _flags |= O_RDWR;
+    else if (_rd)   _flags |= O_RDONLY;
+    else if (_wr)   _flags |= O_WRONLY;
+
+    if (permissions & OPEN_PERMISSION_READ)    _mode |= 0400;
+    if (permissions & OPEN_PERMISSION_WRITE)   _mode |= 0200;
+    if (permissions & OPEN_PERMISSION_EXECUTE) _mode |= 0100;
+
+    if (flags & OPEN_FLAGS_DIRECT) _flags |= O_DIRECT;
+
+    /* O_ASYNC is signal I/O, not io_uring. We don't want that.
+    if (flags & OPEN_FLAGS_ASYNC) _flags |= O_ASYNC;
+    */
+
+    io_handle fd = ::open(path, _flags, _mode);
+
+    if (fd < 0)
+        set_error_by_code(err, -fd);
+
+    return fd;
+#endif
+}
+
+io_handle io_open(const wchar_t *path, error *err)
+{
+    return io_open(path, OPEN_FLAGS_DEFAULT, OPEN_MODE_DEFAULT, OPEN_PERMISSION_DEFAULT, err);
+}
+
+io_handle io_open(const wchar_t *path, int flags, error *err)
+{
+    return io_open(path, flags, OPEN_MODE_DEFAULT, OPEN_PERMISSION_DEFAULT, err);
+}
+
+io_handle io_open(const wchar_t *path, int flags, int mode, error *err)
+{
+    return io_open(path, flags, mode, OPEN_PERMISSION_DEFAULT, err);
+}
+
+io_handle io_open(const wchar_t *path, int flags, int mode, int permissions, error *err)
+{
+#if Windows
+    _CreateFile_params p{};
+    _get_CreateFile_params(&p, flags, mode, permissions);
+
+    io_handle h = CreateFileW(path,
+                              p._access,
+                              p._share,
+                              nullptr,
+                              p._creation,
+                              p._flags,
+                              nullptr);
+
+    if (h == INVALID_HANDLE_VALUE)
+        set_GetLastError_error(err);
+
+    return h;
+#else
+    s64 wchar_count = _string_len(path);
+    s64 char_count = string_conversion_chars_required(path, wchar_count) + 1;
+    char *tmp = ::alloc<char>(char_count);
+
+    ::fill_memory((void*)tmp, 0, char_count);
+    string_convert(path, wchar_count, tmp, char_count);
+    
+    io_handle ret = ::io_open(tmp, flags, mode, permissions);
+
+    dealloc_T<char>(tmp, char_count);
+
+    if (ret < 0)
+    {
+        set_error_by_code(err, -ret);
+        ret = INVALID_IO_HANDLE;
+    }
+
+    return ret;
+#endif
+}
+
+bool io_close(io_handle h, error *err)
+{
+#if Windows
+    if (h != INVALID_IO_HANDLE)
+    if (!CloseHandle(h))
+    {
+        set_GetLastError_error(err);
+        return false;
+    }
+
+    return true;
+#else
+    if (h != INVALID_IO_HANDLE)
+    if (sys_int ret = ::close(h); ret < 0)
+    {
+        set_error_by_code(err, -ret);
+        return false;
+    }
+
+    return true;
+#endif
 }
 
 s64 io_read(io_handle h, char *buf, u64 size, error *err)

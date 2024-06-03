@@ -50,27 +50,27 @@ io_is_pipe(h)   returns whether h is a pipe or not.
 #include "shl/error.hpp"
 
 #if Windows
-#include <windows.h>
+#  include <windows.h>
 
 typedef HANDLE io_handle;
 
-#ifndef IO_SEEK_SET
-#define IO_SEEK_SET FILE_BEGIN 
-#define IO_SEEK_CUR FILE_CURRENT 
-#define IO_SEEK_END FILE_END 
-#endif
+#  ifndef IO_SEEK_SET
+#    define IO_SEEK_SET FILE_BEGIN 
+#    define IO_SEEK_CUR FILE_CURRENT 
+#    define IO_SEEK_END FILE_END 
+#  endif
 
-#define INVALID_IO_HANDLE INVALID_HANDLE_VALUE
+#  define INVALID_IO_HANDLE INVALID_HANDLE_VALUE
 #else
 typedef int io_handle;
 
-#ifndef IO_SEEK_SET 
-#define IO_SEEK_SET 0 
-#define IO_SEEK_CUR 1 
-#define IO_SEEK_END 2 
-#endif
+#  ifndef IO_SEEK_SET 
+#    define IO_SEEK_SET 0 
+#    define IO_SEEK_CUR 1 
+#    define IO_SEEK_END 2 
+#  endif
 
-#define INVALID_IO_HANDLE -1
+#  define INVALID_IO_HANDLE -1
 #endif
 
 io_handle stdin_handle();
@@ -79,6 +79,40 @@ io_handle stderr_handle();
 
 // LINUX: does nothing
 bool set_handle_inheritance(io_handle handle, bool inherit, error *err = nullptr);
+
+#ifndef OPEN_PERMISSION_READ
+#  define OPEN_PERMISSION_READ    1
+#  define OPEN_PERMISSION_WRITE   2
+#  define OPEN_PERMISSION_EXECUTE 4
+
+#  define OPEN_PERMISSION_DEFAULT (OPEN_PERMISSION_READ | OPEN_PERMISSION_WRITE)
+#endif
+
+#ifndef OPEN_MODE_READ
+#  define OPEN_MODE_READ        1
+#  define OPEN_MODE_WRITE       2
+#  define OPEN_MODE_WRITE_TRUNC 4
+
+#  define OPEN_MODE_DEFAULT     (OPEN_MODE_READ | OPEN_MODE_WRITE)
+#endif
+
+#ifndef OPEN_FLAGS_DIRECT
+#  define OPEN_FLAGS_DIRECT     1
+#  define OPEN_FLAGS_ASYNC      2
+
+#  define OPEN_FLAGS_DEFAULT    0
+#endif
+
+io_handle io_open(const char *path, error *err = nullptr);
+io_handle io_open(const char *path, int flags, error *err = nullptr);
+io_handle io_open(const char *path, int flags, int mode, error *err = nullptr);
+io_handle io_open(const char *path, int flags, int mode, int permissions, error *err = nullptr);
+io_handle io_open(const wchar_t *path, error *err = nullptr);
+io_handle io_open(const wchar_t *path, int flags, error *err = nullptr);
+io_handle io_open(const wchar_t *path, int flags, int mode, error *err = nullptr);
+io_handle io_open(const wchar_t *path, int flags, int mode, int permissions, error *err = nullptr);
+
+bool io_close(io_handle h, error *err = nullptr);
 
 s64 io_read(io_handle h, char *buf, u64 size, error *err = nullptr);
 s64 io_write(io_handle h, const char *buf, u64 size, error *err = nullptr);

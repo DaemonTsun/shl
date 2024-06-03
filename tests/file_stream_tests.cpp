@@ -22,7 +22,11 @@
 #define TXT_FILE SYS_CHAR("file_stream_text_data.txt") // 1024 bytes
 #define BIN_FILE SYS_CHAR("file_stream_binary_data.bin") // 12 bytes
 
-const sys_char *get_executable_path()
+typedef string_base<sys_char> sys_string;
+
+sys_string bin_file;
+
+static const sys_char *get_executable_path()
 {
     static sys_char pth[4096] = {0};
 #if Windows
@@ -41,7 +45,7 @@ const sys_char *get_executable_path()
 #endif
 }
 
-string_base<sys_char> get_filepath(const sys_char *file)
+static string_base<sys_char> get_filepath(const sys_char *file)
 {
     string_base<sys_char> ret{};
 
@@ -77,20 +81,16 @@ string_base<sys_char> get_filepath(const sys_char *file)
 define_test(file_stream_init_opens_file)
 {
     file_stream fs;
-    string_base<sys_char> filepath = get_filepath(BIN_FILE);
-    defer { free(&filepath); };
 
-    assert_equal(init(&fs, filepath.data), true);
+    assert_equal(init(&fs, bin_file.data), true);
     assert_equal(free(&fs), true);
 }
 
 define_test(file_stream_read_reads_file_contents)
 {
     file_stream fs;
-    string_base<sys_char> filepath = get_filepath(BIN_FILE);
-    defer { free(&filepath); };
 
-    init(&fs, filepath.data);
+    init(&fs, bin_file.data);
 
     u32 r;
     assert_equal(read(&fs, &r), (s64)sizeof(u32));
@@ -109,10 +109,8 @@ define_test(file_stream_read_reads_file_contents)
 define_test(file_stream_read_at_reads_file_contents_at_position)
 {
     file_stream fs;
-    string_base<sys_char> filepath = get_filepath(BIN_FILE);
-    defer { free(&filepath); };
 
-    init(&fs, filepath.data);
+    init(&fs, bin_file.data);
 
     u32 r;
     assert_equal(read_at(&fs, &r, 0), (s64)sizeof(u32));
@@ -134,10 +132,8 @@ define_test(file_stream_read_at_reads_file_contents_at_position)
 define_test(file_stream_get_size_gets_size_and_sets_cached_size)
 {
     file_stream fs;
-    string_base<sys_char> filepath = get_filepath(BIN_FILE);
-    defer { free(&filepath); };
 
-    init(&fs, filepath.data);
+    init(&fs, bin_file.data);
 
     assert_equal(get_file_size(&fs), 12);
     assert_equal(fs.cached_size, 12);
@@ -149,10 +145,8 @@ define_test(file_stream_seek_next_alignment_seeks_next_alignment)
 {
     file_stream fs;
     defer { free(&fs); };
-    string_base<sys_char> filepath = get_filepath(BIN_FILE);
-    defer { free(&filepath); };
 
-    init(&fs, filepath.data);
+    init(&fs, bin_file.data);
 
     assert_equal(tell(&fs), 0);
     assert_equal(seek_next_alignment(&fs, 4), 4);
@@ -189,10 +183,8 @@ define_test(file_stream_read_block_reads_block)
 {
     file_stream fs;
     defer { free(&fs); };
-    string_base<sys_char> filepath = get_filepath(BIN_FILE);
-    defer { free(&filepath); };
 
-    init(&fs, filepath.data);
+    init(&fs, bin_file.data);
 
     u32 r;
     assert_equal(read_block(&fs, &r, sizeof(u32)), (s64)sizeof(u32));
@@ -214,10 +206,8 @@ define_test(file_stream_read_block_reads_nth_block)
 {
     file_stream fs;
     defer { free(&fs); };
-    string_base<sys_char> filepath = get_filepath(BIN_FILE);
-    defer { free(&filepath); };
 
-    init(&fs, filepath.data);
+    init(&fs, bin_file.data);
 
     u32 r;
     assert_equal(read_block(&fs, &r, 0, sizeof(u32)), (s64)sizeof(u32));
@@ -236,10 +226,8 @@ define_test(file_stream_read_blocks_reads_blocks)
 {
     file_stream fs;
     defer { free(&fs); };
-    string_base<sys_char> filepath = get_filepath(BIN_FILE);
-    defer { free(&filepath); };
 
-    init(&fs, filepath.data);
+    init(&fs, bin_file.data);
 
     u32 r[3] = {0};
     assert_equal(read_blocks(&fs, r, 0, sizeof(u32)), 0);
@@ -268,10 +256,8 @@ define_test(file_stream_read_blocks_reads_blocks)
 define_test(file_stream_read_entire_file_reads_entire_file)
 {
     file_stream fs;
-    string_base<sys_char> filepath = get_filepath(BIN_FILE);
-    defer { free(&filepath); };
 
-    init(&fs, filepath.data);
+    init(&fs, bin_file.data);
     assert_equal(get_file_size(&fs), 12u);
 
     char contents[12];
@@ -283,13 +269,10 @@ define_test(file_stream_read_entire_file_reads_entire_file)
 
 define_test(streams_read_entire_file_reads_entire_file)
 {
-    string_base<sys_char> filepath = get_filepath(BIN_FILE);
-    defer { free(&filepath); };
-
     memory_stream ms{};
 
     // read_entire_file acts as init()
-    assert_equal(read_entire_file(filepath.data, &ms), true);
+    assert_equal(read_entire_file(bin_file.data, &ms), true);
     assert_equal(strncmp(ms.data + 4, "abc", 4), 0);
     free(&ms);
 }
@@ -306,4 +289,14 @@ define_test(streams_read_entire_file_yields_error_on_nonexistent_path)
     assert_not_equal(err.error_code, 0);
 }
 
-define_default_test_main();
+void _setup()
+{
+    bin_file = get_filepath(BIN_FILE);
+}
+
+void _cleanup()
+{
+    free(&bin_file);
+}
+
+define_test_main(_setup, _cleanup);

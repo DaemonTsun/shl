@@ -28,6 +28,7 @@ exit_if_included()
 if (DEFINED Tests)
     copy_files(FILES ${ROOT}/tests/file_stream_binary_data.bin
                      ${ROOT}/tests/file_stream_text_data.txt
+                     ${ROOT}/tests/hello_world.txt
                DESTINATION "${ROOT_BIN}"
                BASE "${ROOT}")
 endif()

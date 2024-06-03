@@ -214,14 +214,6 @@ write_blocks(*Stream, *In, NthBlock, N, Blocksize[, *err])
 #include "shl/number_types.hpp"
 #include "shl/error.hpp"
 
-#define PERMISSION_READ    1
-#define PERMISSION_WRITE   2
-#define PERMISSION_EXECUTE 4
-
-#define MODE_READ        1
-#define MODE_WRITE       2
-#define MODE_WRITE_TRUNC 4
-
 struct file_stream
 {
     io_handle handle;
@@ -230,11 +222,14 @@ struct file_stream
 
 // default mode is writing and reading
 bool init(file_stream *stream, const char *path, error *err = nullptr);
+bool init(file_stream *stream, const char *path, int flags, error *err = nullptr);
+bool init(file_stream *stream, const char *path, int flags, int mode, error *err = nullptr);
+bool init(file_stream *stream, const char *path, int flags, int mode, int permissions, error *err = nullptr);
 bool init(file_stream *stream, const wchar_t *path, error *err = nullptr);
-bool init(file_stream *stream, const char *path, int mode, error *err = nullptr);
-bool init(file_stream *stream, const wchar_t *path, int mode, error *err = nullptr);
-bool init(file_stream *stream, const char *path, int mode, int permissions, error *err = nullptr);
-bool init(file_stream *stream, const wchar_t *path, int mode, int permissions, error *err = nullptr);
+bool init(file_stream *stream, const wchar_t *path, int flags, error *err = nullptr);
+bool init(file_stream *stream, const wchar_t *path, int flags, int mode, error *err = nullptr);
+bool init(file_stream *stream, const wchar_t *path, int flags, int mode, int permissions, error *err = nullptr);
+bool init(file_stream *stream, io_handle handle, error *err = nullptr);
 bool free(file_stream *stream, error *err = nullptr);
 
 bool is_open(file_stream *stream);

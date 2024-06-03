@@ -6,7 +6,6 @@
 
 #include "shl/assert.hpp"
 #include "shl/platform.hpp"
-#include "shl/string_encoding.hpp"
 #include "shl/memory.hpp"
 #include "shl/bits.hpp"
 #include "shl/math.hpp"
@@ -20,168 +19,63 @@
 
 #include "shl/file_stream.hpp"
 
-template<typename C>
-static inline s64 _string_len(const C *str)
-{
-    s64 ret = 0;
-
-    while (*str++ != '\0')
-        ret++;
-
-    return ret;
-}
-
 bool init(file_stream *stream, const char *path, error *err)
 {
-    return init(stream, path, MODE_READ | MODE_WRITE, PERMISSION_READ | PERMISSION_WRITE, err);
+    assert(stream != nullptr);
+    return init(stream, io_open(path, err));
+}
+
+bool init(file_stream *stream, const char *path, int flags, error *err)
+{
+    assert(stream != nullptr);
+    return init(stream, io_open(path, flags, err));
+}
+
+bool init(file_stream *stream, const char *path, int flags, int mode, error *err)
+{
+    assert(stream != nullptr);
+    return init(stream, io_open(path, flags, mode, err));
+}
+
+bool init(file_stream *stream, const char *path, int flags, int mode, int permissions, error *err)
+{
+    assert(stream != nullptr);
+    return init(stream, io_open(path, flags, mode, permissions, err));
 }
 
 bool init(file_stream *stream, const wchar_t *path, error *err)
 {
-    return init(stream, path, MODE_READ | MODE_WRITE, PERMISSION_READ | PERMISSION_WRITE, err);
+    assert(stream != nullptr);
+    return init(stream, io_open(path, err));
 }
 
-bool init(file_stream *stream, const char *path, int mode, error *err)
-{
-    return init(stream, path, mode, PERMISSION_READ | PERMISSION_WRITE, err);
-}
-
-bool init(file_stream *stream, const wchar_t *path, int mode, error *err)
-{
-    return init(stream, path, mode, PERMISSION_READ | PERMISSION_WRITE, err);
-}
-
-bool init(file_stream *stream, const char *path, int mode, int permissions, error *err)
+bool init(file_stream *stream, const wchar_t *path, int flags, error *err)
 {
     assert(stream != nullptr);
+    return init(stream, io_open(path, flags, err));
+}
 
-#if Windows
-    s64 char_count = _string_len(path);
-    s64 wchar_count = string_conversion_chars_required(path, char_count);
-    wchar_t *tmp = ::alloc<wchar_t>(wchar_count);
+bool init(file_stream *stream, const wchar_t *path, int flags, int mode, error *err)
+{
+    assert(stream != nullptr);
+    return init(stream, io_open(path, flags, mode, err));
+}
 
-    ::fill_memory((void*)tmp, 0, wchar_count * sizeof(wchar_t));
-    ::string_convert(path, char_count, tmp, wchar_count);
+bool init(file_stream *stream, const wchar_t *path, int flags, int mode, int permissions, error *err)
+{
+    assert(stream != nullptr);
+    return init(stream, io_open(path, flags, mode, permissions, err));
+}
+
+bool init(file_stream *stream, io_handle handle, error *err)
+{
+    assert(stream != nullptr);
+    stream->handle = handle;
     
-    bool ok = init(stream, tmp, mode, permissions, err);
-
-    dealloc_T(tmp, wchar_count);
-
-    return ok;
-#else
-    stream->handle = -1;
-
-    int _flags = 0;
-    int _mode = 0;
-    bool _rd = mode & MODE_READ;
-    bool _wr = (mode & MODE_WRITE) || (mode & MODE_WRITE_TRUNC);
-
-    if (_wr)
-        _flags |= O_CREAT;
-
-    if (mode & MODE_WRITE_TRUNC)
-        _flags |= O_TRUNC;
-
-    if (_rd && _wr) _flags |= O_RDWR;
-    else if (_rd)   _flags |= O_RDONLY;
-    else if (_wr)   _flags |= O_WRONLY;
-
-    if (permissions & PERMISSION_READ)    _mode |= 0400;
-    if (permissions & PERMISSION_WRITE)   _mode |= 0200;
-    if (permissions & PERMISSION_EXECUTE) _mode |= 0100;
-
-    int fd = open(path, _flags, _mode);
-
-    if (fd < 0)
-    {
-        set_error_by_code(err, -fd);
-        return false;
-    }
-
-    stream->handle = fd;
-    
-    if (get_file_size(stream, err) < 0)
+    if (handle == INVALID_IO_HANDLE || get_file_size(stream, err) < 0)
         return false;
 
     return true;
-#endif
-}
-
-bool init(file_stream *stream, const wchar_t *path, int mode, int permissions, error *err)
-{
-    assert(stream != nullptr);
-
-#if Windows
-    int _access = 0;
-    int _share = 0;
-    int _creation = 0;
-    bool _rd = mode & MODE_READ;
-    bool _wr = (mode & MODE_WRITE) || (mode & MODE_WRITE_TRUNC);
-
-    if (permissions & PERMISSION_READ)    _access |= GENERIC_READ;
-    if (permissions & PERMISSION_WRITE)   _access |= GENERIC_WRITE;
-    if (permissions & PERMISSION_EXECUTE) _access |= GENERIC_EXECUTE;
-
-    if (_rd && _wr)
-    {
-        _access |= GENERIC_READ | GENERIC_WRITE;
-        _share = 0;
-    }
-    else if (_rd)
-    {
-        _access = GENERIC_READ;
-        _share = FILE_SHARE_READ;
-        _creation = OPEN_EXISTING;
-    }
-    else if (_wr)
-    {
-        _access = GENERIC_WRITE;
-        _share = 0;
-    }
-
-    if (mode & MODE_WRITE)
-    {
-        _creation = OPEN_ALWAYS;
-    }
-    else if (mode & MODE_WRITE_TRUNC)
-    {
-        _creation = CREATE_ALWAYS;
-    }
-
-    io_handle h = CreateFile(path,
-                             _access,
-                             _share,
-                             nullptr,
-                             _creation,
-                             FILE_ATTRIBUTE_NORMAL,
-                             nullptr);
-
-    if (h == nullptr || h == INVALID_HANDLE_VALUE)
-    {
-        set_GetLastError_error(err);
-        return false;
-    }
-
-    stream->handle = h;
-    
-    if (get_file_size(stream, err) < 0)
-        return false;
-
-    return true;
-#else
-    s64 wchar_count = _string_len(path);
-    s64 char_count = string_conversion_chars_required(path, wchar_count) + 1;
-    char *tmp = ::alloc<char>(char_count);
-
-    ::fill_memory((void*)tmp, 0, char_count);
-    string_convert(path, wchar_count, tmp, char_count);
-    
-    bool ok = init(stream, tmp, mode, permissions, err);
-
-    dealloc_T<char>(tmp, char_count);
-
-    return ok;
-#endif
 }
 
 bool free(file_stream *stream, error *err)
