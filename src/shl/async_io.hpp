@@ -13,10 +13,8 @@ Low-level async functions.
 struct async_task
 {
 #if Windows
-    // same structure as OVERLAPPED
-    u64 internal;
-    u64 offset;
-    void *event;
+    u32 status;
+    s32 result;
 #elif Linux
     s32 flags;
     s32 result;
@@ -27,5 +25,6 @@ void async_read(async_task *t,  io_handle h, void *buf, s64 buf_size);
 void async_write(async_task *t, io_handle h, void *buf, s64 buf_size);
 
 bool async_submit_tasks(error *err = nullptr);
+void async_process_open_tasks();
 bool async_task_is_done(async_task *task);
 bool async_await(async_task *task, error *err = nullptr);

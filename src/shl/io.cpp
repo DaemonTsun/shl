@@ -70,10 +70,10 @@ bool set_handle_inheritance(io_handle handle, bool inherit, error *err)
 #if Windows
 struct _CreateFile_params
 {
-    int access;
-    int share;
-    int creation;
-    int flags;
+    int _access;
+    int _share;
+    int _creation;
+    int _flags;
 };
 
 static void _get_CreateFile_params(_CreateFile_params *out, int flags, int mode, int permissions)
