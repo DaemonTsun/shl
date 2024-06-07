@@ -11,7 +11,8 @@ project_author("DaemonTsun")
 add_lib(shl STATIC
     VERSION 0.9.3
     SOURCES_DIR "${ROOT}/src" EXCLUDING "${ROOT}/src/shl/impl"
-    SOURCES @Linux "${ROOT}/src/shl/impl/linux"
+    SOURCES @Linux   "${ROOT}/src/shl/impl/linux"
+            @Windows "${ROOT}/src/shl/impl/windows"
     GENERATE_TARGET_HEADER "${ROOT}/src/shl/shl_info.hpp"
     CPP_VERSION 20
     CPP_WARNINGS ALL EXTRA PEDANTIC SANE FATAL
