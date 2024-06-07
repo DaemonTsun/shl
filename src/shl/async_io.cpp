@@ -31,7 +31,7 @@ struct _overlapped
 };
 
 static_assert(sizeof(_overlapped) == sizeof(OVERLAPPED));
-static_assert(offsetof(_overlapped, event) == offsetof(OVERLAPPED, hEvent));
+static_assert(offset_of(_overlapped, event) == offset_of(OVERLAPPED, hEvent));
 
 enum class _async_op
 {

@@ -132,6 +132,6 @@ define_min_value(s16, S16_MIN);
 define_min_value(s32, S32_MIN);
 define_min_value(s64, S64_MIN);
 
-#ifndef offsetof
-#define offsetof(st, m) ((s64)&(((st *)0)->m))
+#ifndef offset_of
+#define offset_of(st, m) ((s64)&(((st *)0)->m))
 #endif

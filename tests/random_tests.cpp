@@ -1,6 +1,6 @@
 
-#include "shl/random.hpp"
 #include "t1/t1.hpp"
+#include "shl/random.hpp"
 
 #define LU(X) U64_LIT(X)
 
