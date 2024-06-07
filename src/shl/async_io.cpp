@@ -4,6 +4,7 @@
 #include "shl/async_io.hpp"
 #include "shl/debug.hpp"
 
+// on windows, should be a multiple of MAXIMUM_WAIT_OBJECTS
 #define ASYNC_ENTRIES 128 
 #define ASYNC_ENTRIES_MASK (ASYNC_ENTRIES - 1)
 
@@ -24,9 +25,13 @@ struct _overlapped
 {
     // same structure as win32 OVERLAPPED
     u64 internal;
+    u64 internal_high;
     u64 offset;
     void *event;
 };
+
+static_assert(sizeof(_overlapped) == sizeof(OVERLAPPED));
+static_assert(offsetof(_overlapped, event) == offsetof(OVERLAPPED, hEvent));
 
 enum class _async_op
 {
@@ -73,11 +78,20 @@ struct _async_cmd
 struct _async_context
 {
     _async_cmd commands[ASYNC_ENTRIES];
+    HANDLE events[ASYNC_ENTRIES];
     u32 submit_index;
     u32 submit_count;
 };
 
 thread_local _async_context _ctx{};
+
+void _cleanup_context()
+{
+    for (int i = 0; i < ASYNC_ENTRIES; ++i)
+        CloseHandle(_ctx.events[i]);
+
+    fill_memory(&_ctx, 0);
+}
 
 _async_context *_get_async_context()
 {
@@ -87,6 +101,15 @@ _async_context *_get_async_context()
     {
         _setup = false;
         fill_memory(&_ctx, 0);
+
+        for (int i = 0; i < ASYNC_ENTRIES; ++i)
+        {
+            _ctx.events[i] = CreateEventA(nullptr, true, false, nullptr);
+            assert(_ctx.events[i] != INVALID_IO_HANDLE);
+            _ctx.commands[i].overlapped.event = _ctx.events[i];
+        }
+
+        register_exit_function(_cleanup_context);
     }
 
     return &_ctx;
@@ -275,36 +298,57 @@ void async_process_open_tasks()
 #if Windows
     _async_context *ctx = _get_async_context();
 
-    // TODO: probably make a second queue thats just indices of open
-    // tasks.
-    for (u32 i = 0; i < ASYNC_ENTRIES; ++i)
+    bool ok = true;
+    u32 res = 0;
+    u32 idx = 0;
+
+    // as long as at least one object is signalled, we continue
+    while (ok)
     {
-        _async_cmd *cmd = ctx->commands + i;
+        ok = false;
 
-        if (cmd->status != ASYNC_STATUS_RUNNING)
-            continue;
-
-        bool ok = GetOverlappedResult(cmd->handle,
-                                      (LPOVERLAPPED)&cmd->overlapped,
-                                      (LPDWORD)&cmd->task->result,
-                                      false);
-        if (!ok)
+        for (s64 wait_batch = 0; wait_batch < ASYNC_ENTRIES; wait_batch += MAXIMUM_WAIT_OBJECTS)
         {
-            int error_code = GetLastError();
-            
-            if (error_code == ERROR_IO_PENDING)
+            res = WaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS,
+                                         ctx->events + wait_batch,
+                                         false,
+                                         0);
+
+            ok |= (/*(res >= WAIT_OBJECT_0) &&*/ (res < WAIT_OBJECT_0 + MAXIMUM_WAIT_OBJECTS));
+
+            if (!ok)
                 continue;
+
+            idx = res - WAIT_OBJECT_0;
+
+            _async_cmd *cmd = ctx->commands + idx;
+
+            if (cmd->status != ASYNC_STATUS_RUNNING)
+                continue;
+
+            
+            if (!GetOverlappedResult(cmd->handle,
+                                     (LPOVERLAPPED)&cmd->overlapped,
+                                     (LPDWORD)&cmd->task->result,
+                                     false))
+            {
+                cmd->status = ASYNC_STATUS_DONE;
+                SET_TASK_STATUS(cmd->task, ASYNC_STATUS_DONE);
+            }
             else
             {
-                cmd->task->result = -error_code;
-                fill_memory(cmd, 0);
-                cmd->status = ASYNC_STATUS_READY;
+                int error_code = GetLastError();
+                
+                if (error_code == ERROR_IO_PENDING)
+                    // huh???
+                    continue;
+                else
+                {
+                    cmd->task->result = -error_code;
+                    fill_memory(cmd, 0);
+                    cmd->status = ASYNC_STATUS_READY;
+                }
             }
-        }
-        else
-        {
-            cmd->status = ASYNC_STATUS_DONE;
-            SET_TASK_STATUS(cmd->task, ASYNC_STATUS_DONE);
         }
     }
 #elif Linux

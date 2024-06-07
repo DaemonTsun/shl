@@ -69,6 +69,7 @@ define_test(async_read_reads_from_file)
 {
     error err{};
     io_handle h = io_open(hello_world_txt.data, OPEN_FLAGS_ASYNC);
+    assert_not_equal(h, INVALID_IO_HANDLE);
     defer { io_close(h); };
 
     char data[32] = {0};
