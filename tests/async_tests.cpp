@@ -1,8 +1,9 @@
 
 #include "t1/t1.hpp"
 
+#include "shl/print.hpp"
+#include "shl/time.hpp"
 #include "shl/defer.hpp"
-#include "shl/string.hpp"
 #include "shl/string.hpp"
 #include "shl/async_io.hpp"
 
@@ -83,8 +84,67 @@ define_test(async_read_reads_from_file)
     assert_equal(async_await(&t, &err), true);
     assert_equal(err.error_code, 0);
     
+    assert_equal(t.result, 12);
     assert_equal(data, "Hello world!"_cs);
+
+    fill_memory(data, 0, 32);
+
+    async_read(&t, h, &data, 5, 6);
+
+    assert_equal(async_submit_tasks(&err), true);
+    assert_equal(err.error_code, 0);
+
+    assert_equal(async_await(&t, &err), true);
+    assert_equal(err.error_code, 0);
+
+    assert_equal(t.result, 5);
+    assert_equal(data, "world"_cs);
 }
+
+// This test starts one long read (2gb) and while the file is being read
+// it writes to the standard output.
+// NOTE: to test on windows, use Sysinternals RAMMap64.exe to clear mapped files,
+// as this test will immediately finish after the first pass otherwise. 
+#if 0
+define_test(async_does_things_asynchronously)
+{
+    error err{};
+
+    io_handle h = io_open(R"(C:/Temp/large_file.txt)", OPEN_FLAGS_ASYNC, OPEN_MODE_READ, &err);
+
+    if (err.error_code != 0)
+        tprint("%\n", err.what);
+
+    assert(h != INVALID_IO_HANDLE);
+    defer { io_close(h); };
+
+    s64 sz = 2 * 1024 * 1024 * 1024ul - 1ul;
+    char *data = alloc<char>(sz);
+    fill_memory(data, 0, sz);
+    defer { dealloc(data, sz); };
+    async_task read_task{};
+    async_task write_task{};
+    io_handle out = stdout_handle();
+    int i = 0;
+
+    async_read(&read_task, h, data, sz);
+
+    while (!async_task_is_done(&read_task))
+    {
+        const_string tmp = tformat("hello %\n", i++);
+        async_write(&write_task, out, (char*)tmp.c_str, tmp.size);
+        async_submit_tasks();
+        async_await(&write_task);
+
+        assert((read_task.status & 0x00ff) != (write_task.status & 0x00ff));
+    }
+
+    if (read_task.result >= 0)
+        tprint("bytes read: %\n", read_task.result);
+    else
+        tprint("error code %: % \n", -read_task.result, _windows_error_message(-read_task.result));
+}
+#endif
 
 void _setup()
 {

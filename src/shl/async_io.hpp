@@ -22,7 +22,9 @@ struct async_task
 };
 
 void async_read(async_task *t,  io_handle h, void *buf, s64 buf_size);
+void async_read(async_task *t,  io_handle h, void *buf, s64 buf_size, s64 offset);
 void async_write(async_task *t, io_handle h, void *buf, s64 buf_size);
+void async_write(async_task *t, io_handle h, void *buf, s64 buf_size, s64 offset);
 
 bool async_submit_tasks(error *err = nullptr);
 void async_process_open_tasks();

@@ -169,22 +169,24 @@ s32 io_uring_next_sqe_index(io_uring_context *ctx)
     OutSqe->flags = (u8)((Task)->flags & 0x000000ff);\
     OutSqe->userdata = (void*)(Task);
 
-void io_uring_cmd_read(io_uring_context *ctx, io_uring_task *task, int fd, void *buf, s64 buf_size)
+void io_uring_cmd_read(io_uring_context *ctx, io_uring_task *task, int fd, void *buf, s64 buf_size, s64 offset)
 {
     _io_uring_setup_task(ctx, task, idx, sqe, IORING_OP_READ);
 
     sqe->fd = fd;
     sqe->data = buf;
     sqe->data_size = (u32)(buf_size);
+    sqe->offset = offset;
 }
 
-void io_uring_cmd_write(io_uring_context *ctx, io_uring_task *task, int fd, void *buf, s64 buf_size)
+void io_uring_cmd_write(io_uring_context *ctx, io_uring_task *task, int fd, void *buf, s64 buf_size, s64 offset)
 {
     _io_uring_setup_task(ctx, task, idx, sqe, IORING_OP_WRITE);
 
     sqe->fd = fd;
     sqe->data = buf;
     sqe->data_size = (u32)(buf_size);
+    sqe->offset = offset;
 }
 
 bool io_uring_submit_commands(io_uring_context *ctx, s32 wait_for_entries, error *err)

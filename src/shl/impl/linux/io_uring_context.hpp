@@ -67,8 +67,8 @@ static inline bool io_uring_task_is_done(io_uring_task *task)
     return (task->flags & TASK_STATUS_MASK) == TASK_STATUS_DONE;
 }
 
-void io_uring_cmd_read(io_uring_context *ctx, io_uring_task *task,  int fd, void *buf, s64 buf_size);
-void io_uring_cmd_write(io_uring_context *ctx, io_uring_task *task, int fd, void *buf, s64 buf_size);
+void io_uring_cmd_read(io_uring_context *ctx, io_uring_task *task,  int fd, void *buf, s64 buf_size, s64 offset);
+void io_uring_cmd_write(io_uring_context *ctx, io_uring_task *task, int fd, void *buf, s64 buf_size, s64 offset);
 
 // submits all unsubmitted commands in the queue.
 // if wait_for_entries is 0, does not wait for any commands.

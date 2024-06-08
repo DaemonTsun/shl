@@ -58,19 +58,29 @@ io_uring_context *_get_async_context()
 
 void async_read(async_task *t, io_handle h, void *buf, s64 buf_size)
 {
+    async_read(t, h, buf, buf_size, 0);
+}
+
+void async_read(async_task *t, io_handle h, void *buf, s64 buf_size, s64 offset)
+{
 #if Windows
-    async_cmd_read(_get_async_context(), t, h, buf, buf_size);
+    async_cmd_read(_get_async_context(), t, h, buf, buf_size, offset);
 #elif Linux
-    io_uring_cmd_read(_get_async_context(), (io_uring_task*)t, h, buf, buf_size);
+    io_uring_cmd_read(_get_async_context(), (io_uring_task*)t, h, buf, buf_size, offset);
 #endif
 }
 
 void async_write(async_task *t, io_handle h, void *buf, s64 buf_size)
 {
+    async_write(t, h, buf, buf_size, 0);
+}
+
+void async_write(async_task *t, io_handle h, void *buf, s64 buf_size, s64 offset)
+{
 #if Windows
-    async_cmd_write(_get_async_context(), t, h, buf, buf_size);
+    async_cmd_write(_get_async_context(), t, h, buf, buf_size, offset);
 #elif Linux
-    io_uring_cmd_write(_get_async_context(), (io_uring_task*)t, h, buf, buf_size);
+    io_uring_cmd_write(_get_async_context(), (io_uring_task*)t, h, buf, buf_size, offset);
 #endif
 }
 
@@ -95,7 +105,8 @@ void async_process_open_tasks()
 bool async_task_is_done(async_task *task)
 {
 #if Windows
-    return GET_TASK_STATUS(task) == ASYNC_STATUS_DONE;
+    int status = GET_TASK_STATUS(task);
+    return status == ASYNC_STATUS_DONE || status == ASYNC_STATUS_READY;
 #elif Linux
     return io_uring_task_is_done((io_uring_task*)task);
 #endif
