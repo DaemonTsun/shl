@@ -10,8 +10,8 @@ if (NOT IS_DIRECTORY "${ASM_ARCHITECTURE_DIR}")
     message(FATAL_ERROR "Architecture ${CMAKE_SYSTEM_PROCESSOR} not supported")
 endif()
 
-
-target_sources(${shl_TARGET} PRIVATE
+# this is fixed version so included versions of shl can use this
+target_sources(shl-0.9.4 PRIVATE
     "${ASM_ARCHITECTURE_DIR}/linux_syscall.S"
     "${ASM_ARCHITECTURE_DIR}/linux_thread.S"
     )
