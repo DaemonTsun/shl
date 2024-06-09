@@ -65,5 +65,3 @@ bool init(ring_buffer *buf, s64 min_size, s32 mapping_count = 3, error *err = nu
 bool free(ring_buffer *buf, error *err = nullptr);
 
 bool resize(ring_buffer *buf, s64 min_size, s32 mapping_count = 3, error *err = nullptr);
-
-s64 get_system_pagesize();

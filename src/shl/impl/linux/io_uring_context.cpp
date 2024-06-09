@@ -189,6 +189,26 @@ void io_uring_cmd_write(io_uring_context *ctx, io_uring_task *task, int fd, void
     sqe->offset = offset;
 }
 
+void io_uring_cmd_readv(io_uring_context *ctx,  io_uring_task *task, int fd, io_vec *buffers, s64 buffer_count, s64 offset)
+{
+    _io_uring_setup_task(ctx, task, idx, sqe, IORING_OP_READV);
+
+    sqe->fd = fd;
+    sqe->data = buffers;
+    sqe->data_size = (u32)(buffer_count);
+    sqe->offset = offset;
+}
+
+void io_uring_cmd_writev(io_uring_context *ctx, io_uring_task *task, int fd, io_vec *buffers, s64 buffer_count, s64 offset)
+{
+    _io_uring_setup_task(ctx, task, idx, sqe, IORING_OP_WRITEV);
+
+    sqe->fd = fd;
+    sqe->data = buffers;
+    sqe->data_size = (u32)(buffer_count);
+    sqe->offset = offset;
+}
+
 bool io_uring_submit_commands(io_uring_context *ctx, s32 wait_for_entries, error *err)
 {
     if (ctx->to_submit == 0)

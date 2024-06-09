@@ -104,3 +104,6 @@ void fill_memory(T *ptr, u8 byte)
 {
     fill_memory(reinterpret_cast<void*>(ptr), byte, sizeof(T));
 }
+
+s64 get_system_allocation_granularity();
+s64 get_system_pagesize();

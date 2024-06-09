@@ -1,6 +1,7 @@
 
 #include <t1/t1.hpp>
 
+#include "shl/memory.hpp"
 #include "shl/ring_buffer.hpp"
 
 define_test(init_initializes_ring_buffer)
@@ -46,7 +47,7 @@ define_test(resize_resizes_ring_buffer)
     error err{};
     ring_buffer buf;
 
-    s64 sz = get_system_pagesize();
+    s64 sz = get_system_allocation_granularity();
     assert_equal(init(&buf, sz, 3, &err), true);
 
     assert_not_equal(buf.data, nullptr);

@@ -84,6 +84,34 @@ void async_write(async_task *t, io_handle h, void *buf, s64 buf_size, s64 offset
 #endif
 }
 
+void async_read_scatter(async_task *t, io_handle h, io_buffer *buffers, s64 buffer_count)
+{
+    async_read_scatter(t, h, buffers, buffer_count, 0);
+}
+
+void async_read_scatter(async_task *t, io_handle h, io_buffer *buffers, s64 buffer_count, s64 offset)
+{
+#if Windows
+    async_cmd_read_scatter(_get_async_context(), t, h, buffers, buffer_count, offset);
+#elif Linux
+    io_uring_cmd_readv(_get_async_context(), (io_uring_task*)t, h, (io_vec*)buffers, buffer_count, offset);
+#endif
+}
+
+void async_write_gather(async_task *t, io_handle h, io_buffer *buffers, s64 buffer_count)
+{
+    async_write_gather(t, h, buffers, buffer_count, 0);
+}
+
+void async_write_gather(async_task *t, io_handle h, io_buffer *buffers, s64 buffer_count, s64 offset)
+{
+#if Windows
+    async_cmd_write_scatter(_get_async_context(), t, h, buffers, buffer_count, offset);
+#elif Linux
+    io_uring_cmd_writev(_get_async_context(), (io_uring_task*)t, h, (io_vec*)buffers, buffer_count, offset);
+#endif
+}
+
 bool async_submit_tasks(error *err)
 {
 #if Windows

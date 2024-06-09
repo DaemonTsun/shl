@@ -37,7 +37,7 @@ enum class async_op
     Read,
     Write,
     ReadScatter,
-    WriteScatter,
+    WriteGather,
     // TODO: Sockets https://learn.microsoft.com/en-us/windows/win32/winsock/overlapped-i-o-and-event-objects-2
 };
 
@@ -63,14 +63,17 @@ struct async_command
             s32 bytes_to_write;
         } write_args;
 
-        /* TODO: implement
         struct
         {
-            buffers,
-            sizes,
-            bytes
+            io_buffer *buffers,
+            s32 count
         } read_scatter_args;
-        */
+
+        struct
+        {
+            io_buffer *buffers,
+            s32 count
+        } write_gather_args;
     };
 };
 
@@ -88,7 +91,10 @@ void free(async_context *ctx);
 
 void async_cmd_read(async_context *ctx, async_task *t, io_handle h, void *buf, s64 buf_size, s64 offset);
 void async_cmd_write(async_context *ctx, async_task *t, io_handle h, void *buf, s64 buf_size, s64 offset);
-// TODO: scatter, sockets, etc
+
+void async_cmd_read_scatter(async_context *ctx, async_task *t, io_handle h, io_buffer *buffers, s64 buffer_count, s64 offset);
+void async_cmd_write_gather(async_context *ctx, async_task *t, io_handle h, io_buffer *buffers, s64 buffer_count, s64 offset);
+// TODO: sockets, etc
 
 bool async_submit_commands(async_context *ctx, error *err);
 void async_process_open_commands(async_context *ctx);

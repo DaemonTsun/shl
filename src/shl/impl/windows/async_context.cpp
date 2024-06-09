@@ -104,11 +104,54 @@ static bool _submit_cmd(async_command *cmd, error *err)
 
         break;
     }
-    // TODO: implement
     case async_op::ReadScatter:
+    {
+        s64 pagesize = get_system_pagesize();
+
+        if (!ReadFileScatter(cmd->handle,
+                             (FILE_SEGMENT_ELEMENT*)cmd->read_scatter_args.buffers,
+                             (DWORD)(cmd->read_scatter_args.buffer_count * pagesize),
+                             nullptr,
+                             (LPOVERLAPPED)&cmd->overlapped))
+        {
+            error_code = GetLastError();
+
+            if (error_code != ERROR_IO_PENDING)
+            {
+                set_error_by_code(err, error_code);
+                cmd->task->result = -error_code;
+                return false;
+            }
+        }
+
+        break;
+    }
     case async_op::WriteScatter:
+    {
+        s64 pagesize = get_system_pagesize();
+
+        if (!WriteFileGather(cmd->handle,
+                             (FILE_SEGMENT_ELEMENT*)cmd->read_scatter_args.buffers,
+                             (DWORD)(cmd->read_scatter_args.buffer_count * pagesize),
+                             nullptr,
+                             (LPOVERLAPPED)&cmd->overlapped))
+        {
+            error_code = GetLastError();
+
+            if (error_code != ERROR_IO_PENDING)
+            {
+                set_error_by_code(err, error_code);
+                cmd->task->result = -error_code;
+                return false;
+            }
+        }
+
+        break;
+    }
+    /* TODO: socket
     default:
         return false;
+    */
     }
 
     cmd->status = ASYNC_STATUS_RUNNING;
@@ -173,6 +216,26 @@ void async_cmd_write(async_context *ctx, async_task *t, io_handle h, void *buf, 
     cmd->handle = h;
     cmd->write_args.buffer = buf;
     cmd->write_args.bytes_to_write = (DWORD)buf_size;
+    cmd->overlapped.offset = offset;
+}
+
+void async_cmd_read_scatter(async_context *ctx, async_task *t, io_handle h, io_buffer *buffers, s64 buffer_count, s64 offset)
+{
+    _async_setup_task(ctx, t, idx, cmd, async_op::ReadScatter);
+
+    cmd->handle = h;
+    cmd->read_scatter_args.buffers = buffers;
+    cmd->read_scatter_args.buffer_count = (DWORD)buffer_count;
+    cmd->overlapped.offset = offset;
+}
+
+void async_cmd_write_gather(async_context *ctx, async_task *t, io_handle h, io_buffer *buffers, s64 buffer_count, s64 offset)
+{
+    _async_setup_task(ctx, t, idx, cmd, async_op::WriteGather);
+
+    cmd->handle = h;
+    cmd->write_gather_args.buffers = buffers;
+    cmd->write_gather_args.buffer_count = (DWORD)buffer_count;
     cmd->overlapped.offset = offset;
 }
 

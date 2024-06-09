@@ -69,7 +69,13 @@ sys_string hello_world_txt{};
 define_test(async_read_reads_from_file)
 {
     error err{};
-    io_handle h = io_open(hello_world_txt.data, OPEN_FLAGS_ASYNC);
+    int open_flags = OPEN_FLAGS_ASYNC;
+
+#if Windows
+    open_flags |= OPEN_FLAGS_DIRECT;
+#endif
+
+    io_handle h = io_open(hello_world_txt.data, open_flags);
     assert_not_equal(h, INVALID_IO_HANDLE);
     defer { io_close(h); };
 
@@ -145,6 +151,42 @@ define_test(async_does_things_asynchronously)
         tprint("error code %: % \n", -read_task.result, _windows_error_message(-read_task.result));
 }
 #endif
+
+define_test(async_read_scatter_reads_from_file)
+{
+    error err{};
+    io_handle h = io_open(hello_world_txt.data, OPEN_FLAGS_ASYNC);
+    assert_not_equal(h, INVALID_IO_HANDLE);
+    defer { io_close(h); };
+
+    s64 pagesize = get_system_pagesize();
+
+    char *data1 = alloc<char>(pagesize);
+    char *data2 = alloc<char>(pagesize);
+
+    fill_memory(data1, 0, pagesize);
+    fill_memory(data2, 0, pagesize);
+
+    defer { dealloc(data1); dealloc(data2); };
+
+    io_buffer bufs[2] = {{data1, io_buffer_size(5)}, {data2, io_buffer_size(7)}};
+    async_task t{};
+
+    async_read_scatter(&t, h, bufs, 2);
+
+    assert_equal(async_submit_tasks(&err), true);
+    assert_equal(err.error_code, 0);
+
+    assert_equal(async_await(&t, &err), true);
+    assert_equal(err.error_code, 0);
+    
+#if Windows
+    assert_equal(to_const_string(data1, 12), "Hello world!"_cs);
+#else
+    assert_equal(data1, "Hello"_cs);
+    assert_equal(data2, " world!"_cs);
+#endif
+}
 
 void _setup()
 {

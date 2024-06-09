@@ -2,14 +2,13 @@
 #include "shl/assert.hpp"
 #include "shl/platform.hpp"
 #include "shl/number_types.hpp"
-#include "shl/memory.hpp" // copy_memory
+#include "shl/memory.hpp" // copy_memory, get_system_allocation_granularity
 
 #if Linux
 #include <errno.h>
 #include <unistd.h>
 
 #include "shl/impl/linux/syscalls.hpp"
-#include "shl/impl/linux/sysinfo.hpp"
 #include "shl/impl/linux/memory.hpp" // mmap
 
 static int _memfd_create(const char *name, u32 flags)
@@ -36,8 +35,8 @@ bool init(ring_buffer *buf, s64 min_size, s32 mapping_count, error *err)
 
     buf->data = nullptr;
 
-    s64 pagesize = get_system_pagesize();
-    s64 actual_size = ceil_multiple2(min_size, pagesize);
+    s64 granularity = get_system_allocation_granularity();
+    s64 actual_size = ceil_multiple2(min_size, granularity);
     assert(actual_size > 0);
 
     s64 total_size = actual_size * mapping_count;
@@ -205,23 +204,4 @@ bool resize(ring_buffer *buf, s64 min_size, s32 mapping_count, error *err)
     *buf = nbuf;
 
     return true;
-}
-
-s64 get_system_pagesize()
-{
-    static s64 pagesize = -1;
-
-#if Windows
-    if (pagesize < 0)
-    {
-        SYSTEM_INFO info;
-        GetSystemInfo(&info);
-        pagesize = (s64)info.dwAllocationGranularity;
-    }
-#else
-    if (pagesize < 0)
-        pagesize = get_pagesize();
-#endif
-
-    return pagesize;
 }
