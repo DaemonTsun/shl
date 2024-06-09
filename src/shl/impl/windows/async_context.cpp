@@ -126,7 +126,7 @@ static bool _submit_cmd(async_command *cmd, error *err)
 
         break;
     }
-    case async_op::WriteScatter:
+    case async_op::WriteGather:
     {
         s64 pagesize = get_system_pagesize();
 

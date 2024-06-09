@@ -65,14 +65,14 @@ struct async_command
 
         struct
         {
-            io_buffer *buffers,
-            s32 count
+            io_buffer *buffers;
+            s32 buffer_count;
         } read_scatter_args;
 
         struct
         {
-            io_buffer *buffers,
-            s32 count
+            io_buffer *buffers;
+            s32 buffer_count;
         } write_gather_args;
     };
 };

@@ -106,7 +106,7 @@ void async_write_gather(async_task *t, io_handle h, io_buffer *buffers, s64 buff
 void async_write_gather(async_task *t, io_handle h, io_buffer *buffers, s64 buffer_count, s64 offset)
 {
 #if Windows
-    async_cmd_write_scatter(_get_async_context(), t, h, buffers, buffer_count, offset);
+    async_cmd_write_gather(_get_async_context(), t, h, buffers, buffer_count, offset);
 #elif Linux
     io_uring_cmd_writev(_get_async_context(), (io_uring_task*)t, h, (io_vec*)buffers, buffer_count, offset);
 #endif

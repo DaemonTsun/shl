@@ -90,7 +90,7 @@ s64 get_system_pagesize()
     {
         SYSTEM_INFO info;
         GetSystemInfo(&info);
-        pagesize = (s64)info.dwAllocationGranularity;
+        pagesize = (s64)info.dwPageSize;
     }
 #else
     // linux/sysinfo.hpp

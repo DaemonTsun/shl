@@ -69,13 +69,8 @@ sys_string hello_world_txt{};
 define_test(async_read_reads_from_file)
 {
     error err{};
-    int open_flags = OPEN_FLAGS_ASYNC;
 
-#if Windows
-    open_flags |= OPEN_FLAGS_DIRECT;
-#endif
-
-    io_handle h = io_open(hello_world_txt.data, open_flags);
+    io_handle h = io_open(hello_world_txt.data, OPEN_FLAGS_ASYNC);
     assert_not_equal(h, INVALID_IO_HANDLE);
     defer { io_close(h); };
 
@@ -155,24 +150,41 @@ define_test(async_does_things_asynchronously)
 define_test(async_read_scatter_reads_from_file)
 {
     error err{};
-    io_handle h = io_open(hello_world_txt.data, OPEN_FLAGS_ASYNC);
+
+    int open_flags = OPEN_FLAGS_ASYNC;
+#if Windows
+    open_flags |= OPEN_FLAGS_DIRECT;
+#endif
+    io_handle h = io_open(hello_world_txt.data, open_flags, OPEN_MODE_READ);
     assert_not_equal(h, INVALID_IO_HANDLE);
     defer { io_close(h); };
 
     s64 pagesize = get_system_pagesize();
 
+#if Windows
+    char *data1 = (char*)VirtualAlloc(nullptr, pagesize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    static_assert(sizeof(io_buffer) == sizeof(FILE_SEGMENT_ELEMENT));
+    defer { VirtualFree(data1, pagesize, MEM_DECOMMIT | MEM_RELEASE); };
+
+    fill_memory(data1, 0, pagesize);
+
+    const s64 buf_count = 1;
+    io_buffer bufs[buf_count] = {{data1}};
+#else
     char *data1 = alloc<char>(pagesize);
     char *data2 = alloc<char>(pagesize);
+    defer { dealloc(data1); dealloc(data2); };
 
     fill_memory(data1, 0, pagesize);
     fill_memory(data2, 0, pagesize);
 
-    defer { dealloc(data1); dealloc(data2); };
+    const s64 buf_count = 2;
+    io_buffer bufs[buf_count] = {{data1, 5}, {data2, 7}};
+#endif
 
-    io_buffer bufs[2] = {{data1, io_buffer_size(5)}, {data2, io_buffer_size(7)}};
     async_task t{};
 
-    async_read_scatter(&t, h, bufs, 2);
+    async_read_scatter(&t, h, bufs, buf_count);
 
     assert_equal(async_submit_tasks(&err), true);
     assert_equal(err.error_code, 0);
