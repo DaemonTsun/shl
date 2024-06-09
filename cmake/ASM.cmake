@@ -11,7 +11,7 @@ if (NOT IS_DIRECTORY "${ASM_ARCHITECTURE_DIR}")
 endif()
 
 
-target_sources(shl-0.9.3 PRIVATE
+target_sources(${shl_TARGET} PRIVATE
     "${ASM_ARCHITECTURE_DIR}/linux_syscall.S"
     "${ASM_ARCHITECTURE_DIR}/linux_thread.S"
     )

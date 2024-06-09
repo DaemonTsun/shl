@@ -231,6 +231,8 @@ void free(wstring *str);
 
 // string / character functions
 
+// TODO: shouldn't these be char */wchar_t *? Both char and wchar_t can be
+// multi-tyte.
 bool is_space(char    c);
 bool is_space(wchar_t c);
 bool is_newline(char    c);
@@ -272,6 +274,7 @@ bool is_blank(const_wstring s);
 bool is_blank(const string  *s);
 bool is_blank(const wstring *s);
 
+// specifically the number of units (chars, wchar_ts) in the string, NOT codepoints.
 s64 string_length(const char    *s);
 s64 string_length(const wchar_t *s);
 s64 string_length(const_string  s);

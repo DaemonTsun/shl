@@ -9,7 +9,7 @@ project_author("DaemonTsun")
 
 # library
 add_lib(shl STATIC
-    VERSION 0.9.3
+    VERSION 0.9.4
     SOURCES_DIR "${ROOT}/src" EXCLUDING "${ROOT}/src/shl/impl"
     SOURCES @Linux   "${ROOT}/src/shl/impl/linux"
             @Windows "${ROOT}/src/shl/impl/windows"

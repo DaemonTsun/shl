@@ -4,6 +4,18 @@
 Low-level async functions.
 
 TODO: docs
+
+TODO: change design so async_tasks are managed by shl (since there can only be
+ASYNC_ENTRIES number of tasks anyway, and the user should store results
+independent of tasks).
+To do this, probably make async_task (public) an u16 index into the
+managed tasks, make tasks reusable only if they were waited for with
+async_await.
+Why? So the library can internally handle different kinds of tasks, including
+aggregate tasks, without the user having to see all sub-tasks.
+This allows for arbitrary async extensions, e.g. an awaitable filesystem copy
+command that copies all entries asynchronously; as well as arbitrary linking
+of tasks.
 */
 
 #pragma once
