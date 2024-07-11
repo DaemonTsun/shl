@@ -137,8 +137,8 @@ struct io_uring_sqe
     u16 priority;
     s32 fd;
     s64 offset;
-    void *data;
-    u32 data_size;
+    void *data; // "addr"
+    u32 data_size; // "len"
 
     union
     {

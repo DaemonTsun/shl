@@ -8,20 +8,7 @@ Helper structure for OVERLAPPED on win32.
 
 #include <windows.h>
 #include "shl/async_io.hpp"
-
-// on windows, should be a multiple of MAXIMUM_WAIT_OBJECTS
-#define ASYNC_ENTRIES 64 
-#define ASYNC_ENTRIES_MASK (ASYNC_ENTRIES - 1)
-
-#define ASYNC_STATUS_READY   0
-#define ASYNC_STATUS_SETUP   1
-#define ASYNC_STATUS_RUNNING 2
-#define ASYNC_STATUS_DONE    3
-
-#define SET_TASK_STATUS(Task, Status)   (Task)->status = ((Status) << 28) | ((Task)->status & 0x0fffffff)
-#define GET_TASK_STATUS(Task)           ((Task)->status >> 28)
-#define SET_TASK_INDEX(Task, Idx)       (Task)->status = ((Idx & 0x0fffffff) | ((Task)->status & 0xf0000000))
-#define GET_TASK_INDEX(Task)            ((Task)->status & 0x0fffffff)
+#include "shl/impl/async_common.hpp"
 
 struct async_overlapped
 {

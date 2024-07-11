@@ -9,12 +9,12 @@
 
 thread_local async_context _ctx{};
 
-void _cleanup_context()
+static void _cleanup_context()
 {
     free(&_ctx);
 }
 
-async_context *_get_async_context()
+static async_context *_get_async_context()
 {
     thread_local bool _setup = true;
 
@@ -32,12 +32,16 @@ async_context *_get_async_context()
 }
 
 #elif Linux
-#define ASYNC_ENTRIES 128 
 #include "shl/impl/linux/io_uring_context.hpp"
 
 thread_local io_uring_context _ctx{};
 
-io_uring_context *_get_async_context()
+static void _cleanup_context()
+{
+    io_uring_destroy_context(&_ctx);
+}
+
+static io_uring_context *_get_async_context()
 {
     if (_ctx.fd == 0)
     {
@@ -50,65 +54,77 @@ io_uring_context *_get_async_context()
             breakpoint();
             return nullptr;
         }
+        register_exit_function(_cleanup_context);
     }
 
     return &_ctx;
 }
 #endif
 
-void async_read(async_task *t, io_handle h, void *buf, s64 buf_size)
+async_task *async_read(io_handle h, void *buf, s64 buf_size)
 {
-    async_read(t, h, buf, buf_size, 0);
+    return async_read(h, buf, buf_size, 0);
 }
 
-void async_read(async_task *t, io_handle h, void *buf, s64 buf_size, s64 offset)
+async_task *async_read(io_handle h, void *buf, s64 buf_size, s64 offset)
 {
 #if Windows
-    async_cmd_read(_get_async_context(), t, h, buf, buf_size, offset);
+    return async_cmd_read(_get_async_context(), h, buf, buf_size, offset);
 #elif Linux
-    io_uring_cmd_read(_get_async_context(), (io_uring_task*)t, h, buf, buf_size, offset);
+    return io_uring_cmd_read(_get_async_context(), h, buf, buf_size, offset);
 #endif
 }
 
-void async_write(async_task *t, io_handle h, void *buf, s64 buf_size)
+async_task *async_write(io_handle h, void *buf, s64 buf_size)
 {
-    async_write(t, h, buf, buf_size, 0);
+    return async_write(h, buf, buf_size, 0);
 }
 
-void async_write(async_task *t, io_handle h, void *buf, s64 buf_size, s64 offset)
+async_task *async_write(io_handle h, void *buf, s64 buf_size, s64 offset)
 {
 #if Windows
-    async_cmd_write(_get_async_context(), t, h, buf, buf_size, offset);
+    return async_cmd_write(_get_async_context(), h, buf, buf_size, offset);
 #elif Linux
-    io_uring_cmd_write(_get_async_context(), (io_uring_task*)t, h, buf, buf_size, offset);
+    return io_uring_cmd_write(_get_async_context(), h, buf, buf_size, offset);
 #endif
 }
 
-void async_read_scatter(async_task *t, io_handle h, io_buffer *buffers, s64 buffer_count)
+async_task *async_read_scatter(io_handle h, io_buffer *buffers, s64 buffer_count)
 {
-    async_read_scatter(t, h, buffers, buffer_count, 0);
+    return async_read_scatter(h, buffers, buffer_count, 0);
 }
 
-void async_read_scatter(async_task *t, io_handle h, io_buffer *buffers, s64 buffer_count, s64 offset)
+async_task *async_read_scatter(io_handle h, io_buffer *buffers, s64 buffer_count, s64 offset)
 {
 #if Windows
-    async_cmd_read_scatter(_get_async_context(), t, h, buffers, buffer_count, offset);
+    return async_cmd_read_scatter(_get_async_context(), h, buffers, buffer_count, offset);
 #elif Linux
-    io_uring_cmd_readv(_get_async_context(), (io_uring_task*)t, h, (io_vec*)buffers, buffer_count, offset);
+    return io_uring_cmd_readv(_get_async_context(), h, (io_vec*)buffers, buffer_count, offset);
 #endif
 }
 
-void async_write_gather(async_task *t, io_handle h, io_buffer *buffers, s64 buffer_count)
+async_task *async_write_gather(io_handle h, io_buffer *buffers, s64 buffer_count)
 {
-    async_write_gather(t, h, buffers, buffer_count, 0);
+    return async_write_gather(h, buffers, buffer_count, 0);
 }
 
-void async_write_gather(async_task *t, io_handle h, io_buffer *buffers, s64 buffer_count, s64 offset)
+async_task *async_write_gather(io_handle h, io_buffer *buffers, s64 buffer_count, s64 offset)
 {
 #if Windows
-    async_cmd_write_gather(_get_async_context(), t, h, buffers, buffer_count, offset);
+    return async_cmd_write_gather(_get_async_context(), h, buffers, buffer_count, offset);
 #elif Linux
-    io_uring_cmd_writev(_get_async_context(), (io_uring_task*)t, h, (io_vec*)buffers, buffer_count, offset);
+    return io_uring_cmd_writev(_get_async_context(), h, (io_vec*)buffers, buffer_count, offset);
+#endif
+}
+
+async_task *async_sleep(s64 seconds, s64 nanoseconds)
+{
+#if Windows
+    // TODO: implement
+    return nullptr;
+#elif Linux
+    io_uring_timespec ts{seconds, nanoseconds};
+    return io_uring_timeout(_get_async_context(), &ts, 0);
 #endif
 }
 
@@ -136,7 +152,7 @@ bool async_task_is_done(async_task *task)
     int status = GET_TASK_STATUS(task);
     return status == ASYNC_STATUS_DONE || status == ASYNC_STATUS_READY;
 #elif Linux
-    return io_uring_task_is_done((io_uring_task*)task);
+    return io_uring_task_is_done(task);
 #endif
 }
 
@@ -145,6 +161,6 @@ bool async_await(async_task *task, error *err)
 #if Windows
     return async_await_task(_get_async_context(), task, err);
 #elif Linux
-    return io_uring_task_await(_get_async_context(), (io_uring_task*)task, err);
+    return io_uring_task_await(_get_async_context(), task, err);
 #endif
 }
