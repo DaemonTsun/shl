@@ -2,6 +2,7 @@
 //#include "shl/print.hpp"
 #define tprint(...)
 #include "shl/assert.hpp"
+#include "shl/async_io.hpp"
 #include "shl/impl/linux/io.hpp"
 #include "shl/impl/linux/memory.hpp"
 #include "shl/impl/linux/io_uring_context.hpp"
