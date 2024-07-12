@@ -60,11 +60,6 @@ bool io_uring_destroy_context(io_uring_context *ctx, error *err = nullptr);
 // also increases the tail index by one
 s32 io_uring_next_sqe_index(io_uring_context *ctx);
 
-static inline bool io_uring_task_is_done(async_task *task)
-{
-    return task->status == ASYNC_STATUS_DONE;
-}
-
 async_task *io_uring_cmd_read(io_uring_context *ctx,  int fd, void *buf, s64 buf_size, s64 offset);
 async_task *io_uring_cmd_write(io_uring_context *ctx, int fd, void *buf, s64 buf_size, s64 offset);
 
@@ -94,4 +89,4 @@ async_task *io_uring_timeout(io_uring_context *ctx, io_uring_timespec *ts, s64 c
 bool io_uring_submit_commands(io_uring_context *ctx, s32 wait_for_entries = 0, error *err = nullptr);
 
 void io_uring_process_open_completion_queue(io_uring_context *ctx);
-bool io_uring_task_await(io_uring_context *ctx, async_task *task, error *err = nullptr);
+bool io_uring_task_await(io_uring_context *ctx, async_task *task, s64 *result, error *err = nullptr);

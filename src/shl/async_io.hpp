@@ -13,6 +13,11 @@ TODO: docs
 #include "shl/io.hpp"
 #include "shl/number_types.hpp"
 
+#define ASYNC_STATUS_READY   0 // Task can be set up
+#define ASYNC_STATUS_SETUP   1 // Task is set up but not started (do not overwrite)
+#define ASYNC_STATUS_RUNNING 2 // Task is running and may be done
+#define ASYNC_STATUS_DONE    3 // Task is done and can be reset to ready
+
 struct async_task;
 
 async_task *async_read(io_handle h, void *buf, s64 buf_size);
@@ -37,10 +42,10 @@ async_task *async_sleep(s64 seconds, s64 nanoseconds = 0);
 
 bool async_submit_tasks(error *err = nullptr);
 void async_process_open_tasks();
-bool async_task_is_done(async_task *task);
+int async_task_status(async_task *task);
 static inline s64 async_task_result(async_task *task)
 {
     return *((s64*)task);
 }
 
-bool async_await(async_task *task, error *err = nullptr);
+bool async_await(async_task *task, s64 *out_result = nullptr, error *err = nullptr);

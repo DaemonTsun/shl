@@ -146,21 +146,16 @@ void async_process_open_tasks()
 #endif
 }
 
-bool async_task_is_done(async_task *task)
+int async_task_status(async_task *task)
 {
-#if Windows
-    int status = GET_TASK_STATUS(task);
-    return status == ASYNC_STATUS_DONE || status == ASYNC_STATUS_READY;
-#elif Linux
-    return io_uring_task_is_done(task);
-#endif
+    return task->status;
 }
 
-bool async_await(async_task *task, error *err)
+bool async_await(async_task *task, s64 *out_result, error *err)
 {
 #if Windows
-    return async_await_task(_get_async_context(), task, err);
+    return async_await_task(_get_async_context(), task, out_result, err);
 #elif Linux
-    return io_uring_task_await(_get_async_context(), task, err);
+    return io_uring_task_await(_get_async_context(), task, out_result, err);
 #endif
 }

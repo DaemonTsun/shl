@@ -78,14 +78,15 @@ define_test(async_read_reads_from_file)
     async_task *t;
 
     t = async_read(h, &data, 12);
+    s64 result = 0;
 
     assert_equal(async_submit_tasks(&err), true);
     assert_equal(err.error_code, 0);
 
-    assert_equal(async_await(t, &err), true);
+    assert_equal(async_await(t, &result, &err), true);
     assert_equal(err.error_code, 0);
     
-    assert_equal(async_task_result(t), 12);
+    assert_equal(result, 12);
     assert_equal(data, "Hello world!"_cs);
 
     fill_memory(data, 0, 32);
@@ -95,10 +96,10 @@ define_test(async_read_reads_from_file)
     assert_equal(async_submit_tasks(&err), true);
     assert_equal(err.error_code, 0);
 
-    assert_equal(async_await(t, &err), true);
+    assert_equal(async_await(t, &result, &err), true);
     assert_equal(err.error_code, 0);
 
-    assert_equal(async_task_result(t), 5);
+    assert_equal(result, 5);
     assert_equal(data, "world"_cs);
 }
 
@@ -195,13 +196,14 @@ define_test(async_read_scatter_reads_from_file)
 #endif
 
     async_task *t;
+    s64 result = 0;
 
     t = async_read_scatter(h, bufs, buf_count);
 
     assert_equal(async_submit_tasks(&err), true);
     assert_equal(err.error_code, 0);
 
-    assert_equal(async_await(t, &err), true);
+    assert_equal(async_await(t, &result, &err), true);
     assert_equal(err.error_code, 0);
     
 #if Windows

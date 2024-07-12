@@ -324,13 +324,16 @@ void io_uring_process_open_completion_queue(io_uring_context *ctx)
     *cring_head = head;
 }
 
-bool io_uring_task_await(io_uring_context *ctx, async_task *task, error *err)
+bool io_uring_task_await(io_uring_context *ctx, async_task *task, s64 *result, error *err)
 {
     assert(ctx != nullptr);
     assert(task != nullptr);
 
     if (task->status == ASYNC_STATUS_DONE)
     {
+        if (result != nullptr)
+            *result = task->result;
+
         task->status = ASYNC_STATUS_READY;
         return true;
     }
@@ -344,7 +347,7 @@ bool io_uring_task_await(io_uring_context *ctx, async_task *task, error *err)
     {
         io_uring_process_open_completion_queue(ctx);
 
-        if (io_uring_task_is_done(task))
+        if (task->status == ASYNC_STATUS_DONE)
             break;
 
         code = io_uring_enter(ctx->fd, 0, 1, IORING_ENTER_GETEVENTS, nullptr, 0);
@@ -359,6 +362,9 @@ bool io_uring_task_await(io_uring_context *ctx, async_task *task, error *err)
 
     if (task->status != ASYNC_STATUS_DONE)
         return false;
+
+    if (result != nullptr)
+        *result = task->result;
 
     task->status = ASYNC_STATUS_READY;
     return true;
