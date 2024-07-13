@@ -53,7 +53,7 @@ struct inotify_event
 
 static inline const char *inotify_event_name(inotify_event *ev)
 {
-    return (const char*)(ev) + offsetof(inotify_event, name_length) + sizeof(u32);
+    return (const char*)(ev) + offset_of(inotify_event, name_length) + sizeof(u32);
 }
 
 #define IN_ONLYDIR      0x01000000 // only watch directories

@@ -6,7 +6,7 @@
 JOIN        function variant of x##y
 JOIN3       x##y##z
 GET_MACROn  Used internally for variable argument macros
-offsetof    The offsetof operator
+offset_of   The offset_of operator
 */
 
 #ifndef JOIN
@@ -37,13 +37,13 @@ offsetof    The offsetof operator
 #define GET_MACRO6(_1, _2, _3, _4, _5, _6, _7, NAME, ...) NAME
 #endif
 
-#ifndef offsetof
+#ifndef offset_of
 #  if defined(__GNUC__)
-#    define offsetof(type, member) __builtin_offsetof(type, member)
+#    define offset_of(type, member) __builtin_offsetof(type, member)
 #  elif defined(_MSC_VER) && defined _CRT_USE_BUILTIN_OFFSETOF
-#    define offsetof(type, member) __builtin_offsetof(type, member)
+#    define offset_of(type, member) __builtin_offsetof(type, member)
 #  else
 // fallback definition (UB)
-#    define offsetof(type, member) (long unsigned int)(&((type *)0)->member)
+#    define offset_of(type, member) (long unsigned int)(&((type *)0)->member)
 #  endif
 #endif
