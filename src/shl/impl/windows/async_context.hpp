@@ -8,20 +8,7 @@ Helper structure for OVERLAPPED on win32.
 
 #include <windows.h>
 #include "shl/async_io.hpp"
-
-// on windows, should be a multiple of MAXIMUM_WAIT_OBJECTS
-#define ASYNC_ENTRIES 64 
-#define ASYNC_ENTRIES_MASK (ASYNC_ENTRIES - 1)
-
-#define ASYNC_STATUS_READY   0
-#define ASYNC_STATUS_SETUP   1
-#define ASYNC_STATUS_RUNNING 2
-#define ASYNC_STATUS_DONE    3
-
-#define SET_TASK_STATUS(Task, Status)   (Task)->status = ((Status) << 28) | ((Task)->status & 0x0fffffff)
-#define GET_TASK_STATUS(Task)           ((Task)->status >> 28)
-#define SET_TASK_INDEX(Task, Idx)       (Task)->status = ((Idx & 0x0fffffff) | ((Task)->status & 0xf0000000))
-#define GET_TASK_INDEX(Task)            ((Task)->status & 0x0fffffff)
+#include "shl/impl/async_common.hpp"
 
 struct async_overlapped
 {
@@ -43,10 +30,9 @@ enum class async_op
 
 struct async_command
 {
-    int status;
+    async_task task;
     async_op   op;
     async_overlapped overlapped;
-    async_task *task;
     io_handle handle;
 
     union
@@ -89,13 +75,13 @@ struct async_context
 bool init(async_context *ctx, error *err);
 void free(async_context *ctx);
 
-void async_cmd_read(async_context *ctx, async_task *t, io_handle h, void *buf, s64 buf_size, s64 offset);
-void async_cmd_write(async_context *ctx, async_task *t, io_handle h, void *buf, s64 buf_size, s64 offset);
+async_task *async_cmd_read(async_context *ctx, io_handle h, void *buf, s64 buf_size, s64 offset);
+async_task *async_cmd_write(async_context *ctx, io_handle h, void *buf, s64 buf_size, s64 offset);
 
-void async_cmd_read_scatter(async_context *ctx, async_task *t, io_handle h, io_buffer *buffers, s64 buffer_count, s64 offset);
-void async_cmd_write_gather(async_context *ctx, async_task *t, io_handle h, io_buffer *buffers, s64 buffer_count, s64 offset);
+async_task *async_cmd_read_scatter(async_context *ctx, io_handle h, io_buffer *buffers, s64 buffer_count, s64 offset);
+async_task *async_cmd_write_gather(async_context *ctx, io_handle h, io_buffer *buffers, s64 buffer_count, s64 offset);
 // TODO: sockets, etc
 
 bool async_submit_commands(async_context *ctx, error *err);
 void async_process_open_commands(async_context *ctx);
-bool async_await_task(async_context *ctx, async_task *task, error *err);
+bool async_await_task(async_context *ctx, async_task *task, s64 *result, error *err);

@@ -1,5 +1,8 @@
 
+//#include "shl/print.hpp"
+#define tprint(...)
 #include "shl/assert.hpp"
+#include "shl/async_io.hpp"
 #include "shl/impl/linux/io.hpp"
 #include "shl/impl/linux/memory.hpp"
 #include "shl/impl/linux/io_uring_context.hpp"
@@ -7,6 +10,8 @@
 bool io_uring_create_context(io_uring_context *ctx, u32 entries, io_uring_params *params, error *err)
 {
     assert(ctx != nullptr);
+
+    fill_memory(ctx, 0);
 
     ctx->fd = io_uring_setup(entries, params);
 
@@ -17,6 +22,7 @@ bool io_uring_create_context(io_uring_context *ctx, u32 entries, io_uring_params
         return false;
     }
 
+    ctx->entry_count = entries;
     ctx->features = params->features;
 
     ctx->sq.size = params->sq_off.array + params->sq_entries * sizeof(u32);
@@ -90,6 +96,10 @@ bool io_uring_create_context(io_uring_context *ctx, u32 entries, io_uring_params
     ctx->cq.ring_mask = (u32*)((char*)ctx->cq.base + params->cq_off.ring_mask);
     ctx->cq.ring_entries = (u32*)((char*)ctx->cq.base + params->cq_off.ring_entries);
 
+    ctx->tasks = alloc<async_task>(ctx->entry_count);
+    fill_memory(ctx->tasks, 0, ctx->entry_count * sizeof(async_task));
+    ctx->submit_queue = alloc<s16>(ctx->entry_count);
+
     return true;
 }
 
@@ -136,10 +146,14 @@ bool io_uring_destroy_context(io_uring_context *ctx, error *err)
 
     ctx->fd = -1;
     ctx->features = 0;
+    dealloc(ctx->tasks, ctx->entry_count);
+    dealloc(ctx->submit_queue, ctx->entry_count);
+    ctx->tasks = nullptr;
 
     return true;
 }
 
+/*
 s32 io_uring_next_sqe_index(io_uring_context *ctx)
 {
     assert(ctx != nullptr);
@@ -154,22 +168,51 @@ s32 io_uring_next_sqe_index(io_uring_context *ctx)
 
     return idx;
 }
+*/
+s32 io_uring_next_free_sqe_index(io_uring_context *ctx)
+{
+    assert(ctx != nullptr);
 
-#define _io_uring_setup_task(Ctx, Task, OutIdx, OutSqe, OpCode)\
+    u32 *sring_tail = ctx->sq.tail;
+    u32 mask = *ctx->sq.ring_mask;
+    u32 tail = *sring_tail;
+    u32 idx = tail & mask;
+    u32 failsafe_counter = 0;
+
+    while (ctx->tasks[idx].status != ASYNC_STATUS_READY && failsafe_counter < ctx->entry_count)
+    {
+        tail += 1;
+        idx = tail & mask;
+
+        failsafe_counter += 1;
+    }
+
+    if (failsafe_counter >= ctx->entry_count)
+        return -1;
+
+    *sring_tail = tail + 1;
+
+    return idx;
+}
+
+#define _io_uring_setup_task(Ctx, OutTask, OutIdx, OutSqe, OpCode)\
     assert((Ctx) != nullptr);\
-    assert((Task) != nullptr);\
-    (Task)->result = 0;\
-    u32 OutIdx = io_uring_next_sqe_index(Ctx);\
+    s32 OutIdx = io_uring_next_free_sqe_index(Ctx);\
+    if (OutIdx < 0) return nullptr;\
     io_uring_sqe *OutSqe = (Ctx)->sqes + OutIdx;\
+    async_task *OutTask = (Ctx)->tasks + OutIdx;\
     (Ctx)->sq.array[OutIdx] = OutIdx;\
-    (Task)->flags = ((Task)->flags & TASK_STATUS_UNMASK) | TASK_STATUS_SETUP;\
-    (Ctx)->to_submit += 1;\
+    (Ctx)->submit_queue[(Ctx)->submit_count] = OutIdx;\
+    (Ctx)->submit_count += 1;\
     fill_memory(OutSqe, 0);\
     OutSqe->opcode = OpCode;\
-    OutSqe->flags = (u8)((Task)->flags & 0x000000ff);\
-    OutSqe->userdata = (void*)(Task);
+    OutSqe->userdata = (void*)(OutTask);\
+    fill_memory(OutTask, 0);\
+    (OutTask)->status = ASYNC_STATUS_SETUP;\
+    (OutTask)->index = OutIdx;\
+    tprint("new task % %: %\n", OutIdx, OutTask, OpCode);
 
-void io_uring_cmd_read(io_uring_context *ctx, io_uring_task *task, int fd, void *buf, s64 buf_size, s64 offset)
+async_task *io_uring_cmd_read(io_uring_context *ctx, int fd, void *buf, s64 buf_size, s64 offset)
 {
     _io_uring_setup_task(ctx, task, idx, sqe, IORING_OP_READ);
 
@@ -177,9 +220,11 @@ void io_uring_cmd_read(io_uring_context *ctx, io_uring_task *task, int fd, void 
     sqe->data = buf;
     sqe->data_size = (u32)(buf_size);
     sqe->offset = offset;
+
+    return task;
 }
 
-void io_uring_cmd_write(io_uring_context *ctx, io_uring_task *task, int fd, void *buf, s64 buf_size, s64 offset)
+async_task *io_uring_cmd_write(io_uring_context *ctx, int fd, void *buf, s64 buf_size, s64 offset)
 {
     _io_uring_setup_task(ctx, task, idx, sqe, IORING_OP_WRITE);
 
@@ -187,9 +232,11 @@ void io_uring_cmd_write(io_uring_context *ctx, io_uring_task *task, int fd, void
     sqe->data = buf;
     sqe->data_size = (u32)(buf_size);
     sqe->offset = offset;
+
+    return task;
 }
 
-void io_uring_cmd_readv(io_uring_context *ctx,  io_uring_task *task, int fd, io_vec *buffers, s64 buffer_count, s64 offset)
+async_task *io_uring_cmd_readv(io_uring_context *ctx, int fd, io_vec *buffers, s64 buffer_count, s64 offset)
 {
     _io_uring_setup_task(ctx, task, idx, sqe, IORING_OP_READV);
 
@@ -197,9 +244,11 @@ void io_uring_cmd_readv(io_uring_context *ctx,  io_uring_task *task, int fd, io_
     sqe->data = buffers;
     sqe->data_size = (u32)(buffer_count);
     sqe->offset = offset;
+
+    return task;
 }
 
-void io_uring_cmd_writev(io_uring_context *ctx, io_uring_task *task, int fd, io_vec *buffers, s64 buffer_count, s64 offset)
+async_task *io_uring_cmd_writev(io_uring_context *ctx, int fd, io_vec *buffers, s64 buffer_count, s64 offset)
 {
     _io_uring_setup_task(ctx, task, idx, sqe, IORING_OP_WRITEV);
 
@@ -207,23 +256,48 @@ void io_uring_cmd_writev(io_uring_context *ctx, io_uring_task *task, int fd, io_
     sqe->data = buffers;
     sqe->data_size = (u32)(buffer_count);
     sqe->offset = offset;
+
+    return task;
+}
+
+async_task *io_uring_timeout(io_uring_context *ctx, io_uring_timespec *ts, s64 cq_count)
+{
+    _io_uring_setup_task(ctx, task, idx, sqe, IORING_OP_TIMEOUT);
+
+    tprint("sleeping for % seconds, % nanoseconds\n", ts->seconds, ts->nanoseconds);
+    sqe->fd = -1;
+    sqe->data = ts;
+    sqe->data_size = 1; // must be 1
+    sqe->offset = cq_count;
+
+    return task;
 }
 
 bool io_uring_submit_commands(io_uring_context *ctx, s32 wait_for_entries, error *err)
 {
-    if (ctx->to_submit == 0)
+    if (ctx->submit_count == 0)
         return true;
 
     if (wait_for_entries == -1)
-        wait_for_entries = ctx->to_submit;
+        wait_for_entries = ctx->submit_count;
 
-    sys_int code = io_uring_enter(ctx->fd, ctx->to_submit, wait_for_entries, wait_for_entries > 0 ? IORING_ENTER_GETEVENTS : 0, nullptr, 0);
+    sys_int code = io_uring_enter(ctx->fd,
+                                  ctx->submit_count,
+                                  wait_for_entries,
+                                  wait_for_entries > 0 ? IORING_ENTER_GETEVENTS : 0,
+                                  nullptr,
+                                  0);
 
     if (code < 0)
     {
         set_error_by_code(err, -code);
         return false;
     }
+
+    for (s32 i = 0; i < (s32)ctx->submit_count; ++i)
+        ctx->tasks[ctx->submit_queue[i]].status = ASYNC_STATUS_RUNNING;
+
+    ctx->submit_count = 0;
 
     return true;
 }
@@ -239,9 +313,11 @@ void io_uring_process_open_completion_queue(io_uring_context *ctx)
     while (head != *cring_tail)
     {
         cqe = ctx->cqes + (head & *cring_mask);
-        io_uring_task *task = (io_uring_task*)cqe->userdata;
+        async_task *task = (async_task*)cqe->userdata;
         task->result = cqe->result;
-        task->flags = (task->flags & TASK_STATUS_UNMASK) | TASK_STATUS_DONE;
+        task->status = ASYNC_STATUS_DONE;
+
+        tprint("task % (%) is done\n", (int)task->index, task);
 
         head += 1;
     }
@@ -249,15 +325,21 @@ void io_uring_process_open_completion_queue(io_uring_context *ctx)
     *cring_head = head;
 }
 
-bool io_uring_task_await(io_uring_context *ctx, io_uring_task *task, error *err)
+bool io_uring_task_await(io_uring_context *ctx, async_task *task, s64 *result, error *err)
 {
     assert(ctx != nullptr);
     assert(task != nullptr);
 
-    if ((task->flags & TASK_STATUS_MASK) == TASK_STATUS_DONE)
-        return true;
+    if (task->status == ASYNC_STATUS_DONE)
+    {
+        if (result != nullptr)
+            *result = task->result;
 
-    if ((task->flags & TASK_STATUS_MASK) != TASK_STATUS_SETUP)
+        task->status = ASYNC_STATUS_READY;
+        return true;
+    }
+
+    if (task->status != ASYNC_STATUS_RUNNING)
         return false;
     
     sys_int code = 0;
@@ -266,7 +348,7 @@ bool io_uring_task_await(io_uring_context *ctx, io_uring_task *task, error *err)
     {
         io_uring_process_open_completion_queue(ctx);
 
-        if (io_uring_task_is_done(task))
+        if (task->status == ASYNC_STATUS_DONE)
             break;
 
         code = io_uring_enter(ctx->fd, 0, 1, IORING_ENTER_GETEVENTS, nullptr, 0);
@@ -279,5 +361,12 @@ bool io_uring_task_await(io_uring_context *ctx, io_uring_task *task, error *err)
         return false;
     }
 
-    return (task->flags & TASK_STATUS_MASK) == TASK_STATUS_DONE;
+    if (task->status != ASYNC_STATUS_DONE)
+        return false;
+
+    if (result != nullptr)
+        *result = task->result;
+
+    task->status = ASYNC_STATUS_READY;
+    return true;
 }

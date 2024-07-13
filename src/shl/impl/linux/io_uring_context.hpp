@@ -10,11 +10,13 @@ If you were looking for plain io_uring syscalls, see io_uring.hpp/.cpp.
 #include "shl/error.hpp"
 #include "shl/memory.hpp"
 #include "shl/impl/linux/io_uring.hpp"
+#include "shl/impl/async_common.hpp"
 
 struct io_uring_context
 {
     int fd;
     u32 features;
+    u32 entry_count;
 
     struct
     {
@@ -42,7 +44,14 @@ struct io_uring_context
     s64 sqes_size;
     io_uring_cqe *cqes;
 
-    s32 to_submit; 
+    // list of indices of sqes that will be submitted with next call to
+    // io_uring_submit_commands. This is used to update state of these
+    // sqes to ASYNC_STATUS_RUNNING.
+    s16 *submit_queue;
+    u32 submit_index;
+    u32 submit_count;
+
+    async_task *tasks;
 };
 
 bool io_uring_create_context(io_uring_context *ctx, u32 entries, io_uring_params *params, error *err = nullptr);
@@ -51,24 +60,8 @@ bool io_uring_destroy_context(io_uring_context *ctx, error *err = nullptr);
 // also increases the tail index by one
 s32 io_uring_next_sqe_index(io_uring_context *ctx);
 
-#define TASK_STATUS_SETUP   0x01000000
-#define TASK_STATUS_DONE    0x02000000
-#define TASK_STATUS_MASK    0xff000000
-#define TASK_STATUS_UNMASK  0x00ffffff
-
-struct io_uring_task
-{
-    s32 flags;
-    s32 result;
-};
-
-static inline bool io_uring_task_is_done(io_uring_task *task)
-{
-    return (task->flags & TASK_STATUS_MASK) == TASK_STATUS_DONE;
-}
-
-void io_uring_cmd_read(io_uring_context *ctx,  io_uring_task *task, int fd, void *buf, s64 buf_size, s64 offset);
-void io_uring_cmd_write(io_uring_context *ctx, io_uring_task *task, int fd, void *buf, s64 buf_size, s64 offset);
+async_task *io_uring_cmd_read(io_uring_context *ctx,  int fd, void *buf, s64 buf_size, s64 offset);
+async_task *io_uring_cmd_write(io_uring_context *ctx, int fd, void *buf, s64 buf_size, s64 offset);
 
 struct io_vec
 {
@@ -76,8 +69,18 @@ struct io_vec
     s64   size;
 };
 
-void io_uring_cmd_readv(io_uring_context *ctx,  io_uring_task *task, int fd, io_vec *buffers, s64 buffer_count, s64 offset);
-void io_uring_cmd_writev(io_uring_context *ctx, io_uring_task *task, int fd, io_vec *buffers, s64 buffer_count, s64 offset);
+async_task *io_uring_cmd_readv(io_uring_context *ctx,  int fd, io_vec *buffers, s64 buffer_count, s64 offset);
+async_task *io_uring_cmd_writev(io_uring_context *ctx, int fd, io_vec *buffers, s64 buffer_count, s64 offset);
+
+struct io_uring_timespec
+{
+    s64 seconds;
+    s64 nanoseconds;
+};
+
+// cq_count = 0 -> timeout
+// otherwise, wait for cq_count cqes to be done
+async_task *io_uring_timeout(io_uring_context *ctx, io_uring_timespec *ts, s64 cq_count);
 
 // submits all unsubmitted commands in the queue.
 // if wait_for_entries is 0, does not wait for any commands.
@@ -86,4 +89,4 @@ void io_uring_cmd_writev(io_uring_context *ctx, io_uring_task *task, int fd, io_
 bool io_uring_submit_commands(io_uring_context *ctx, s32 wait_for_entries = 0, error *err = nullptr);
 
 void io_uring_process_open_completion_queue(io_uring_context *ctx);
-bool io_uring_task_await(io_uring_context *ctx, io_uring_task *task, error *err = nullptr);
+bool io_uring_task_await(io_uring_context *ctx, async_task *task, s64 *result, error *err = nullptr);

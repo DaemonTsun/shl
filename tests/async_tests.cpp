@@ -75,43 +75,48 @@ define_test(async_read_reads_from_file)
     defer { io_close(h); };
 
     char data[32] = {0};
-    async_task t{};
+    async_task *t;
 
-    async_read(&t, h, &data, 12);
+    t = async_read(h, &data, 12);
+    s64 result = 0;
 
     assert_equal(async_submit_tasks(&err), true);
     assert_equal(err.error_code, 0);
 
-    assert_equal(async_await(&t, &err), true);
+    assert_equal(async_await(t, &result, &err), true);
     assert_equal(err.error_code, 0);
     
-    assert_equal(t.result, 12);
+    assert_equal(result, 12);
     assert_equal(data, "Hello world!"_cs);
 
     fill_memory(data, 0, 32);
 
-    async_read(&t, h, &data, 5, 6);
+    t = async_read(h, &data, 5, 6);
 
     assert_equal(async_submit_tasks(&err), true);
     assert_equal(err.error_code, 0);
 
-    assert_equal(async_await(&t, &err), true);
+    assert_equal(async_await(t, &result, &err), true);
     assert_equal(err.error_code, 0);
 
-    assert_equal(t.result, 5);
+    assert_equal(result, 5);
     assert_equal(data, "world"_cs);
 }
 
+#if 0
 // This test starts one long read (2gb) and while the file is being read
 // it writes to the standard output.
 // NOTE: to test on windows, use Sysinternals RAMMap64.exe to clear mapped files,
 // as this test will immediately finish after the first pass otherwise. 
-#if 0
 define_test(async_does_things_asynchronously)
 {
     error err{};
 
+#if Windows
     io_handle h = io_open(R"(C:/Temp/large_file.txt)", OPEN_FLAGS_ASYNC, OPEN_MODE_READ, &err);
+#else
+    io_handle h = io_open(R"(/tmp/large_file.txt)", OPEN_FLAGS_ASYNC, OPEN_MODE_READ, &err);
+#endif
 
     if (err.error_code != 0)
         tprint("%\n", err.what);
@@ -123,27 +128,35 @@ define_test(async_does_things_asynchronously)
     char *data = alloc<char>(sz);
     fill_memory(data, 0, sz);
     defer { dealloc(data, sz); };
-    async_task read_task{};
-    async_task write_task{};
+    async_task *read_task;
+    async_task *write_task;
     io_handle out = stdout_handle();
     int i = 0;
 
-    async_read(&read_task, h, data, sz);
+    read_task = async_read(h, data, sz);
 
-    while (!async_task_is_done(&read_task))
+    while (!async_task_is_done(read_task))
     {
         const_string tmp = tformat("hello %\n", i++);
-        async_write(&write_task, out, (char*)tmp.c_str, tmp.size);
+        write_task = async_write(out, (char*)tmp.c_str, tmp.size);
         async_submit_tasks();
-        async_await(&write_task);
+        async_await(write_task);
 
-        assert((read_task.status & 0x00ff) != (write_task.status & 0x00ff));
+        // assert((read_task.status & 0x00ff) != (write_task.status & 0x00ff));
     }
 
-    if (read_task.result >= 0)
-        tprint("bytes read: %\n", read_task.result);
+    s64 read_result = async_task_result(read_task);
+
+    if (read_result >= 0)
+        tprint("bytes read: %\n", read_result);
     else
-        tprint("error code %: % \n", -read_task.result, _windows_error_message(-read_task.result));
+    {
+#if Windows
+        tprint("error code %: % \n", -read_result, _windows_error_message(-read_result));
+#else
+        tprint("error code %: % \n", -read_result, _errno_error_message(-read_result));
+#endif
+    }
 }
 #endif
 
@@ -182,14 +195,15 @@ define_test(async_read_scatter_reads_from_file)
     io_buffer bufs[buf_count] = {{data1, 5}, {data2, 7}};
 #endif
 
-    async_task t{};
+    async_task *t;
+    s64 result = 0;
 
-    async_read_scatter(&t, h, bufs, buf_count);
+    t = async_read_scatter(h, bufs, buf_count);
 
     assert_equal(async_submit_tasks(&err), true);
     assert_equal(err.error_code, 0);
 
-    assert_equal(async_await(&t, &err), true);
+    assert_equal(async_await(t, &result, &err), true);
     assert_equal(err.error_code, 0);
     
 #if Windows

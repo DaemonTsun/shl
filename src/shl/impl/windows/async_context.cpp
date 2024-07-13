@@ -51,13 +51,13 @@ static void _reset_cmd(async_command *cmd)
     void *event = cmd->overlapped.event;
     fill_memory(cmd, 0);
     cmd->overlapped.event = event;
-    cmd->status = ASYNC_STATUS_READY;
+    cmd->task.status = ASYNC_STATUS_READY;
     ::ResetEvent(event);
 }
 
 static bool _submit_cmd(async_command *cmd, error *err)
 {
-    if (cmd->status != ASYNC_STATUS_SETUP)
+    if (cmd->task.status != ASYNC_STATUS_SETUP)
         return false;
 
     int error_code = 0;
@@ -77,7 +77,7 @@ static bool _submit_cmd(async_command *cmd, error *err)
             if (error_code != ERROR_IO_PENDING)
             {
                 set_error_by_code(err, error_code);
-                cmd->task->result = -error_code;
+                cmd->task.result = -error_code;
                 return false;
             }
         }
@@ -97,7 +97,7 @@ static bool _submit_cmd(async_command *cmd, error *err)
             if (error_code != ERROR_IO_PENDING)
             {
                 set_error_by_code(err, error_code);
-                cmd->task->result = -error_code;
+                cmd->task.result = -error_code;
                 return false;
             }
         }
@@ -119,7 +119,7 @@ static bool _submit_cmd(async_command *cmd, error *err)
             if (error_code != ERROR_IO_PENDING)
             {
                 set_error_by_code(err, error_code);
-                cmd->task->result = -error_code;
+                cmd->task.result = -error_code;
                 return false;
             }
         }
@@ -141,7 +141,7 @@ static bool _submit_cmd(async_command *cmd, error *err)
             if (error_code != ERROR_IO_PENDING)
             {
                 set_error_by_code(err, error_code);
-                cmd->task->result = -error_code;
+                cmd->task.result = -error_code;
                 return false;
             }
         }
@@ -154,8 +154,7 @@ static bool _submit_cmd(async_command *cmd, error *err)
     */
     }
 
-    cmd->status = ASYNC_STATUS_RUNNING;
-    SET_TASK_STATUS(cmd->task, ASYNC_STATUS_RUNNING);
+    cmd->task.status = ASYNC_STATUS_RUNNING;
 
     return true;
 }
@@ -168,7 +167,7 @@ static u32 _next_command_index(async_context *ctx)
     u32 failsafe_counter = 0;
     async_command *cmd = ctx->commands + cur;
 
-    while (cmd->status != ASYNC_STATUS_READY && failsafe_counter < ASYNC_ENTRIES)
+    while (cmd->task.status != ASYNC_STATUS_READY && failsafe_counter < ASYNC_ENTRIES)
     {
         ctx->submit_index += 1;
         cur = ctx->submit_index & ASYNC_ENTRIES_MASK;
@@ -178,7 +177,7 @@ static u32 _next_command_index(async_context *ctx)
 
     // should never fail
     assert(failsafe_counter < ASYNC_ENTRIES);
-    assert(cmd->status == ASYNC_STATUS_READY);
+    assert(cmd->task.status == ASYNC_STATUS_READY);
 
     ctx->submit_queue[ctx->submit_count] = (u16)(cur & 0x0000ffff);
     ctx->submit_index += 1;
@@ -187,56 +186,61 @@ static u32 _next_command_index(async_context *ctx)
     return cur;
 }
 
-#define _async_setup_task(Ctx, Task, OutIdx, OutCmd, OpCode)\
+#define _async_setup_task(Ctx, OutIdx, OutCmd, OpCode)\
     assert((Ctx) != nullptr);\
-    assert((Task) != nullptr);\
     u32 OutIdx = _next_command_index(Ctx);\
     async_command *OutCmd = (Ctx)->commands + OutIdx;\
-    (OutCmd)->task = (Task);\
-    (OutCmd)->status = ASYNC_STATUS_SETUP;\
-    SET_TASK_STATUS((Task), ASYNC_STATUS_SETUP);\
-    SET_TASK_INDEX((Task), OutIdx);\
-    (Task)->result = 0;\
+    (OutCmd)->task.status = ASYNC_STATUS_SETUP;\
+    (OutCmd)->task.index = OutIdx;\
+    (OutCmd)->task.result = 0;\
     (OutCmd)->op = OpCode;
 
-void async_cmd_read(async_context *ctx, async_task *t, io_handle h, void *buf, s64 buf_size, s64 offset)
+async_task *async_cmd_read(async_context *ctx, io_handle h, void *buf, s64 buf_size, s64 offset)
 {
-    _async_setup_task(ctx, t, idx, cmd, async_op::Read);
+    _async_setup_task(ctx, idx, cmd, async_op::Read);
 
     cmd->handle = h;
     cmd->read_args.buffer = buf;
     cmd->read_args.bytes_to_read = (DWORD)buf_size;
     cmd->overlapped.offset = offset;
+
+    return &cmd->task;
 }
 
-void async_cmd_write(async_context *ctx, async_task *t, io_handle h, void *buf, s64 buf_size, s64 offset)
+async_task *async_cmd_write(async_context *ctx, io_handle h, void *buf, s64 buf_size, s64 offset)
 {
-    _async_setup_task(ctx, t, idx, cmd, async_op::Write);
+    _async_setup_task(ctx, idx, cmd, async_op::Write);
 
     cmd->handle = h;
     cmd->write_args.buffer = buf;
     cmd->write_args.bytes_to_write = (DWORD)buf_size;
     cmd->overlapped.offset = offset;
+
+    return &cmd->task;
 }
 
-void async_cmd_read_scatter(async_context *ctx, async_task *t, io_handle h, io_buffer *buffers, s64 buffer_count, s64 offset)
+async_task *async_cmd_read_scatter(async_context *ctx, io_handle h, io_buffer *buffers, s64 buffer_count, s64 offset)
 {
-    _async_setup_task(ctx, t, idx, cmd, async_op::ReadScatter);
+    _async_setup_task(ctx, idx, cmd, async_op::ReadScatter);
 
     cmd->handle = h;
     cmd->read_scatter_args.buffers = buffers;
     cmd->read_scatter_args.buffer_count = (DWORD)buffer_count;
     cmd->overlapped.offset = offset;
+
+    return &cmd->task;
 }
 
-void async_cmd_write_gather(async_context *ctx, async_task *t, io_handle h, io_buffer *buffers, s64 buffer_count, s64 offset)
+async_task *async_cmd_write_gather(async_context *ctx, io_handle h, io_buffer *buffers, s64 buffer_count, s64 offset)
 {
-    _async_setup_task(ctx, t, idx, cmd, async_op::WriteGather);
+    _async_setup_task(ctx, idx, cmd, async_op::WriteGather);
 
     cmd->handle = h;
     cmd->write_gather_args.buffers = buffers;
     cmd->write_gather_args.buffer_count = (DWORD)buffer_count;
     cmd->overlapped.offset = offset;
+
+    return &cmd->task;
 }
 
 bool async_submit_commands(async_context *ctx, error *err)
@@ -250,12 +254,12 @@ bool async_submit_commands(async_context *ctx, error *err)
         idx = ctx->submit_queue[i];
         async_command *cmd = ctx->commands + idx;
 
-        if (cmd->status == ASYNC_STATUS_SETUP)
+        if (cmd->task.status == ASYNC_STATUS_SETUP)
         {
             ok = _submit_cmd(cmd, err);
 
             if (ok)
-                cmd->status = ASYNC_STATUS_RUNNING;
+                cmd->task.status = ASYNC_STATUS_RUNNING;
             else
                 _reset_cmd(cmd);
         }
@@ -304,15 +308,14 @@ static bool _process_open_commands(async_context *ctx, u32 *out_index, bool wait
             idx = res - WAIT_OBJECT_0;
             async_command *cmd = ctx->commands + idx;
 
-            assert(cmd->status == ASYNC_STATUS_RUNNING);
+            assert(cmd->task.status == ASYNC_STATUS_RUNNING);
 
             if (GetOverlappedResult(cmd->handle,
                                     (LPOVERLAPPED)&cmd->overlapped,
-                                    (LPDWORD)&cmd->task->result,
+                                    (LPDWORD)&cmd->task.result,
                                     false))
             {
-                cmd->status = ASYNC_STATUS_DONE;
-                SET_TASK_STATUS(cmd->task, ASYNC_STATUS_DONE);
+                cmd->task.status = ASYNC_STATUS_DONE;
                 ::ResetEvent(cmd->overlapped.event);
             }
             else
@@ -324,9 +327,8 @@ static bool _process_open_commands(async_context *ctx, u32 *out_index, bool wait
                     continue;
                 else
                 {
-                    cmd->task->result = -error_code;
-                    SET_TASK_STATUS(cmd->task, ASYNC_STATUS_DONE);
-                    _reset_cmd(cmd);
+                    cmd->task.result = -error_code;
+                    cmd->task.status = ASYNC_STATUS_DONE;
                 }
             }
 
@@ -346,15 +348,24 @@ void async_process_open_commands(async_context *ctx)
     _process_open_commands(ctx, nullptr, false);
 }
 
-bool async_await_task(async_context *ctx, async_task *task, error *err)
+bool async_await_task(async_context *ctx, async_task *task, s64 *result, error *err)
 {
-    if (async_task_is_done(task))
-        return true;
+    assert(ctx != nullptr);
+    assert(task != nullptr);
 
-    u32 i = GET_TASK_INDEX(task);
+    u32 i = task->index;
     async_command *cmd = ctx->commands + i;
 
-    if (cmd->status != ASYNC_STATUS_RUNNING)
+    if (cmd->task.status == ASYNC_STATUS_DONE)
+    {
+        if (result != nullptr)
+            *result = cmd->task.result;
+
+        _reset_cmd(cmd);
+        return true;
+    }
+
+    if (cmd->task.status != ASYNC_STATUS_RUNNING)
         return false;
 
     u32 completed_idx = ASYNC_ENTRIES;
@@ -362,11 +373,12 @@ bool async_await_task(async_context *ctx, async_task *task, error *err)
     while (_process_open_commands(ctx, &completed_idx, true) && completed_idx != i)
         continue;
 
-    if (completed_idx == i)
-    {
-        _reset_cmd(cmd);
-        return true;
-    }
+    if (completed_idx != i)
+        return false;
 
-    return false;
+    if (result != nullptr)
+        *result = cmd->task.result;
+
+    _reset_cmd(cmd);
+    return true;
 }
