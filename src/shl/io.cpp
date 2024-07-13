@@ -386,6 +386,7 @@ bool io_poll_read(io_handle h, u32 timeout_ms, error *err)
 
     return ret > 0;
 #else
+    // TODO: change to poll...?
     timespan t{};
     _set_timeval(timeout_ms, &t);
 
