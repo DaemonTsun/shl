@@ -3,7 +3,10 @@
 
 /* macros.hpp
 
-Used mostly internally.
+JOIN        function variant of x##y
+JOIN3       x##y##z
+GET_MACROn  Used internally for variable argument macros
+offsetof    The offsetof operator
 */
 
 #ifndef JOIN
@@ -32,4 +35,15 @@ Used mostly internally.
 
 #ifndef GET_MACRO6
 #define GET_MACRO6(_1, _2, _3, _4, _5, _6, _7, NAME, ...) NAME
+#endif
+
+#ifndef offsetof
+#  if defined(__GNUC__)
+#    define offsetof(type, member) __builtin_offsetof(type, member)
+#  elif defined(_MSC_VER) && defined _CRT_USE_BUILTIN_OFFSETOF
+#    define offsetof(type, member) __builtin_offsetof(type, member)
+#  else
+// fallback definition (UB)
+#    define offsetof(type, member) (long unsigned int)(&((type *)0)->member)
+#  endif
 #endif

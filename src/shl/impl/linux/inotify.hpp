@@ -6,6 +6,7 @@ Linux inotify syscalls.
 #pragma once
 
 #include "shl/number_types.hpp"
+#include "shl/macros.hpp"
 
 #ifndef IN_NONBLOCK
 #  define IN_NONBLOCK 0x800
@@ -49,6 +50,11 @@ struct inotify_event
     u32 name_length; // number of bytes after this that contain the name of the watched path
     // name is directly after name_length
 };
+
+static inline const char *inotify_event_name(inotify_event *ev)
+{
+    return (const char*)(ev) + offsetof(inotify_event, name_length) + sizeof(u32);
+}
 
 #define IN_ONLYDIR      0x01000000 // only watch directories
 #define IN_DONT_FOLLOW  0x02000000 // do not follow a symlink
