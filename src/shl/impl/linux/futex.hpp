@@ -11,7 +11,7 @@ Linux futex syscalls and constants.
 
 #define FUTEX_WAKE_ALL S32_MAX
 
-extern "C" sys_int futex(s32 *addr, sys_int futex_op, s32 val, void *val2, s32 *addr2, s32 val3);
+sys_int futex(s32 *addr, sys_int futex_op, s32 val, void *val2, s32 *addr2, s32 val3);
 
 sys_int futex_wait(s32 *addr, s32 expected_value, timespan *timeout = nullptr);
 sys_int futex_wake(s32 *addr, s32 count = FUTEX_WAKE_ALL);

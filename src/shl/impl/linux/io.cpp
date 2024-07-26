@@ -2,8 +2,6 @@
 #include "shl/impl/linux/syscalls.hpp"
 #include "shl/impl/linux/io.hpp"
 
-extern "C"
-{
 int open(const char *path, int flags, int mode)
 {
     return (int)(sys_int)linux_syscall3(SYS_open,
@@ -179,4 +177,3 @@ sys_int sync()
 {
     return (sys_int)linux_syscall(SYS_sync);
 }
-} // extern C

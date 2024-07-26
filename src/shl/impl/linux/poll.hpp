@@ -26,4 +26,4 @@ struct poll_fd
     short returned_events;
 };
 
-extern "C" sys_int poll(poll_fd *fds, int count, int timeout_milliseconds);
+sys_int poll(poll_fd *fds, int count, int timeout_milliseconds);

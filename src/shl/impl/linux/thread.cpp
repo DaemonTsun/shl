@@ -8,7 +8,7 @@
 #include "shl/impl/linux/sysinfo.hpp"
 #include "shl/impl/linux/thread.hpp"
 
-extern "C" sys_int clone3(clone_args *args, s64 arg_size)
+sys_int clone3(clone_args *args, s64 arg_size)
 {
     return (sys_int)linux_syscall2(SYS_clone3,
                                    (void*)args,
@@ -70,6 +70,7 @@ thread_stack_head *get_thread_stack_head(void *stack, s64 size, s64 extra_size)
     return ret;
 }
 
+// written in asm
 extern "C" void *_linux_thread_start(thread_stack_head *head);
 
 void default_clone_entry(thread_stack_head *head)

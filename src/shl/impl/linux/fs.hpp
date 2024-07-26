@@ -8,8 +8,6 @@ Linux filesystem syscalls, structs and constants.
 
 #include "shl/number_types.hpp"
 
-extern "C"
-{
 // mode to check with access
 #ifndef F_OK
 #  define F_OK  0
@@ -115,4 +113,3 @@ sys_int chroot(const char *path);
 #  define UTIME_OMIT    ((1l << 30) - 2l)
 #endif
 sys_int utimensat(int fd, const char *path, void *times, int flags);
-}

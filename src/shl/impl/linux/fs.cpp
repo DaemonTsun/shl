@@ -2,8 +2,6 @@
 #include "shl/impl/linux/syscalls.hpp"
 #include "shl/impl/linux/fs.hpp"
 
-extern "C"
-{
 sys_int access(const char *path, int mode)
 {
     return (sys_int)linux_syscall2(SYS_access,
@@ -240,5 +238,3 @@ sys_int utimensat(int fd, const char *path, void *times, int flags)
         (void*)times,
         (void*)(sys_int)flags);
 }
-
-} // extern C

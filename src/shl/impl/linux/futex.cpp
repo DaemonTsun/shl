@@ -2,7 +2,7 @@
 #include "shl/impl/linux/syscalls.hpp"
 #include "shl/impl/linux/futex.hpp"
 
-extern "C" sys_int futex(s32 *addr, sys_int futex_op, s32 val, void *val2, s32 *addr2, s32 val3)
+sys_int futex(s32 *addr, sys_int futex_op, s32 val, void *val2, s32 *addr2, s32 val3)
 {
     return (sys_int)linux_syscall6(SYS_futex,
                                    (void*)addr,

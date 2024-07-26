@@ -11,8 +11,8 @@ Linux system calls 'select' and 'pselect6'.
 struct fd_set;
 struct timespan; // in shl/time.hpp
 
-extern "C" sys_int select(int fd_count, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, timespan *timeout);
-extern "C" sys_int pselect6(int fd_count, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, timespan *timeout, void *sigmask);
+sys_int select(int fd_count, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, timespan *timeout);
+sys_int pselect6(int fd_count, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, timespan *timeout, void *sigmask);
 
 typedef long int fd_mask;
 #define FD_MaxFDs 1024 

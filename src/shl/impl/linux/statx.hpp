@@ -27,7 +27,7 @@ Linux statx struct and syscall.
 
 struct statx;
 
-extern "C" sys_int statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *out);
+sys_int statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *out);
 
 struct statx_timestamp
 {

@@ -4,7 +4,7 @@
 #include "shl/time.hpp"
 #include "shl/print.hpp"
 
-extern "C" sys_int select(int fd_count, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, timespan *timeout)
+sys_int select(int fd_count, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, timespan *timeout)
 {
     return (sys_int)linux_syscall5(SYS_select,
                                   (void*)(sys_int)fd_count,
@@ -14,7 +14,7 @@ extern "C" sys_int select(int fd_count, fd_set *readfds, fd_set *writefds, fd_se
                                   (void*)timeout);
 }
 
-extern "C" sys_int pselect6(int fd_count, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, timespan *timeout, void *sigmask)
+sys_int pselect6(int fd_count, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, timespan *timeout, void *sigmask)
 {
     sys_uint data[2] =
     {

@@ -37,7 +37,7 @@ struct clone_args
 
 // You probably don't want this, as this gets the clone_args as argument, which is not
 // that useful.
-extern "C" sys_int clone3(clone_args *args, s64 arg_size = sizeof(clone_args));
+sys_int clone3(clone_args *args, s64 arg_size = sizeof(clone_args));
 
 #ifndef CLONE_VM
 #  define CSIGNAL               0x000000ff

@@ -3,12 +3,12 @@
 #include "shl/impl/linux/syscalls.hpp"
 #include "shl/impl/linux/process.hpp"
 
-extern "C" int fork()
+int fork()
 {
     return (int)(sys_int)linux_syscall(SYS_fork);
 }
 
-extern "C" int execve(char *path, char **argv, char **env)
+int execve(char *path, char **argv, char **env)
 {
     return (int)(sys_int)linux_syscall3(SYS_execve,
                                         (void*)path,
@@ -16,12 +16,12 @@ extern "C" int execve(char *path, char **argv, char **env)
                                         (void*)env);
 }
 
-extern "C" int getpid()
+int getpid()
 {
     return (int)(sys_int)linux_syscall(SYS_getpid);
 }
 
-extern "C" int getppid()
+int getppid()
 {
     return (int)(sys_int)linux_syscall(SYS_getppid);
 }

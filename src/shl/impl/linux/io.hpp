@@ -8,8 +8,6 @@ Linux io syscalls, structs and constants.
 
 #include "shl/number_types.hpp"
 
-extern "C"
-{
 // open flags
 #ifndef O_RDONLY
 #  define O_RDONLY    0x0
@@ -119,4 +117,3 @@ sys_int copy_file_range(int in_fd, sys_int *in_offset, int out_fd, sys_int *out_
 sys_int fsync(int fd);
 sys_int fdatasync(int fd);
 sys_int sync();
-}

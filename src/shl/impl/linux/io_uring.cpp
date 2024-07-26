@@ -2,8 +2,6 @@
 #include "shl/impl/linux/syscalls.hpp"
 #include "shl/impl/linux/io_uring.hpp"
 
-extern "C"
-{
 int io_uring_setup(u32 entries, io_uring_params *params)
 {
     return (int)(sys_int)linux_syscall2(SYS_io_uring_setup,
@@ -30,5 +28,3 @@ sys_int io_uring_register(int fd, int opcode, void *args, sys_int arg_count)
         (void*)args,
         (void*)arg_count);
 }
-
-} // extern C

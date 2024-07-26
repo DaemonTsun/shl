@@ -5,7 +5,7 @@
 
 #include "shl/number_types.hpp"
 
-extern "C" sys_int kill(int pid, int status);
+sys_int kill(int pid, int status);
 
 #ifndef SIGHUP
 #  define SIGHUP  1

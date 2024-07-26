@@ -7,8 +7,6 @@ Linux io_uring header.
 
 #include "shl/number_types.hpp"
 
-extern "C"
-{
 // Submission offsets
 struct io_sqring_offsets
 {
@@ -179,4 +177,3 @@ sys_int io_uring_register(int fd, int opcode, void *args, sys_int arg_count);
 #define IORING_OFF_SQ_RING  0ULL
 #define IORING_OFF_CQ_RING  0x8000000ULL
 #define IORING_OFF_SQES     0x10000000ULL
-}

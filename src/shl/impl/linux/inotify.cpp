@@ -2,18 +2,18 @@
 #include "shl/impl/linux/inotify.hpp"
 #include "shl/impl/linux/syscalls.hpp"
 
-extern "C" sys_int inotify_init()
+sys_int inotify_init()
 {
     return (sys_int)linux_syscall(SYS_inotify_init);
 }
 
-extern "C" sys_int inotify_init1(int flags)
+sys_int inotify_init1(int flags)
 {
     return (sys_int)linux_syscall1(SYS_inotify_init,
                                    (void*)(sys_int)flags);
 }
 
-extern "C" sys_int inotify_add_watch(int watcher_fd, const char *path, u32 mask)
+sys_int inotify_add_watch(int watcher_fd, const char *path, u32 mask)
 {
     return (sys_int)linux_syscall3(SYS_inotify_add_watch,
                                    (void*)(sys_int)watcher_fd,
@@ -21,7 +21,7 @@ extern "C" sys_int inotify_add_watch(int watcher_fd, const char *path, u32 mask)
                                    (void*)(sys_int)mask);
 }
 
-extern "C" sys_int inotify_rm_watch(int watcher_fd, int watched_fd)
+sys_int inotify_rm_watch(int watcher_fd, int watched_fd)
 {
     return (sys_int)linux_syscall2(SYS_inotify_rm_watch,
                                    (void*)(sys_int)watcher_fd,
