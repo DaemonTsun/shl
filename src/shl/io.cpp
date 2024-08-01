@@ -76,18 +76,18 @@ struct _CreateFile_params
     int _flags;
 };
 
-static void _get_CreateFile_params(_CreateFile_params *out, int flags, int mode, int permissions)
+static void _get_CreateFile_params(_CreateFile_params *out, open_mode mode, open_flag flags, open_permission permissions)
 {
     out->_access = 0;
     out->_share = 0;
     out->_creation = 0;
     out->_flags = FILE_ATTRIBUTE_NORMAL;
-    bool _rd = mode & OPEN_MODE_READ;
-    bool _wr = (mode & OPEN_MODE_WRITE) || (mode & OPEN_MODE_WRITE_TRUNC);
+    bool _rd = is_flag_set(mode, open_mode::Read);
+    bool _wr = is_flag_set(mode, open_mode::Write) || is_flag_set(mode, open_mode::WriteTrunc);
 
-    if (permissions & OPEN_PERMISSION_READ)    out->_access |= GENERIC_READ;
-    if (permissions & OPEN_PERMISSION_WRITE)   out->_access |= GENERIC_WRITE;
-    if (permissions & OPEN_PERMISSION_EXECUTE) out->_access |= GENERIC_EXECUTE;
+    if (is_flag_set(permissions, open_permission::Read))    out->_access |= GENERIC_READ;
+    if (is_flag_set(permissions, open_permission::Write))   out->_access |= GENERIC_WRITE;
+    if (is_flag_set(permissions, open_permission::Execute)) out->_access |= GENERIC_EXECUTE;
 
     if (_rd && _wr)
     {
@@ -106,16 +106,16 @@ static void _get_CreateFile_params(_CreateFile_params *out, int flags, int mode,
         out->_share = 0;
     }
 
-    if (mode & OPEN_MODE_WRITE)
+    if (is_flag_set(mode, open_mode::Write))
     {
         out->_creation = OPEN_ALWAYS;
     }
-    else if (mode & OPEN_MODE_WRITE_TRUNC)
+    else if (is_flag_set(mode, open_mode::WriteTrunc))
     {
         out->_creation = CREATE_ALWAYS;
     }
 
-    if (flags & OPEN_FLAGS_DIRECT)
+    if (is_flag_set(flags, open_flag::Direct))
     {
         out->_flags |= FILE_FLAG_NO_BUFFERING;
 
@@ -123,7 +123,7 @@ static void _get_CreateFile_params(_CreateFile_params *out, int flags, int mode,
             out->_flags |= FILE_FLAG_WRITE_THROUGH;
     }
 
-    if (flags & OPEN_FLAGS_ASYNC)
+    if (is_flag_set(flags, open_flag::Async))
     {
         out->_flags |= FILE_FLAG_OVERLAPPED;
     }
@@ -132,20 +132,20 @@ static void _get_CreateFile_params(_CreateFile_params *out, int flags, int mode,
 
 io_handle io_open(const char *path, error *err)
 {
-    return io_open(path, OPEN_FLAGS_DEFAULT, OPEN_MODE_DEFAULT, OPEN_PERMISSION_DEFAULT, err);
+    return io_open(path, open_mode_default, open_flag_default, open_permission_default, err);
 }
 
-io_handle io_open(const char *path, int flags, error *err)
+io_handle io_open(const char *path, open_mode mode, error *err)
 {
-    return io_open(path, flags, OPEN_MODE_DEFAULT, OPEN_PERMISSION_DEFAULT, err);
+    return io_open(path, mode, open_flag_default, open_permission_default, err);
 }
 
-io_handle io_open(const char *path, int flags, int mode, error *err)
+io_handle io_open(const char *path, open_mode mode, open_flag flags, error *err)
 {
-    return io_open(path, flags, mode, OPEN_PERMISSION_DEFAULT, err);
+    return io_open(path, mode, flags, open_permission_default, err);
 }
 
-io_handle io_open(const char *path, int flags, int mode, int permissions, error *err)
+io_handle io_open(const char *path, open_mode mode, open_flag flags, open_permission permissions, error *err)
 {
 #if Windows
     _CreateFile_params p{};
@@ -166,27 +166,27 @@ io_handle io_open(const char *path, int flags, int mode, int permissions, error 
 #else
     int _flags = 0;
     int _mode = 0;
-    bool _rd = mode & OPEN_MODE_READ;
-    bool _wr = (mode & OPEN_MODE_WRITE) || (mode & OPEN_MODE_WRITE_TRUNC);
+    bool _rd = is_flag_set(mode, open_mode::Read);
+    bool _wr = is_flag_set(mode, open_mode::Write) || is_flag_set(mode, open_mode::WriteTrunc);
 
     if (_wr)
         _flags |= O_CREAT;
 
-    if (mode & OPEN_MODE_WRITE_TRUNC)
+    if (is_flag_set(mode, open_mode::WriteTrunc))
         _flags |= O_TRUNC;
 
     if (_rd && _wr) _flags |= O_RDWR;
     else if (_rd)   _flags |= O_RDONLY;
     else if (_wr)   _flags |= O_WRONLY;
 
-    if (permissions & OPEN_PERMISSION_READ)    _mode |= 0400;
-    if (permissions & OPEN_PERMISSION_WRITE)   _mode |= 0200;
-    if (permissions & OPEN_PERMISSION_EXECUTE) _mode |= 0100;
+    if (is_flag_set(permissions, open_permission::Read))    _mode |= 0400;
+    if (is_flag_set(permissions, open_permission::Write))   _mode |= 0200;
+    if (is_flag_set(permissions, open_permission::Execute)) _mode |= 0100;
 
-    if (flags & OPEN_FLAGS_DIRECT) _flags |= O_DIRECT;
+    if (is_flag_set(flags, open_flag::Direct)) _flags |= O_DIRECT;
 
     /* O_ASYNC is signal I/O, not io_uring. We don't want that.
-    if (flags & OPEN_FLAGS_ASYNC) _flags |= O_ASYNC;
+    if (is_flag_set(flags, open_flag::Async)) _flags |= O_ASYNC;
     */
 
     io_handle fd = ::open(path, _flags, _mode);
@@ -200,20 +200,20 @@ io_handle io_open(const char *path, int flags, int mode, int permissions, error 
 
 io_handle io_open(const wchar_t *path, error *err)
 {
-    return io_open(path, OPEN_FLAGS_DEFAULT, OPEN_MODE_DEFAULT, OPEN_PERMISSION_DEFAULT, err);
+    return io_open(path, open_mode_default, open_flag_default, open_permission_default, err);
 }
 
-io_handle io_open(const wchar_t *path, int flags, error *err)
+io_handle io_open(const wchar_t *path, open_mode mode, error *err)
 {
-    return io_open(path, flags, OPEN_MODE_DEFAULT, OPEN_PERMISSION_DEFAULT, err);
+    return io_open(path, mode, open_flag_default, open_permission_default, err);
 }
 
-io_handle io_open(const wchar_t *path, int flags, int mode, error *err)
+io_handle io_open(const wchar_t *path, open_mode mode, open_flag flags, error *err)
 {
-    return io_open(path, flags, mode, OPEN_PERMISSION_DEFAULT, err);
+    return io_open(path, mode, flags, open_permission_default, err);
 }
 
-io_handle io_open(const wchar_t *path, int flags, int mode, int permissions, error *err)
+io_handle io_open(const wchar_t *path, open_mode mode, open_flag flags, open_permission permissions, error *err)
 {
 #if Windows
     _CreateFile_params p{};
@@ -239,7 +239,7 @@ io_handle io_open(const wchar_t *path, int flags, int mode, int permissions, err
     ::fill_memory((void*)tmp, 0, char_count);
     string_convert(path, wchar_count, tmp, char_count);
     
-    io_handle ret = ::io_open(tmp, flags, mode, permissions);
+    io_handle ret = ::io_open(tmp, mode, flags, permissions);
 
     dealloc_T<char>(tmp, char_count);
 

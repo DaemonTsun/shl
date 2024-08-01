@@ -25,22 +25,22 @@ bool init(file_stream *stream, const char *path, error *err)
     return init(stream, io_open(path, err));
 }
 
-bool init(file_stream *stream, const char *path, int flags, error *err)
+bool init(file_stream *stream, const char *path, open_mode mode, error *err)
 {
     assert(stream != nullptr);
-    return init(stream, io_open(path, flags, err));
+    return init(stream, io_open(path, mode, err));
 }
 
-bool init(file_stream *stream, const char *path, int flags, int mode, error *err)
+bool init(file_stream *stream, const char *path, open_mode mode, open_flag flags, error *err)
 {
     assert(stream != nullptr);
-    return init(stream, io_open(path, flags, mode, err));
+    return init(stream, io_open(path, mode, flags, err));
 }
 
-bool init(file_stream *stream, const char *path, int flags, int mode, int permissions, error *err)
+bool init(file_stream *stream, const char *path, open_mode mode, open_flag flags, open_permission permissions, error *err)
 {
     assert(stream != nullptr);
-    return init(stream, io_open(path, flags, mode, permissions, err));
+    return init(stream, io_open(path, mode, flags, permissions, err));
 }
 
 bool init(file_stream *stream, const wchar_t *path, error *err)
@@ -49,22 +49,22 @@ bool init(file_stream *stream, const wchar_t *path, error *err)
     return init(stream, io_open(path, err));
 }
 
-bool init(file_stream *stream, const wchar_t *path, int flags, error *err)
+bool init(file_stream *stream, const wchar_t *path, open_mode mode, error *err)
 {
     assert(stream != nullptr);
-    return init(stream, io_open(path, flags, err));
+    return init(stream, io_open(path, mode, err));
 }
 
-bool init(file_stream *stream, const wchar_t *path, int flags, int mode, error *err)
+bool init(file_stream *stream, const wchar_t *path, open_mode mode, open_flag flags, error *err)
 {
     assert(stream != nullptr);
-    return init(stream, io_open(path, flags, mode, err));
+    return init(stream, io_open(path, mode, flags, err));
 }
 
-bool init(file_stream *stream, const wchar_t *path, int flags, int mode, int permissions, error *err)
+bool init(file_stream *stream, const wchar_t *path, open_mode mode, open_flag flags, open_permission permissions, error *err)
 {
     assert(stream != nullptr);
-    return init(stream, io_open(path, flags, mode, permissions, err));
+    return init(stream, io_open(path, mode, flags, permissions, err));
 }
 
 bool init(file_stream *stream, io_handle handle, error *err)

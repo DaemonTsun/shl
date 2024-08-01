@@ -47,6 +47,7 @@ io_is_pipe(h)   returns whether h is a pipe or not.
 
 #include "shl/platform.hpp"
 #include "shl/number_types.hpp"
+#include "shl/enum_flag.hpp"
 #include "shl/error.hpp"
 
 #if Windows
@@ -80,21 +81,29 @@ io_handle stderr_handle();
 // LINUX: does nothing
 bool set_handle_inheritance(io_handle handle, bool inherit, error *err = nullptr);
 
-#ifndef OPEN_PERMISSION_READ
-#  define OPEN_PERMISSION_READ    1
-#  define OPEN_PERMISSION_WRITE   2
-#  define OPEN_PERMISSION_EXECUTE 4
+enum class open_permission
+{
+    None    = 0,
+    Read    = 1,
+    Write   = 2,
+    Execute = 4
+};
 
-#  define OPEN_PERMISSION_DEFAULT (OPEN_PERMISSION_READ | OPEN_PERMISSION_WRITE)
-#endif
+enum_flag(open_permission);
 
-#ifndef OPEN_MODE_READ
-#  define OPEN_MODE_READ        1
-#  define OPEN_MODE_WRITE       2
-#  define OPEN_MODE_WRITE_TRUNC 4
+constexpr open_permission open_permission_default = open_permission::Read | open_permission::Write;
 
-#  define OPEN_MODE_DEFAULT     (OPEN_MODE_READ | OPEN_MODE_WRITE)
-#endif
+enum class open_mode
+{
+    None        = 0,
+    Read        = 1,
+    Write       = 2,
+    WriteTrunc  = 4
+};
+
+enum_flag(open_mode);
+
+constexpr open_mode open_mode_default = open_mode::Read | open_mode::Write;
 
 #ifndef OPEN_FLAGS_DIRECT
 #  define OPEN_FLAGS_DIRECT     1
@@ -103,14 +112,25 @@ bool set_handle_inheritance(io_handle handle, bool inherit, error *err = nullptr
 #  define OPEN_FLAGS_DEFAULT    0
 #endif
 
+enum class open_flag
+{
+    None    = 0,
+    Direct  = 1,
+    Async   = 2
+};
+
+enum_flag(open_flag);
+
+constexpr open_flag open_flag_default = open_flag::None;
+
 io_handle io_open(const char *path, error *err = nullptr);
-io_handle io_open(const char *path, int flags, error *err = nullptr);
-io_handle io_open(const char *path, int flags, int mode, error *err = nullptr);
-io_handle io_open(const char *path, int flags, int mode, int permissions, error *err = nullptr);
+io_handle io_open(const char *path, open_mode mode, error *err = nullptr);
+io_handle io_open(const char *path, open_mode mode, open_flag flags, error *err = nullptr);
+io_handle io_open(const char *path, open_mode mode, open_flag flags, open_permission permissions, error *err = nullptr);
 io_handle io_open(const wchar_t *path, error *err = nullptr);
-io_handle io_open(const wchar_t *path, int flags, error *err = nullptr);
-io_handle io_open(const wchar_t *path, int flags, int mode, error *err = nullptr);
-io_handle io_open(const wchar_t *path, int flags, int mode, int permissions, error *err = nullptr);
+io_handle io_open(const wchar_t *path, open_mode mode, error *err = nullptr);
+io_handle io_open(const wchar_t *path, open_mode mode, open_flag flags, error *err = nullptr);
+io_handle io_open(const wchar_t *path, open_mode mode, open_flag flags, open_permission permissions, error *err = nullptr);
 
 bool io_close(io_handle h, error *err = nullptr);
 

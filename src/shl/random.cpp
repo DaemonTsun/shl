@@ -26,9 +26,9 @@ u64 generate_seed()
 #if Windows
     // TODO: use RtlGenRandom or something
 #else
-    file_stream randstream;
+    file_stream randstream{};
 
-    if (init(&randstream, "/dev/urandom", OPEN_MODE_READ))
+    if (init(&randstream, "/dev/urandom", open_mode::Read))
     {
         bool ok = read(&randstream, &ret, sizeof(u64));
         free(&randstream);

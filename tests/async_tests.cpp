@@ -70,7 +70,7 @@ define_test(async_read_reads_from_file)
 {
     error err{};
 
-    io_handle h = io_open(hello_world_txt.data, OPEN_FLAGS_ASYNC);
+    io_handle h = io_open(hello_world_txt.data, open_mode::Read, open_flag::Async);
     assert_not_equal(h, INVALID_IO_HANDLE);
     defer { io_close(h); };
 
@@ -113,9 +113,9 @@ define_test(async_does_things_asynchronously)
     error err{};
 
 #if Windows
-    io_handle h = io_open(R"(C:/Temp/large_file.txt)", OPEN_FLAGS_ASYNC, OPEN_MODE_READ, &err);
+    io_handle h = io_open(R"(C:/Temp/large_file.txt)", open_flag::Async, open_mode::Read, &err);
 #else
-    io_handle h = io_open(R"(/tmp/large_file.txt)", OPEN_FLAGS_ASYNC, OPEN_MODE_READ, &err);
+    io_handle h = io_open(R"(/tmp/large_file.txt)", open_flag::Async, open_mode::Read, &err);
 #endif
 
     if (err.error_code != 0)
@@ -164,11 +164,11 @@ define_test(async_read_scatter_reads_from_file)
 {
     error err{};
 
-    int open_flags = OPEN_FLAGS_ASYNC;
+    open_flag open_flags = open_flag::Async;
 #if Windows
-    open_flags |= OPEN_FLAGS_DIRECT;
+    open_flags |= open_flag::Direct;
 #endif
-    io_handle h = io_open(hello_world_txt.data, open_flags, OPEN_MODE_READ);
+    io_handle h = io_open(hello_world_txt.data, open_mode::Read, open_flags);
     assert_not_equal(h, INVALID_IO_HANDLE);
     defer { io_close(h); };
 

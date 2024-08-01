@@ -222,13 +222,13 @@ struct file_stream
 
 // default mode is writing and reading
 bool init(file_stream *stream, const char *path, error *err = nullptr);
-bool init(file_stream *stream, const char *path, int flags, error *err = nullptr);
-bool init(file_stream *stream, const char *path, int flags, int mode, error *err = nullptr);
-bool init(file_stream *stream, const char *path, int flags, int mode, int permissions, error *err = nullptr);
+bool init(file_stream *stream, const char *path, open_mode mode, error *err = nullptr);
+bool init(file_stream *stream, const char *path, open_mode mode, open_flag flags, error *err = nullptr);
+bool init(file_stream *stream, const char *path, open_mode mode, open_flag flags, open_permission permissions, error *err = nullptr);
 bool init(file_stream *stream, const wchar_t *path, error *err = nullptr);
-bool init(file_stream *stream, const wchar_t *path, int flags, error *err = nullptr);
-bool init(file_stream *stream, const wchar_t *path, int flags, int mode, error *err = nullptr);
-bool init(file_stream *stream, const wchar_t *path, int flags, int mode, int permissions, error *err = nullptr);
+bool init(file_stream *stream, const wchar_t *path, open_mode mode, error *err = nullptr);
+bool init(file_stream *stream, const wchar_t *path, open_mode mode, open_flag flags, error *err = nullptr);
+bool init(file_stream *stream, const wchar_t *path, open_mode mode, open_flag flags, open_permission permissions, error *err = nullptr);
 bool init(file_stream *stream, io_handle handle, error *err = nullptr);
 bool free(file_stream *stream, error *err = nullptr);
 

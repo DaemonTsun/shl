@@ -11,7 +11,7 @@ bool _read_entire_file_ms(const C *path, memory_stream *out, error *err)
 
     file_stream fstream{};
 
-    if (!init(&fstream, path, 0, OPEN_MODE_READ, 0, err))
+    if (!init(&fstream, path, open_mode::Read, err))
         return false;
 
     bool ret = read_entire_file(&fstream, out, err);
@@ -59,7 +59,7 @@ bool _read_entire_file_s(const C *path, string *out, error *err)
 
     file_stream fstream{};
 
-    if (!init(&fstream, path, 0, OPEN_MODE_READ, 0, err))
+    if (!init(&fstream, path, open_mode::Read, err))
         return false;
 
     bool ret = read_entire_file(&fstream, out, err);
