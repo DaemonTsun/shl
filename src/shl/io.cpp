@@ -149,7 +149,7 @@ io_handle io_open(const char *path, open_mode mode, open_flag flags, open_permis
 {
 #if Windows
     _CreateFile_params p{};
-    _get_CreateFile_params(&p, flags, mode, permissions);
+    _get_CreateFile_params(&p, mode, flags, permissions);
 
     io_handle h = CreateFileA(path,
                               p._access,
@@ -217,7 +217,7 @@ io_handle io_open(const wchar_t *path, open_mode mode, open_flag flags, open_per
 {
 #if Windows
     _CreateFile_params p{};
-    _get_CreateFile_params(&p, flags, mode, permissions);
+    _get_CreateFile_params(&p, mode, flags, permissions);
 
     io_handle h = CreateFileW(path,
                               p._access,
