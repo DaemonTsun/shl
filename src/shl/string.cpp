@@ -212,7 +212,9 @@ void clear(string  *str)
     assert(str != nullptr);
 
     clear(as_array_ptr(string::value_type, str));
-    str->data[0] = '\0';
+
+    if (str->data != nullptr)
+        str->data[0] = '\0';
 }
 
 void clear(wstring *str)
@@ -220,7 +222,9 @@ void clear(wstring *str)
     assert(str != nullptr);
 
     clear(as_array_ptr(wstring::value_type, str));
-    str->data[0] = L'\0';
+
+    if (str->data != nullptr)
+        str->data[0] = L'\0';
 }
 
 void free(string  *str)
