@@ -192,7 +192,10 @@ io_handle io_open(const char *path, open_mode mode, open_flag flags, open_permis
     io_handle fd = ::open(path, _flags, _mode);
 
     if (fd < 0)
+    {
         set_error_by_code(err, -fd);
+        fd = INVALID_IO_HANDLE;
+    }
 
     return fd;
 #endif
@@ -239,15 +242,9 @@ io_handle io_open(const wchar_t *path, open_mode mode, open_flag flags, open_per
     ::fill_memory((void*)tmp, 0, char_count);
     string_convert(path, wchar_count, tmp, char_count);
     
-    io_handle ret = ::io_open(tmp, mode, flags, permissions);
+    io_handle ret = ::io_open(tmp, mode, flags, permissions, err);
 
     dealloc_T<char>(tmp, char_count);
-
-    if (ret < 0)
-    {
-        set_error_by_code(err, -ret);
-        ret = INVALID_IO_HANDLE;
-    }
 
     return ret;
 #endif
