@@ -105,13 +105,6 @@ enum_flag(open_mode);
 
 constexpr open_mode open_mode_default = open_mode::Read | open_mode::Write;
 
-#ifndef OPEN_FLAGS_DIRECT
-#  define OPEN_FLAGS_DIRECT     1
-#  define OPEN_FLAGS_ASYNC      2
-
-#  define OPEN_FLAGS_DEFAULT    0
-#endif
-
 enum class open_flag
 {
     None    = 0,
