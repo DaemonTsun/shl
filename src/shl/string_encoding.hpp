@@ -3,8 +3,12 @@
 
 Handle different string encodings.
 u32 is used as the type for Unicode codepoints.
-u16* is used for UTF-16 strings, since wchar_t is trash that can have variable
-sizes.
+
+REMINDER:
+
+u8"abc"  ->  utf8  string
+ u"abc"  ->  utf16 string
+ U"abc"  ->  utf32 string... isn't C++ amazing
 
 TODO: docs
 */
@@ -12,6 +16,10 @@ TODO: docs
 #pragma once
 
 #include "shl/number_types.hpp"
+
+typedef char     c8;
+typedef char16_t c16;
+typedef char32_t c32;
 
 #define UNICODE_MAX 0x10ffff
 
@@ -30,37 +38,57 @@ TODO: docs
 
 extern "C"
 {
-const char *utf8_decode (const char *str, u32 *cp, int *error);
-const u16  *utf16_decode(const u16  *str, u32 *cp, int *error);
+const c8  *utf8_decode (const c8  *str, u32 *cp, int *error);
+const c16 *utf16_decode(const c16 *str, u32 *cp, int *error);
+const c32 *utf32_decode(const c32 *str, u32 *cp, int *error);
 
 // u8str/u16str must be zero padded to a multiple of four bytes.
 // str_buf_size is the total number of elements in the string, regardless
 // of encoding or code points.
 // Returns the number of codepoints (u32) written to out.
-s64 utf8_decode_string (const char *u8str, s64 str_buf_size, u32 *out, s64 out_size);
-s64 utf16_decode_string(const u16 *u16str, s64 str_buf_size, u32 *out, s64 out_size);
+s64 utf8_decode_string (const c8  *u8str,  s64 u8str_size,  u32 *out, s64 out_size);
+s64 utf16_decode_string(const c16 *u16str, s64 u16str_size, u32 *out, s64 out_size);
+s64 utf32_decode_string(const c32 *u32str, s64 u32str_size, u32 *out, s64 out_size);
 
-// Same as above, but u8str/u16str don't have to be zero padded.
-s64 utf8_decode_string_safe (const char *u8str, s64 str_buf_size, u32 *out, s64 out_size);
-s64 utf16_decode_string_safe(const u16 *u16str, s64 str_buf_size, u32 *out, s64 out_size);
+// Same as above, but u8str/u16str don't have to be zero padded because
+// string length is checked.
+s64 utf8_decode_string_safe (const c8  *u8str,  s64 u8str_size,  u32 *out, s64 out_size);
+s64 utf16_decode_string_safe(const c16 *u16str, s64 u16str_size, u32 *out, s64 out_size);
+s64 utf32_decode_string_safe(const c32 *u32str, s64 u32str_size, u32 *out, s64 out_size);
 
 // returns the number of bytes written, or -1 on error.
 // out must have space for 4 bytes.
-s64 utf8_encode(u32 cp, char *out);
-s64 utf16_encode(u32 cp, u16 *out);
+s64 utf8_encode (u32 cp, c8  *out);
+s64 utf16_encode(u32 cp, c16 *out);
+s64 utf32_encode(u32 cp, c32 *out);
 
-s64 utf8_encode_string (const u32 *cps, s64 cp_count, char *out, s64 out_size);
-s64 utf16_encode_string(const u32 *cps, s64 cp_count, u16  *out, s64 out_size);
+// encode CODEPOINTS to utf8/utf16/utf32
+s64 utf8_encode_string (const u32 *cps, s64 cp_count, c8  *out, s64 out_size);
+s64 utf16_encode_string(const u32 *cps, s64 cp_count, c16 *out, s64 out_size);
+s64 utf32_encode_string(const u32 *cps, s64 cp_count, c32 *out, s64 out_size);
 
 // returns the number of elements written such that
 // out + return value = directly after written content.
-s64 utf8_to_utf16(const char *u8str, s64 u8str_size,  u16  *out, s64 out_size);
-s64 utf16_to_utf8(const u16 *u16str, s64 u16str_size, char *out, s64 out_size);
+s64 utf8_to_utf16 (const c8  *u8str,  s64 u8str_size,  c16 *out, s64 out_size);
+s64 utf8_to_utf32 (const c8  *u8str,  s64 u8str_size,  c32 *out, s64 out_size);
+s64 utf16_to_utf8 (const c16 *u16str, s64 u16str_size, c8  *out, s64 out_size);
+s64 utf16_to_utf32(const c16 *u16str, s64 u16str_size, c32 *out, s64 out_size);
+s64 utf32_to_utf8 (const c32 *u32str, s64 u32str_size, c8  *out, s64 out_size);
+s64 utf32_to_utf16(const c32 *u32str, s64 u32str_size, c16 *out, s64 out_size);
 
-s64 utf16_bytes_required_from_utf8(const char *u8str, s64 u8str_size);
-s64 utf16_bytes_required_from_codepoints(const u32 *cps, s64 cp_count);
-s64 utf8_bytes_required_from_utf16(const u16 *u16str, s64 u16str_size);
-s64 utf8_bytes_required_from_codepoints(const u32 *cps, s64 cp_count);
+s64 utf8_units_required_from_utf16 (const c16 *u16str, s64 u16str_size);
+s64 utf8_units_required_from_utf32 (const c32 *u32str, s64 u32str_size);
+s64 utf16_units_required_from_utf8 (const c8  *u8str,  s64 u8str_size);
+s64 utf16_units_required_from_utf32(const c32 *u32str, s64 u32str_size);
+s64 utf32_units_required_from_utf8 (const c8  *u8str,  s64 u8str_size);
+s64 utf32_units_required_from_utf16(const c16 *u16str, s64 u16str_size);
+
+s64 utf8_bytes_required_from_utf16 (const c16 *u16str, s64 u16str_size);
+s64 utf8_bytes_required_from_utf32 (const c32 *u32str, s64 u32str_size);
+s64 utf16_bytes_required_from_utf8 (const c8  *u8str,  s64 u8str_size);
+s64 utf16_bytes_required_from_utf32(const c32 *u32str, s64 u32str_size);
+s64 utf32_bytes_required_from_utf8 (const c8  *u8str,  s64 u8str_size);
+s64 utf32_bytes_required_from_utf16(const c16 *u16str, s64 u16str_size);
 
 // length (bytes) of a single unicode codepoint if it were encoded as utf8/utf16
 static inline s32 codepoint_utf8_length (u32 cp)
@@ -76,11 +104,64 @@ static inline s32 codepoint_utf16_length(u32 cp)
     if (cp <= UTF16_1_MAX)  return 1;
     else                    return 2;
 }
+
+static inline s32 codepoint_utf32_length(u32 cp)
+{
+    (void)cp;
+    return 1;
 }
 
-s64 string_convert(const char *u8str, s64 u8str_size, wchar_t *wcstr, s64 wcstr_size);
-s64 string_convert(const wchar_t *wcstr, s64 wcstr_size, char *u8str, s64 u8str_size);
-s64 string_conversion_chars_required(const char *u8str, s64 u8str_size);
-s64 string_conversion_chars_required(const wchar_t *wcstr, s64 wcstr_size);
-s64 string_conversion_bytes_required(const char *u8str, s64 u8str_size);
-s64 string_conversion_bytes_required(const wchar_t *wcstr, s64 wcstr_size);
+s64 utf8_bytes_required_from_codepoints (const u32 *cps, s64 cp_count);
+s64 utf16_bytes_required_from_codepoints(const u32 *cps, s64 cp_count);
+s64 utf32_bytes_required_from_codepoints(const u32 *cps, s64 cp_count);
+}
+
+s64 string_convert(const c8  *u8str,  s64 u8str_size,  c16 *u16str, s64 u16str_size);
+s64 string_convert(const c8  *u8str,  s64 u8str_size,  c32 *u32str, s64 u32str_size);
+s64 string_convert(const c16 *u16str, s64 u16str_size, c8  *u8str,  s64 u8str_size);
+s64 string_convert(const c16 *u16str, s64 u16str_size, c32 *u32str, s64 u32str_size);
+s64 string_convert(const c32 *u32str, s64 u32str_size, c8  *u8str,  s64 u8str_size);
+s64 string_convert(const c32 *u32str, s64 u32str_size, c16 *u16str, s64 u16str_size);
+
+
+// bytes required for type of first parameter from string of second parameter of size of third parameter...
+s64 string_conversion_bytes_required([[maybe_unused]] c8  *, const c16 *u16str, s64 u16str_size);
+s64 string_conversion_bytes_required([[maybe_unused]] c8  *, const c32 *u32str, s64 u32str_size);
+s64 string_conversion_bytes_required([[maybe_unused]] c16 *, const c8  *u8str,  s64 u8str_size);
+s64 string_conversion_bytes_required([[maybe_unused]] c16 *, const c32 *u32str, s64 u32str_size);
+s64 string_conversion_bytes_required([[maybe_unused]] c32 *, const c8  *u8str,  s64 u8str_size);
+s64 string_conversion_bytes_required([[maybe_unused]] c32 *, const c16 *u16str, s64 u16str_size);
+
+// wchar_t """support"""
+// TODO: remove these, use char_cast for everything instead
+s64 string_convert(const c8  *u8str,  s64 u8str_size,  wchar_t *wstr, s64 wstr_size);
+s64 string_convert(const c16 *u16str, s64 u16str_size, wchar_t *wstr, s64 wstr_size);
+s64 string_convert(const c32 *u32str, s64 u32str_size, wchar_t *wstr, s64 wstr_size);
+s64 string_convert(const wchar_t *wstr, s64 wstr_size, c8  *u8str,  s64 u8str_size);
+s64 string_convert(const wchar_t *wstr, s64 wstr_size, c16 *u16str, s64 u16str_size);
+s64 string_convert(const wchar_t *wstr, s64 wstr_size, c32 *u32str, s64 u32str_size);
+
+s64 string_conversion_bytes_required([[maybe_unused]] c8  *, const wchar_t *wstr, s64 wstr_size);
+s64 string_conversion_bytes_required([[maybe_unused]] c16 *, const wchar_t *wstr, s64 wstr_size);
+s64 string_conversion_bytes_required([[maybe_unused]] c32 *, const wchar_t *wstr, s64 wstr_size);
+s64 string_conversion_bytes_required([[maybe_unused]] wchar_t *, const c8  *u8str,  s64 u8str_size);
+s64 string_conversion_bytes_required([[maybe_unused]] wchar_t *, const c16 *u16str, s64 u16str_size);
+s64 string_conversion_bytes_required([[maybe_unused]] wchar_t *, const c32 *u32str, s64 u32str_size);
+
+#define char_types_need_conversion(CFrom, CTo) (sizeof(CFrom) != sizeof(CTo))
+
+static inline auto char_cast(wchar_t *str)
+{
+    if constexpr (sizeof(wchar_t*) == 2)
+        return (c16*)str;
+    else
+        return (c32*)str;
+}
+
+static inline auto char_cast(const wchar_t *str)
+{
+    if constexpr (sizeof(wchar_t*) == 2)
+        return (const c16*)str;
+    else
+        return (const c32*)str;
+}

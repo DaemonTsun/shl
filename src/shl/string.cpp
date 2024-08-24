@@ -709,7 +709,7 @@ void set_string(string  *dst, const wchar_t    *src, s64 n)
 
 void set_string(string  *dst, const_wstring   src)
 {
-    s64 required_size = string_conversion_bytes_required(src.c_str, src.size);
+    s64 required_size = string_conversion_bytes_required(dst->data, src.c_str, src.size);
 
     string_reserve(dst, required_size);
     ::fill_memory((void*)dst->data, 0, dst->reserved_size * sizeof(char));
@@ -754,7 +754,7 @@ void set_string(wstring *dst, const char *src, s64 n)
 
 void set_string(wstring *dst, const_string  src)
 {
-    s64 required_size = string_conversion_bytes_required(src.c_str, src.size);
+    s64 required_size = string_conversion_bytes_required(dst->data, src.c_str, src.size);
 
     string_reserve(dst, required_size / sizeof(wchar_t));
     ::fill_memory((void*)dst->data, 0, dst->reserved_size * sizeof(wchar_t));
@@ -1833,7 +1833,7 @@ static inline bool _get_converted_environment_variable(const C *name, s64 namesi
     }
     else
     {
-        s64 char_count = string_conversion_chars_required(name, namesize);
+        s64 char_count = string_conversion_bytes_required((sys_char*)nullptr, name, namesize) / sizeof(sys_char);
 
         if (char_count < 0)
             return false;
@@ -1853,7 +1853,7 @@ static inline bool _get_converted_environment_variable(const C *name, s64 namesi
 
         if (envvar != nullptr)
         {
-            char_count = string_conversion_chars_required(envvar, envvar_size);
+            char_count = string_conversion_bytes_required((C*)nullptr, envvar, envvar_size) / sizeof(C);
 
             if (char_count < 0)
                 return false;

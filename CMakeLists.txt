@@ -7,11 +7,14 @@ find_package(better REQUIRED PATHS ext/better-cmake/cmake)
 project(shl CXX ASM)
 project_author("DaemonTsun")
 
+include(cmake/ASM.cmake)
+
 # library
 add_lib(shl STATIC
-    VERSION 0.9.4
+    VERSION 0.10.0
     SOURCES_DIR "${ROOT}/src" EXCLUDING "${ROOT}/src/shl/impl"
     SOURCES @Linux   "${ROOT}/src/shl/impl/linux"
+                     ${ASM_LINUX_SOURCES}
             @Windows "${ROOT}/src/shl/impl/windows"
     GENERATE_TARGET_HEADER "${ROOT}/src/shl/shl_info.hpp"
     CPP_VERSION 20
@@ -21,8 +24,6 @@ add_lib(shl STATIC
         @Windows mincore.lib # for VirtualAlloc2 in ring_buffer.cpp
     TESTS "${ROOT}/tests"
     )
-
-include(cmake/ASM.cmake)
 
 exit_if_included()
 

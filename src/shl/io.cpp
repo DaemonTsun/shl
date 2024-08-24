@@ -236,8 +236,9 @@ io_handle io_open(const wchar_t *path, open_mode mode, open_flag flags, open_per
     return h;
 #else
     s64 wchar_count = _string_len(path);
-    s64 char_count = string_conversion_chars_required(path, wchar_count) + 1;
-    char *tmp = ::alloc<char>(char_count);
+    char *tmp = nullptr;
+    s64 char_count = (string_conversion_bytes_required(tmp, path, wchar_count) / sizeof(wchar_t)) + 1;
+    tmp = ::alloc<char>(char_count);
 
     ::fill_memory((void*)tmp, 0, char_count);
     string_convert(path, wchar_count, tmp, char_count);
