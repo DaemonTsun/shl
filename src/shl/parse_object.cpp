@@ -8,7 +8,7 @@ void init_slice(const_string *out, const char *input, const parse_range *range)
     char *buf = alloc<char>(len);
     out->c_str = buf;
     out->size = len;
-    copy_string(input + range->start.pos, buf, len);
+    string_copy(input + range->start.pos, buf, len);
 }
 
 static void free(const_string *str)
@@ -540,7 +540,7 @@ bool parse_object(parser *p, parsed_object *out, parse_error *err)
             {
                 p->it = bool_p.it;
                 ret.type = parsed_object_type::Bool;
-                ret.data._bool = to_lower(bool_p.input[bool_rn.start.pos]) == 't';
+                ret.data._bool = char_to_lower(bool_p.input[bool_rn.start.pos]) == 't';
             }
         }
         else
@@ -671,7 +671,7 @@ static s64 _parsed_object_to_string(string *s, const parsed_object *x, s64 offse
         s->data[offset] = PARSE_STRING_DELIM;
         written++;
 
-        copy_string(x->data._string, s, len, written + offset);
+        string_copy(x->data._string, s, len, written + offset);
         written += len;
 
         s->data[offset + written] = PARSE_STRING_DELIM;
@@ -684,7 +684,7 @@ static s64 _parsed_object_to_string(string *s, const parsed_object *x, s64 offse
         s64 len = string_length(x->data._string);
         string_reserve(s, offset + len);
 
-        copy_string(x->data._string, s, len, written + offset);
+        string_copy(x->data._string, s, len, written + offset);
         written += len;
         break;
     }

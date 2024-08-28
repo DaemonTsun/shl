@@ -347,7 +347,7 @@ static inline bool _parse_bool(parser_base<C> *p, parse_range *out, parse_error 
     parse_iterator start = p->it;
     auto c = parser_current_char(p);
     
-    if (to_lower(c) == 't')
+    if (char_to_lower(c) == 't')
     {
         if (is_at_end(p, 3))
         {
@@ -368,7 +368,7 @@ static inline bool _parse_bool(parser_base<C> *p, parse_range *out, parse_error 
 
             c = parser_current_char(p);
 
-            if (to_lower(c) != "true"[i])
+            if (char_to_lower(c) != "true"[i])
             {
                 format_parse_error(err, p, "unexpected symbol '%c' at " IT_FMT, c, format_it(p->it));
                 p->it = start;
@@ -379,7 +379,7 @@ static inline bool _parse_bool(parser_base<C> *p, parse_range *out, parse_error 
             ++i;
         }
     }
-    else if (to_lower(c) == 'f')
+    else if (char_to_lower(c) == 'f')
     {
         if (is_at_end(p, 4))
         {
@@ -400,7 +400,7 @@ static inline bool _parse_bool(parser_base<C> *p, parse_range *out, parse_error 
 
             c = parser_current_char(p);
 
-            if (to_lower(c) != "false"[i])
+            if (char_to_lower(c) != "false"[i])
             {
                 format_parse_error(err, p, "unexpected symbol '%c' at " IT_FMT, c, format_it(p->it));
                 p->it = start;
@@ -439,7 +439,7 @@ static inline bool _parse_bool_v(parser_base<C> *p, bool *out, parse_error *err)
     if (!_parse_bool(p, &range, err))
         return false;
 
-    *out = to_lower(p->input[range.start.pos]) == 't';
+    *out = char_to_lower(p->input[range.start.pos]) == 't';
 
     return true;
 }

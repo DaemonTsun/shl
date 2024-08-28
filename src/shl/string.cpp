@@ -16,9 +16,6 @@
 #include "shl/string_encoding.hpp"
 #include "shl/string.hpp"
 
-#define LIT(C, Literal)\
-    inline_const_if(is_same(C, char), Literal, L##Literal)
-
 #define as_array_ptr(C, str) (array<C>*)(str)
 
 #if Windows
@@ -67,28 +64,19 @@ static inline wchar_t *wcpcpy(wchar_t *dst, const wchar_t *src)
 }
 #endif
 
-const_string  operator ""_cs(const char *str, u64 n)
+const_string operator ""_cs(const c8 *str, u64 n)
 {
     return const_string{str, (s64)n};
 }
 
-const_wstring operator ""_cs(const wchar_t *str, u64 n)
+const_u16string operator ""_cs(const c16 *str, u64 n)
 {
-    return const_wstring{str, (s64)n};
+    return const_u16string{str, (s64)n};
 }
 
-string  operator ""_s(const char *str, u64 n)
+const_u32string operator ""_cs(const c32 *str, u64 n)
 {
-    string ret;
-    init(&ret, str, (s64)n);
-    return ret;
-}
-
-wstring operator ""_s(const wchar_t *str, u64 n)
-{
-    wstring ret;
-    init(&ret, str, (s64)n);
-    return ret;
+    return const_u32string{str, (s64)n};
 }
 
 template<typename C>
@@ -106,7 +94,7 @@ static inline void _init(string_base<C> *str, s64 size)
 
     init(as_array_ptr(C, str), size + 1);
     str->size -= 1;
-    str->data[size] = '\0';
+    str->data[size] = (C)'\0';
 }
 
 template<typename C>
@@ -130,8 +118,8 @@ static inline void _init(string_base<C> *str, const_string_base<C> cs)
 
     init(as_array_ptr(C, str), cs.size + 1);
     str->size -= 1;
-    copy_string(cs, str);
-    str->data[cs.size] = '\0';
+    string_copy(cs, str);
+    str->data[cs.size] = (C)'\0';
 }
 
 void init(string *str)
@@ -144,12 +132,12 @@ void init(string *str, s64 size)
     _init(str, size);
 }
 
-void init(string *str, const char *c)
+void init(string *str, const c8 *c)
 {
     _init(str, c);
 }
 
-void init(string *str, const char *c, s64 size)
+void init(string *str, const c8 *c, s64 size)
 {
     _init(str, c, size);
 }
@@ -159,34 +147,102 @@ void init(string *str, const_string s)
     _init(str, s);
 }
 
-void init(wstring *str)
+void init(u16string *str)
 {
     _init(str);
 }
 
-void init(wstring *str, s64 size)
+void init(u16string *str, s64 size)
 {
     _init(str, size);
 }
 
-void init(wstring *str, const wchar_t *c)
+void init(u16string *str, const c16 *c)
 {
     _init(str, c);
 }
 
-void init(wstring *str, const wchar_t *c, s64 size)
+void init(u16string *str, const c16 *c, s64 size)
 {
     _init(str, c, size);
 }
 
-void init(wstring *str, const_wstring s)
+void init(u16string *str, const_u16string s)
 {
     _init(str, s);
+}
+
+void init(u32string *str)
+{
+    _init(str);
+}
+
+void init(u32string *str, s64 size)
+{
+    _init(str, size);
+}
+
+void init(u32string *str, const c32 *c)
+{
+    _init(str, c);
+}
+
+void init(u32string *str, const c32 *c, s64 size)
+{
+    _init(str, c, size);
+}
+
+void init(u32string *str, const_u32string s)
+{
+    _init(str, s);
+}
+
+void free(string  *str)
+{
+    assert(str != nullptr);
+
+    free(as_array_ptr(string::value_type, str));
+}
+
+void free(u16string *str)
+{
+    assert(str != nullptr);
+
+    free(as_array_ptr(u16string::value_type, str));
+}
+
+void free(u32string *str)
+{
+    assert(str != nullptr);
+
+    free(as_array_ptr(u32string::value_type, str));
+}
+
+string  operator ""_s(const c8 *str, u64 n)
+{
+    string ret;
+    init(&ret, str, (s64)n);
+    return ret;
+}
+
+u16string  operator ""_s(const c16 *str, u64 n)
+{
+    u16string ret;
+    init(&ret, str, (s64)n);
+    return ret;
+}
+
+u32string  operator ""_s(const c32 *str, u64 n)
+{
+    u32string ret;
+    init(&ret, str, (s64)n);
+    return ret;
 }
 
 template<typename C>
 static inline bool _string_reserve(string_base<C> *s, s64 size)
 {
+    assert(s != nullptr);
     // +1 for \0
     if (s->reserved_size < size + 1)
     {
@@ -202,347 +258,128 @@ bool string_reserve(string *s, s64 size)
     return _string_reserve(s, size);
 }
 
-bool string_reserve(wstring *s, s64 size)
+bool string_reserve(u16string *s, s64 size)
 {
     return _string_reserve(s, size);
 }
 
+bool string_reserve(u32string *s, s64 size)
+{
+    return _string_reserve(s, size);
+}
+
+template<typename C>
+static inline void _string_clear(string_base<C> *str)
+{
+    assert(str != nullptr);
+
+    clear(as_array_ptr(C, str));
+
+    if (str->data != nullptr)
+        str->data[0] = (C)'\0';
+}
+
 void clear(string  *str)
 {
-    assert(str != nullptr);
-
-    clear(as_array_ptr(string::value_type, str));
-
-    if (str->data != nullptr)
-        str->data[0] = '\0';
+    _string_clear(str);
 }
 
-void clear(wstring *str)
+void clear(u16string  *str)
 {
-    assert(str != nullptr);
-
-    clear(as_array_ptr(wstring::value_type, str));
-
-    if (str->data != nullptr)
-        str->data[0] = L'\0';
+    _string_clear(str);
 }
 
-void free(string  *str)
+void clear(u32string  *str)
 {
-    assert(str != nullptr);
-
-    free(as_array_ptr(string::value_type, str));
-}
-
-void free(wstring *str)
-{
-    assert(str != nullptr);
-
-    free(as_array_ptr(wstring::value_type, str));
+    _string_clear(str);
 }
 
 // string / char functions
-bool is_space(char c)
-{
-    return (bool)isspace(c);
-}
-
-bool is_space(wchar_t c)
-{
-    return (bool)iswspace(static_cast<wint_t>(c));
-}
-
-bool is_newline(char c)
-{
-    return c == '\n' || c == '\v' || c == '\f';
-}
-
-bool is_newline(wchar_t c)
-{
-    return c == L'\n' || c == L'\v' || c == L'\f';
-}
-
-bool is_alpha(char c)
-{
-    return (bool)isalpha(c);
-}
-
-bool is_alpha(wchar_t c)
-{
-    return (bool)iswalpha(static_cast<wint_t>(c));
-}
-
-bool is_digit(char c)
-{
-    return (bool)isdigit(c);
-}
-
-bool is_digit(wchar_t c)
-{
-    return (bool)iswdigit(static_cast<wint_t>(c));
-}
-
-bool is_bin_digit(char c)
-{
-    return c == '0' || c == '1';
-}
-
-bool is_bin_digit(wchar_t c)
-{
-    return c == L'0' || c == L'1';
-}
-
-bool is_oct_digit(char c)
-{
-    return c == '0' || c == '1' || c == '2' || c == '3' || c == '4' || c == '5' || c == '6' || c == '7';
-}
-
-bool is_oct_digit(wchar_t c)
-{
-    return c == L'0' || c == L'1' || c == L'2' || c == L'3' || c == L'4' || c == L'5' || c == L'6' || c == L'7';
-}
-
-bool is_hex_digit(char c)
-{
-    return (bool)isxdigit(c);
-}
-
-bool is_hex_digit(wchar_t c)
-{
-    return (bool)iswxdigit(static_cast<wint_t>(c));
-}
-
-bool is_alphanum(char c)
-{
-    return (bool)isalnum(c);
-}
-
-bool is_alphanum(wchar_t c)
-{
-    return (bool)iswalnum(static_cast<wint_t>(c));
-}
-
-bool is_upper(char c)
-{
-    return (bool)isupper(static_cast<int>(c));
-}
-
-bool is_upper(wchar_t c)
-{
-    return (bool)iswupper(static_cast<wint_t>(c));
-}
-
-bool is_lower(char c)
-{
-    return (bool)islower(static_cast<int>(c));
-}
-
-bool is_lower(wchar_t c)
-{
-    return (bool)iswlower(static_cast<wint_t>(c));
-}
+bool is_space(u32 codepoint) { (void)codepoint; return false; /* TODO: implement */ }
+bool is_newline(u32 codepoint) { (void)codepoint; return false; /* TODO: implement */ }
+bool is_alpha(u32 codepoint) { (void)codepoint; return false; /* TODO: implement */ }
+bool is_digit(u32 codepoint) { (void)codepoint; return false; /* TODO: implement */ }
+bool is_bin_digit(u32 codepoint) { (void)codepoint; return false; /* TODO: implement */ }
+bool is_oct_digit(u32 codepoint) { (void)codepoint; return false; /* TODO: implement */ }
+bool is_hex_digit(u32 codepoint) { (void)codepoint; return false; /* TODO: implement */ }
+bool is_alphanum(u32 codepoint) { (void)codepoint; return false; /* TODO: implement */ }
+bool is_upper(u32 codepoint) { (void)codepoint; return false; /* TODO: implement */ }
+bool is_lower(u32 codepoint) { (void)codepoint; return false; /* TODO: implement */ }
 
 template<typename C>
-static inline bool _is_empty(const C *s)
+static inline bool _string_is_empty_cs(const_string_base<C> s)
 {
-    return (s != nullptr) && (*s == '\0');
+    return s.size == 0;
 }
 
-bool is_empty(const char *s)
-{
-    return _is_empty(s);
-}
-
-bool is_empty(const wchar_t *s)
-{
-    return _is_empty(s);
-}
+bool _string_is_empty(const_string    s) { return _string_is_empty_cs(s); }
+bool _string_is_empty(const_u16string s) { return _string_is_empty_cs(s); }
+bool _string_is_empty(const_u32string s) { return _string_is_empty_cs(s); }
 
 template<typename C>
-static inline bool _is_empty_cs(const_string_base<C> s)
-{
-    return (s.c_str != nullptr) && (s.size == 0);
-}
-
-bool is_empty(const_string s)
-{
-    return _is_empty_cs(s);
-}
-
-bool is_empty(const_wstring s)
-{
-    return _is_empty_cs(s);
-}
-
-bool is_empty(const string *s)
-{
-    assert(s != nullptr);
-    return _is_empty_cs(to_const_string(s));
-}
-
-bool is_empty(const wstring *s)
-{
-    assert(s != nullptr);
-    return _is_empty_cs(to_const_string(s));
-}
-
-template<typename C>
-static inline bool _is_null_or_empty(const C *s)
-{
-    return (s == nullptr) || (*s == '\0');
-}
-
-bool is_null_or_empty(const char *s)
-{
-    return _is_null_or_empty(s);
-}
-
-bool is_null_or_empty(const wchar_t *s)
-{
-    return _is_null_or_empty(s);
-}
-
-template<typename C>
-static inline bool _is_null_or_empty_cs(const_string_base<C> s)
+static inline bool _string_is_null_or_empty_cs(const_string_base<C> s)
 {
     return (s.c_str == nullptr) || (s.size == 0);
 }
 
-bool is_null_or_empty(const_string s)
-{
-    return _is_null_or_empty_cs(s);
-}
-
-bool is_null_or_empty(const_wstring s)
-{
-    return _is_null_or_empty_cs(s);
-}
-
-bool is_null_or_empty(const string *s)
-{
-    assert(s != nullptr);
-    return _is_null_or_empty_cs(to_const_string(s));
-}
-
-bool is_null_or_empty(const wstring *s)
-{
-    assert(s != nullptr);
-    return _is_null_or_empty_cs(to_const_string(s));
-}
+bool _string_is_null_or_empty(const_string    s) { return _string_is_null_or_empty_cs(s); }
+bool _string_is_null_or_empty(const_u16string s) { return _string_is_null_or_empty_cs(s); }
+bool _string_is_null_or_empty(const_u32string s) { return _string_is_null_or_empty_cs(s); }
 
 template<typename C>
-static inline bool _is_blank(const C *s)
+static inline bool _string_is_blank_cs(const_string_base<C> s)
 {
-    if (s == nullptr)
-        return true;
+    /* TODO: for_utf_... is_space or 0 */
+    (void)s;
 
-    while (*s != '\0')
-    {
-        if (!is_space(*s))
-            return false;
-
-        ++s;
-    }
-
-    return true;
+    return false;
 }
 
-bool is_blank(const char *s)
-{
-    return _is_blank(s);
-}
-
-bool is_blank(const wchar_t *s)
-{
-    return _is_blank(s);
-}
+bool _string_is_blank(const_string    s) { return _string_is_blank_cs(s); }
+bool _string_is_blank(const_u16string s) { return _string_is_blank_cs(s); }
+bool _string_is_blank(const_u32string s) { return _string_is_blank_cs(s); }
 
 template<typename C>
-static inline bool _is_blank_cs(const_string_base<C> s)
-{
-    s64 i = 0;
-    s64 size = s.size;
-    C c;
-
-    while (i < size)
-    {
-        c = s.c_str[i];
-
-        if (!(is_space(c) || c == '\0'))
-            return false;
-
-        ++i;
-    }
-
-    return true;
-}
-
-bool is_blank(const_string s)
-{
-    return _is_blank_cs(s);
-}
-
-bool is_blank(const_wstring s)
-{
-    return _is_blank_cs(s);
-}
-
-bool is_blank(const string *s)
-{
-    assert(s != nullptr);
-    return _is_blank_cs(to_const_string(s));
-}
-
-bool is_blank(const wstring *s)
-{
-    assert(s != nullptr);
-    return _is_blank_cs(to_const_string(s));
-}
-
-s64 string_length(const char *s)
+s64 _string_length(const C *s)
 {
     if (s == nullptr)
         return 0;
 
-    return strlen(s);
+    s64 ret = 0;
+
+    while (*s++ != (C)'\0')
+        ret++;
+
+    return ret;
 }
 
-s64 string_length(const wchar_t *s)
-{
-    if (s == nullptr)
-        return 0;
+s64 string_length(const c8  *s) { return _string_length(s); }
+s64 string_length(const c16 *s) { return _string_length(s); }
+s64 string_length(const c32 *s) { return _string_length(s); }
+s64 string_length(const wchar_t *s) { return _string_length(char_cast(s)); }
 
-    return wcslen(s);
-}
+s64 string_length(const_string s)    { return s.size; }
+s64 string_length(const_u16string s) { return s.size; }
+s64 string_length(const_u32string s) { return s.size; }
 
-s64 string_length(const_string s)
-{
-    return s.size;
-}
+s64 string_length(const string *s)    { return s == nullptr ? 0 : s->size; }
+s64 string_length(const u16string *s) { return s == nullptr ? 0 : s->size; }
+s64 string_length(const u32string *s) { return s == nullptr ? 0 : s->size; }
 
-s64 string_length(const_wstring s)
-{
-    return s.size;
-}
+s64 string_utf_length(const c8  *s) { return string_utf_length(to_const_string(s)); }
+s64 string_utf_length(const c16 *s) { return string_utf_length(to_const_string(s)); }
+s64 string_utf_length(const c32 *s) { return string_utf_length(to_const_string(s)); }
 
-s64 string_length(const string *s)
-{
-    if (s == nullptr)
-        return 0;
+s64 string_utf_length(const_string s)    { return utf32_units_required_from_utf8 (s.c_str, s.size); }
+s64 string_utf_length(const_u16string s) { return utf32_units_required_from_utf16(s.c_str, s.size); }
+s64 string_utf_length(const_u32string s) { return s.size; }
 
-    return s->size;
-}
-
-s64 string_length(const wstring *s)
-{
-    if (s == nullptr)
-        return 0;
-
-    return s->size;
-}
+s64 string_utf_length(const string *s)    { return s == nullptr ? 0 : string_utf_length(to_const_string(s)); }
+s64 string_utf_length(const u16string *s) { return s == nullptr ? 0 : string_utf_length(to_const_string(s)); }
+s64 string_utf_length(const u32string *s) { return s == nullptr ? 0 : string_utf_length(to_const_string(s)); }
 
 template<typename C>
-static inline int _compare_strings_cs(const_string_base<C> s1, const_string_base<C> s2, s64 n)
+static inline int _string_compare_cs(const_string_base<C> s1, const_string_base<C> s2, s64 n)
 {
     int res = 0;
     s64 i = 0;
@@ -565,54 +402,74 @@ static inline int _compare_strings_cs(const_string_base<C> s1, const_string_base
     return res;
 }
 
-int _compare_strings(const_string   s1, const_string   s2, s64 n)
+int _string_compare(const_string s1, const_string s2, s64 n)
 {
-    return _compare_strings_cs(s1, s2, n);
+    return _string_compare_cs(s1, s2, n);
 }
 
-int _compare_strings(const_wstring   s1, const_wstring   s2, s64 n)
+int _string_compare(const_u16string s1, const_u16string s2, s64 n)
 {
-    return _compare_strings_cs(s1, s2, n);
+    return _string_compare_cs(s1, s2, n);
 }
 
-template<> bool equals(string  s1, string  s2)
+int _string_compare(const_u32string s1, const_u32string s2, s64 n)
 {
-    return compare_strings(&s1, &s2) == 0;
+    return _string_compare_cs(s1, s2, n);
 }
 
-template<> bool equals(wstring s1, wstring s2)
+template<> bool equals(string s1, string s2)
 {
-    return compare_strings(&s1, &s2) == 0;
+    return string_compare(s1, s2) == 0;
 }
 
-template<> bool equals_p(const string  *s1, const string  *s2)
+template<> bool equals(u16string s1, u16string s2)
 {
-    return compare_strings(s1, s2) == 0;
+    return string_compare(s1, s2) == 0;
 }
 
-template<> bool equals_p(const wstring *s1, const wstring *s2)
+template<> bool equals(u32string s1, u32string s2)
 {
-    return compare_strings(s1, s2) == 0;
+    return string_compare(s1, s2) == 0;
+}
+
+template<> bool equals_p(const string *s1, const string *s2)
+{
+    return string_compare(s1, s2) == 0;
+}
+
+template<> bool equals_p(const u16string *s1, const u16string *s2)
+{
+    return string_compare(s1, s2) == 0;
+}
+
+template<> bool equals_p(const u32string *s1, const u32string *s2)
+{
+    return string_compare(s1, s2) == 0;
 }
 
 template<typename C>
-static inline bool _begins_with_cs(const_string_base<C> s, const_string_base<C> prefix)
+static inline bool _string_begins_with_cs(const_string_base<C> s, const_string_base<C> prefix)
 {
-    return compare_strings(prefix, s, string_length(prefix)) == 0;
+    return string_compare(prefix, s, string_length(prefix)) == 0;
 }
 
-bool _begins_with(const_string s, const_string prefix)
+bool _string_begins_with(const_string s, const_string prefix)
 {
-    return _begins_with_cs(s, prefix);
+    return _string_begins_with_cs(s, prefix);
 }
 
-bool _begins_with(const_wstring s, const_wstring prefix)
+bool _string_begins_with(const_u16string s, const_u16string prefix)
 {
-    return _begins_with_cs(s, prefix);
+    return _string_begins_with_cs(s, prefix);
+}
+
+bool _string_begins_with(const_u32string s, const_u32string prefix)
+{
+    return _string_begins_with_cs(s, prefix);
 }
 
 template<typename C>
-static inline bool _ends_with_cs(const_string_base<C> s, const_string_base<C> suffix)
+static inline bool _string_ends_with_cs(const_string_base<C> s, const_string_base<C> suffix)
 {
     s64 str_length = string_length(s);
     s64 suffix_length = string_length(suffix);
@@ -622,48 +479,48 @@ static inline bool _ends_with_cs(const_string_base<C> s, const_string_base<C> su
 
     const_string_base<C> s2{s.c_str + str_length - suffix_length, suffix_length};
 
-    return compare_strings(s2, suffix, suffix_length) == 0;
+    return string_compare(s2, suffix, suffix_length) == 0;
 }
 
-bool _ends_with(const_string s, const_string prefix)
+bool _string_ends_with(const_string s, const_string prefix)
 {
-    return _ends_with_cs(s, prefix);
+    return _string_ends_with_cs(s, prefix);
 }
 
-bool _ends_with(const_wstring s, const_wstring prefix)
+bool _string_ends_with(const_u16string s, const_u16string prefix)
 {
-    return _ends_with_cs(s, prefix);
+    return _string_ends_with_cs(s, prefix);
 }
 
-#define DEFINE_INTEGER_BODY(T, NAME, FUNC, WIDEFUNC) \
-    T NAME(const char    *s, char    **pos, int base) { return FUNC(s, pos, base); }\
-    T NAME(const wchar_t *s, wchar_t **pos, int base) { return WIDEFUNC(s, pos, base); }\
-    T NAME(const_string   s, char    **pos, int base) { return FUNC(s.c_str, pos, base); }\
-    T NAME(const_wstring  s, wchar_t **pos, int base) { return WIDEFUNC(s.c_str, pos, base); }\
-    T NAME(const string  *s, char    **pos, int base) { assert(s != nullptr); return FUNC(s->data, pos, base); }\
-    T NAME(const wstring *s, wchar_t **pos, int base) { assert(s != nullptr); return WIDEFUNC(s->data, pos, base); }
+bool _string_ends_with(const_u32string s, const_u32string prefix)
+{
+    return _string_ends_with_cs(s, prefix);
+}
 
-#define DEFINE_DECIMAL_BODY(T, NAME, FUNC, WIDEFUNC) \
-    T NAME(const char    *s, char    **pos) { return FUNC(s, pos); }\
-    T NAME(const wchar_t *s, wchar_t **pos) { return WIDEFUNC(s, pos); }\
-    T NAME(const_string   s, char    **pos) { return FUNC(s.c_str, pos); }\
-    T NAME(const_wstring  s, wchar_t **pos) { return WIDEFUNC(s.c_str, pos); }\
-    T NAME(const string  *s, char    **pos) { assert(s != nullptr); return FUNC(s->data, pos); }\
-    T NAME(const wstring *s, wchar_t **pos) { assert(s != nullptr); return WIDEFUNC(s->data, pos); }
+// TODO: u8/u16/u32/u64 functions instead
+#define DEFINE_INTEGER_BODY(T, NAME, FUNC) \
+    T NAME(const c8     *s, c8 **pos, int base) { return FUNC(s, pos, base); }\
+    T NAME(const_string  s, c8 **pos, int base) { return FUNC(s.c_str, pos, base); }\
+    T NAME(const string *s, c8 **pos, int base) { assert(s != nullptr); return FUNC(s->data, pos, base); }
 
-DEFINE_INTEGER_BODY(int, to_int, strtol, wcstol);
-DEFINE_INTEGER_BODY(long, to_long, strtol, wcstol);
-DEFINE_INTEGER_BODY(long long, to_long_long, strtoll, wcstoll);
-DEFINE_INTEGER_BODY(unsigned int, to_unsigned_int, strtoul, wcstoul);
-DEFINE_INTEGER_BODY(unsigned long, to_unsigned_long, strtoul, wcstoul);
-DEFINE_INTEGER_BODY(unsigned long long, to_unsigned_long_long, strtoull, wcstoull);
-DEFINE_DECIMAL_BODY(float, to_float, strtof, wcstof);
-DEFINE_DECIMAL_BODY(double, to_double, strtod, wcstod);
-DEFINE_DECIMAL_BODY(long double, to_long_double, strtold, wcstold);
+#define DEFINE_DECIMAL_BODY(T, NAME, FUNC) \
+    T NAME(const c8     *s, c8 **pos) { return FUNC(s, pos); }\
+    T NAME(const_string  s, c8 **pos) { return FUNC(s.c_str, pos); }\
+    T NAME(const string *s, c8 **pos) { assert(s != nullptr); return FUNC(s->data, pos); }
+
+DEFINE_INTEGER_BODY(int, to_int, strtol);
+DEFINE_INTEGER_BODY(long, to_long, strtol);
+DEFINE_INTEGER_BODY(long long, to_long_long, strtoll);
+DEFINE_INTEGER_BODY(unsigned int, to_unsigned_int, strtoul);
+DEFINE_INTEGER_BODY(unsigned long, to_unsigned_long, strtoul);
+DEFINE_INTEGER_BODY(unsigned long long, to_unsigned_long_long, strtoull);
+DEFINE_DECIMAL_BODY(float, to_float, strtof);
+DEFINE_DECIMAL_BODY(double, to_double, strtod);
+DEFINE_DECIMAL_BODY(long double, to_long_double, strtold);
 
 // manip
 template<typename C>
-static inline void _set_string(string_base<C> *dst, const_string_base<C> src)
+static inline void _string_set_same_char(string_base<C> *dst, const_string_base<C> src)
 {
     assert(dst != nullptr);
 
@@ -677,118 +534,52 @@ static inline void _set_string(string_base<C> *dst, const_string_base<C> src)
     dst->data[dst->size] = '\0';
 }
 
-void set_string(string  *dst, const char    *src)
+template<typename CTo, typename CFrom>
+static inline void _string_set_different_char(string_base<CTo> *dst, const_string_base<CFrom> src)
 {
-    set_string(dst, to_const_string(src));
+    assert(dst != nullptr);
+
+    s64 required_size = string_conversion_bytes_required(dst->data, src.c_str, src.size) / sizeof(CTo);
+
+    if (dst->reserved_size < required_size + 1)
+        string_reserve(dst, required_size + 1);
+
+    dst->size = string_convert(src.c_str, src.size, dst->data, dst->reserved_size);
+    dst->data[dst->size] = '\0';
 }
 
-void set_string(string  *dst, const char    *src, s64 n)
-{
-    set_string(dst, to_const_string(src, n));
-}
-
-void set_string(string  *dst, const_string   src)
-{
-    _set_string(dst, src);
-}
-
-void set_string(string  *dst, const string  *src)
-{
-    set_string(dst, to_const_string(src));
-}
-
-void set_string(string  *dst, const wchar_t    *src)
-{
-    set_string(dst, to_const_string(src));
-}
-
-void set_string(string  *dst, const wchar_t    *src, s64 n)
-{
-    set_string(dst, to_const_string(src, n));
-}
-
-void set_string(string  *dst, const_wstring   src)
-{
-    s64 required_size = string_conversion_bytes_required(dst->data, src.c_str, src.size);
-
-    string_reserve(dst, required_size);
-    ::fill_memory((void*)dst->data, 0, dst->reserved_size * sizeof(char));
-
-    dst->size = ::string_convert(src.c_str, src.size, dst->data, dst->reserved_size);
-}
-
-void set_string(string  *dst, const wstring  *src)
-{
-    set_string(dst, to_const_string(src));
-}
-
-void set_string(wstring *dst, const wchar_t *src)
-{
-    set_string(dst, to_const_string(src));
-}
-
-void set_string(wstring *dst, const wchar_t *src, s64 n)
-{
-    set_string(dst, to_const_string(src, n));
-}
-
-void set_string(wstring *dst, const_wstring  src)
-{
-    _set_string(dst, src);
-}
-
-void set_string(wstring *dst, const wstring *src)
-{
-    set_string(dst, to_const_string(src));
-}
-
-void set_string(wstring *dst, const char *src)
-{
-    set_string(dst, to_const_string(src));
-}
-
-void set_string(wstring *dst, const char *src, s64 n)
-{
-    set_string(dst, to_const_string(src, n));
-}
-
-void set_string(wstring *dst, const_string  src)
-{
-    s64 required_size = string_conversion_bytes_required(dst->data, src.c_str, src.size);
-
-    string_reserve(dst, required_size / sizeof(wchar_t));
-    ::fill_memory((void*)dst->data, 0, dst->reserved_size * sizeof(wchar_t));
-
-    dst->size = ::string_convert(src.c_str, src.size, dst->data, dst->reserved_size);
-}
-
-void set_string(wstring *dst, const string *src)
-{
-    set_string(dst, to_const_string(src));
-}
-
-char *copy_string(const char *src, char *dst)
-{
-    return stpcpy(dst, src);
-}
-
-wchar_t *copy_string(const wchar_t *src, wchar_t *dst)
-{
-    return wcpcpy(dst, src);
-}
-
-char *copy_string(const char *src, char *dst, s64 n)
-{
-    return stpncpy(dst, src, n);
-}
-
-wchar_t *copy_string(const wchar_t *src, wchar_t *dst, s64 n)
-{
-    return wcpncpy(dst, src, n);
-}
+void _string_set(string    *dst, const_string src)    { _string_set_same_char(dst, src); }
+void _string_set(string    *dst, const_u16string src) { _string_set_different_char(dst, src); }
+void _string_set(string    *dst, const_u32string src) { _string_set_different_char(dst, src); }
+void _string_set(u16string *dst, const_string src)    { _string_set_different_char(dst, src); }
+void _string_set(u16string *dst, const_u16string src) { _string_set_same_char(dst, src); }
+void _string_set(u16string *dst, const_u32string src) { _string_set_different_char(dst, src); }
+void _string_set(u32string *dst, const_string src)    { _string_set_different_char(dst, src); }
+void _string_set(u32string *dst, const_u16string src) { _string_set_different_char(dst, src); }
+void _string_set(u32string *dst, const_u32string src) { _string_set_same_char(dst, src); }
 
 template<typename C>
-static inline void _copy_string_cs_s(const_string_base<C> src, string_base<C> *dst, s64 n, s64 dst_offset)
+static inline C *_string_copy(const C *src, C *dst, s64 n)
+{
+    assert(dst != nullptr);
+
+    if (n < 0 || src == nullptr)
+        return nullptr;
+
+    copy_memory((const void*)src, (void*)dst, n * sizeof(C));
+
+    return dst;
+}
+
+c8  *string_copy(const c8  *src, c8  *dst)        { return _string_copy(src, dst, string_length(src)); }
+c8  *string_copy(const c8  *src, c8  *dst, s64 n) { return _string_copy(src, dst, n); }
+c16 *string_copy(const c16 *src, c16 *dst)        { return _string_copy(src, dst, string_length(src)); }
+c16 *string_copy(const c16 *src, c16 *dst, s64 n) { return _string_copy(src, dst, n); }
+c32 *string_copy(const c32 *src, c32 *dst)        { return _string_copy(src, dst, string_length(src)); }
+c32 *string_copy(const c32 *src, c32 *dst, s64 n) { return _string_copy(src, dst, n); }
+
+template<typename C>
+static inline void _string_copy_cs_s(const_string_base<C> src, string_base<C> *dst, s64 n, s64 dst_offset)
 {
     assert(dst != nullptr);
 
@@ -812,44 +603,53 @@ static inline void _copy_string_cs_s(const_string_base<C> src, string_base<C> *d
         append_null = true;
     }
 
-    copy_memory(src.c_str, dst->data + dst_offset, sizeof(C) * n);
+    copy_memory((const void*)src.c_str, (void*)(dst->data + dst_offset), sizeof(C) * n);
 
     if (append_null)
         dst->data[dst->size] = '\0';
 }
 
-void _copy_string(const_string src, string *dst, s64 n, s64 dst_offset)
+void _string_copy(const_string src, string *dst, s64 n, s64 dst_offset)
 {
-    _copy_string_cs_s(src, dst, n, dst_offset);
+    _string_copy_cs_s(src, dst, n, dst_offset);
 }
 
-void _copy_string(const_wstring src, wstring *dst, s64 n, s64 dst_offset)
+void _string_copy(const_u16string src, u16string *dst, s64 n, s64 dst_offset)
 {
-    _copy_string_cs_s(src, dst, n, dst_offset);
+    _string_copy_cs_s(src, dst, n, dst_offset);
+}
+
+void _string_copy(const_u32string src, u32string *dst, s64 n, s64 dst_offset)
+{
+    _string_copy_cs_s(src, dst, n, dst_offset);
 }
 
 template<typename C>
 static inline string_base<C> _copy_new_string(const_string_base<C> src, s64 n)
 {
-    string_base<C> ret;
-    init(&ret);
-    _copy_string(src, &ret, n, 0);
+    string_base<C> ret{};
+    _string_copy(src, &ret, n, 0);
 
     return ret;
 }
 
-string _copy_string(const_string  src, s64 n)
+string _string_copy(const_string src, s64 n)
 {
-    return _copy_new_string<char>(src, n);
+    return _copy_new_string(src, n);
 }
 
-wstring _copy_string(const_wstring  src, s64 n)
+u16string _string_copy(const_u16string src, s64 n)
 {
-    return _copy_new_string<wchar_t>(src, n);
+    return _copy_new_string(src, n);
+}
+
+u32string _string_copy(const_u32string src, s64 n)
+{
+    return _copy_new_string(src, n);
 }
 
 template<typename C>
-static inline void _append_string_cs(string_base<C> *dst, const_string_base<C> other)
+static inline void _string_append_cs(string_base<C> *dst, const_string_base<C> other)
 {
     assert(dst != nullptr);
 
@@ -864,34 +664,29 @@ static inline void _append_string_cs(string_base<C> *dst, const_string_base<C> o
         string_reserve(dst, required_space);
     }
 
-    copy_memory(other.c_str, dst->data + dst->size, sizeof(C) * other.size);
+    copy_memory((const void*)other.c_str, (void*)(dst->data + dst->size), sizeof(C) * other.size);
 
     dst->size += other.size;
     dst->data[dst->size] = '\0';
 }
 
-void append_string(string  *dst, char c)
+void _string_append(string    *dst, const_string    other)
 {
-    _append_string_cs(dst, const_string{.c_str = (const char *)&c, .size = 1});
+    _string_append_cs(dst, other);
 }
 
-void append_string(wstring *dst, wchar_t c)
+void _string_append(u16string *dst, const_u16string other)
 {
-    _append_string_cs(dst, const_wstring{.c_str = (const wchar_t *)&c, .size = 1});
+    _string_append_cs(dst, other);
 }
 
-void _append_string(string  *dst, const_string  other)
+void _string_append(u32string *dst, const_u32string other)
 {
-    _append_string_cs(dst, other);
-}
-
-void _append_string(wstring *dst, const_wstring other)
-{
-    _append_string_cs(dst, other);
+    _string_append_cs(dst, other);
 }
 
 template<typename C>
-static inline void _prepend_string_cs(string_base<C> *dst, const_string_base<C> other)
+static inline void _string_prepend_cs(string_base<C> *dst, const_string_base<C> other)
 {
     assert(dst != nullptr);
 
@@ -906,51 +701,46 @@ static inline void _prepend_string_cs(string_base<C> *dst, const_string_base<C> 
         string_reserve(dst, required_space);
     }
 
-    move_memory(dst->data, dst->data + other.size, sizeof(C) * dst->size);
-    copy_memory(other.c_str, dst->data, sizeof(C) * other.size);
+    move_memory((const void*)dst->data, (void*)(dst->data + other.size), sizeof(C) * dst->size);
+    copy_memory((const void*)other.c_str, (void*)dst->data, sizeof(C) * other.size);
 
     dst->size += other.size;
     dst->data[dst->size] = '\0';
 }
 
-void _prepend_string(string  *dst, const_string  other)
+void _string_prepend(string    *dst, const_string    other)
 {
-    _prepend_string_cs(dst, other);
+    _string_prepend_cs(dst, other);
 }
 
-void _prepend_string(wstring *dst, const_wstring other)
+void _string_prepend(u16string *dst, const_u16string other)
 {
-    _prepend_string_cs(dst, other);
+    _string_prepend_cs(dst, other);
+}
+
+void _string_prepend(u32string *dst, const_u32string other)
+{
+    _string_prepend_cs(dst, other);
 }
 
 template<typename C>
-static inline s64 _index_of_c(const_string_base<C> str, C needle, s64 offset)
+static inline s64 _string_index_of_c(const_string_base<C> haystack, C needle, s64 offset)
 {
     if (offset < 0)
         return -1;
 
-    if (offset >= str.size)
+    if (offset >= haystack.size)
         return -1;
 
-    for (s64 i = offset; i < str.size; ++i)
-        if (str.c_str[i] == needle)
+    for (s64 i = offset; i < haystack.size; ++i)
+        if (haystack.c_str[i] == needle)
             return i;
 
     return -1;
 }
 
-s64 _index_of(const_string str, char    needle, s64 offset)
-{
-    return _index_of_c(str, needle, offset);
-}
-
-s64 _index_of(const_wstring str, wchar_t needle, s64 offset)
-{
-    return _index_of_c(str, needle, offset);
-}
-
 template<typename C>
-static inline s64 _index_of_s(const_string_base<C> str, const_string_base<C> needle, s64 offset)
+static inline s64 _string_index_of_s(const_string_base<C> str, const_string_base<C> needle, s64 offset)
 {
     if (offset < 0)
         return -1;
@@ -994,45 +784,57 @@ static inline s64 _index_of_s(const_string_base<C> str, const_string_base<C> nee
     }
 }
 
-s64 _index_of(const_string  str, const_string  needle, s64 offset)
+s64 _string_index_of(const_string    haystack, c8              needle, s64 offset)
 {
-    return _index_of_s(str, needle, offset);
+    return _string_index_of_c(haystack, needle, offset);
 }
 
-s64 _index_of(const_wstring str, const_wstring needle, s64 offset)
+s64 _string_index_of(const_string    haystack, const_string    needle, s64 offset)
 {
-    return _index_of_s(str, needle, offset);
+    return _string_index_of_s(haystack, needle, offset);
+}
+
+s64 _string_index_of(const_u16string haystack, c16             needle, s64 offset)
+{
+    return _string_index_of_c(haystack, needle, offset);
+}
+
+s64 _string_index_of(const_u16string haystack, const_u16string needle, s64 offset)
+{
+    return _string_index_of_s(haystack, needle, offset);
+}
+
+s64 _string_index_of(const_u32string haystack, c32             needle, s64 offset)
+{
+    return _string_index_of_c(haystack, needle, offset);
+}
+
+s64 _string_index_of(const_u32string haystack, const_u32string needle, s64 offset)
+{
+    return _string_index_of_s(haystack, needle, offset);
 }
 
 template<typename C>
-static inline s64 _last_index_of_c(const_string_base<C> str, C needle, s64 offset)
+static inline s64 _string_last_index_of_c(const_string_base<C> haystack, C needle, s64 offset)
 {
+    // TODO: UTF
     if (offset < 0)
         return -1;
 
-    if (offset + 1 >= str.size)
-        offset = str.size - 1;
+    if (offset + 1 >= haystack.size)
+        offset = haystack.size - 1;
 
     for (s64 i = offset; i >= 0; --i)
-        if (str.c_str[i] == needle)
+        if (haystack.c_str[i] == needle)
             return i;
 
     return -1;
 }
 
-s64 _last_index_of(const_string str, char    needle, s64 offset)
-{
-    return _last_index_of_c(str, needle, offset);
-}
-
-s64 _last_index_of(const_wstring str, wchar_t needle, s64 offset)
-{
-    return _last_index_of_c(str, needle, offset);
-}
-
 template<typename C>
-static inline s64 _last_index_of_s(const_string_base<C> str, const_string_base<C> needle, s64 offset)
+static inline s64 _string_last_index_of_s(const_string_base<C> str, const_string_base<C> needle, s64 offset)
 {
+    // TODO: UTF
     if (offset < 0)
         return -1;
 
@@ -1065,24 +867,45 @@ static inline s64 _last_index_of_s(const_string_base<C> str, const_string_base<C
     return -1;
 }
 
-s64 _last_index_of(const_string  str, const_string  needle, s64 offset)
+s64 _string_last_index_of(const_string    haystack, c8              needle, s64 offset)
 {
-    return _last_index_of_s(str, needle, offset);
+    return _string_last_index_of_c(haystack, needle, offset);
 }
 
-s64 _last_index_of(const_wstring str, const_wstring needle, s64 offset)
+s64 _string_last_index_of(const_string    haystack, const_string    needle, s64 offset)
 {
-    return _last_index_of_s(str, needle, offset);
+    return _string_last_index_of_s(haystack, needle, offset);
+}
+
+s64 _string_last_index_of(const_u16string haystack, c16             needle, s64 offset)
+{
+    return _string_last_index_of_c(haystack, needle, offset);
+}
+
+s64 _string_last_index_of(const_u16string haystack, const_u16string needle, s64 offset)
+{
+    return _string_last_index_of_s(haystack, needle, offset);
+}
+
+s64 _string_last_index_of(const_u32string haystack, c32             needle, s64 offset)
+{
+    return _string_last_index_of_c(haystack, needle, offset);
+}
+
+s64 _string_last_index_of(const_u32string haystack, const_u32string needle, s64 offset)
+{
+    return _string_last_index_of_s(haystack, needle, offset);
 }
 
 template<typename C>
-static inline void _trim_left(string_base<C> *s)
+static inline bool _string_trim_left(string_base<C> *s)
 {
     assert(s != nullptr);
 
     s64 i = 0;
     s64 len = string_length(s);
 
+    // TODO: change to UTF
     C c;
     while (i < len)
     {
@@ -1098,21 +921,18 @@ static inline void _trim_left(string_base<C> *s)
     {
         remove_elements(as_array_ptr(C, s), 0, i);
         s->data[s->size] = '\0';
+        return true;
     }
+
+    return false;
 }
 
-void trim_left(string *s)
-{
-    _trim_left(s);
-}
-
-void trim_left(wstring *s)
-{
-    _trim_left(s);
-}
+bool string_trim_left(string    *s) { return _string_trim_left(s); }
+bool string_trim_left(u16string *s) { return _string_trim_left(s); }
+bool string_trim_left(u32string *s) { return _string_trim_left(s); }
 
 template<typename C>
-static inline void _trim_right(string_base<C> *s)
+static inline bool _string_trim_right(string_base<C> *s)
 {
     assert(s != nullptr);
 
@@ -1120,6 +940,7 @@ static inline void _trim_right(string_base<C> *s)
     s64 i = len;
     i -= 1;
 
+    // TODO: change to UTF
     C c;
     while (i >= 0)
     {
@@ -1136,134 +957,183 @@ static inline void _trim_right(string_base<C> *s)
     {
         remove_elements(as_array_ptr(C, s), i, len - i);
         s->data[s->size] = '\0';
+        return true;
     }
+
+    return false;
 }
 
-void trim_right(string *s)
-{
-    _trim_right(s);
-}
-
-void trim_right(wstring *s)
-{
-    _trim_right(s);
-}
+bool string_trim_right(string    *s) { return _string_trim_right(s); }
+bool string_trim_right(u16string *s) { return _string_trim_right(s); }
+bool string_trim_right(u32string *s) { return _string_trim_right(s); }
 
 template<typename C>
-static inline void _trim(string_base<C> *s)
+static inline bool _string_trim(string_base<C> *s)
 {
-    _trim_left(s);
-    _trim_right(s);
+    bool ret = _string_trim_left(s);
+    ret     |= _string_trim_right(s);
+    return ret;
 }
 
-void trim(string *s)
-{
-    _trim(s);
-}
-
-void trim(wstring *s)
-{
-    _trim(s);
-}
-
-char to_upper(char c)
-{
-    return (char)toupper(static_cast<int>(c));
-}
-
-wchar_t to_upper(wchar_t c)
-{
-    return towupper(static_cast<wint_t>(c));
-}
+bool string_trim(string    *s) { return _string_trim(s); }
+bool string_trim(u16string *s) { return _string_trim(s); }
+bool string_trim(u32string *s) { return _string_trim(s); }
 
 template<typename C>
-static inline void _to_upper(C *s)
+static inline C _char_to_upper(C c)
 {
-    while (*s)
-    {
-        *s = to_upper(*s);
-        s++;
-    }
+    if (c >= (C)'a' && c <= (C)'z')
+        return (c - (C)'a') + (C)'A';
+
+    return c;
 }
 
-void to_upper(char *s)
+c8  char_to_upper(c8  c) { return _char_to_upper(c); }
+c16 char_to_upper(c16 c) { return _char_to_upper(c); }
+c32 char_to_upper(c32 c) { return _char_to_upper(c); }
+
+void utf_codepoint_to_upper(c8  *codepoint)
 {
-    _to_upper(s);
+    // TODO: implement
+    (void)codepoint;
 }
 
-void to_upper(wchar_t *s)
+void utf_codepoint_to_upper(c16 *codepoint)
 {
-    _to_upper(s);
+    // TODO: implement
+    (void)codepoint;
 }
+
+void utf_codepoint_to_upper(c32 *codepoint)
+{
+    // TODO: implement
+    (void)codepoint;
+}
+
+void utf_to_upper(c8  *s, s64 size)
+{
+    // TODO: implement
+    (void)s;
+    (void)size;
+    // for_utf_codepoints(cp, {s, size})
+    //     utf_codepoint_to_upper(cp);
+}
+
+void utf_to_upper(c16 *s, s64 size)
+{
+    // TODO: implement
+    (void)s;
+    (void)size;
+    // for_utf_codepoints(cp, {s, size})
+    //     utf_codepoint_to_upper(cp);
+}
+void utf_to_upper(c32 *s, s64 size)
+{
+    // TODO: implement
+    (void)s;
+    (void)size;
+    // for_utf_codepoints(cp, {s, size})
+    //     utf_codepoint_to_upper(cp);
+}
+void utf_to_upper(string    *s)
+{
+    // TODO: implement
+    (void)s;
+    // for_utf_codepoints(cp, s)
+    //     utf_codepoint_to_upper(cp);
+}
+void utf_to_upper(u16string *s)
+{
+    // TODO: implement
+    (void)s;
+    // for_utf_codepoints(cp, s)
+    //     utf_codepoint_to_upper(cp);
+}
+void utf_to_upper(u32string *s)
+{
+    // TODO: implement
+    (void)s;
+    // for_utf_codepoints(cp, s)
+    //     utf_codepoint_to_upper(cp);
+}
+
 
 template<typename C>
-static inline void _to_upper_s(string_base<C> *s)
+static inline C _char_to_lower(C c)
 {
-    assert(s != nullptr);
+    if (c >= (C)'A' && c <= (C)'Z')
+        return (c - (C)'A') + (C)'a';
 
-    for (s64 i = 0; i < s->size; ++i)
-        s->data[i] = to_upper(s->data[i]);
+    return c;
 }
 
-void to_upper(string *s)
+c8  char_to_lower(c8  c) { return _char_to_lower(c); }
+c16 char_to_lower(c16 c) { return _char_to_lower(c); }
+c32 char_to_lower(c32 c) { return _char_to_lower(c); }
+
+void utf_codepoint_to_lower(c8  *codepoint)
 {
-    _to_upper_s(s);
+    // TODO: implement
+    (void)codepoint;
 }
 
-void to_upper(wstring *s)
+void utf_codepoint_to_lower(c16 *codepoint)
 {
-    _to_upper_s(s);
+    // TODO: implement
+    (void)codepoint;
 }
 
-char to_lower(char c)
+void utf_codepoint_to_lower(c32 *codepoint)
 {
-    return (char)tolower(static_cast<int>(c));
+    // TODO: implement
+    (void)codepoint;
 }
 
-wchar_t to_lower(wchar_t c)
+void utf_to_lower(c8  *s, s64 size)
 {
-    return towlower(static_cast<wint_t>(c));
+    // TODO: implement
+    (void)s;
+    (void)size;
+    // for_utf_codepoints(cp, {s, size})
+    //     utf_codepoint_to_lower(cp);
 }
 
-template<typename C>
-static inline void _to_lower(C *s)
+void utf_to_lower(c16 *s, s64 size)
 {
-    while (*s)
-    {
-        *s = to_lower(*s);
-        s++;
-    }
+    // TODO: implement
+    (void)s;
+    (void)size;
+    // for_utf_codepoints(cp, {s, size})
+    //     utf_codepoint_to_lower(cp);
 }
-
-void to_lower(char *s)
+void utf_to_lower(c32 *s, s64 size)
 {
-    _to_lower(s);
+    // TODO: implement
+    (void)s;
+    (void)size;
+    // for_utf_codepoints(cp, {s, size})
+    //     utf_codepoint_to_lower(cp);
 }
-
-void to_lower(wchar_t *s)
+void utf_to_lower(string    *s)
 {
-    _to_lower(s);
+    // TODO: implement
+    (void)s;
+    // for_utf_codepoints(cp, s)
+    //     utf_codepoint_to_lower(cp);
 }
-
-template<typename C>
-static inline void _to_lower_s(string_base<C> *s)
+void utf_to_lower(u16string *s)
 {
-    assert(s != nullptr);
-
-    s64 len = string_length(s);
-
-    for (s64 i = 0; i < len; ++i)
-        s->data[i] = to_lower(s->data[i]);
+    // TODO: implement
+    (void)s;
+    // for_utf_codepoints(cp, s)
+    //     utf_codepoint_to_lower(cp);
 }
-
-void to_lower(string *s)
+void utf_to_lower(u32string *s)
 {
-    _to_lower_s(s);
-}
-
-void to_lower(wstring *s)
-{
-    _to_lower_s(s);
+    // TODO: implement
+    (void)s;
+    // for_utf_codepoints(cp, s)
+    //     utf_codepoint_to_lower(cp);
 }
 
 template<typename C>
@@ -1280,12 +1150,17 @@ static inline const_string_base<C> _substring_nocopy(const_string_base<C> str, s
     return const_string_base<C>{.c_str = str.c_str + start, .size = length};
 }
 
-const_string  _substring(const_string  s, s64 start, s64 length)
+const_string _substring(const_string s, s64 start, s64 length)
 {
     return _substring_nocopy(s, start, length);
 }
 
-const_wstring _substring(const_wstring s, s64 start, s64 length)
+const_u16string _substring(const_u16string s, s64 start, s64 length)
+{
+    return _substring_nocopy(s, start, length);
+}
+
+const_u32string _substring(const_u32string s, s64 start, s64 length)
 {
     return _substring_nocopy(s, start, length);
 }
@@ -1293,15 +1168,20 @@ const_wstring _substring(const_wstring s, s64 start, s64 length)
 template<typename C>
 static inline void _substring_c_str(const C *s, s64 start, s64 length, C *out, s64 out_offset)
 {
-    copy_string(s + start, out + out_offset, length);
+    string_copy(s + start, out + out_offset, length);
 }
 
-void substring(const char    *s, s64 start, s64 length, char    *out, s64 out_offset)
+void substring(const c8 *s, s64 start, s64 length, c8 *out, s64 out_offset)
 {
     _substring_c_str(s, start, length, out, out_offset);
 }
 
-void substring(const wchar_t *s, s64 start, s64 length, wchar_t *out, s64 out_offset)
+void substring(const c16 *s, s64 start, s64 length, c16 *out, s64 out_offset)
+{
+    _substring_c_str(s, start, length, out, out_offset);
+}
+
+void substring(const c32 *s, s64 start, s64 length, c32 *out, s64 out_offset)
 {
     _substring_c_str(s, start, length, out, out_offset);
 }
@@ -1330,34 +1210,106 @@ static inline void _substring_copy(const_string_base<C> s, s64 start, s64 length
         out->data[out->size] = '\0';
 }
 
-void _substring(const_string  s, s64 start, s64 length, string *out,  s64 out_offset)
+void _substring(const_string s, s64 start, s64 length, string *out,  s64 out_offset)
 {
     _substring_copy(s, start, length, out, out_offset);
 }
 
-void _substring(const_wstring s, s64 start, s64 length, wstring *out, s64 out_offset)
+void _substring(const_u16string s, s64 start, s64 length, u16string *out, s64 out_offset)
+{
+    _substring_copy(s, start, length, out, out_offset);
+}
+
+void _substring(const_u32string s, s64 start, s64 length, u32string *out, s64 out_offset)
 {
     _substring_copy(s, start, length, out, out_offset);
 }
 
 template<typename C>
-static inline void _replace_c(string_base<C> *s, C needle, C replacement, s64 offset)
+static inline const_string_base<C> _utf_substring_nocopy(const_string_base<C> str, s64 start, s64 length)
 {
-    s64 idx = index_of(s, needle, offset);
+    (void)str;
+    (void)start;
+    (void)length;
+    // TODO: implement
+    return const_string_base<C>{};
+}
 
-    if (idx < 0)
-        return;
+const_string _utf_substring(const_string s, s64 start, s64 length)
+{
+    return _utf_substring_nocopy(s, start, length);
+}
 
-    s->data[idx] = replacement;
+const_u16string _utf_substring(const_u16string s, s64 start, s64 length)
+{
+    return _utf_substring_nocopy(s, start, length);
+}
+
+const_u32string _utf_substring(const_u32string s, s64 start, s64 length)
+{
+    return _utf_substring_nocopy(s, start, length);
+}
+
+template<typename C>
+static inline void _utf_substring_c_str(const C *s, s64 start, s64 length, C *out, s64 out_offset)
+{
+    (void)s;
+    (void)start;
+    (void)length;
+    (void)out;
+    (void)out_offset;
+    // TODO: implement
+}
+
+void utf_substring(const c8 *s, s64 start, s64 length, c8 *out, s64 out_offset)
+{
+    _utf_substring_c_str(s, start, length, out, out_offset);
+}
+
+void utf_substring(const c16 *s, s64 start, s64 length, c16 *out, s64 out_offset)
+{
+    _utf_substring_c_str(s, start, length, out, out_offset);
+}
+
+void utf_substring(const c32 *s, s64 start, s64 length, c32 *out, s64 out_offset)
+{
+    _utf_substring_c_str(s, start, length, out, out_offset);
+}
+
+template<typename C>
+static inline void _utf_substring_copy(const_string_base<C> s, s64 start, s64 length, string_base<C> *out, s64 out_offset)
+{
+    // TODO: implement
+    (void)s;
+    (void)start;
+    (void)length;
+    (void)out;
+    (void)out_offset;
+}
+
+void _utf_substring(const_string s, s64 start, s64 length, string *out,  s64 out_offset)
+{
+    _utf_substring_copy(s, start, length, out, out_offset);
+}
+
+void _utf_substring(const_u16string s, s64 start, s64 length, u16string *out, s64 out_offset)
+{
+    _utf_substring_copy(s, start, length, out, out_offset);
+}
+
+void _utf_substring(const_u32string s, s64 start, s64 length, u32string *out, s64 out_offset)
+{
+    _utf_substring_copy(s, start, length, out, out_offset);
 }
 
 template<typename C>
 static inline void _replace_s(string_base<C> *s, const_string_base<C> needle, const_string_base<C> replacement, s64 offset)
 {
+    // TODO: UTF replace
     if (needle.size == 0)
         return;
 
-    s64 idx = index_of(s, needle, offset);
+    s64 idx = string_index_of(s, needle, offset);
 
     if (idx < 0)
         return;
@@ -1384,48 +1336,32 @@ static inline void _replace_s(string_base<C> *s, const_string_base<C> needle, co
         s->data[s->size] = '\0';
     }
 
-    copy_string(replacement, s, max_value(s64), idx);
+    string_copy(replacement, s, max_value(s64), idx);
 }
 
-void replace(string *s, char needle, char replacement, s64 offset)
-{
-    _replace_c(s, needle, replacement, offset);
-}
-
-void replace(wstring *s, wchar_t needle, wchar_t replacement, s64 offset)
-{
-    _replace_c(s, needle, replacement, offset);
-}
-
-void _replace(string  *s, const_string  needle, const_string  replacement, s64 offset)
+void _string_replace(string  *s, const_string  needle, const_string  replacement, s64 offset)
 {
     _replace_s(s, needle, replacement, offset);
 }
 
-void _replace(wstring *s, const_wstring needle, const_wstring replacement, s64 offset)
+void _string_replace(u16string *s, const_u16string needle, const_u16string replacement, s64 offset)
+{
+    _replace_s(s, needle, replacement, offset);
+}
+
+void _string_replace(u32string *s, const_u32string needle, const_u32string replacement, s64 offset)
 {
     _replace_s(s, needle, replacement, offset);
 }
 
 template<typename C>
-static inline void _replace_all_c(string_base<C> *s, C needle, C replacement, s64 offset)
+static inline void _string_replace_all_s(string_base<C> *s, const_string_base<C> needle, const_string_base<C> replacement, s64 offset)
 {
-    s64 idx = index_of(s, needle, offset);
-
-    while (idx >= 0)
-    {
-        s->data[idx] = replacement;
-        idx = index_of(s, needle, idx + 1);
-    }
-}
-
-template<typename C>
-static inline void _replace_all_s(string_base<C> *s, const_string_base<C> needle, const_string_base<C> replacement, s64 offset)
-{
+    // TODO: UTF replace
     if (needle.size == 0)
         return;
 
-    s64 idx = index_of(s, needle, offset);
+    s64 idx = string_index_of(s, needle, offset);
 
     while (idx >= 0)
     {
@@ -1451,88 +1387,31 @@ static inline void _replace_all_s(string_base<C> *s, const_string_base<C> needle
             s->data[s->size] = '\0';
         }
 
-        copy_string(replacement, s, max_value(s64), idx);
+        string_copy(replacement, s, max_value(s64), idx);
 
-        idx = index_of(s, needle, idx + 1);
+        idx = string_index_of(s, needle, idx + 1);
     }
 }
 
-void replace_all(string *s, char needle, char replacement, s64 offset)
+void _string_replace_all(string  *s, const_string  needle, const_string  replacement, s64 offset)
 {
-    _replace_all_c(s, needle, replacement, offset);
+    _string_replace_all_s(s, needle, replacement, offset);
 }
 
-void replace_all(wstring *s, wchar_t needle, wchar_t replacement, s64 offset)
+void _string_replace_all(u16string *s, const_u16string needle, const_u16string replacement, s64 offset)
 {
-    _replace_all_c(s, needle, replacement, offset);
+    _string_replace_all_s(s, needle, replacement, offset);
 }
 
-void _replace_all(string  *s, const_string  needle, const_string  replacement, s64 offset)
+void _string_replace_all(u32string *s, const_u32string needle, const_u32string replacement, s64 offset)
 {
-    _replace_all_s(s, needle, replacement, offset);
-}
-
-void _replace_all(wstring *s, const_wstring needle, const_wstring replacement, s64 offset)
-{
-    _replace_all_s(s, needle, replacement, offset);
-}
-
-template<typename C>
-static inline s64 _split_c(const_string_base<C> s, C delim, array<const_string_base<C>> *out)
-{
-    s64 split_count = 0;
-    out->size = 0;
-
-    s64 begin = 0;
-    s64 end = index_of(s, delim);
-    s64 diff = 0;
-
-    const_string_base<C> to_add;
-
-    while (end >= 0)
-    {
-        split_count++;
-        diff = end - begin;
-
-        if (diff <= 0)
-        {
-            to_add.c_str = LIT(C, "");
-            to_add.size = 0;
-        }
-        else
-        {
-            to_add.c_str = s.c_str + begin;
-            to_add.size = end - begin;
-        }
-
-        add_at_end(out, to_add);
-
-        begin = end + 1;
-        end = index_of(s, delim, end + 1);
-    }
-
-    end = s.size;
-    diff = end - begin;
-
-    if (diff <= 0)
-    {
-        to_add.c_str = LIT(C, "");
-        to_add.size = 0;
-    }
-    else
-    {
-        to_add.c_str = s.c_str + begin;
-        to_add.size = end - begin;
-    }
-
-    add_at_end(out, to_add);
-
-    return split_count;
+    _string_replace_all_s(s, needle, replacement, offset);
 }
 
 template<typename C>
 static inline s64 _split_s(const_string_base<C> s, const_string_base<C> delim, array<const_string_base<C>> *out)
 {
+    // TODO: UTF split
     if (delim.size == 0)
         return 0;
 
@@ -1540,7 +1419,7 @@ static inline s64 _split_s(const_string_base<C> s, const_string_base<C> delim, a
     out->size = 0;
 
     s64 begin = 0;
-    s64 end = index_of(s, delim);
+    s64 end = string_index_of(s, delim);
     s64 diff = 0;
 
     const_string_base<C> to_add;
@@ -1552,7 +1431,7 @@ static inline s64 _split_s(const_string_base<C> s, const_string_base<C> delim, a
 
         if (diff <= 0)
         {
-            to_add.c_str = LIT(C, "");
+            to_add.c_str = string_literal(C, "");
             to_add.size = 0;
         }
         else
@@ -1564,7 +1443,7 @@ static inline s64 _split_s(const_string_base<C> s, const_string_base<C> delim, a
         add_at_end(out, to_add);
 
         begin = end + delim.size;
-        end = index_of(s, delim, end + delim.size);
+        end = string_index_of(s, delim, end + delim.size);
     }
 
     end = s.size;
@@ -1572,7 +1451,7 @@ static inline s64 _split_s(const_string_base<C> s, const_string_base<C> delim, a
 
     if (diff <= 0)
     {
-        to_add.c_str = LIT(C, "");
+        to_add.c_str = string_literal(C, "");
         to_add.size = 0;
     }
     else
@@ -1586,81 +1465,30 @@ static inline s64 _split_s(const_string_base<C> s, const_string_base<C> delim, a
     return split_count;
 }
 
-s64 _split(const_string  s, char          delim, array<const_string>  *out)
-{
-    return _split_c(s, delim, out);
-}
 
-s64 _split(const_wstring s, wchar_t       delim, array<const_wstring> *out)
-{
-    return _split_c(s, delim, out);
-}
-
-s64 _split(const_string  s, const_string  delim, array<const_string>  *out)
+s64 _string_split(const_string    s, const_string    delim, array<const_string>    *out)
 {
     return _split_s(s, delim, out);
 }
 
-s64 _split(const_wstring s, const_wstring delim, array<const_wstring> *out)
+s64 _string_split(const_u16string s, const_u16string delim, array<const_u16string> *out)
 {
     return _split_s(s, delim, out);
 }
 
-template<typename C> inline const_string_base<C> _to_const_string(const C **s) { return to_const_string(*s); }
-template<typename C> inline const_string_base<C> _to_const_string(const_string_base<C> *s) { return *s; }
-template<typename C> inline const_string_base<C> _to_const_string(const string_base<C> *s) { return to_const_string(s); }
-template<typename C> inline s64 _string_length(const C  **s) { return string_length(*s); }
-template<typename C> inline s64 _string_length(const_string_base<C> *s) { return s->size; }
-template<typename C> inline s64 _string_length(const string_base<C> *s) { return string_length(s); }
-
-template<typename Str, typename C>
-static inline void _join_c(Str *strings, s64 count, C delim, string_base<C> *out)
+s64 _string_split(const_u32string s, const_u32string delim, array<const_u32string> *out)
 {
-    if (count == 0)
-        return;
-
-    s64 total_size = 0;
-    s64 i = 0;
-
-    total_size += count - 1; // delims
-
-    for (; i < count ; ++i)
-        total_size += _string_length(strings + i);
-
-    string_reserve(out, total_size);
-
-    s64 offset = 0;
-    i = 0;
-
-    const_string_base<C> s = _to_const_string(strings + i);
-    
-    if (s.size > 0)
-        copy_memory(s.c_str, out->data + offset, sizeof(C) * s.size);
-
-    offset += s.size;
-    i++;
-
-    while (i < count)
-    {
-        out->data[offset] = delim;
-        offset++;
-
-        s = _to_const_string(strings + i);
-
-        if (s.size > 0)
-            copy_memory(s.c_str, out->data + offset, sizeof(C) * s.size);
-
-        offset += s.size;
-        i++;
-    }
-
-    out->size = total_size;
-    out->data[total_size] = 0;
+    return _split_s(s, delim, out);
 }
 
+template<typename C> auto _string_length_x(const C **str) { return string_length(*str); }
+template<typename C> auto _string_length_x(const_string_base<C> *str) { return string_length(*str); }
+template<typename C> auto _string_length_x(const string_base<C> *str) { return string_length(to_const_string(str)); }
+
 template<typename Str, typename C>
-static inline void _join(Str *strings, s64 count, const_string_base<C> delim, string_base<C> *out)
+static inline void _string_join_s(Str *strings, s64 count, const_string_base<C> delim, string_base<C> *out)
 {
+    // TODO: UTF join... wait, isn't this already compatible with UTF?
     if (count == 0)
         return;
 
@@ -1670,14 +1498,14 @@ static inline void _join(Str *strings, s64 count, const_string_base<C> delim, st
     total_size += (count - 1) * delim.size;
 
     for (; i < count ; ++i)
-        total_size += _string_length(strings + i);
+        total_size += _string_length_x(strings+i);
 
     string_reserve(out, total_size);
 
     s64 offset = 0;
     i = 0;
 
-    const_string_base<C> s = _to_const_string(strings + i);
+    const_string_base<C> s = to_const_string(strings[i]);
     
     if (s.size > 0)
         copy_memory(s.c_str, out->data + offset, sizeof(C) * s.size);
@@ -1691,7 +1519,7 @@ static inline void _join(Str *strings, s64 count, const_string_base<C> delim, st
             copy_memory(delim.c_str, out->data + offset, sizeof(C) * delim.size);
 
         offset += delim.size;
-        s = _to_const_string(strings + i);
+        s = to_const_string(strings[i]);
 
         if (s.size > 0)
             copy_memory(s.c_str, out->data + offset, sizeof(C) * s.size);
@@ -1704,130 +1532,55 @@ static inline void _join(Str *strings, s64 count, const_string_base<C> delim, st
     out->data[total_size] = 0;
 }
 
-void join(const char  **strings, s64 count, char          delim, string *out)
+void _string_join(const c8     **strings, s64 count, const_string delim, string *out)
 {
-    _join_c(strings, count, delim, out);
+    _string_join_s(strings, count, delim, out);
 }
 
-void join(const char  **strings, s64 count, const char   *delim, string *out)
+void _string_join(const_string  *strings, s64 count, const_string delim, string *out)
 {
-    _join(strings, count, to_const_string(delim), out);
+    _string_join_s(strings, count, delim, out);
 }
 
-void join(const char  **strings, s64 count, const_string  delim, string *out)
+void _string_join(const string  *strings, s64 count, const_string delim, string *out)
 {
-    _join(strings, count, delim, out);
+    _string_join_s(strings, count, delim, out);
 }
 
-void join(const char  **strings, s64 count, const string *delim, string *out)
+void _string_join(const c16       **strings, s64 count, const_u16string delim, u16string *out)
 {
-    _join(strings, count, to_const_string(delim), out);
+    _string_join_s(strings, count, delim, out);
 }
 
-void join(const_string *strings, s64 count, char          delim, string *out)
+void _string_join(const_u16string  *strings, s64 count, const_u16string delim, u16string *out)
 {
-    _join_c(strings, count, delim, out);
+    _string_join_s(strings, count, delim, out);
 }
 
-void join(const_string *strings, s64 count, const char   *delim, string *out)
+void _string_join(const u16string  *strings, s64 count, const_u16string delim, u16string *out)
 {
-    _join(strings, count, to_const_string(delim), out);
+    _string_join_s(strings, count, delim, out);
 }
 
-void join(const_string *strings, s64 count, const_string  delim, string *out)
+void _string_join(const c32       **strings, s64 count, const_u32string delim, u32string *out)
 {
-    _join(strings, count, delim, out);
+    _string_join_s(strings, count, delim, out);
 }
 
-void join(const_string *strings, s64 count, const string *delim, string *out)
+void _string_join(const_u32string  *strings, s64 count, const_u32string delim, u32string *out)
 {
-    _join(strings, count, to_const_string(delim), out);
+    _string_join_s(strings, count, delim, out);
 }
 
-void join(const string *strings, s64 count, char          delim, string *out)
+void _string_join(const u32string  *strings, s64 count, const_u32string delim, u32string *out)
 {
-    _join_c(strings, count, delim, out);
-}
-
-void join(const string *strings, s64 count, const char   *delim, string *out)
-{
-    _join(strings, count, to_const_string(delim), out);
-}
-
-void join(const string *strings, s64 count, const_string  delim, string *out)
-{
-    _join(strings, count, delim, out);
-}
-
-void join(const string *strings, s64 count, const string *delim, string *out)
-{
-    _join(strings, count, to_const_string(delim), out);
-}
-
-void join(const wchar_t  **strings, s64 count, wchar_t          delim, wstring *out)
-{
-    _join_c(strings, count, delim, out);
-}
-
-void join(const wchar_t  **strings, s64 count, const wchar_t   *delim, wstring *out)
-{
-    _join(strings, count, to_const_string(delim), out);
-}
-
-void join(const wchar_t  **strings, s64 count, const_wstring  delim, wstring *out)
-{
-    _join(strings, count, delim, out);
-}
-
-void join(const wchar_t  **strings, s64 count, const wstring *delim, wstring *out)
-{
-    _join(strings, count, to_const_string(delim), out);
-}
-
-void join(const_wstring *strings, s64 count, wchar_t          delim, wstring *out)
-{
-    _join_c(strings, count, delim, out);
-}
-
-void join(const_wstring *strings, s64 count, const wchar_t   *delim, wstring *out)
-{
-    _join(strings, count, to_const_string(delim), out);
-}
-
-void join(const_wstring *strings, s64 count, const_wstring  delim, wstring *out)
-{
-    _join(strings, count, delim, out);
-}
-
-void join(const_wstring *strings, s64 count, const wstring *delim, wstring *out)
-{
-    _join(strings, count, to_const_string(delim), out);
-}
-
-void join(const wstring *strings, s64 count, wchar_t          delim, wstring *out)
-{
-    _join_c(strings, count, delim, out);
-}
-
-void join(const wstring *strings, s64 count, const wchar_t   *delim, wstring *out)
-{
-    _join(strings, count, to_const_string(delim), out);
-}
-
-void join(const wstring *strings, s64 count, const_wstring  delim, wstring *out)
-{
-    _join(strings, count, delim, out);
-}
-
-void join(const wstring *strings, s64 count, const wstring *delim, wstring *out)
-{
-    _join(strings, count, to_const_string(delim), out);
+    _string_join_s(strings, count, delim, out);
 }
 
 template<typename C>
 static inline bool _get_converted_environment_variable(const C *name, s64 namesize, C **outbuf, s64 *outsize, sys_char **sysbuf, s64 *syssize)
 {
-    if constexpr (is_same(C, sys_char))
+    if constexpr (sizeof(C) == sizeof(sys_char))
     {
         *outbuf = const_cast<C*>(get_environment_variable(name, namesize));
     }
@@ -1884,9 +1637,9 @@ template<typename C>
 static inline void _alias_environment_variables([[maybe_unused]] const_string_base<C> *str)
 {
 #if Windows
-    if (*str == LIT(C, "HOME"_cs))
+    if (*str == string_literal(C, "HOME"_cs))
     {
-        *str = LIT(C, "USERPROFILE"_cs);
+        *str = string_literal(C, "USERPROFILE"_cs);
     }
 #endif
 }
@@ -1906,7 +1659,7 @@ static inline void _resolve_environment_variables(C *str, s64 _size, bool aliase
     s64 _sys_char_buf_size = 0;
 
     defer {
-        if constexpr (!is_same(C, sys_char))
+        if constexpr (sizeof(C) != sizeof(sys_char))
         {
             if (_val != nullptr)
                 dealloc_T<C>(_val, _val_buf_size);
@@ -1971,12 +1724,17 @@ static inline void _resolve_environment_variables(C *str, s64 _size, bool aliase
     }
 }
 
-void resolve_environment_variables(char *str, s64 size, bool aliases)
+void resolve_environment_variables(c8 *str, s64 size, bool aliases)
 {
     _resolve_environment_variables(str, size, aliases);
 }
 
-void resolve_environment_variables(wchar_t *str, s64 size, bool aliases)
+void resolve_environment_variables(c16 *str, s64 size, bool aliases)
+{
+    _resolve_environment_variables(str, size, aliases);
+}
+
+void resolve_environment_variables(c32 *str, s64 size, bool aliases)
 {
     _resolve_environment_variables(str, size, aliases);
 }
@@ -1992,7 +1750,7 @@ static inline void _resolve_environment_variables_s(string_base<C> *str, bool al
     s64 _sys_char_buf_size = 0;
 
     defer {
-        if constexpr (!is_same(C, sys_char))
+        if constexpr (sizeof(C) != sizeof(sys_char))
         {
             if (_val != nullptr)
                 dealloc_T<C>(_val, _val_buf_size);
@@ -2067,7 +1825,12 @@ void resolve_environment_variables(string  *str, bool aliases)
     _resolve_environment_variables_s(str, aliases);
 }
 
-void resolve_environment_variables(wstring *str, bool aliases)
+void resolve_environment_variables(u16string  *str, bool aliases)
+{
+    _resolve_environment_variables_s(str, aliases);
+}
+
+void resolve_environment_variables(u32string  *str, bool aliases)
 {
     _resolve_environment_variables_s(str, aliases);
 }
@@ -2078,38 +1841,12 @@ static inline hash_t _hash(const_string_base<C> str)
     return hash_data(str.c_str, str.size);
 }
 
-hash_t hash(const_string str)
-{
-    return _hash(str);
-}
-
-hash_t hash(const_wstring str)
-{
-    return _hash(str);
-}
-
-template<typename C>
-static inline hash_t _hash(const const_string_base<C> *str)
-{
-    return hash_data(str->c_str, str->size);
-}
-
-hash_t hash(const const_string  *str)
-{
-    return _hash(str);
-}
-
-hash_t hash(const const_wstring *str)
-{
-    return _hash(str);
-}
-
-hash_t hash(const string *str)
-{
-    return _hash(to_const_string(str));
-}
-
-hash_t hash(const wstring *str)
-{
-    return _hash(to_const_string(str));
-}
+hash_t hash(const_string    str) { return _hash(str); }
+hash_t hash(const_u16string str) { return _hash(str); }
+hash_t hash(const_u32string str) { return _hash(str); }
+hash_t hash(const const_string    *str) { return _hash(*str); }
+hash_t hash(const const_u16string *str) { return _hash(*str); }
+hash_t hash(const const_u32string *str) { return _hash(*str); }
+hash_t hash(const string    *str) { return _hash(to_const_string(str)); }
+hash_t hash(const u16string *str) { return _hash(to_const_string(str)); }
+hash_t hash(const u32string *str) { return _hash(to_const_string(str)); }

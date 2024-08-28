@@ -95,7 +95,7 @@ const sys_char *get_environment_variable(const sys_char *name, s64 name_len, [[m
             continue;
         }
 
-        if (compare_strings(varline, name, equals - 1) != 0)
+        if (string_compare(varline, name, equals - 1) != 0)
         {
             idx += 1;
             continue;

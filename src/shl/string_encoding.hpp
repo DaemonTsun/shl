@@ -16,10 +16,13 @@ TODO: docs
 #pragma once
 
 #include "shl/number_types.hpp"
+#include "shl/type_functions.hpp"
 
 typedef char     c8;
 typedef char16_t c16;
 typedef char32_t c32;
+
+using wc_utf_type = if_type((sizeof(wchar_t) == sizeof(c16)), c16, c32);
 
 #define UNICODE_MAX 0x10ffff
 
@@ -123,7 +126,6 @@ s64 string_convert(const c16 *u16str, s64 u16str_size, c32 *u32str, s64 u32str_s
 s64 string_convert(const c32 *u32str, s64 u32str_size, c8  *u8str,  s64 u8str_size);
 s64 string_convert(const c32 *u32str, s64 u32str_size, c16 *u16str, s64 u16str_size);
 
-
 // bytes required for type of first parameter from string of second parameter of size of third parameter...
 s64 string_conversion_bytes_required([[maybe_unused]] c8  *, const c16 *u16str, s64 u16str_size);
 s64 string_conversion_bytes_required([[maybe_unused]] c8  *, const c32 *u32str, s64 u32str_size);
@@ -150,18 +152,22 @@ s64 string_conversion_bytes_required([[maybe_unused]] wchar_t *, const c32 *u32s
 
 #define char_types_need_conversion(CFrom, CTo) (sizeof(CFrom) != sizeof(CTo))
 
-static inline auto char_cast(wchar_t *str)
-{
-    if constexpr (sizeof(wchar_t*) == 2)
-        return (c16*)str;
-    else
-        return (c32*)str;
-}
+static inline auto char_cast(wchar_t c)          { return (wc_utf_type)c; }
+static inline auto char_cast(wchar_t *str)       { return (wc_utf_type*)str; }
+static inline auto char_cast(const wchar_t *str) { return (const wc_utf_type*)str; }
 
-static inline auto char_cast(const wchar_t *str)
-{
-    if constexpr (sizeof(wchar_t*) == 2)
-        return (const c16*)str;
-    else
-        return (const c32*)str;
-}
+/* TODO: Once wchar_t functions have been removed, remove these too */
+static inline auto char_cast(c8  c) { return c; }
+static inline auto char_cast(c16 c) { return c; }
+static inline auto char_cast(c32 c) { return c; }
+static inline auto char_cast(c8  *str) { return str; }
+static inline auto char_cast(c16 *str) { return str; }
+static inline auto char_cast(c32 *str) { return str; }
+static inline auto char_cast(const c8  *str) { return str; }
+static inline auto char_cast(const c16 *str) { return str; }
+static inline auto char_cast(const c32 *str) { return str; }
+
+// for more "readable" literals, e.g. string_literal(c16, "Hello")
+#define string_literal(CharType, Literal)\
+    inline_const_if(is_same(C, c8), u8##Literal,\
+        inline_const_if(is_same(C, c16), u##Literal, U##Literal))

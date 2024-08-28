@@ -191,11 +191,6 @@ s64 _write(file_stream *stream, const_string  s, error *err)
     return _write_fs(stream, s, err);
 }
 
-s64 _write(file_stream *stream, const_wstring s, error *err)
-{
-    return _write_fs(stream, s, err);
-}
-
 template<typename C>
 s64 _write_ms(memory_stream *stream, const_string_base<C> cs)
 {
@@ -214,19 +209,9 @@ s64 _write(memory_stream *stream, const_string  s)
     return _write_ms(stream, s);
 }
 
-s64 _write(memory_stream *stream, const_wstring s)
-{
-    return _write_ms(stream, s);
-}
-
 s64 _write(io_handle h, const_string  s, error *err)
 {
     return io_write(h, s.c_str, s.size, err);
-}
-
-s64 _write(io_handle h, const_wstring s, error *err)
-{
-    return io_write(h, (const char*)s.c_str, s.size * sizeof(wchar_t), err);
 }
 
 s64 _write(pipe_t *p, const_string  s, error *err)
@@ -234,7 +219,3 @@ s64 _write(pipe_t *p, const_string  s, error *err)
     return _write(p->write, s, err);
 }
 
-s64 _write(pipe_t *p, const_wstring s, error *err)
-{
-    return _write(p->write, s, err);
-}

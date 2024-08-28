@@ -49,7 +49,7 @@ void _cmdline_to_args(const sys_char *cmd, const sys_char *exe, array<sys_char*>
     const char *exe_name = _get_exe_name(exe);
     if (exe_name != nullptr)
     {
-        set_string(&arg, exe_name);
+        string_set(&arg, exe_name);
         add_at_end(args, arg.data);
         add_at_end(sizes, arg.reserved_size);
         init(&arg);
@@ -68,7 +68,7 @@ void _cmdline_to_args(const sys_char *cmd, const sys_char *exe, array<sys_char*>
             if (i + 1 >= len)
                 break;
 
-            append_string(&arg, cmd[i+1]);
+            string_append(&arg, char_to_const_string(cmd[i+1]));
             i += 2;
             continue;
         }
@@ -94,7 +94,7 @@ void _cmdline_to_args(const sys_char *cmd, const sys_char *exe, array<sys_char*>
             }
         }
 
-        append_string(&arg, c);
+        string_append(&arg, char_to_const_string(c));
         i += 1;
     }
 
@@ -134,9 +134,9 @@ void _args_to_cmdline(const C **args, string_base<C> *cmdline)
 
     if (arg_count > 0)
     {
-        append_string(cmdline, LIT(C, '"'));
-        join(args, arg_count, LIT(C, "\" \""), cmdline);
-        append_string(cmdline, LIT(C, '"'));
+        string_append(cmdline, string_literal(C, "\""));
+        join(args, arg_count, string_literal(C, "\" \""), cmdline);
+        string_append(cmdline, string_literal(C, "\""));
     }
 }
 
@@ -232,7 +232,7 @@ void set_process_executable(process *p, const char *exe)
 
 #if Windows
     sys_string path{};
-    set_string(&path, exe);
+    string_set(&path, exe);
     p->start_info.path = path.data;
     p->start_info._free_exe_path = true;
     p->start_info._free_exe_path_size = path.reserved_size * sizeof(sys_char);
@@ -253,7 +253,7 @@ void set_process_executable(process *p, const wchar_t *exe)
     p->start_info._free_exe_path = false;
 #else
     sys_string path{};
-    set_string(&path, exe);
+    string_set(&path, char_cast(exe));
     p->start_info.path = path.data;
     p->start_info._free_exe_path = true;
     p->start_info._free_exe_path_size = path.reserved_size * sizeof(sys_char);
@@ -275,7 +275,7 @@ void set_process_arguments(process *p, const char *args)
 
 #if Windows
     sys_string cmdline{};
-    set_string(&cmdline, args);
+    string_set(&cmdline, args);
     p->start_info.args = cmdline.data;
     p->start_info._free_args = true;
     p->start_info._free_args_sizes = alloc<s64>();
@@ -313,7 +313,7 @@ void set_process_arguments(process *p, const wchar_t *args)
     *p->start_info._free_args_sizes = cmdline.reserved_size * sizeof(sys_char);
 #else
     sys_string sargs{};
-    set_string(&sargs, args);
+    string_set(&sargs, char_cast(args));
     array<sys_char*> _args{};
     array<s64> _sizes{};
     _cmdline_to_args(sargs.data, p->start_info.path, &_args, &_sizes);
@@ -341,7 +341,7 @@ void set_process_arguments(process *p, const char **args, [[maybe_unused]] bool 
     _args_to_cmdline(args, &_cmdline);
 
     sys_string cmdline{};
-    set_string(&cmdline, &_cmdline);
+    string_set(&cmdline, &_cmdline);
     p->start_info.args = cmdline.data;
     p->start_info._free_args = true;
     p->start_info._free_args_sizes = alloc<s64>();
@@ -367,14 +367,14 @@ void set_process_arguments(process *p, const char **args, [[maybe_unused]] bool 
 
         if (exe_name != nullptr)
         {
-            string e = copy_string(exe_name);
+            string e = string_copy(exe_name);
             add_at_end(&_args, e.data);
             add_at_end(&_sizes, e.reserved_size);
         }
 
         for (u64 i = 0; i < arg_count; ++i)
         {
-            string e = copy_string(args[i]);
+            string e = string_copy(args[i]);
             add_at_end(&_args, e.data);
             add_at_end(&_sizes, e.reserved_size);
         }
@@ -428,7 +428,7 @@ void set_process_arguments(process *p, const wchar_t **args)
     for (u64 i = 0; i < arg_count; ++i)
     {
         sys_string tmp{};
-        set_string(&tmp, args[i]);
+        string_set(&tmp, char_cast(args[i]));
         add_at_end(&_args, tmp.data);
         add_at_end(&_args_sizes, tmp.reserved_size);
     }

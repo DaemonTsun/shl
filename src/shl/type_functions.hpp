@@ -51,6 +51,14 @@ template<typename T>               struct _is_same<T, T> { static constexpr bool
 template<typename T> struct _is_signed { static constexpr bool value = (T(-1) < T(0)); };
 #define is_signed(T) _is_signed<T>::value
 
+template<bool B, class T, class F>
+struct _if_type { using type = T; };
+ 
+template<class T, class F>
+struct _if_type<false, T, F> { using type = F; };
+
+#define if_type(Condition, TrueType, FalseType) _if_type<Condition, TrueType, FalseType>::type
+
 template<typename T>
 inline T&& forward(typename remove_reference(T)& t)
 {
