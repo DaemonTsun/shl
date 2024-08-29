@@ -187,14 +187,13 @@ const_u16string operator ""_cs(const c16 *, u64);
 const_u32string operator ""_cs(const c32 *, u64);
 
 // this will either return const_u16string or const_u32string depending on size of wchar_t
-auto operator ""_cs(const wchar_t *s, u64 len) { return const_string_base{char_cast(s), (s64)len}; }
+static inline const_string_base<wc_utf_type> operator ""_cs(const wchar_t *s, u64 len)
+{
+    return const_string_base{char_cast(s), (s64)len};
+}
 
 template<typename C>
-inline C *string_data(const_string_base<C> str) { return str.c_str; }
-
-// in units
-template<typename C>
-s64 string_size(const_string_base<C> str) { return str.size; }
+inline const C *string_data(const_string_base<C> str) { return str.c_str; }
 
 template<typename C>
 struct string_base
@@ -257,7 +256,7 @@ string    operator ""_s(const c8  *, u64);
 u16string operator ""_s(const c16 *, u64);
 u32string operator ""_s(const c32 *, u64);
 
-auto operator ""_s(const wchar_t *str, u64 len)
+static inline auto operator ""_s(const wchar_t *str, u64 len)
 {
     string_base<wc_utf_type> ret{};
     init(&ret, char_cast(str), (s64)len);
@@ -266,10 +265,6 @@ auto operator ""_s(const wchar_t *str, u64 len)
 
 template<typename C>
 inline C *string_data(string_base<C> *str) { return str != nullptr ? str->data : nullptr; }
-
-// in units
-template<typename C>
-s64 string_size(string_base<C> *str) { return str != nullptr ? str->size : 0; }
 
 bool string_reserve(string    *s, s64 total_size);
 bool string_reserve(u16string *s, s64 total_size);
@@ -280,16 +275,26 @@ void clear(u16string *str);
 void clear(u32string *str);
 
 // iteration
+#define for_utf_string_IIUPC(I_Var, IU_Var, P_Var, C_Var, STRING)\
+    if constexpr (auto P_Var##_str = to_const_string(STRING); true)\
+    if (string_length(P_Var##_str) > 0)\
+    if constexpr (s64 I_Var = 0;  true)\
+    if constexpr (s64 IU_Var = 0; true)\
+    if constexpr (u32 P_Var = utf_decode(P_Var##_str.c_str); true)\
+    if constexpr (const_string_base C_Var{string_data(P_Var##_str), utf_codepoint_length(P_Var##_str.c_str)}; true)\
+    for (; I_Var < string_length(P_Var##_str);\
+           ++IU_Var, I_Var += C_Var.size, C_Var.c_str = utf_advance(C_Var.c_str + C_Var.size, &P_Var, &C_Var.size))
 
-#define for_utf_string_IV(I_Var, V_Var, STRING)\
-    if constexpr (auto V_Var##_str = (STRING); true)\
-    if constexpr (auto *V_Var = string_data(V_Var##_str); true)\
-    for (s64 I_Var = 0; I_Var < string_size(V_Var##_str); ++I_Var, ++V_Var)
+#define for_utf_string_IUPC(IU_Var, P_Var, C_Var, STRING)\
+    for_utf_string_IIUPC(C_Var##_i, IU_Var, P_Var, C_Var, STRING)
 
-#define for_utf_string_V(V_Var, STRING)\
-    for_utf_string_IV(V_Var##_index, V_Var, STRING)
+#define for_utf_string_PC(P_Var, C_Var, STRING)\
+    for_utf_string_IIUPC(C_Var##_i, C_Var##_iu, P_Var, C_Var, STRING)
 
-#define for_utf_string(...) GET_MACRO2(__VA_ARGS__, for_utf_string_IV, for_utf_string_V)(__VA_ARGS__)
+#define for_utf_string_C(C_Var, STRING)\
+    for_utf_string_IIUPC(C_Var##_i, C_Var##_iu, C_Var##_cp, C_Var, STRING)
+
+#define for_utf_string(...) GET_MACRO4(__VA_ARGS__, for_utf_string_IIUPC, for_utf_string_IUPC, for_utf_string_PC, for_utf_string_C)(__VA_ARGS__)
 
 // character/codepoint functions
 bool is_space(u32 codepoint);

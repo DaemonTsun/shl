@@ -175,10 +175,10 @@ inline constexpr integer_format_options default_integer_options =
     .caps_prefix = false
 };
 
-s64 to_string(c8    *s, s64 ssize, u8  x, s64 offset = 0, format_options<c8>    opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
-s64 to_string(c8    *s, s64 ssize, u16 x, s64 offset = 0, format_options<c8>    opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
-s64 to_string(c8    *s, s64 ssize, u32 x, s64 offset = 0, format_options<c8>    opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
-s64 to_string(c8    *s, s64 ssize, u64 x, s64 offset = 0, format_options<c8>    opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(c8  *s, s64 ssize, u8  x, s64 offset = 0, format_options<c8>  opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(c8  *s, s64 ssize, u16 x, s64 offset = 0, format_options<c8>  opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(c8  *s, s64 ssize, u32 x, s64 offset = 0, format_options<c8>  opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(c8  *s, s64 ssize, u64 x, s64 offset = 0, format_options<c8>  opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
 s64 to_string(c16 *s, s64 ssize, u8  x, s64 offset = 0, format_options<c16> opt = default_format_options<c16>, integer_format_options ioptions = default_integer_options);
 s64 to_string(c16 *s, s64 ssize, u16 x, s64 offset = 0, format_options<c16> opt = default_format_options<c16>, integer_format_options ioptions = default_integer_options);
 s64 to_string(c16 *s, s64 ssize, u32 x, s64 offset = 0, format_options<c16> opt = default_format_options<c16>, integer_format_options ioptions = default_integer_options);
@@ -188,10 +188,10 @@ s64 to_string(c32 *s, s64 ssize, u16 x, s64 offset = 0, format_options<c32> opt 
 s64 to_string(c32 *s, s64 ssize, u32 x, s64 offset = 0, format_options<c32> opt = default_format_options<c32>, integer_format_options ioptions = default_integer_options);
 s64 to_string(c32 *s, s64 ssize, u64 x, s64 offset = 0, format_options<c32> opt = default_format_options<c32>, integer_format_options ioptions = default_integer_options);
 
-s64 to_string(c8    *s, s64 ssize, s8  x, s64 offset = 0, format_options<c8>    opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
-s64 to_string(c8    *s, s64 ssize, s16 x, s64 offset = 0, format_options<c8>    opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
-s64 to_string(c8    *s, s64 ssize, s32 x, s64 offset = 0, format_options<c8>    opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
-s64 to_string(c8    *s, s64 ssize, s64 x, s64 offset = 0, format_options<c8>    opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(c8  *s, s64 ssize, s8  x, s64 offset = 0, format_options<c8>  opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(c8  *s, s64 ssize, s16 x, s64 offset = 0, format_options<c8>  opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(c8  *s, s64 ssize, s32 x, s64 offset = 0, format_options<c8>  opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(c8  *s, s64 ssize, s64 x, s64 offset = 0, format_options<c8>  opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
 s64 to_string(c16 *s, s64 ssize, s8  x, s64 offset = 0, format_options<c16> opt = default_format_options<c16>, integer_format_options ioptions = default_integer_options);
 s64 to_string(c16 *s, s64 ssize, s16 x, s64 offset = 0, format_options<c16> opt = default_format_options<c16>, integer_format_options ioptions = default_integer_options);
 s64 to_string(c16 *s, s64 ssize, s32 x, s64 offset = 0, format_options<c16> opt = default_format_options<c16>, integer_format_options ioptions = default_integer_options);
@@ -201,10 +201,10 @@ s64 to_string(c32 *s, s64 ssize, s16 x, s64 offset = 0, format_options<c32> opt 
 s64 to_string(c32 *s, s64 ssize, s32 x, s64 offset = 0, format_options<c32> opt = default_format_options<c32>, integer_format_options ioptions = default_integer_options);
 s64 to_string(c32 *s, s64 ssize, s64 x, s64 offset = 0, format_options<c32> opt = default_format_options<c32>, integer_format_options ioptions = default_integer_options);
 
-s64 to_string(string  *s, u8  x, s64 offset = 0, format_options<c8>    opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
-s64 to_string(string  *s, u16 x, s64 offset = 0, format_options<c8>    opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
-s64 to_string(string  *s, u32 x, s64 offset = 0, format_options<c8>    opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
-s64 to_string(string  *s, u64 x, s64 offset = 0, format_options<c8>    opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(string    *s, u8  x, s64 offset = 0, format_options<c8>  opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(string    *s, u16 x, s64 offset = 0, format_options<c8>  opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(string    *s, u32 x, s64 offset = 0, format_options<c8>  opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(string    *s, u64 x, s64 offset = 0, format_options<c8>  opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
 s64 to_string(u16string *s, u8  x, s64 offset = 0, format_options<c16> opt = default_format_options<c16>, integer_format_options ioptions = default_integer_options);
 s64 to_string(u16string *s, u16 x, s64 offset = 0, format_options<c16> opt = default_format_options<c16>, integer_format_options ioptions = default_integer_options);
 s64 to_string(u16string *s, u32 x, s64 offset = 0, format_options<c16> opt = default_format_options<c16>, integer_format_options ioptions = default_integer_options);
@@ -214,10 +214,10 @@ s64 to_string(u32string *s, u16 x, s64 offset = 0, format_options<c32> opt = def
 s64 to_string(u32string *s, u32 x, s64 offset = 0, format_options<c32> opt = default_format_options<c32>, integer_format_options ioptions = default_integer_options);
 s64 to_string(u32string *s, u64 x, s64 offset = 0, format_options<c32> opt = default_format_options<c32>, integer_format_options ioptions = default_integer_options);
 
-s64 to_string(string  *s, s8  x, s64 offset = 0, format_options<c8>    opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
-s64 to_string(string  *s, s16 x, s64 offset = 0, format_options<c8>    opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
-s64 to_string(string  *s, s32 x, s64 offset = 0, format_options<c8>    opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
-s64 to_string(string  *s, s64 x, s64 offset = 0, format_options<c8>    opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(string    *s, s8  x, s64 offset = 0, format_options<c8>  opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(string    *s, s16 x, s64 offset = 0, format_options<c8>  opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(string    *s, s32 x, s64 offset = 0, format_options<c8>  opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
+s64 to_string(string    *s, s64 x, s64 offset = 0, format_options<c8>  opt = default_format_options<c8>,    integer_format_options ioptions = default_integer_options);
 s64 to_string(u16string *s, s8  x, s64 offset = 0, format_options<c16> opt = default_format_options<c16>, integer_format_options ioptions = default_integer_options);
 s64 to_string(u16string *s, s16 x, s64 offset = 0, format_options<c16> opt = default_format_options<c16>, integer_format_options ioptions = default_integer_options);
 s64 to_string(u16string *s, s32 x, s64 offset = 0, format_options<c16> opt = default_format_options<c16>, integer_format_options ioptions = default_integer_options);
@@ -228,10 +228,10 @@ s64 to_string(u32string *s, s32 x, s64 offset = 0, format_options<c32> opt = def
 s64 to_string(u32string *s, s64 x, s64 offset = 0, format_options<c32> opt = default_format_options<c32>, integer_format_options ioptions = default_integer_options);
 
 // pointer
-s64 to_string(c8    *s, s64 ssize, const void *x, s64 offset = 0, format_options<c8>    opt = default_format_options<c8>);
+s64 to_string(c8  *s, s64 ssize, const void *x, s64 offset = 0, format_options<c8>  opt = default_format_options<c8>);
 s64 to_string(c16 *s, s64 ssize, const void *x, s64 offset = 0, format_options<c16> opt = default_format_options<c16>);
 s64 to_string(c32 *s, s64 ssize, const void *x, s64 offset = 0, format_options<c32> opt = default_format_options<c32>);
-s64 to_string(string  *s, const void *x, s64 offset = 0, format_options<c8>    opt = default_format_options<c8>);
+s64 to_string(string    *s, const void *x, s64 offset = 0, format_options<c8>  opt = default_format_options<c8>);
 s64 to_string(u16string *s, const void *x, s64 offset = 0, format_options<c16> opt = default_format_options<c16>);
 s64 to_string(u32string *s, const void *x, s64 offset = 0, format_options<c32> opt = default_format_options<c32>);
 
@@ -248,8 +248,8 @@ inline constexpr float_format_options default_float_options =
     .ignore_trailing_zeroes = true
 };
 
-s64 to_string(c8    *s, s64 ssize, float  x, s64 offset = 0, format_options<c8>    opt = default_format_options<c8>,    float_format_options foptions = default_float_options);
-s64 to_string(c8    *s, s64 ssize, double x, s64 offset = 0, format_options<c8>    opt = default_format_options<c8>,    float_format_options foptions = default_float_options);
+s64 to_string(c8  *s, s64 ssize, float  x, s64 offset = 0, format_options<c8>  opt = default_format_options<c8>,    float_format_options foptions = default_float_options);
+s64 to_string(c8  *s, s64 ssize, double x, s64 offset = 0, format_options<c8>  opt = default_format_options<c8>,    float_format_options foptions = default_float_options);
 s64 to_string(c16 *s, s64 ssize, float  x, s64 offset = 0, format_options<c16> opt = default_format_options<c16>, float_format_options foptions = default_float_options);
 s64 to_string(c16 *s, s64 ssize, double x, s64 offset = 0, format_options<c16> opt = default_format_options<c16>, float_format_options foptions = default_float_options);
 s64 to_string(c32 *s, s64 ssize, float  x, s64 offset = 0, format_options<c32> opt = default_format_options<c32>, float_format_options foptions = default_float_options);

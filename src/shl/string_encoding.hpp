@@ -156,18 +156,34 @@ static inline auto char_cast(wchar_t c)          { return (wc_utf_type)c; }
 static inline auto char_cast(wchar_t *str)       { return (wc_utf_type*)str; }
 static inline auto char_cast(const wchar_t *str) { return (const wc_utf_type*)str; }
 
-/* TODO: Once wchar_t functions have been removed, remove these too */
-static inline auto char_cast(c8  c) { return c; }
-static inline auto char_cast(c16 c) { return c; }
-static inline auto char_cast(c32 c) { return c; }
-static inline auto char_cast(c8  *str) { return str; }
-static inline auto char_cast(c16 *str) { return str; }
-static inline auto char_cast(c32 *str) { return str; }
-static inline auto char_cast(const c8  *str) { return str; }
-static inline auto char_cast(const c16 *str) { return str; }
-static inline auto char_cast(const c32 *str) { return str; }
-
 // for more "readable" literals, e.g. string_literal(c16, "Hello")
 #define string_literal(CharType, Literal)\
     inline_const_if(is_same(C, c8), u8##Literal,\
         inline_const_if(is_same(C, c16), u##Literal, U##Literal))
+
+s32 utf_codepoint_length(const c8  *str);
+s32 utf_codepoint_length(const c16 *str);
+s32 utf_codepoint_length(const c32 *str);
+#define utf_next_codepoint(Str) ((Str) + utf_codepoint_length(Str))
+
+u32 utf_decode(const c8  *str);
+u32 utf_decode(const c16 *str);
+u32 utf_decode(const c32 *str);
+const c8  *utf_decode(const c8  *str, u32 *cp);
+const c16 *utf_decode(const c16 *str, u32 *cp);
+const c32 *utf_decode(const c32 *str, u32 *cp);
+const c8  *utf_decode(const c8  *str, u32 *cp, int *error);
+const c16 *utf_decode(const c16 *str, u32 *cp, int *error);
+const c32 *utf_decode(const c32 *str, u32 *cp, int *error);
+
+template<typename C>
+static inline C *utf_advance(C *str, u32 *out_cp, s64 *out_cp_size)
+{
+    int size = 0;
+    utf_decode(str, out_cp, /*error*/&size);
+    size = utf_codepoint_length(str);
+
+    *out_cp_size = size;
+    // *out_adv += size;
+    return str;
+}

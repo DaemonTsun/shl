@@ -522,7 +522,7 @@ s64 utf32_units_required_from_utf8(const c8  *u8str,  s64 u8str_size)
     return utf32_bytes_required_from_utf8(u8str, u8str_size) / sizeof(c32);
 }
 
-s64 utf32_units_required_from_utf32(const c16 *u16str, s64 u16str_size)
+s64 utf32_units_required_from_utf16(const c16 *u16str, s64 u16str_size)
 {
     return utf32_bytes_required_from_utf16(u16str, u16str_size) / sizeof(c32);
 }
@@ -842,3 +842,32 @@ s64 string_conversion_bytes_required([[maybe_unused]] wchar_t *x, const c32 *u32
     else
         return u32str_size;
 }
+
+s32 utf_codepoint_length(const c8  *str)
+{
+    int len = _utf8_lengths[((u8)str[0]) >> 3];
+    return len + !len;
+}
+
+s32 utf_codepoint_length(const c16 *str)
+{
+    if ((((u16)*str) & UTF16_SURROGATE_MASK) != UTF16_SURROGATE_HIGH) return 1;
+    else                                                              return 2;
+}
+
+s32 utf_codepoint_length(const c32 *)
+{
+    return 1;
+}
+
+u32 utf_decode(const c8  *str) { int err = 0; u32 ret = 0; utf8_decode (str, &ret, &err); return ret; }
+u32 utf_decode(const c16 *str) { int err = 0; u32 ret = 0; utf16_decode(str, &ret, &err); return ret; }
+u32 utf_decode(const c32 *str) { int err = 0; u32 ret = 0; utf32_decode(str, &ret, &err); return ret; }
+
+const c8  *utf_decode(const c8  *str, u32 *cp) { int err = 0; return utf8_decode (str, cp, &err); }
+const c16 *utf_decode(const c16 *str, u32 *cp) { int err = 0; return utf16_decode(str, cp, &err); }
+const c32 *utf_decode(const c32 *str, u32 *cp) { int err = 0; return utf32_decode(str, cp, &err); }
+
+const c8  *utf_decode(const c8  *str, u32 *cp, int *error) { return utf8_decode (str, cp, error); }
+const c16 *utf_decode(const c16 *str, u32 *cp, int *error) { return utf16_decode(str, cp, error); }
+const c32 *utf_decode(const c32 *str, u32 *cp, int *error) { return utf32_decode(str, cp, error); }
