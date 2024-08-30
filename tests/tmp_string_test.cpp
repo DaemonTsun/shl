@@ -8,7 +8,7 @@ define_test(test_1)
     auto uts = u8"今日は привет"_cs;
 
     put(uts);
-    put(char_cast(L"\n"));
+    put("\n");
 
     tprint(u8"abc % def\n", uts);
 
@@ -22,9 +22,26 @@ define_test(test_1)
 
     put("\n");
 
+    for_utf_string(i, cp, c, uts)
+    {
+        tprint("% 0x%08x ", i, cp);
+        put(c);
+        put("\n");
+    }
+
+    put("\n");
+
     for_utf_string(cp, c, uts)
     {
         tprint("0x%08x ", cp);
+        put(c);
+        put("\n");
+    }
+
+    put("\n");
+
+    for_utf_string(c, u8"今日は привет")
+    {
         put(c);
         put("\n");
     }

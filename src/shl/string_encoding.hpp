@@ -22,6 +22,8 @@ typedef char     c8;
 typedef char16_t c16;
 typedef char32_t c32;
 
+#define is_char_type(T) (is_same(T, c8) || is_same(T, c16) || is_same(T, c32))
+
 using wc_utf_type = if_type((sizeof(wchar_t) == sizeof(c16)), c16, c32);
 
 #define UNICODE_MAX 0x10ffff
@@ -184,6 +186,14 @@ static inline C *utf_advance(C *str, u32 *out_cp, s64 *out_cp_size)
     size = utf_codepoint_length(str);
 
     *out_cp_size = size;
-    // *out_adv += size;
+    return str;
+}
+
+template<typename C>
+static inline C *utf_advance(C *str, s64 *out_cp_size)
+{
+    int size = utf_codepoint_length(str);
+
+    *out_cp_size = size;
     return str;
 }

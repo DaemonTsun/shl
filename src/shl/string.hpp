@@ -193,9 +193,6 @@ static inline const_string_base<wc_utf_type> operator ""_cs(const wchar_t *s, u6
 }
 
 template<typename C>
-inline const C *string_data(const_string_base<C> str) { return str.c_str; }
-
-template<typename C>
 struct string_base
 {
     typedef C value_type;
@@ -263,8 +260,21 @@ static inline auto operator ""_s(const wchar_t *str, u64 len)
     return ret;
 };
 
+static inline c8  *string_data(c8  *str) { return str; }
+static inline c16 *string_data(c16 *str) { return str; }
+static inline c32 *string_data(c32 *str) { return str; }
+static inline const c8  *string_data(const c8  *str) { return str; }
+static inline const c16 *string_data(const c16 *str) { return str; }
+static inline const c32 *string_data(const c32 *str) { return str; }
+template<u64 N> constexpr const c8  *string_data(const c8  (&str)[N]) { return str; }
+template<u64 N> constexpr const c16 *string_data(const c16 (&str)[N]) { return str; }
+template<u64 N> constexpr const c32 *string_data(const c32 (&str)[N]) { return str; }
+
 template<typename C>
-inline C *string_data(string_base<C> *str) { return str != nullptr ? str->data : nullptr; }
+static inline const C *string_data(const_string_base<C> str) { return str.c_str; }
+
+template<typename C>
+static inline C *string_data(string_base<C> *str) { return str != nullptr ? str->data : nullptr; }
 
 bool string_reserve(string    *s, s64 total_size);
 bool string_reserve(u16string *s, s64 total_size);
@@ -275,26 +285,43 @@ void clear(u16string *str);
 void clear(u32string *str);
 
 // iteration
-#define for_utf_string_IIUPC(I_Var, IU_Var, P_Var, C_Var, STRING)\
+#define for_utf_string_IUIPC(IU_Var, I_Var, P_Var, C_Var, STRING)\
     if constexpr (auto P_Var##_str = to_const_string(STRING); true)\
     if (string_length(P_Var##_str) > 0)\
-    if constexpr (s64 I_Var = 0;  true)\
     if constexpr (s64 IU_Var = 0; true)\
+    if constexpr (s64 I_Var = 0;  true)\
     if constexpr (u32 P_Var = utf_decode(P_Var##_str.c_str); true)\
     if constexpr (const_string_base C_Var{string_data(P_Var##_str), utf_codepoint_length(P_Var##_str.c_str)}; true)\
     for (; I_Var < string_length(P_Var##_str);\
            ++IU_Var, I_Var += C_Var.size, C_Var.c_str = utf_advance(C_Var.c_str + C_Var.size, &P_Var, &C_Var.size))
 
-#define for_utf_string_IUPC(IU_Var, P_Var, C_Var, STRING)\
-    for_utf_string_IIUPC(C_Var##_i, IU_Var, P_Var, C_Var, STRING)
+#define for_utf_string_IPC(I_Var, P_Var, C_Var, STRING)\
+    if constexpr (auto P_Var##_str = to_const_string(STRING); true)\
+    if (string_length(P_Var##_str) > 0)\
+    if constexpr (s64 I_Var = 0;  true)\
+    if constexpr (u32 P_Var = utf_decode(P_Var##_str.c_str); true)\
+    if constexpr (const_string_base C_Var{string_data(P_Var##_str), utf_codepoint_length(P_Var##_str.c_str)}; true)\
+    for (; I_Var < string_length(P_Var##_str);\
+           I_Var += C_Var.size, C_Var.c_str = utf_advance(C_Var.c_str + C_Var.size, &P_Var, &C_Var.size))
 
 #define for_utf_string_PC(P_Var, C_Var, STRING)\
-    for_utf_string_IIUPC(C_Var##_i, C_Var##_iu, P_Var, C_Var, STRING)
+    if constexpr (auto C_Var = to_const_string(STRING); true)\
+    if (string_length(C_Var) > 0)\
+    if constexpr (u32 P_Var = utf_decode(C_Var.c_str); true)\
+    if constexpr (s64 C_Var##_size_left = C_Var.size; true)\
+    for (C_Var.size = utf_codepoint_length(C_Var.c_str); \
+         C_Var##_size_left > 0;\
+         C_Var##_size_left -= C_Var.size, C_Var.c_str = utf_advance(C_Var.c_str + C_Var.size, &P_Var, &C_Var.size))
 
 #define for_utf_string_C(C_Var, STRING)\
-    for_utf_string_IIUPC(C_Var##_i, C_Var##_iu, C_Var##_cp, C_Var, STRING)
+    if constexpr (auto C_Var = to_const_string(STRING); true)\
+    if (string_length(C_Var) > 0)\
+    if constexpr (s64 C_Var##_size_left = C_Var.size; true)\
+    for (C_Var.size = utf_codepoint_length(C_Var.c_str); \
+         C_Var##_size_left > 0;\
+         C_Var##_size_left -= C_Var.size, C_Var.c_str = utf_advance(C_Var.c_str + C_Var.size, &C_Var.size))
 
-#define for_utf_string(...) GET_MACRO4(__VA_ARGS__, for_utf_string_IIUPC, for_utf_string_IUPC, for_utf_string_PC, for_utf_string_C)(__VA_ARGS__)
+#define for_utf_string(...) GET_MACRO4(__VA_ARGS__, for_utf_string_IUIPC, for_utf_string_IPC, for_utf_string_PC, for_utf_string_C)(__VA_ARGS__)
 
 // character/codepoint functions
 bool is_space(u32 codepoint);
@@ -372,6 +399,9 @@ s64 string_length(const c8        *s);
 s64 string_length(const c16       *s);
 s64 string_length(const c32       *s);
 s64 string_length(const wchar_t   *s);
+template<u64 N> constexpr s64 string_length(const c8  (&s)[N]) { return (s64)N-1; }
+template<u64 N> constexpr s64 string_length(const c16 (&s)[N]) { return (s64)N-1; }
+template<u64 N> constexpr s64 string_length(const c32 (&s)[N]) { return (s64)N-1; }
 s64 string_length(const_string     s);
 s64 string_length(const_u16string  s);
 s64 string_length(const_u32string  s);
@@ -393,26 +423,29 @@ s64 string_utf_length(const u32string *s);
 
 #define char_to_const_string(C) (const_string_base{&(C), 1})
 
-template<typename C>
-inline const_string_base<C> to_const_string(const C *s)
-{
-    return const_string_base<C>{s, string_length(s)};
-}
+static inline const_string    to_const_string(const c8  *s) { return const_string{s,    string_length(s)}; }
+static inline const_u16string to_const_string(const c16 *s) { return const_u16string{s, string_length(s)}; }
+static inline const_u32string to_const_string(const c32 *s) { return const_u32string{s, string_length(s)}; }
 
 template<typename C>
-inline const_string_base<C> to_const_string(const C *s, s64 n)
+static inline const_string_base<C> to_const_string(const C *s, s64 n)
 {
     return const_string_base<C>{s, n};
 }
 
-/* breaks to_const_string(const C *s)
- * thanks C
-template<typename C, s64 N>
-inline const_string_base<C> to_const_string(const C (&s)[N])
+template<s64 N>
+constexpr const_string to_const_string(const c8 (&s)[N])
 {
-    return const_string_base<C>{s, N-1}; // -1 because string literals count null terminating char 
+    return const_string{s, (s64)N-1}; // -1 because string literals count null terminating char 
 }
-*/
+
+template<u64 N>
+static inline const_u16string to_const_string(const c16 (&s)[N])
+{ return const_u16string{s, (s64)N-1}; }
+
+template<u64 N>
+static inline const_u32string to_const_string(const c32 (&s)[N])
+{ return const_u32string{s, (s64)N-1}; }
 
 template<typename C>
 inline const_string_base<C> to_const_string(const string_base<C> *s)
