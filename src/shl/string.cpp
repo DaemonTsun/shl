@@ -1,16 +1,13 @@
 
-// TODO: get rid of these
-#include <string.h>
+// TODO: get rid of this
 #include <stdlib.h>
-#include <ctype.h>
-#include <wctype.h>
-#include <wchar.h>
 
 #include "shl/assert.hpp"
 #include "shl/memory.hpp"
 #include "shl/type_functions.hpp"
 #include "shl/compare.hpp"
 #include "shl/defer.hpp"
+#include "shl/compiler.hpp"
 #include "shl/platform.hpp"
 #include "shl/environment.hpp"
 #include "shl/string_encoding.hpp"
@@ -18,7 +15,24 @@
 
 #define as_array_ptr(C, str) (array<C>*)(str)
 
-#if Windows
+#if GNU
+#define memcmp __builtin_memcmp
+#else
+int memcmp(const void *s1, const void *s2, size_t n)
+{
+    const u8 *p1 = (const u8*)s1;
+    const u8 *p2 = (const u8*)s2;
+
+    while (n-- > 0)
+    {
+        if (*p1++ != *p2++)
+            return p1[-1] < p2[-1] ? -1 : 1;
+    }
+
+    return 0;
+}
+#endif
+
 // https://stackoverflow.com/a/52989329
 static inline void* memmem(const void* haystack, size_t haystack_len,
     const void* const needle, const size_t needle_len)
@@ -38,6 +52,7 @@ static inline void* memmem(const void* haystack, size_t haystack_len,
     return NULL;
 }
 
+#if Windows
 template<typename T>
 static inline T *stpncpy(T *dst, const T *src, s64 len)
 {
@@ -47,20 +62,10 @@ static inline T *stpncpy(T *dst, const T *src, s64 len)
     return dst + len;
 }
 
-static inline wchar_t *wcpncpy(wchar_t *dst, const wchar_t *src, s64 len)
-{
-    return stpncpy<wchar_t>(dst, src, len);
-}
-
 template<typename T>
 static inline T *stpcpy(T *dst, const T *src)
 {
     return stpncpy(dst, src, string_length(src));
-}
-
-static inline wchar_t *wcpcpy(wchar_t *dst, const wchar_t *src)
-{
-    return stpcpy<wchar_t>(dst, src);
 }
 #endif
 
@@ -295,26 +300,104 @@ void clear(u32string  *str)
 }
 
 // string / char functions
-bool is_space(u32 codepoint) { (void)codepoint; return false; /* TODO: implement */ }
-bool is_newline(u32 codepoint) { (void)codepoint; return false; /* TODO: implement */ }
-bool is_alpha(u32 codepoint) { (void)codepoint; return false; /* TODO: implement */ }
-bool is_digit(u32 codepoint) { (void)codepoint; return false; /* TODO: implement */ }
-bool is_bin_digit(u32 codepoint) { (void)codepoint; return false; /* TODO: implement */ }
-bool is_oct_digit(u32 codepoint) { (void)codepoint; return false; /* TODO: implement */ }
-bool is_hex_digit(u32 codepoint) { (void)codepoint; return false; /* TODO: implement */ }
-bool is_alphanum(u32 codepoint) { (void)codepoint; return false; /* TODO: implement */ }
-bool is_upper(u32 codepoint) { (void)codepoint; return false; /* TODO: implement */ }
-bool is_lower(u32 codepoint) { (void)codepoint; return false; /* TODO: implement */ }
-
-template<typename C>
-static inline bool _string_is_empty_cs(const_string_base<C> s)
+// TODO: these can probably be optimized, I hear something of a "trie" data structure
+// or something, but as long as we don't run into performance hits, I don't really care.
+bool is_space(u32 codepoint)
 {
-    return s.size == 0;
+    if (codepoint > 0x00003000u)
+        return false;
+
+    if (codepoint >= 0x00000009u && codepoint <= 0x0000000Du)
+        return true;
+
+    if (codepoint == 0x00000020u) return true;
+    if (codepoint == 0x00000085u) return true;
+    if (codepoint == 0x000000A0u) return true;
+    if (codepoint == 0x00001680u) return true;
+
+    if (codepoint >= 0x00002000u && codepoint <= 0x0000200Au)
+        return true;
+
+    if (codepoint == 0x00002028u) return true;
+    if (codepoint == 0x00002029u) return true;
+    if (codepoint == 0x0000202Fu) return true;
+    if (codepoint == 0x0000205Fu) return true;
+    if (codepoint == 0x00003000u) return true;
+
+    return false;
 }
 
-bool _string_is_empty(const_string    s) { return _string_is_empty_cs(s); }
-bool _string_is_empty(const_u16string s) { return _string_is_empty_cs(s); }
-bool _string_is_empty(const_u32string s) { return _string_is_empty_cs(s); }
+bool is_newline(u32 codepoint)
+{
+    if (codepoint > 0x00002029u)
+        return false;
+
+    if (codepoint >= 0x0000000Au && codepoint <= 0x0000000Du)
+        return true;
+
+    if (codepoint == 0x00000085u) return true;
+    if (codepoint == 0x00002028u) return true;
+    if (codepoint == 0x00002029u) return true;
+
+    return false;
+}
+
+bool is_alpha(u32 codepoint)
+{
+    if (codepoint >= (u32)'A' && codepoint <= (u32)'Z') return true;
+    if (codepoint >= (u32)'a' && codepoint <= (u32)'z') return true;
+    // TODO: all others...
+    return false;
+}
+
+bool is_digit(u32 codepoint)
+{
+    if (codepoint >= (u32)'0' && codepoint <= (u32)'9') return true;
+    // TODO: all other numbers.......
+    return false;
+}
+
+bool is_bin_digit(u32 codepoint)
+{
+    if (codepoint == (u32)'0' || codepoint == (u32)'1') return true;
+    // TODO: all 0 and 1 variants...
+    return false;
+}
+
+bool is_oct_digit(u32 codepoint)
+{
+    if (codepoint >= (u32)'0' && codepoint <= (u32)'7') return true;
+    // TODO: all other number variants...
+    return false;
+}
+
+bool is_hex_digit(u32 codepoint)
+{
+    if (codepoint >= (u32)'0' && codepoint <= (u32)'9') return true;
+    if (codepoint >= (u32)'a' && codepoint <= (u32)'f') return true;
+    if (codepoint >= (u32)'A' && codepoint <= (u32)'F') return true;
+    // TODO: all other number and a-f variants...
+    return false;
+}
+
+bool is_alphanum(u32 codepoint)
+{
+    return is_digit(codepoint) || is_alpha(codepoint);
+}
+
+bool is_upper(u32 codepoint)
+{
+    if (codepoint >= (u32)'A' && codepoint <= (u32)'Z') return true;
+    // TODO: all alpha variants...
+    return false;
+}
+
+bool is_lower(u32 codepoint)
+{
+    if (codepoint >= (u32)'a' && codepoint <= (u32)'z') return true;
+    // TODO: all alpha variants...
+    return false;
+}
 
 template<typename C>
 static inline bool _string_is_null_or_empty_cs(const_string_base<C> s)

@@ -11,20 +11,56 @@ define_t1_to_string(const_string s, "%s", s.c_str);
 
 define_test(cs_suffix_constructs_const_string_from_literal)
 {
+    // utf 8
     const_string str = "abc"_cs;
 
     assert_equal(str.size, 3);
-    assert_equal(compare_strings(str.c_str, "abc"), 0);
+    assert_equal(string_compare(str.c_str, "abc"), 0);
+    assert_equal(str.c_str[3], '\0');
+
+    // utf 16
+    const_u16string str2 = u"hello"_cs;
+
+    assert_equal(str2.size, 5);
+    assert_equal(string_compare(str2.c_str, u"hello"), 0);
+    assert_equal(str2.c_str[5], u'\0');
+
+    // utf 32
+    const_u32string str3 = U" world"_cs;
+
+    assert_equal(str3.size, 6);
+    assert_equal(string_compare(str3.c_str, U" world"), 0);
+    assert_equal(str3.c_str[6], U'\0');
 }
 
 define_test(s_suffix_constructs_string_from_literal)
 {
+    // utf 8
     string str = "abc"_s;
 
-    assert_equal(string_length(&str), 3);
-    assert_equal(compare_strings(str, "abc"_cs), 0);
+    assert_equal(str.size, 3);
+    assert_equal(string_compare(str, "abc"), 0);
+    assert_equal(str[3], '\0');
 
     free(&str);
+
+    // utf 16
+    u16string str2 = u"hello"_s;
+
+    assert_equal(str2.size, 5);
+    assert_equal(string_compare(str2, u"hello"), 0);
+    assert_equal(str2[5], u'\0');
+
+    free(&str2);
+
+    // utf 32
+    u32string str3 = U" world"_s;
+
+    assert_equal(str3.size, 6);
+    assert_equal(string_compare(str3, U" world"), 0);
+    assert_equal(str3[6], U'\0');
+
+    free(&str3);
 }
 
 define_test(init_initializes_empty_string)
@@ -54,7 +90,7 @@ define_test(init_initializes_string_from_c_string)
     init(&str, "hello");
 
     assert_equal(string_length(&str), 5);
-    assert_equal(compare_strings(str, "hello"_cs), 0);
+    assert_equal(string_compare(str, "hello"_cs), 0);
     assert_equal(str[5], '\0');
 
     free(&str);
@@ -66,7 +102,7 @@ define_test(init_initializes_string_from_c_string_with_length)
     init(&str, "hello", 4);
 
     assert_equal(string_length(&str), 4);
-    assert_equal(compare_strings(str, "hell"_cs), 0);
+    assert_equal(string_compare(str, "hell"_cs), 0);
     assert_equal(str[4], '\0');
 
     free(&str);
@@ -78,7 +114,7 @@ define_test(init_initializes_string_from_const_string)
     init(&str, "hello"_cs);
 
     assert_equal(string_length(&str), 5);
-    assert_equal(compare_strings(str, "hello"_cs), 0);
+    assert_equal(string_compare(str, "hello"_cs), 0);
     assert_equal(str[5], '\0');
 
     free(&str);
@@ -91,8 +127,31 @@ define_test(init_initializes_string_with_nulls)
 
     // length is 5 !!
     assert_equal(string_length(&str), 5);
-    assert_equal(compare_strings(str, "w\0rld"_cs), 0);
+    assert_equal(string_compare(str, "w\0rld"_cs), 0);
     assert_equal(str[5], '\0');
+
+    free(&str);
+}
+
+define_test(string_reserve_reserved_string_memory)
+{
+    string str = ""_s;
+
+    assert_equal(str.size, 0);
+    assert_equal(str.reserved_size, 1); // \0
+    
+    // returns whether or not memory was resized
+    assert_equal(string_reserve(&str, 7), true);
+    assert_equal(string_reserve(&str, 7), false);
+
+    assert_equal(str.size, 0);
+    assert_equal(str.reserved_size, 8); // +1 for \0
+
+    assert_equal(string_reserve(&str, 9), true);
+    assert_equal(string_reserve(&str, 9), false);
+
+    assert_equal(str.size, 0);
+    assert_equal(str.reserved_size, 16); // rounded to nearest power of 2
 
     free(&str);
 }
@@ -110,136 +169,300 @@ define_test(clear_clears_string)
     free(&str);
 }
 
-define_test(equals_operator_returns_if_strings_are_equal)
+define_test(is_space_returns_true_if_unicode_codepoint_is_whitespace)
 {
-    string str = "hello world"_s;
-    const_string cstr = "hello world"_cs;
-
-    assert_equal(str == "hello world"_cs, true);
-    assert_equal(cstr == "hello world"_cs, true);
-    assert_equal(cstr == "world hello"_cs, false);
-
-    // when == operator is defined, assert_equal works
-    assert_equal(str, "hello world"_cs);
-
-    free(&str);
+    assert_equal(is_space(0x0009u),  true); // tab
+    assert_equal(is_space(0x000Au),  true); // lf
+    assert_equal(is_space(0x000Bu),  true); // line tab
+    assert_equal(is_space(0x000Cu),  true); // f
+    assert_equal(is_space(0x000Du),  true); // cr
+    assert_equal(is_space(0x0020u),  true); // space
+    assert_equal(is_space(0x0085u),  true); // "next line"
+    assert_equal(is_space(0x00A0u),  true); // nbsp
+    assert_equal(is_space(0x1680u),  true); // ogham space
+    assert_equal(is_space(0x2000u),  true); // en quad
+    assert_equal(is_space(0x2009u),  true); // thin space
+    assert_equal(is_space(0x200Au),  true); // hair space
+    assert_equal(is_space(0x2028u),  true); // line separator
+    assert_equal(is_space(0x2029u),  true); // paragraph separator
+    assert_equal(is_space(0x205Fu),  true); // medium mathematical space
+    assert_equal(is_space(0x3000u),  true); // "ideographic space"
 }
 
-define_test(equals_operator_returns_if_strings_are_equal2)
+define_test(is_space_returns_false_if_codepoint_is_not_whitespace)
 {
-    string str = "hello"_s;
-    const_string cstr = "hello"_cs;
-
-    assert_equal(str  == "hello"_cs, true);
-    assert_equal(cstr == "hello"_cs, true);
-    assert_equal(str  == "hellow"_cs, false);
-    assert_equal(cstr == "hellow"_cs, false);
-    assert_equal(str  == "hell"_cs, false);
-    assert_equal(cstr == "hell"_cs, false);
-    assert_equal(str  == "hello", true);
-    assert_equal(cstr == "hello", true);
-    assert_equal(str  == "hellow", false);
-    assert_equal(cstr == "hellow", false);
-    assert_equal(str  == "hell", false);
-    assert_equal(cstr == "hell", false);
-
-    assert_equal("hello"_cs  == str , true);
-    assert_equal("hello"_cs  == cstr, true);
-    assert_equal("hellow"_cs == str , false);
-    assert_equal("hellow"_cs == cstr, false);
-    assert_equal("hell"_cs   == str , false);
-    assert_equal("hell"_cs   == cstr, false);
-    assert_equal("hello"     == str , true);
-    assert_equal("hello"     == cstr, true);
-    assert_equal("hellow"    == str , false);
-    assert_equal("hellow"    == cstr, false);
-    assert_equal("hell"      == str , false);
-    assert_equal("hell"      == cstr, false);
-
-    free(&str);
+    assert_equal(is_space((u32)'\0'), false);
+    assert_equal(is_space((u32)'a'),  false);
+    assert_equal(is_space((u32)'Z'),  false);
+    assert_equal(is_space((u32)'0'),  false);
+    assert_equal(is_space((u32)'9'),  false);
+    assert_equal(is_space((u32)'~'),  false);
 }
 
-define_test(is_space_returns_true_if_character_is_whitespace)
+define_test(is_space_returns_true_if_string_is_entirely_spaces)
 {
-    assert_equal(is_space(' '), true);
-    assert_equal(is_space('\t'), true);
-    assert_equal(is_space('\n'), true);
-    assert_equal(is_space('\r'), true);
-    assert_equal(is_space('\v'), true);
+    assert_equal(is_space(u8" \t\v\n\r"_cs), true);
+    assert_equal(is_space( u" \t\v\n\r"_cs), true);
+    assert_equal(is_space( U" \t\v\n\r"_cs), true);
+    assert_equal(is_space(u8"     "_cs), true);
+    assert_equal(is_space( u"     "_cs), true);
+    assert_equal(is_space( U"     "_cs), true);
 }
 
-define_test(is_space_returns_true_if_wide_character_is_whitespace)
+define_test(is_space_returns_false_if_string_is_not_entirely_spaces)
 {
-    assert_equal(is_space(L' '), true);
-    assert_equal(is_space(L'\t'), true);
-    assert_equal(is_space(L'\n'), true);
+    assert_equal(is_space(u8""_cs), false);
+    assert_equal(is_space(u8"a"_cs), false);
+    assert_equal(is_space(u8" a"_cs), false);
+    assert_equal(is_space(u8" a "_cs), false);
+    assert_equal(is_space(u8"a "_cs), false);
 }
 
-define_test(is_space_returns_false_if_character_is_not_whitespace)
+define_test(is_newline_returns_true_if_codepoint_is_newline)
 {
-    assert_equal(is_space('\0'), false);
-    assert_equal(is_space('a'),  false);
-    assert_equal(is_space('Z'),  false);
-    assert_equal(is_space('0'),  false);
-    assert_equal(is_space('9'),  false);
-    assert_equal(is_space('~'),  false);
+    assert_equal(is_newline((u32)'\n'), true);
+    assert_equal(is_newline((u32)'\f'), true);
+    assert_equal(is_newline((u32)'\v'), true);
+    assert_equal(is_newline(0x2029u),  true); // paragraph separator
 }
 
-define_test(is_space_returns_false_if_wide_character_is_not_whitespace)
+define_test(is_newline_returns_false_if_codepoint_is_not_newline)
 {
-    assert_equal(is_space(L'\0'), false);
-    assert_equal(is_space(L'a'),  false);
-    assert_equal(is_space(L'!'),  false);
+    assert_equal(is_newline((u32)' '),  false);
+    assert_equal(is_newline((u32)'\t'), false);
+    assert_equal(is_newline((u32)'a'),  false);
 }
 
-define_test(is_newline_returns_true_if_character_is_newline)
+define_test(is_newline_returns_true_if_string_is_entirely_newlines)
 {
-    assert_equal(is_newline('\n'), true);
-    assert_equal(is_newline('\f'), true);
-    assert_equal(is_newline('\v'), true);
+    assert_equal(is_newline(u8"\v\n\r"_cs), true);
+    assert_equal(is_newline( u"\v\n\r"_cs), true);
+    assert_equal(is_newline( U"\v\n\r"_cs), true);
 }
 
-define_test(is_newline_returns_false_if_character_is_not_newline)
+define_test(is_newline_returns_false_if_string_is_not_entirely_newlines)
 {
-    assert_equal(is_newline(' '),  false);
-    assert_equal(is_newline('\t'), false);
-    assert_equal(is_newline('a'),  false);
+    assert_equal(is_newline(u8""_cs), false);
+    assert_equal(is_newline(u8"a"_cs), false);
+    assert_equal(is_newline(u8"\na"_cs), false);
+    assert_equal(is_newline(u8"\na\n"_cs), false);
+    assert_equal(is_newline(u8"a\n"_cs), false);
 }
 
-define_test(is_newline_returns_true_if_wide_character_is_newline)
+define_test(is_alpha_returns_true_if_codepoint_is_alphabetical)
 {
-    assert_equal(is_newline(L'\n'), true);
-    assert_equal(is_newline(L'\f'), true);
-    assert_equal(is_newline(L'\v'), true);
+    assert_equal(is_alpha((u32)'a'), true);
+    assert_equal(is_alpha((u32)'b'), true);
+    assert_equal(is_alpha((u32)'z'), true);
+    assert_equal(is_alpha((u32)'A'), true);
+    assert_equal(is_alpha((u32)'B'), true);
+    assert_equal(is_alpha((u32)'Z'), true);
+    // TODO: more tests 
 }
 
-define_test(is_newline_returns_false_if_wide_character_is_not_newline)
+define_test(is_alpha_returns_false_if_codepoint_is_not_alphabetical)
 {
-    assert_equal(is_newline(L' '),  false);
-    assert_equal(is_newline(L'\t'), false);
-    assert_equal(is_newline(L'a'),  false);
+    assert_equal(is_alpha((u32)'1'), false);
+    assert_equal(is_alpha((u32)'\0'), false);
+    assert_equal(is_alpha((u32)' '), false);
 }
 
-define_test(is_empty_returns_true_if_string_is_empty)
+define_test(is_alpha_returns_true_if_string_is_entirely_alphabetical)
 {
-    assert_equal(is_empty(""), true);
-    assert_equal(is_empty(L""), true);
-    assert_equal(is_empty(""_cs), true);
+    assert_equal(is_alpha(u8"helloworld"_cs), true);
 }
 
-define_test(is_empty_returns_false_if_string_is_nullptr)
+define_test(is_alpha_returns_false_if_string_is_not_entirely_alphabetical)
 {
-    string s;
+    assert_equal(is_alpha(u8""_cs), false);
+    assert_equal(is_alpha(u8"hello world"_cs), false);
+    assert_equal(is_alpha(u8" helloworld"_cs), false);
+    assert_equal(is_alpha(u8" helloworld "_cs), false);
+}
+
+define_test(is_digit_returns_true_if_codepoint_is_digit)
+{
+    assert_equal(is_digit((u32)'1'), true);
+    assert_equal(is_digit((u32)'0'), true);
+    assert_equal(is_digit((u32)'9'), true);
+    // TODO: more
+}
+
+define_test(is_digit_returns_false_if_codepoint_is_not_digit)
+{
+    assert_equal(is_digit((u32)'a'), false);
+    assert_equal(is_digit((u32)'X'), false);
+    assert_equal(is_digit((u32)'['), false);
+}
+
+define_test(is_digit_returns_true_if_string_is_entirely_digits)
+{
+    assert_equal(is_digit(u8"1"_cs), true);
+    assert_equal(is_digit(u8"11231231239934004123123123"_cs), true);
+}
+
+define_test(is_digit_returns_false_if_string_is_not_entirely_digits)
+{
+    assert_equal(is_digit(u8"a"_cs), false);
+    assert_equal(is_digit(u8" 1"_cs), false);
+    assert_equal(is_digit(u8" 1 "_cs), false);
+}
+
+define_test(is_bin_digit_returns_true_if_codepoint_is_binary_digit)
+{
+    assert_equal(is_bin_digit((u32)'1'), true);
+    assert_equal(is_bin_digit((u32)'0'), true);
+}
+
+define_test(is_bin_digit_returns_false_if_codepoint_is_not_binary_digit)
+{
+    assert_equal(is_bin_digit((u32)'a'), false);
+    assert_equal(is_bin_digit((u32)'2'), false);
+    assert_equal(is_bin_digit((u32)'['), false);
+}
+
+define_test(is_bin_digit_returns_true_if_string_is_entirely_binary_digits)
+{
+    assert_equal(is_bin_digit(u8"1"_cs), true);
+    assert_equal(is_bin_digit(u8"1111010101001011010101010"_cs), true);
+}
+
+define_test(is_bin_digit_returns_false_if_string_is_not_entirely_binary_digits)
+{
+    assert_equal(is_bin_digit(u8"a"_cs),   false);
+    assert_equal(is_bin_digit(u8" 1"_cs),  false);
+    assert_equal(is_bin_digit(u8" 1 "_cs), false);
+}
+
+define_test(is_oct_digit_returns_true_if_codepoint_is_octal_digit)
+{
+    assert_equal(is_oct_digit((u32)'1'), true);
+    assert_equal(is_oct_digit((u32)'0'), true);
+    assert_equal(is_oct_digit((u32)'7'), true);
+}
+
+define_test(is_oct_digit_returns_false_if_codepoint_is_not_octal_digit)
+{
+    assert_equal(is_oct_digit((u32)'8'), false);
+    assert_equal(is_oct_digit((u32)'9'), false);
+    assert_equal(is_oct_digit((u32)'['), false);
+    assert_equal(is_oct_digit((u32)'a'), false);
+}
+
+define_test(is_oct_digit_returns_true_if_string_is_entirely_octal_digits)
+{
+    assert_equal(is_oct_digit(u8"03412346123412345123674"_cs), true);
+    assert_equal(is_oct_digit(u8"0"_cs), true);
+    assert_equal(is_oct_digit(u8"7"_cs), true);
+}
+
+define_test(is_oct_digit_returns_false_if_string_is_not_entirely_octal_digits)
+{
+    assert_equal(is_oct_digit(u8"a"_cs),   false);
+    assert_equal(is_oct_digit(u8" 1"_cs),  false);
+    assert_equal(is_oct_digit(u8" 1 "_cs), false);
+}
+
+define_test(is_hex_digit_returns_true_if_codepoint_is_hexadecimal_digit)
+{
+    assert_equal(is_hex_digit((u32)'1'), true);
+    assert_equal(is_hex_digit((u32)'0'), true);
+    assert_equal(is_hex_digit((u32)'7'), true);
+    assert_equal(is_hex_digit((u32)'9'), true);
+    assert_equal(is_hex_digit((u32)'a'), true);
+    assert_equal(is_hex_digit((u32)'f'), true);
+    assert_equal(is_hex_digit((u32)'A'), true);
+    assert_equal(is_hex_digit((u32)'F'), true);
+}
+
+define_test(is_hex_digit_returns_false_if_codepoint_is_not_hexadecimal_digit)
+{
+    assert_equal(is_hex_digit((u32)'g'), false);
+    assert_equal(is_hex_digit((u32)'['), false);
+    assert_equal(is_hex_digit((u32)' '), false);
+}
+
+define_test(is_hex_digit_returns_true_if_string_is_entirely_hexadecimal_digits)
+{
+    assert_equal(is_hex_digit(u8"03412346123412345123674"_cs), true);
+    assert_equal(is_hex_digit(u8"0"_cs), true);
+    assert_equal(is_hex_digit(u8"deadbeef123"_cs), true);
+    assert_equal(is_hex_digit(u8"DEADBEEF789"_cs), true);
+}
+
+define_test(is_hex_digit_returns_false_if_string_is_not_entirely_hexadecimal_digits)
+{
+    assert_equal(is_hex_digit(u8"g"_cs),   false);
+    assert_equal(is_hex_digit(u8" 1"_cs),  false);
+    assert_equal(is_hex_digit(u8" 1 "_cs), false);
+}
+
+define_test(is_alphanum_returns_true_if_codepoint_is_digit_or_alphabetical)
+{
+    assert_equal(is_alphanum((u32)'1'), true);
+    assert_equal(is_alphanum((u32)'9'), true);
+    assert_equal(is_alphanum((u32)'0'), true);
+    assert_equal(is_alphanum((u32)'a'), true);
+    assert_equal(is_alphanum((u32)'Z'), true);
+}
+
+define_test(is_alphanum_returns_false_if_codepoint_is_not_digit_or_alphabetical)
+{
+    assert_equal(is_alphanum((u32)'['), false);
+    assert_equal(is_alphanum((u32)' '), false);
+}
+
+define_test(is_upper_returns_true_if_codepoint_is_uppercase_alphabetical)
+{
+    assert_equal(is_upper((u32)'A'), true);
+    assert_equal(is_upper((u32)'Z'), true);
+    // TODO: more...
+}
+
+define_test(is_upper_returns_false_if_codepoint_is_not_uppercase_alphabetical)
+{
+    assert_equal(is_upper((u32)'0'), false);
+    assert_equal(is_upper((u32)'a'), false);
+    // TODO: more...
+}
+
+define_test(is_lower_returns_true_if_codepoint_is_lowercase_alphabetical)
+{
+    assert_equal(is_lower((u32)'a'), true);
+    assert_equal(is_lower((u32)'z'), true);
+    // TODO: more...
+}
+
+define_test(is_lower_returns_false_if_codepoint_is_not_lowercase_alphabetical)
+{
+    assert_equal(is_lower((u32)'0'), false);
+    assert_equal(is_lower((u32)'A'), false);
+    // TODO: more...
+}
+
+define_test(string_is_empty_returns_true_if_string_is_empty)
+{
+    assert_equal(string_is_empty(""), true);
+    assert_equal(string_is_empty(u8""), true);
+    assert_equal(string_is_empty(u8""_cs), true);
+    assert_equal(string_is_empty(U""_cs), true);
+}
+
+define_test(string_is_empty_returns_false_if_string_is_nullptr)
+{
+    string s{};
     init(&s);
 
-    const char *s2 = nullptr;
+    const c8 *s2 = nullptr;
 
-    assert_equal(is_empty(&s), false);
-    assert_equal(is_empty(s2), false);
+    assert_equal(string_is_empty(&s), false);
+    assert_equal(string_is_empty(s2), false);
+    assert_equal(string_is_empty((c16*)nullptr), false);
 
     free(&s);
 }
 
+#if 0
 define_test(is_null_or_empty_returns_true_if_string_is_empty)
 {
     assert_equal(is_null_or_empty(""), true);
@@ -303,30 +526,30 @@ define_test(string_length_returns_length_of_string)
     free(&str);
 }
 
-define_test(compare_strings_compares_strings)
+define_test(string_compare_compares_strings)
 {
-    assert_equal(compare_strings("", ""), 0);
-    assert_equal(compare_strings("a", "a"), 0);
-    assert_equal(compare_strings("hello", "hello"), 0);
+    assert_equal(string_compare("", ""), 0);
+    assert_equal(string_compare("a", "a"), 0);
+    assert_equal(string_compare("hello", "hello"), 0);
 
-    assert_less   (compare_strings("a", "b"), 0);
-    assert_greater(compare_strings("b", "a"), 0);
-    assert_less   (compare_strings("a", "aa"), 0);
-    assert_greater(compare_strings("aa", "a"), 0);
-    assert_less   (compare_strings(L"a", L"aa"), 0);
-    assert_greater(compare_strings(L"aa", L"a"), 0);
+    assert_less   (string_compare("a", "b"), 0);
+    assert_greater(string_compare("b", "a"), 0);
+    assert_less   (string_compare("a", "aa"), 0);
+    assert_greater(string_compare("aa", "a"), 0);
+    assert_less   (string_compare(L"a", L"aa"), 0);
+    assert_greater(string_compare(L"aa", L"a"), 0);
 
-    assert_equal(compare_strings("abc"_cs, "abc"_cs), 0);
+    assert_equal(string_compare("abc"_cs, "abc"_cs), 0);
 
     string a = "w\0rld"_s;
     string b = "w\0rld"_s;
 
-    assert_equal(compare_strings(&a, &b), 0);
-    assert_equal(compare_strings(a, "w\0rld"_cs), 0);
-    assert_equal(compare_strings(a, "abc"_cs),     1);
-    assert_equal(compare_strings(a, "alfred"_cs), -1);
-    assert_equal(compare_strings(a, "zeta"_cs),   1);
-    assert_equal(compare_strings(a, "zebra"_cs), -1);
+    assert_equal(string_compare(&a, &b), 0);
+    assert_equal(string_compare(a, "w\0rld"_cs), 0);
+    assert_equal(string_compare(a, "abc"_cs),     1);
+    assert_equal(string_compare(a, "alfred"_cs), -1);
+    assert_equal(string_compare(a, "zeta"_cs),   1);
+    assert_equal(string_compare(a, "zebra"_cs), -1);
 
     free(&a);
     free(&b);
@@ -439,7 +662,7 @@ define_test(set_string_empties_string)
 
     set_string(&dst, "");
 
-    assert_equal(compare_strings(dst.data, ""), 0);
+    assert_equal(string_compare(dst.data, ""), 0);
     assert_equal(dst.size, 0);
 
     free(&dst);
@@ -453,7 +676,7 @@ define_test(set_string_overwrites_string)
 
     set_string(&dst, "bye"_cs);
 
-    assert_equal(compare_strings(dst.data, "bye"), 0);
+    assert_equal(string_compare(dst.data, "bye"), 0);
     assert_equal(dst.size, 3);
 
     free(&dst);
@@ -467,7 +690,7 @@ define_test(set_string_overwrites_string2)
 
     set_string(&dst, "lorem ipsum abc def"_cs);
 
-    assert_equal(compare_strings(dst.data, "lorem ipsum abc def"), 0);
+    assert_equal(string_compare(dst.data, "lorem ipsum abc def"), 0);
     assert_equal(dst.size, 19);
 
     free(&dst);
@@ -510,7 +733,7 @@ define_test(copy_string_copies_string)
 
     copy_string(str1, str2, 3);
 
-    assert_equal(compare_strings(str1, str2), 0);
+    assert_equal(string_compare(str1, str2), 0);
 }
 
 define_test(copy_string_copies_to_empty_string_object)
@@ -525,7 +748,7 @@ define_test(copy_string_copies_to_empty_string_object)
     assert_equal(string_length(str), 3);
     assert_equal(str[3], '\0');
 
-    assert_equal(compare_strings(str, "abc"_cs), 0);
+    assert_equal(string_compare(str, "abc"_cs), 0);
 
     free(&str);
 }
@@ -542,11 +765,11 @@ define_test(copy_string_copies_up_to_n_characters)
     assert_equal(string_length(str), 11);
     assert_equal(str[string_length(str)], '\0');
 
-    assert_equal(compare_strings(str, "lorem world"_cs), 0);
+    assert_equal(string_compare(str, "lorem world"_cs), 0);
 
     str.size = 5;
 
-    assert_equal(compare_strings(str, "lorem"_cs), 0);
+    assert_equal(string_compare(str, "lorem"_cs), 0);
 
     free(&str);
 }
@@ -562,7 +785,7 @@ define_test(copy_string_copies_at_destination_offset)
     assert_equal(string_length(str), 11);
     assert_equal(str[string_length(str)], '\0');
 
-    assert_equal(compare_strings(str, "hello lorem"_cs), 0);
+    assert_equal(string_compare(str, "hello lorem"_cs), 0);
 
     free(&str);
 }
@@ -578,7 +801,7 @@ define_test(copy_string_copies_at_destination_offset_and_allocates_if_offset_is_
     assert_equal(string_length(str), 16);
     assert_equal(str[string_length(str)], '\0');
 
-    assert_equal(compare_strings(str, "hello worldlorem"_cs), 0);
+    assert_equal(string_compare(str, "hello worldlorem"_cs), 0);
 
     free(&str);
 }
@@ -623,7 +846,7 @@ define_test(append_string_appends_to_empty_string_object)
     assert_equal(string_length(str), 3);
     assert_equal(str[3], '\0');
 
-    assert_equal(compare_strings(str, "abc"_cs), 0);
+    assert_equal(string_compare(str, "abc"_cs), 0);
 
     free(&str);
 }
@@ -639,7 +862,7 @@ define_test(append_string_appends_to_string_object)
     assert_equal(string_length(str), 11);
     assert_equal(str[11], '\0');
 
-    assert_equal(compare_strings(str, "hello world"_cs), 0);
+    assert_equal(string_compare(str, "hello world"_cs), 0);
 
     free(&str);
 }
@@ -658,7 +881,7 @@ define_test(append_string_appends_to_string_object2)
     assert_equal(string_length(str), 23);
     assert_equal(str[23], '\0');
 
-    assert_equal(compare_strings(str, "hello world lorem ipsum"_cs), 0);
+    assert_equal(string_compare(str, "hello world lorem ipsum"_cs), 0);
 
     free(&ipsum);
     free(&str);
@@ -676,7 +899,7 @@ define_test(prepend_string_prepends_to_empty_string_object)
     assert_equal(string_length(str), 3);
     assert_equal(str[3], '\0');
 
-    assert_equal(compare_strings(str, "abc"_cs), 0);
+    assert_equal(string_compare(str, "abc"_cs), 0);
 
     free(&str);
 }
@@ -692,7 +915,7 @@ define_test(prepend_string_prepends_to_string_object)
     assert_equal(string_length(str), 11);
     assert_equal(str[11], '\0');
 
-    assert_equal(compare_strings(str, "hello world"_cs), 0);
+    assert_equal(string_compare(str, "hello world"_cs), 0);
 
     free(&str);
 }
@@ -711,7 +934,7 @@ define_test(prepend_string_prepends_to_string_object2)
     assert_equal(string_length(str), 23);
     assert_equal(str[23], '\0');
 
-    assert_equal(compare_strings(str, "hello world lorem ipsum"_cs), 0);
+    assert_equal(string_compare(str, "hello world lorem ipsum"_cs), 0);
 
     free(&hello);
     free(&str);
@@ -846,7 +1069,7 @@ define_test(to_upper_converts_to_upper)
 
     string s = "hello world"_s;
     to_upper(&s);
-    assert_equal(compare_strings(s, "HELLO WORLD"_cs), 0);
+    assert_equal(string_compare(s, "HELLO WORLD"_cs), 0);
 
     free(&s);
 }
@@ -862,7 +1085,7 @@ define_test(to_lower_converts_to_lower)
 
     string s = "HELLO WORLD"_s;
     to_lower(&s);
-    assert_equal(compare_strings(s, "hello world"_cs), 0);
+    assert_equal(string_compare(s, "hello world"_cs), 0);
 
     free(&s);
 }
@@ -873,11 +1096,11 @@ define_test(trim_left_trims_leftmost_whitespaces_from_string)
     assert_equal(string_length(&s), 8);
 
     trim_left(&s);
-    assert_equal(compare_strings(s, "ab c  "_cs), 0);
+    assert_equal(string_compare(s, "ab c  "_cs), 0);
     assert_equal(string_length(&s), 6);
     assert_equal(s[string_length(&s)], '\0');
     trim_left(&s);
-    assert_equal(compare_strings(s, "ab c  "_cs), 0);
+    assert_equal(string_compare(s, "ab c  "_cs), 0);
     assert_equal(string_length(&s), 6);
     assert_equal(s[string_length(&s)], '\0');
 
@@ -890,11 +1113,11 @@ define_test(trim_left_trims_whitespace_string)
     assert_equal(string_length(&s), 8);
 
     trim_left(&s);
-    assert_equal(compare_strings(s, ""_cs), 0);
+    assert_equal(string_compare(s, ""_cs), 0);
     assert_equal(string_length(&s), 0);
     assert_equal(s[0], '\0');
     trim_left(&s);
-    assert_equal(compare_strings(s, ""_cs), 0);
+    assert_equal(string_compare(s, ""_cs), 0);
     assert_equal(string_length(&s), 0);
     assert_equal(s[0], '\0');
 
@@ -907,11 +1130,11 @@ define_test(trim_right_trims_rightmost_whitespaces_from_string)
     assert_equal(string_length(&s), 8);
 
     trim_right(&s);
-    assert_equal(compare_strings(s, "  ab c"_cs), 0);
+    assert_equal(string_compare(s, "  ab c"_cs), 0);
     assert_equal(string_length(&s), 6);
     assert_equal(s[string_length(&s)], '\0');
     trim_right(&s);
-    assert_equal(compare_strings(s, "  ab c"_cs), 0);
+    assert_equal(string_compare(s, "  ab c"_cs), 0);
     assert_equal(string_length(&s), 6);
     assert_equal(s[string_length(&s)], '\0');
 
@@ -924,11 +1147,11 @@ define_test(trim_right_trims_whitespace_string)
     assert_equal(string_length(&s), 8);
 
     trim_right(&s);
-    assert_equal(compare_strings(s, ""_cs), 0);
+    assert_equal(string_compare(s, ""_cs), 0);
     assert_equal(string_length(&s), 0);
     assert_equal(s[0], '\0');
     trim_right(&s);
-    assert_equal(compare_strings(s, ""_cs), 0);
+    assert_equal(string_compare(s, ""_cs), 0);
     assert_equal(string_length(&s), 0);
     assert_equal(s[0], '\0');
 
@@ -942,11 +1165,11 @@ define_test(trim_trims_leftmost_and_rightmost_whitespaces_from_string)
     assert_equal(string_length(&s), 8);
 
     trim(&s);
-    assert_equal(compare_strings(s, "ab c"_cs), 0);
+    assert_equal(string_compare(s, "ab c"_cs), 0);
     assert_equal(string_length(&s), 4);
     assert_equal(s[string_length(&s)], '\0');
     trim(&s);
-    assert_equal(compare_strings(s, "ab c"_cs), 0);
+    assert_equal(string_compare(s, "ab c"_cs), 0);
     assert_equal(string_length(&s), 4);
     assert_equal(s[string_length(&s)], '\0');
 
@@ -959,11 +1182,11 @@ define_test(trim_trims_whitespace_string)
     assert_equal(string_length(&s), 8);
 
     trim(&s);
-    assert_equal(compare_strings(s, ""_cs), 0);
+    assert_equal(string_compare(s, ""_cs), 0);
     assert_equal(string_length(&s), 0);
     assert_equal(s[0], '\0');
     trim(&s);
-    assert_equal(compare_strings(s, ""_cs), 0);
+    assert_equal(string_compare(s, ""_cs), 0);
     assert_equal(string_length(&s), 0);
     assert_equal(s[0], '\0');
 
@@ -1006,7 +1229,7 @@ define_test(substring_copies_substring_to_empty_string)
     substring("hello"_cs, 0, 5, &out);
 
     assert_equal(string_length(&out), 5);
-    assert_equal(compare_strings(out, "hello"_cs), 0);
+    assert_equal(string_compare(out, "hello"_cs), 0);
     assert_equal(out[5], '\0');
 
     free(&out);
@@ -1021,7 +1244,7 @@ define_test(substring_overwrites_string_with_substring)
     substring("hello"_cs, 0, 5, &out);
 
     assert_equal(string_length(&out), 11);
-    assert_equal(compare_strings(out, "hello world"_cs), 0);
+    assert_equal(string_compare(out, "hello world"_cs), 0);
     assert_equal(out[11], '\0');
 
     free(&out);
@@ -1036,7 +1259,7 @@ define_test(substring_overwrites_string_with_substring_at_given_offset)
     substring("world"_cs, 0, 5, &out, 6);
 
     assert_equal(string_length(&out), 11);
-    assert_equal(compare_strings(out, "hello world"_cs), 0);
+    assert_equal(string_compare(out, "hello world"_cs), 0);
     assert_equal(out[11], '\0');
 
     free(&out);
@@ -1051,7 +1274,7 @@ define_test(substring_allocates_memory_in_target_when_target_is_not_large_enough
     substring("world"_cs, 0, 5, &out, 6);
 
     assert_equal(string_length(&out), 11);
-    assert_equal(compare_strings(out, "hello world"_cs), 0);
+    assert_equal(string_compare(out, "hello world"_cs), 0);
     assert_equal(out[11], '\0');
 
     free(&out);
@@ -1063,38 +1286,38 @@ define_test(substring_with_no_out_parameter_returns_slice_to_data)
     const_string output;
 
     output = substring(input, 0);
-    assert_equal(compare_strings(input, output), 0);
+    assert_equal(string_compare(input, output), 0);
     assert_equal(input.c_str, output.c_str);
 
     output = substring(input, 0, 5);
-    assert_equal(compare_strings(input, output), 0);
+    assert_equal(string_compare(input, output), 0);
     assert_equal(input.c_str, output.c_str);
 
     output = substring(input, 0, 5000);
-    assert_equal(compare_strings(input, output), 0);
+    assert_equal(string_compare(input, output), 0);
     assert_equal(input.c_str, output.c_str);
 
     output = substring(input, 0, max_value(s64));
-    assert_equal(compare_strings(input, output), 0);
+    assert_equal(string_compare(input, output), 0);
     assert_equal(input.c_str, output.c_str);
 
     output = substring(input, 1);
-    assert_equal(compare_strings(output, "ello"), 0);
+    assert_equal(string_compare(output, "ello"), 0);
     assert_equal(output.c_str, input.c_str + 1);
     assert_equal(output.size, 4);
 
     output = substring(input, 1, 3);
-    assert_equal(compare_strings(output, "ell"), 0);
+    assert_equal(string_compare(output, "ell"), 0);
     assert_equal(output.c_str, input.c_str + 1);
     assert_equal(output.size, 3);
 
     output = substring(input, 5, 3);
-    assert_equal(compare_strings(output, ""), 0);
+    assert_equal(string_compare(output, ""), 0);
     assert_equal(output.c_str, input.c_str + input.size);
     assert_equal(output.size, 0);
 
     output = substring(input, 20, 3);
-    assert_equal(compare_strings(output, ""), 0);
+    assert_equal(string_compare(output, ""), 0);
     assert_equal(output.c_str, input.c_str + input.size);
     assert_equal(output.size, 0);
 }
@@ -1666,5 +1889,55 @@ define_test(resolve_environment_variables_resolves_wide_strings)
     assert_equal(str, L"hello WORLD\n"_cs);
     assert_equal(str.size, 12);
 }
+
+define_test(equals_operator_returns_if_strings_are_equal)
+{
+    string str = "hello world"_s;
+    const_string cstr = "hello world"_cs;
+
+    assert_equal(str == "hello world"_cs, true);
+    assert_equal(cstr == "hello world"_cs, true);
+    assert_equal(cstr == "world hello"_cs, false);
+
+    // when == operator is defined, assert_equal works
+    assert_equal(str, "hello world"_cs);
+
+    free(&str);
+}
+
+define_test(equals_operator_returns_if_strings_are_equal2)
+{
+    string str = "hello"_s;
+    const_string cstr = "hello"_cs;
+
+    assert_equal(str  == "hello"_cs, true);
+    assert_equal(cstr == "hello"_cs, true);
+    assert_equal(str  == "hellow"_cs, false);
+    assert_equal(cstr == "hellow"_cs, false);
+    assert_equal(str  == "hell"_cs, false);
+    assert_equal(cstr == "hell"_cs, false);
+    assert_equal(str  == "hello", true);
+    assert_equal(cstr == "hello", true);
+    assert_equal(str  == "hellow", false);
+    assert_equal(cstr == "hellow", false);
+    assert_equal(str  == "hell", false);
+    assert_equal(cstr == "hell", false);
+
+    assert_equal("hello"_cs  == str , true);
+    assert_equal("hello"_cs  == cstr, true);
+    assert_equal("hellow"_cs == str , false);
+    assert_equal("hellow"_cs == cstr, false);
+    assert_equal("hell"_cs   == str , false);
+    assert_equal("hell"_cs   == cstr, false);
+    assert_equal("hello"     == str , true);
+    assert_equal("hello"     == cstr, true);
+    assert_equal("hellow"    == str , false);
+    assert_equal("hellow"    == cstr, false);
+    assert_equal("hell"      == str , false);
+    assert_equal("hell"      == cstr, false);
+
+    free(&str);
+}
+#endif
 
 define_default_test_main();

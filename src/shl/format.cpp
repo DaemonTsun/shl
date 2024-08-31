@@ -121,7 +121,7 @@ static inline s64 _pad_string_s(string_base<C> *s, C chr, s64 count, s64 offset)
     if (count <= 0)
         return 0;
 
-    string_reserve(char_cast(s), count + offset);
+    string_reserve(s, count + offset);
 
     for (s64 i = 0; i < count; ++i)
         s->data[i + offset] = chr;

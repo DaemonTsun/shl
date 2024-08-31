@@ -220,18 +220,10 @@ typedef string_base<c32> u32string;
 static inline auto char_cast(const_string_base<wchar_t> str) { return const_string_base<wc_utf_type>{char_cast(str.c_str), str.size}; }
 static inline auto char_cast(string_base<wchar_t> *str) { return (string_base<wc_utf_type>*)str; }
 
-/* TODO: Once wchar_t functions have been removed, remove these too */
-static inline auto char_cast(string    *str) { return str; }
-static inline auto char_cast(u16string *str) { return str; }
-static inline auto char_cast(u32string *str) { return str; }
-static inline auto char_cast(const_string    *str) { return str; }
-static inline auto char_cast(const_u16string *str) { return str; }
-static inline auto char_cast(const_u32string *str) { return str; }
-
 void init(string *str);
 void init(string *str, s64 size);
-void init(string *str, const char *c);
-void init(string *str, const char *c, s64 size);
+void init(string *str, const c8 *c);
+void init(string *str, const c8 *c, s64 size);
 void init(string *str, const_string s);
 void init(u16string *str);
 void init(u16string *str, s64 size);
@@ -325,53 +317,61 @@ void clear(u32string *str);
 
 // character/codepoint functions
 bool is_space(u32 codepoint);
-template<typename C>
-bool is_space(const_string_base<C> str)
-{
-    (void)str; return false;/* TODO: for_utf_codepoints(cp, str) if (!is_space(cp)) { return false; } */
-}
+
+#define define_string_is_property(CodepointIsProp)\
+    template<typename C>\
+    bool CodepointIsProp(const_string_base<C> str)\
+    {\
+        if (str.size <= 0) return false;\
+        for_utf_string(cp, _, str) if (!CodepointIsProp(cp)) return false;\
+        return true;\
+    }
+
+define_string_is_property(is_space);
+
 bool is_newline(u32 codepoint);
-template<typename C>
-bool is_newline(const_string_base<C> str)
-{
-    (void)str; return false;/* TODO: for_utf_codepoints(cp, str) if (!is_newline(cp)) { return false; } */
-}
+define_string_is_property(is_newline);
 
 bool is_alpha(u32 codepoint);
-template<typename C>
-bool is_alpha(const_string_base<C> str) { (void)str; return false; }
+define_string_is_property(is_alpha);
 bool is_digit(u32 codepoint);
-template<typename C>
-bool is_digit(const_string_base<C> str) { (void)str; return false; }
+define_string_is_property(is_digit);
 bool is_bin_digit(u32 codepoint);
-template<typename C>
-bool is_bin_digit(const_string_base<C> str) { (void)str; return false; }
+define_string_is_property(is_bin_digit);
 bool is_oct_digit(u32 codepoint);
-template<typename C>
-bool is_oct_digit(const_string_base<C> str) { (void)str; return false; }
+define_string_is_property(is_oct_digit);
 bool is_hex_digit(u32 codepoint);
-template<typename C>
-bool is_hex_digit(const_string_base<C> str) { (void)str; return false; }
+define_string_is_property(is_hex_digit);
 bool is_alphanum(u32 codepoint);
-template<typename C>
-bool is_alphanum(const_string_base<C> str) { (void)str; return false; }
+define_string_is_property(is_alphanum);
 
 bool is_upper(u32 codepoint);
-template<typename C>
-bool is_upper(const_string_base<C> str) { (void)str; return false; }
+define_string_is_property(is_upper);
 bool is_lower(u32 codepoint);
-template<typename C>
-bool is_lower(const_string_base<C> str) { (void)str; return false; }
+define_string_is_property(is_lower);
 
 // string functions
-bool _string_is_empty(const_string    s);
-bool _string_is_empty(const_u16string s);
-bool _string_is_empty(const_u32string s);
+
+// specifically the number of units (c8, c16, c32) in the string, NOT codepoints.
+s64 string_length(const c8        *s);
+s64 string_length(const c16       *s);
+s64 string_length(const c32       *s);
+s64 string_length(const wchar_t   *s);
+template<u64 N> constexpr s64 string_length(const c8  (&s)[N]) { return (s64)N-1; }
+template<u64 N> constexpr s64 string_length(const c16 (&s)[N]) { return (s64)N-1; }
+template<u64 N> constexpr s64 string_length(const c32 (&s)[N]) { return (s64)N-1; }
+s64 string_length(const_string     s);
+s64 string_length(const_u16string  s);
+s64 string_length(const_u32string  s);
+s64 string_length(const string    *s);
+s64 string_length(const u16string *s);
+s64 string_length(const u32string *s);
+
 template<typename T>
 auto string_is_empty(T str)
-    -> decltype(_string_is_empty(to_const_string(str)))
+    -> decltype(string_data(str) != nullptr && string_length(str) == 0)
 {
-    return _string_is_empty(to_const_string(str));
+    return string_data(str) != nullptr && string_length(str) == 0;
 }
 
 bool _string_is_null_or_empty(const_string    s);
@@ -393,21 +393,6 @@ auto string_is_blank(T str)
 {
     return _string_is_blank(to_const_string(str));
 }
-
-// specifically the number of units (c8, c16, c32) in the string, NOT codepoints.
-s64 string_length(const c8        *s);
-s64 string_length(const c16       *s);
-s64 string_length(const c32       *s);
-s64 string_length(const wchar_t   *s);
-template<u64 N> constexpr s64 string_length(const c8  (&s)[N]) { return (s64)N-1; }
-template<u64 N> constexpr s64 string_length(const c16 (&s)[N]) { return (s64)N-1; }
-template<u64 N> constexpr s64 string_length(const c32 (&s)[N]) { return (s64)N-1; }
-s64 string_length(const_string     s);
-s64 string_length(const_u16string  s);
-s64 string_length(const_u32string  s);
-s64 string_length(const string    *s);
-s64 string_length(const u16string *s);
-s64 string_length(const u32string *s);
 
 // number of codepoints
 s64 string_utf_length(const c8        *s);
