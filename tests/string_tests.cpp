@@ -440,6 +440,26 @@ define_test(is_lower_returns_false_if_codepoint_is_not_lowercase_alphabetical)
     // TODO: more...
 }
 
+define_test(string_length_returns_unit_length_of_string)
+{
+    assert_equal(string_length((c8*)nullptr), 0);
+    assert_equal(string_length((const c16*)nullptr), 0);
+    assert_equal(string_length(""), 0);
+    assert_equal(string_length("a"), 1);
+    assert_equal(string_length(u"a"), 1);
+    assert_equal(string_length(U"a"), 1);
+    assert_equal(string_length("abc"), 3);
+    assert_equal(string_length("hell\0 w\0rld!!!"_cs), 14);
+    assert_equal(string_length(u8"今日は привет"), 22);
+    assert_equal(string_length(u"今日は привет"), 10); // utf 16
+    assert_equal(string_length(U"今日は привет"), 10); // utf 32
+    
+    string str = "hades"_s;
+    assert_equal(string_length(&str), 5);
+    free(&str);
+}
+
+
 define_test(string_is_empty_returns_true_if_string_is_empty)
 {
     assert_equal(string_is_empty(""), true);
@@ -462,68 +482,53 @@ define_test(string_is_empty_returns_false_if_string_is_nullptr)
     free(&s);
 }
 
-#if 0
-define_test(is_null_or_empty_returns_true_if_string_is_empty)
+define_test(string_is_null_or_empty_returns_true_if_string_is_empty_or_nullptr)
 {
-    assert_equal(is_null_or_empty(""), true);
-    assert_equal(is_null_or_empty(L""), true);
-    assert_equal(is_null_or_empty(""_cs), true);
+    assert_equal(string_is_null_or_empty(""), true);
+    assert_equal(string_is_null_or_empty(u8""), true);
+    assert_equal(string_is_null_or_empty(u8""_cs), true);
+    assert_equal(string_is_null_or_empty(U""_cs), true);
+    assert_equal(string_is_null_or_empty((const c16*)nullptr), true);
+    assert_equal(string_is_null_or_empty((const c8*)nullptr), true);
 }
 
-define_test(is_null_or_empty_returns_true_if_string_is_nullptr)
+define_test(string_is_blank_returns_true_if_string_is_empty)
 {
-    string s;
-    init(&s);
-
-    const char *s2 = nullptr;
-
-    assert_equal(is_null_or_empty(&s), true);
-    assert_equal(is_null_or_empty(s2), true);
-
-    free(&s);
+    assert_equal(string_is_blank(""), true);
+    assert_equal(string_is_blank(u8""), true);
+    assert_equal(string_is_blank(""_cs), true);
+    assert_equal(string_is_blank(u""_cs), true);
 }
 
-define_test(is_blank_returns_true_if_string_is_empty)
+define_test(string_is_blank_returns_true_if_string_is_whitespaces)
 {
-    assert_equal(is_blank(""), true);
-    assert_equal(is_blank(L""), true);
-    assert_equal(is_blank(""_cs), true);
+    auto x = to_const_string(" ");
+    (void)x;
+    assert_equal(string_is_blank(" "), true);
+    assert_equal(string_is_blank("     "), true);
+    assert_equal(string_is_blank("  \t  "), true);
+    assert_equal(string_is_blank("  \r\n  "), true);
+    assert_equal(string_is_blank(u" "), true);
+    assert_equal(string_is_blank(u"     "), true);
+    assert_equal(string_is_blank(U"  \t  "), true);
+    assert_equal(string_is_blank(U"  \r\n  "), true);
+    assert_equal(string_is_blank("  \r\n\0  "_cs), true);
 }
 
-define_test(is_blank_returns_true_if_string_is_whitespaces)
+define_test(string_is_blank_returns_true_if_string_is_nullptr)
 {
-    assert_equal(is_blank(" "), true);
-    assert_equal(is_blank("     "), true);
-    assert_equal(is_blank("  \t  "), true);
-    assert_equal(is_blank("  \r\n  "), true);
-    assert_equal(is_blank(L" "), true);
-    assert_equal(is_blank(L"     "), true);
-    assert_equal(is_blank(L"  \t  "), true);
-    assert_equal(is_blank(L"  \r\n  "), true);
-    assert_equal(is_blank("  \r\n\0  "_cs), true);
+    assert_equal(string_is_blank((const char*)nullptr), true);
+    assert_equal(string_is_blank((const c16*)nullptr), true);
+    assert_equal(string_is_blank((const c32*)nullptr), true);
 }
 
-define_test(is_blank_returns_false_if_string_contains_non_whitespaces)
+define_test(string_is_blank_returns_false_if_string_contains_non_whitespaces)
 {
-    assert_equal(is_blank("a"), false);
-    assert_equal(is_blank("   def  "), false);
-    assert_equal(is_blank(L"a"), false);
-    assert_equal(is_blank(L"   def  "), false);
-    assert_equal(is_blank("   \0def  "_cs), false);
-}
-
-define_test(string_length_returns_length_of_string)
-{
-    assert_equal(string_length((char*)nullptr), 0);
-    assert_equal(string_length(""), 0);
-    assert_equal(string_length("a"), 1);
-    assert_equal(string_length("abc"), 3);
-    assert_equal(string_length(L"hello world"), 11);
-    assert_equal(string_length("hell\0 w\0rld!!!"_cs), 14);
-    
-    string str = "hades"_s;
-    assert_equal(string_length(&str), 5);
-    free(&str);
+    assert_equal(string_is_blank("a"), false);
+    assert_equal(string_is_blank("   def  "), false);
+    assert_equal(string_is_blank(u8"a"), false);
+    assert_equal(string_is_blank(u8"   def  "), false);
+    assert_equal(string_is_blank("   \0def  "_cs), false);
 }
 
 define_test(string_compare_compares_strings)
@@ -536,8 +541,8 @@ define_test(string_compare_compares_strings)
     assert_greater(string_compare("b", "a"), 0);
     assert_less   (string_compare("a", "aa"), 0);
     assert_greater(string_compare("aa", "a"), 0);
-    assert_less   (string_compare(L"a", L"aa"), 0);
-    assert_greater(string_compare(L"aa", L"a"), 0);
+    assert_less   (string_compare(u"a", u"aa"), 0);
+    assert_greater(string_compare(u"aa", u"a"), 0);
 
     assert_equal(string_compare("abc"_cs, "abc"_cs), 0);
 
@@ -546,15 +551,16 @@ define_test(string_compare_compares_strings)
 
     assert_equal(string_compare(&a, &b), 0);
     assert_equal(string_compare(a, "w\0rld"_cs), 0);
-    assert_equal(string_compare(a, "abc"_cs),     1);
-    assert_equal(string_compare(a, "alfred"_cs), -1);
-    assert_equal(string_compare(a, "zeta"_cs),   1);
-    assert_equal(string_compare(a, "zebra"_cs), -1);
+    assert_equal(string_compare(a, "abc"),     1);
+    assert_equal(string_compare(a, "alfred"), -1);
+    assert_equal(string_compare(a, "zeta"),   1);
+    assert_equal(string_compare(a, "zebra"), -1);
 
     free(&a);
     free(&b);
 }
 
+#if 0
 define_test(begins_with_returns_true_if_string_starts_with_prefix)
 {
     assert_equal(begins_with("hello", "hell"), true);

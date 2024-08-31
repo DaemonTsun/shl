@@ -367,45 +367,6 @@ s64 string_length(const string    *s);
 s64 string_length(const u16string *s);
 s64 string_length(const u32string *s);
 
-template<typename T>
-auto string_is_empty(T str)
-    -> decltype(string_data(str) != nullptr && string_length(str) == 0)
-{
-    return string_data(str) != nullptr && string_length(str) == 0;
-}
-
-bool _string_is_null_or_empty(const_string    s);
-bool _string_is_null_or_empty(const_u16string s);
-bool _string_is_null_or_empty(const_u32string s);
-template<typename T>
-auto string_is_null_or_empty(T str)
-    -> decltype(_string_is_null_or_empty(to_const_string(str)))
-{
-    return _string_is_null_or_empty(to_const_string(str));
-}
-
-bool _string_is_blank(const_string    s);
-bool _string_is_blank(const_u16string s);
-bool _string_is_blank(const_u32string s);
-template<typename T>
-auto string_is_blank(T str)
-    -> decltype(_string_is_blank(to_const_string(str)))
-{
-    return _string_is_blank(to_const_string(str));
-}
-
-// number of codepoints
-s64 string_utf_length(const c8        *s);
-s64 string_utf_length(const c16       *s);
-s64 string_utf_length(const c32       *s);
-s64 string_utf_length(const wchar_t   *s);
-s64 string_utf_length(const_string     s);
-s64 string_utf_length(const_u16string  s);
-s64 string_utf_length(const_u32string  s);
-s64 string_utf_length(const string    *s);
-s64 string_utf_length(const u16string *s);
-s64 string_utf_length(const u32string *s);
-
 #define char_to_const_string(C) (const_string_base{&(C), 1})
 
 static inline const_string    to_const_string(const c8  *s) { return const_string{s,    string_length(s)}; }
@@ -449,6 +410,42 @@ inline const_string_base<C> to_const_string(const_string_base<C> s)
 {
     return s;
 }
+
+template<typename T>
+static inline auto string_is_empty(T str)
+    -> decltype(string_data(str) != nullptr && string_length(str) == 0)
+{
+    return string_data(str) != nullptr && string_length(str) == 0;
+}
+
+template<typename T>
+static inline auto string_is_null_or_empty(T str)
+    -> decltype(string_data(str) == nullptr || string_length(str) == 0)
+{
+    return string_data(str) == nullptr || string_length(str) == 0;
+}
+
+bool _string_is_blank(const_string    s);
+bool _string_is_blank(const_u16string s);
+bool _string_is_blank(const_u32string s);
+template<typename T>
+static inline auto string_is_blank(T str)
+    -> decltype(_string_is_blank(to_const_string(str)))
+{
+    return _string_is_blank(to_const_string(str));
+}
+
+// number of codepoints
+s64 string_utf_length(const c8        *s);
+s64 string_utf_length(const c16       *s);
+s64 string_utf_length(const c32       *s);
+s64 string_utf_length(const wchar_t   *s);
+s64 string_utf_length(const_string     s);
+s64 string_utf_length(const_u16string  s);
+s64 string_utf_length(const_u32string  s);
+s64 string_utf_length(const string    *s);
+s64 string_utf_length(const u16string *s);
+s64 string_utf_length(const u32string *s);
 
 int _string_compare(const_string    s1, const_string    s2, s64 n);
 int _string_compare(const_u16string s1, const_u16string s2, s64 n);

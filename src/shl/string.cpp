@@ -412,10 +412,11 @@ bool _string_is_null_or_empty(const_u32string s) { return _string_is_null_or_emp
 template<typename C>
 static inline bool _string_is_blank_cs(const_string_base<C> s)
 {
-    /* TODO: for_utf_... is_space or 0 */
-    (void)s;
+    for_utf_string(cp, _, s)
+        if (!is_space(cp) && cp != 0u)
+            return false;
 
-    return false;
+    return true;
 }
 
 bool _string_is_blank(const_string    s) { return _string_is_blank_cs(s); }
