@@ -560,41 +560,55 @@ define_test(string_compare_compares_strings)
     free(&b);
 }
 
-#if 0
-define_test(begins_with_returns_true_if_string_starts_with_prefix)
+define_test(string_begins_with_returns_true_if_string_starts_with_prefix)
 {
-    assert_equal(begins_with("hello", "hell"), true);
-    assert_equal(begins_with(L"hello", L"hell"), true);
+    assert_equal(string_begins_with("hello", "hell"), true);
+    assert_equal(string_begins_with(u"hello", u"hell"), true);
+    assert_equal(string_begins_with(U"hello", U"hell"), true);
 
     string s = "hell\0 w\0rld"_s;
-    assert_equal(begins_with(s, "hell\0 w"_cs), true);
+    assert_equal(string_begins_with(s, "hell\0 w"_cs), true);
 
     free(&s);
 }
 
-define_test(begins_with_returns_false_if_prefix_is_longer_than_string)
+define_test(string_begins_with_returns_false_if_string_does_not_start_with_prefix)
 {
-    assert_equal(begins_with("hello", "hellow"), false);
+    assert_equal(string_begins_with("hello", "world"), false);
+    assert_equal(string_begins_with("hello", "helw"), false);
 }
 
-define_test(ends_with_returns_true_if_string_ends_with_suffix)
+define_test(string_begins_with_returns_false_if_prefix_is_longer_than_string)
 {
-    assert_equal(ends_with("hello", "ello"), true);
-    assert_equal(ends_with(L"hello", L"ello"), true);
-    assert_equal(ends_with("world"_cs, "orld"_cs), true);
+    assert_equal(string_begins_with("hello", "hellow"), false);
+}
+
+define_test(string_ends_with_returns_true_if_string_ends_with_suffix)
+{
+    assert_equal(string_ends_with("hello", "ello"), true);
+    assert_equal(string_ends_with(u"hello", u"ello"), true);
+    assert_equal(string_ends_with(U"hello", U"ello"), true);
+    assert_equal(string_ends_with("world"_cs, "orld"_cs), true);
 
     string s = "hello w\0rld"_s;
 
-    assert_equal(ends_with(s, "\0rld"_cs), true);
+    assert_equal(string_ends_with(s, "\0rld"_cs), true);
 
     free(&s);
 }
 
-define_test(ends_with_returns_false_if_suffix_is_longer_than_string)
+define_test(string_ends_with_returns_false_if_string_does_not_end_with_prefix)
 {
-    assert_equal(ends_with("hello", "whello"), false);
+    assert_equal(string_ends_with("hello", "world"), false);
+    assert_equal(string_ends_with("hello", "wllo"), false);
 }
 
+define_test(string_ends_with_returns_false_if_suffix_is_longer_than_string)
+{
+    assert_equal(string_ends_with("hello", "whello"), false);
+}
+
+#if 0
 define_test(to_int_converts_to_int)
 {
     assert_equal(to_int("0"), 0);
