@@ -589,9 +589,9 @@ s64 utf32_bytes_required_from_utf8(const c8 *u8str, s64 u8str_size)
     const c8 *s = start;
     int len = 0;
 
-    while ((s64)(s - start) < u8str_size && *s != 0u)
+    while ((s64)(s - start) < u8str_size)
     {
-        len = _utf8_lengths[s[0] >> 3];
+        len = _utf8_lengths[((u8)s[0]) >> 3];
         s = s + len + !len;
         sz += sizeof(c32);
     }
@@ -604,7 +604,7 @@ s64 utf32_bytes_required_from_utf16(const c16 *u16str, s64 u16str_size)
     s64 sz = 0;
     c16 high = 0;
 
-    while (u16str_size > 0 && *u16str != 0)
+    while (u16str_size > 0)
     {
         high = *(const u16*)u16str;
         sz += sizeof(c32);

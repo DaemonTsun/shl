@@ -459,6 +459,20 @@ define_test(string_length_returns_unit_length_of_string)
     free(&str);
 }
 
+define_test(string_utf_length_returns_utf_length_of_string)
+{
+    assert_equal(string_utf_length((c8*)nullptr), 0);
+    assert_equal(string_utf_length((const c16*)nullptr), 0);
+    assert_equal(string_utf_length(""), 0);
+    assert_equal(string_utf_length("a"), 1);
+    assert_equal(string_utf_length(u"a"), 1);
+    assert_equal(string_utf_length(U"a"), 1);
+    assert_equal(string_utf_length("abc"), 3);
+    assert_equal(string_utf_length("hell\0 w\0rld!!!"_cs), 14);
+    assert_equal(string_utf_length(u8"今日は привет"), 10);
+    assert_equal(string_utf_length(u"今日は привет"),  10); // utf 16
+    assert_equal(string_utf_length(U"今日は привет"),  10); // utf 32
+}
 
 define_test(string_is_empty_returns_true_if_string_is_empty)
 {
@@ -608,16 +622,74 @@ define_test(string_ends_with_returns_false_if_suffix_is_longer_than_string)
     assert_equal(string_ends_with("hello", "whello"), false);
 }
 
-#if 0
-define_test(to_int_converts_to_int)
+define_test(string_to_s32_converts_to_s32)
 {
-    assert_equal(to_int("0"), 0);
-    assert_equal(to_int("1234"), 1234);
-    assert_equal(to_int("2147483647"), max_value(int)); // may be different on some platforms
-    assert_equal(to_int("-2147483648"), min_value(int)); // may be different on some platforms
-    assert_equal(to_int("1234"_cs), 1234);
+    assert_equal(string_to_s32("0"), 0);
+    assert_equal(string_to_s32(u"1234"), 1234);
+    assert_equal(string_to_s32(U"2147483647"), max_value(s32));
+    assert_equal(string_to_s32(u8"-2147483648"), min_value(s32));
+    assert_equal(string_to_s32("1234"_cs), 1234);
+    assert_equal(string_to_s32(u"1234"_cs), 1234);
+
+    const_string after_parse{};
+    assert_equal(string_to_s32("1234abc", &after_parse), 1234);
+    assert_equal(after_parse.size, 3);
+    assert_equal(after_parse, "abc"_cs);
 }
 
+define_test(string_to_s32_converts_to_s32_infers_base)
+{
+    assert_equal(string_to_s32(u"1234"),    1234); // base 10
+    assert_equal(string_to_s32(u"0b101"),   5);    // starting with 0b -> binary
+    assert_equal(string_to_s32(U"0777"),    511);  // starting with 0 -> octal
+    assert_equal(string_to_s32(u8"0xdead"), 57005); // starting with 0x -> hex
+}
+
+define_test(string_to_s32_converts_to_s32_in_bases)
+{
+    assert_equal(string_to_s32(u"1234", nullptr, 8),  668);
+    assert_equal(string_to_s32(u"1234", nullptr, 10), 1234);
+    assert_equal(string_to_s32(U"0777", nullptr, 8),  511);
+    assert_equal(string_to_s32(U"0777", nullptr, 10), 777);
+    assert_equal(string_to_s32(u8"0xdead", nullptr, 16), 57005);
+}
+
+define_test(string_to_s32_returns_min_and_max_values_on_under_and_overflow)
+{
+    error err{};
+    assert_equal(string_to_s32("23462378461237461284343671423467", nullptr, 0, &err), max_value(s32));
+    assert_equal(err.error_code, 34); // erange
+    err.error_code = 0;
+
+    assert_equal(string_to_s32("-4245726572678265123528918418923", nullptr, 0, &err), min_value(s32));
+    assert_equal(err.error_code, 34);
+    err.error_code = 0;
+}
+
+define_test(string_to_s32_returns_0_on_invalid_input)
+{
+    error err{};
+    const_string after_parse{};
+    s32 ret = string_to_s32((const c8*)nullptr, &after_parse, 0, &err);
+
+    assert_equal(ret, 0);
+    assert_equal(err.error_code, 22); // einval
+    assert_equal(after_parse.c_str, (const c8*)nullptr);
+    assert_equal(after_parse.size, 0);
+
+    err.error_code = 0;
+
+    const_string input = "xyz"_cs;
+    ret = string_to_s32(input, &after_parse, 10, &err);
+
+    assert_equal(ret, 0);
+    // assert_equal(err.error_code, 22); // einval, Gnu doesn't set to einval???
+    assert_equal(after_parse.c_str, input.c_str);
+    assert_equal(after_parse.size, input.size);
+    assert_equal(after_parse, input);
+}
+
+#if 0
 define_test(to_long_converts_to_long)
 {
     assert_equal(to_long("0"), 0);

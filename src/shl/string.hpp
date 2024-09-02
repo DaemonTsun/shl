@@ -162,6 +162,7 @@ hash(str) returns a 32 bit hash of the string.
 #include "shl/array.hpp"
 #include "shl/compare.hpp"
 #include "shl/string_encoding.hpp"
+#include "shl/error.hpp"
 #include "shl/number_types.hpp"
 
 template<typename C>
@@ -285,7 +286,7 @@ void clear(u32string *str);
     if constexpr (u32 P_Var = utf_decode(P_Var##_str.c_str); true)\
     if constexpr (const_string_base C_Var{string_data(P_Var##_str), utf_codepoint_length(P_Var##_str.c_str)}; true)\
     for (; I_Var < string_length(P_Var##_str);\
-           ++IU_Var, I_Var += C_Var.size, C_Var.c_str = utf_advance(C_Var.c_str + C_Var.size, &P_Var, &C_Var.size))
+           ++IU_Var, I_Var += C_Var.size, C_Var.c_str = _for_utf_decode(C_Var.c_str + C_Var.size, &P_Var, &C_Var.size))
 
 #define for_utf_string_IPC(I_Var, P_Var, C_Var, STRING)\
     if constexpr (auto P_Var##_str = to_const_string(STRING); true)\
@@ -294,7 +295,7 @@ void clear(u32string *str);
     if constexpr (u32 P_Var = utf_decode(P_Var##_str.c_str); true)\
     if constexpr (const_string_base C_Var{string_data(P_Var##_str), utf_codepoint_length(P_Var##_str.c_str)}; true)\
     for (; I_Var < string_length(P_Var##_str);\
-           I_Var += C_Var.size, C_Var.c_str = utf_advance(C_Var.c_str + C_Var.size, &P_Var, &C_Var.size))
+           I_Var += C_Var.size, C_Var.c_str = _for_utf_decode(C_Var.c_str + C_Var.size, &P_Var, &C_Var.size))
 
 #define for_utf_string_PC(P_Var, C_Var, STRING)\
     if constexpr (auto C_Var = to_const_string(STRING); true)\
@@ -303,7 +304,7 @@ void clear(u32string *str);
     if constexpr (s64 C_Var##_size_left = C_Var.size; true)\
     for (C_Var.size = utf_codepoint_length(C_Var.c_str); \
          C_Var##_size_left > 0;\
-         C_Var##_size_left -= C_Var.size, C_Var.c_str = utf_advance(C_Var.c_str + C_Var.size, &P_Var, &C_Var.size))
+         C_Var##_size_left -= C_Var.size, C_Var.c_str = _for_utf_decode(C_Var.c_str + C_Var.size, &P_Var, &C_Var.size))
 
 #define for_utf_string_C(C_Var, STRING)\
     if constexpr (auto C_Var = to_const_string(STRING); true)\
@@ -311,9 +312,19 @@ void clear(u32string *str);
     if constexpr (s64 C_Var##_size_left = C_Var.size; true)\
     for (C_Var.size = utf_codepoint_length(C_Var.c_str); \
          C_Var##_size_left > 0;\
-         C_Var##_size_left -= C_Var.size, C_Var.c_str = utf_advance(C_Var.c_str + C_Var.size, &C_Var.size))
+         C_Var##_size_left -= C_Var.size, C_Var.c_str = _for_utf_decode(C_Var.c_str + C_Var.size, &C_Var.size))
 
 #define for_utf_string(...) GET_MACRO4(__VA_ARGS__, for_utf_string_IUIPC, for_utf_string_IPC, for_utf_string_PC, for_utf_string_C)(__VA_ARGS__)
+
+template<typename C>
+inline const_string_base<C> utf_advance(const_string_base<C> str)
+{
+    if (str.c_str == nullptr || str.size <= 0)
+        return str;
+
+    int len = utf_codepoint_length(str.c_str);
+    return const_string_base<C>{str.c_str + len, str.size - len};
+}
 
 // character/codepoint functions
 bool is_space(u32 codepoint);
@@ -476,6 +487,20 @@ bool _string_ends_with(const_u16string s, const_u16string prefix);
 bool _string_ends_with(const_u32string s, const_u32string prefix);
 
 #define string_ends_with(S, Prefix) (_string_ends_with(to_const_string(S), to_const_string(Prefix)))
+
+// returns -1 if invalid
+int utf_codepoint_digit_value(u32 cp);
+
+s32 _string_to_s32(const_string    s, const_string    *next, int base, error *err);
+s32 _string_to_s32(const_u16string s, const_u16string *next, int base, error *err);
+s32 _string_to_s32(const_u32string s, const_u32string *next, int base, error *err);
+
+template<typename T>
+s32 string_to_s32(T s, const_string_base<typename decltype(to_const_string(s))::value_type> *next = nullptr, int base = 0, error *err = nullptr)
+    // -> decltype(_string_to_s32(to_const_string(s), next, base, err))
+{
+    return _string_to_s32(to_const_string(s), next, base, err);
+}
 
 #define DEFINE_INTEGER_SIGNATURE(T, NAME) \
 T NAME(const c8     *s, c8 **pos = nullptr, int base = 10);\

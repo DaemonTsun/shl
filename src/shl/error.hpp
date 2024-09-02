@@ -32,6 +32,8 @@ bool do_thing(int x, int y, error *err = nullptr)
 
     ...
 }
+
+TODO: some sort of error stack for tracing
 */
 
 struct error

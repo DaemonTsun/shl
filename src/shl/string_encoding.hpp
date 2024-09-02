@@ -178,8 +178,9 @@ const c8  *utf_decode(const c8  *str, u32 *cp, int *error);
 const c16 *utf_decode(const c16 *str, u32 *cp, int *error);
 const c32 *utf_decode(const c32 *str, u32 *cp, int *error);
 
+// used internally for for_utf_string
 template<typename C>
-static inline C *utf_advance(C *str, u32 *out_cp, s64 *out_cp_size)
+static inline C *_for_utf_decode(C *str, u32 *out_cp, s64 *out_cp_size)
 {
     int size = 0;
     utf_decode(str, out_cp, /*error*/&size);
@@ -190,7 +191,7 @@ static inline C *utf_advance(C *str, u32 *out_cp, s64 *out_cp_size)
 }
 
 template<typename C>
-static inline C *utf_advance(C *str, s64 *out_cp_size)
+static inline C *_for_utf_decode(C *str, s64 *out_cp_size)
 {
     int size = utf_codepoint_length(str);
 

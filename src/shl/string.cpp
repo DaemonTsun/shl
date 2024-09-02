@@ -581,6 +581,167 @@ bool _string_ends_with(const_u32string s, const_u32string prefix)
     return _string_ends_with_cs(s, prefix);
 }
 
+int utf_codepoint_digit_value(u32 cp)
+{
+    if (cp >= (u32)'0' && cp <= '9') return (int)(cp - (u32)'0');
+    // TODO: more...
+    return -1;
+}
+
+template<typename Tn, typename C>
+static Tn _string_to_number(const_string_base<C> s, const_string_base<C> *next, int base, error *err)
+{
+    if (s.size <= 0)
+    {
+        set_error(err, 22 /* einval */, "No conversion was performed");
+        *next = s;
+        return 0;
+    }
+
+    const_string_base<C> end{};
+    bool is_neg = false;
+    bool overflow = false;
+
+    Tn n = 0;
+    Tn cutoff = 0;
+    int cutlim = 0;
+
+    if (base < 0 || base == 1 || base > 36)
+    {
+        set_error(err, 22 /* einval */, "Invalid base");
+        return 0;
+    }
+
+    end = s;
+    u32 cp = 0;
+    int utf_error = 0;
+
+#define _to_number_utf_decode(str, cp, utf_error)\
+    {\
+        utf_decode(str.c_str, &cp, &utf_error);\
+\
+        if (utf_error)\
+        {\
+            set_error(err, utf_error, "Invalid UTF");\
+            return 0;\
+        }\
+    }
+    _to_number_utf_decode(s, cp, utf_error);
+
+    if (cp == (u32)'+')
+    {
+        s = utf_advance(s);
+        _to_number_utf_decode(s, cp, utf_error);
+    }
+    else if (cp == (u32)'-')
+    {
+        is_neg = 1;
+        s = utf_advance(s);
+        _to_number_utf_decode(s, cp, utf_error);
+    }
+
+    int digit = utf_codepoint_digit_value(cp);
+
+    if (digit == 0)
+    {
+        s = utf_advance(s);
+        end = s;
+        _to_number_utf_decode(s, cp, utf_error);
+
+        if (base == 16 && (cp == (u32)'X' || cp == (u32)'x'))
+        {
+            s = utf_advance(s);
+            _to_number_utf_decode(s, cp, utf_error);
+        }
+        else if (base == 2 && (cp == (u32)'B' || cp == (u32)'b'))
+        {
+            s = utf_advance(s);
+            _to_number_utf_decode(s, cp, utf_error);
+        }
+        else if (base == 0)
+        {
+            if (cp == (u32)'X' || cp == (u32)'x')
+            {
+                base = 16;
+                s = utf_advance(s);
+                _to_number_utf_decode(s, cp, utf_error);
+            }
+            else if (cp == (u32)'B' || cp == (u32)'b')
+            {
+                base = 2;
+                s = utf_advance(s);
+                _to_number_utf_decode(s, cp, utf_error);
+            }
+            else
+                base = 8;
+        }
+    }
+    else if (base == 0)
+        base = 10;
+
+    cutoff = (is_neg) ? -(min_value(Tn) / base) : max_value(Tn) / base;
+    cutlim = (is_neg) ? -(min_value(Tn) % base) : max_value(Tn) % base;
+
+    while (s.size > 0)
+    {
+        digit = utf_codepoint_digit_value(cp);
+
+        if (digit < 0)
+        {
+            if (cp >= (u32)'A' && cp <= (u32)'z')
+                digit = (int)((cp - (u32)'A') & (~((u32)'a' ^ (u32)'A'))) + 10;
+            else
+                break;
+        }
+
+        if (digit < 0 || digit >= base)
+            break;
+
+        s = utf_advance(s);
+        end = s;
+        _to_number_utf_decode(s, cp, utf_error);
+
+        if (overflow)
+        {
+            if (next != nullptr)
+                continue;
+
+            break;
+        }
+
+        if (n > cutoff || (n == cutoff && digit > cutlim))
+        {
+            overflow = 1;
+            continue;
+        }
+
+        n = n * base + digit;
+    }
+
+    if (next != nullptr)
+        *next = end;
+
+    if (overflow)
+    {
+        set_error(err, 34 /* erange */, "Parse overflow");
+        return ((is_neg) ? min_value(Tn) : max_value(Tn));
+    }
+
+    return (Tn)((is_neg) ? -n : n);
+
+#undef _to_number_utf_decode
+}
+
+#define define_string_to_number(NumberType, CharType)\
+NumberType _string_to_##NumberType(const_string_base<CharType> s, const_string_base<CharType> *next, int base, error *err)\
+{\
+    return _string_to_number<NumberType>(s, next, base, err);\
+}
+
+define_string_to_number(s32, c8);
+define_string_to_number(s32, c16);
+define_string_to_number(s32, c32);
+
 // TODO: u8/u16/u32/u64 functions instead
 #define DEFINE_INTEGER_BODY(T, NAME, FUNC) \
     T NAME(const c8     *s, c8 **pos, int base) { return FUNC(s, pos, base); }\
