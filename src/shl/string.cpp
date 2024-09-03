@@ -588,8 +588,8 @@ int utf_codepoint_digit_value(u32 cp)
     return -1;
 }
 
-template<typename Tn, typename C>
-static Tn _string_to_number(const_string_base<C> s, const_string_base<C> *next, int base, error *err)
+template<typename C>
+static s64 _string_to_integer(const_string_base<C> s, const_string_base<C> *next, int base, s64 number_min, s64 number_max, error *err)
 {
     if (s.size <= 0)
     {
@@ -602,8 +602,8 @@ static Tn _string_to_number(const_string_base<C> s, const_string_base<C> *next, 
     bool is_neg = false;
     bool overflow = false;
 
-    Tn n = 0;
-    Tn cutoff = 0;
+    s64 n = 0;
+    s64 cutoff = 0;
     int cutlim = 0;
 
     if (base < 0 || base == 1 || base > 36)
@@ -679,8 +679,16 @@ static Tn _string_to_number(const_string_base<C> s, const_string_base<C> *next, 
     else if (base == 0)
         base = 10;
 
-    cutoff = (is_neg) ? -(min_value(Tn) / base) : max_value(Tn) / base;
-    cutlim = (is_neg) ? -(min_value(Tn) % base) : max_value(Tn) % base;
+    if (number_min != 0)
+    {
+        cutoff = (is_neg) ? -(number_min / base) : number_max / base;
+        cutlim = (is_neg) ? -(number_min % base) : number_max % base;
+    }
+    else
+    {
+        cutoff = number_max / base;
+        cutlim = number_max % base;
+    }
 
     while (s.size > 0)
     {
@@ -724,41 +732,40 @@ static Tn _string_to_number(const_string_base<C> s, const_string_base<C> *next, 
     if (overflow)
     {
         set_error(err, 34 /* erange */, "Parse overflow");
-        return ((is_neg) ? min_value(Tn) : max_value(Tn));
+        return ((is_neg) ? number_min : number_max);
     }
 
-    return (Tn)((is_neg) ? -n : n);
+    return (s64)((is_neg) ? -n : n);
 
 #undef _to_number_utf_decode
 }
 
-#define define_string_to_number(NumberType, CharType)\
+#define define_string_to_integer_c(NumberType, CharType)\
 NumberType _string_to_##NumberType(const_string_base<CharType> s, const_string_base<CharType> *next, int base, error *err)\
 {\
-    return _string_to_number<NumberType>(s, next, base, err);\
+    s64 n = _string_to_integer(s, next, base, min_value(NumberType), max_value(NumberType), err);\
+    return (NumberType)n;\
 }
 
-define_string_to_number(s32, c8);
-define_string_to_number(s32, c16);
-define_string_to_number(s32, c32);
+#define define_string_to_integer(NumberType)\
+    define_string_to_integer_c(NumberType, c8) \
+    define_string_to_integer_c(NumberType, c16)\
+    define_string_to_integer_c(NumberType, c32)\
 
-// TODO: u8/u16/u32/u64 functions instead
-#define DEFINE_INTEGER_BODY(T, NAME, FUNC) \
-    T NAME(const c8     *s, c8 **pos, int base) { return FUNC(s, pos, base); }\
-    T NAME(const_string  s, c8 **pos, int base) { return FUNC(s.c_str, pos, base); }\
-    T NAME(const string *s, c8 **pos, int base) { assert(s != nullptr); return FUNC(s->data, pos, base); }
+define_string_to_integer(s8);
+define_string_to_integer(s16);
+define_string_to_integer(s32);
+define_string_to_integer(s64);
+define_string_to_integer(u8);
+define_string_to_integer(u16);
+define_string_to_integer(u32);
+define_string_to_integer(u64);
 
 #define DEFINE_DECIMAL_BODY(T, NAME, FUNC) \
     T NAME(const c8     *s, c8 **pos) { return FUNC(s, pos); }\
     T NAME(const_string  s, c8 **pos) { return FUNC(s.c_str, pos); }\
     T NAME(const string *s, c8 **pos) { assert(s != nullptr); return FUNC(s->data, pos); }
 
-DEFINE_INTEGER_BODY(int, to_int, strtol);
-DEFINE_INTEGER_BODY(long, to_long, strtol);
-DEFINE_INTEGER_BODY(long long, to_long_long, strtoll);
-DEFINE_INTEGER_BODY(unsigned int, to_unsigned_int, strtoul);
-DEFINE_INTEGER_BODY(unsigned long, to_unsigned_long, strtoul);
-DEFINE_INTEGER_BODY(unsigned long long, to_unsigned_long_long, strtoull);
 DEFINE_DECIMAL_BODY(float, to_float, strtof);
 DEFINE_DECIMAL_BODY(double, to_double, strtod);
 DEFINE_DECIMAL_BODY(long double, to_long_double, strtold);

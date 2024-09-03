@@ -491,39 +491,36 @@ bool _string_ends_with(const_u32string s, const_u32string prefix);
 // returns -1 if invalid
 int utf_codepoint_digit_value(u32 cp);
 
-s32 _string_to_s32(const_string    s, const_string    *next, int base, error *err);
-s32 _string_to_s32(const_u16string s, const_u16string *next, int base, error *err);
-s32 _string_to_s32(const_u32string s, const_u32string *next, int base, error *err);
+#define declare_string_to_integer(NumberType)\
+    NumberType _string_to_##NumberType(const_string    s, const_string    *next, int base, error *err);\
+    NumberType _string_to_##NumberType(const_u16string s, const_u16string *next, int base, error *err);\
+    NumberType _string_to_##NumberType(const_u32string s, const_u32string *next, int base, error *err);\
+    \
+    template<typename T>\
+    auto string_to_##NumberType(T s, const_string_base<typename decltype(to_const_string(s))::value_type> *next = nullptr, int base = 0, error *err = nullptr)\
+        -> decltype(_string_to_##NumberType(to_const_string(s), next, base, err))\
+    {\
+        return _string_to_##NumberType(to_const_string(s), next, base, err);\
+    }
 
-template<typename T>
-s32 string_to_s32(T s, const_string_base<typename decltype(to_const_string(s))::value_type> *next = nullptr, int base = 0, error *err = nullptr)
-    // -> decltype(_string_to_s32(to_const_string(s), next, base, err))
-{
-    return _string_to_s32(to_const_string(s), next, base, err);
-}
-
-#define DEFINE_INTEGER_SIGNATURE(T, NAME) \
-T NAME(const c8     *s, c8 **pos = nullptr, int base = 10);\
-T NAME(const_string  s, c8 **pos = nullptr, int base = 10);\
-T NAME(const string *s, c8 **pos = nullptr, int base = 10);
+declare_string_to_integer(s8);
+declare_string_to_integer(s16);
+declare_string_to_integer(s32);
+declare_string_to_integer(s64);
+declare_string_to_integer(u8);
+declare_string_to_integer(u16);
+declare_string_to_integer(u32);
+declare_string_to_integer(u64);
 
 #define DEFINE_DECIMAL_SIGNATURE(T, NAME) \
 T NAME(const c8     *s, c8 **pos = nullptr);\
 T NAME(const_string  s, c8 **pos = nullptr);\
 T NAME(const string *s, c8 **pos = nullptr);
 
-DEFINE_INTEGER_SIGNATURE(int, to_int);
-DEFINE_INTEGER_SIGNATURE(long, to_long);
-DEFINE_INTEGER_SIGNATURE(long long, to_long_long);
-DEFINE_INTEGER_SIGNATURE(unsigned int, to_unsigned_int);
-DEFINE_INTEGER_SIGNATURE(unsigned long, to_unsigned_long);
-DEFINE_INTEGER_SIGNATURE(unsigned long long, to_unsigned_long_long);
-
 DEFINE_DECIMAL_SIGNATURE(float, to_float);
 DEFINE_DECIMAL_SIGNATURE(double, to_double);
 DEFINE_DECIMAL_SIGNATURE(long double, to_long_double);
 
-#undef DEFINE_INTEGER_SIGNATURE
 #undef DEFINE_DECIMAL_SIGNATURE
 
 // string manipulation

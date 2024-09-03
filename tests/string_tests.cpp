@@ -630,6 +630,7 @@ define_test(string_to_s32_converts_to_s32)
     assert_equal(string_to_s32(u8"-2147483648"), min_value(s32));
     assert_equal(string_to_s32("1234"_cs), 1234);
     assert_equal(string_to_s32(u"1234"_cs), 1234);
+    assert_equal(string_to_s32(u"-1234"_cs), -1234);
 
     const_string after_parse{};
     assert_equal(string_to_s32("1234abc", &after_parse), 1234);
@@ -687,6 +688,91 @@ define_test(string_to_s32_returns_0_on_invalid_input)
     assert_equal(after_parse.c_str, input.c_str);
     assert_equal(after_parse.size, input.size);
     assert_equal(after_parse, input);
+}
+
+// we're gonna assume it works pretty much the same as string_to_s32
+define_test(string_to_s8_converts_to_s8)
+{
+    assert_equal(string_to_s8("0"), (s8)0);
+    assert_equal(string_to_s8(u"123"), (s8)123);
+    assert_equal(string_to_s8("123"_cs), (s8)123);
+    assert_equal(string_to_s8(U"123"_cs), (s8)123);
+    assert_equal(string_to_s8(u8"-123"_cs), (s8)-123);
+
+    const_string after_parse{};
+    assert_equal(string_to_s8("123abc", &after_parse), (s8)123);
+    assert_equal(after_parse.size, 3);
+    assert_equal(after_parse, "abc"_cs);
+
+    error err{};
+    assert_equal(string_to_s8(U"2147483647", nullptr, 0, &err), max_value(s8));
+    assert_equal(err.error_code, 34);
+    err.error_code = 0;
+    assert_equal(string_to_s8("-2147483648", nullptr, 0, &err), min_value(s8));
+    assert_equal(err.error_code, 34);
+}
+
+define_test(string_to_s16_converts_to_s16)
+{
+    assert_equal(string_to_s16("0"), (s16)0);
+    assert_equal(string_to_s16(u"1234"), (s16)1234);
+    assert_equal(string_to_s16("1234"_cs), (s16)1234);
+    assert_equal(string_to_s16(U"1234"_cs), (s16)1234);
+    assert_equal(string_to_s16(u8"-1234"_cs), (s16)-1234);
+
+    const_string after_parse{};
+    assert_equal(string_to_s16("1234abc", &after_parse), (s16)1234);
+    assert_equal(after_parse.size, 3);
+    assert_equal(after_parse, "abc"_cs);
+
+    error err{};
+    assert_equal(string_to_s16(U"2147483647", nullptr, 0, &err), max_value(s16));
+    assert_equal(err.error_code, 34);
+    err.error_code = 0;
+    assert_equal(string_to_s16("-2147483648", nullptr, 0, &err), min_value(s16));
+    assert_equal(err.error_code, 34);
+}
+
+define_test(string_to_s64_converts_to_s64)
+{
+    assert_equal(string_to_s64("0"), 0);
+    assert_equal(string_to_s64(u"123"), 123);
+    assert_equal(string_to_s64("123"_cs), 123);
+    assert_equal(string_to_s64(U"123"_cs), 123);
+    assert_equal(string_to_s64(u8"-123"_cs), -123);
+
+    const_string after_parse{};
+    assert_equal(string_to_s64("123abc", &after_parse), 123);
+    assert_equal(after_parse.size, 3);
+    assert_equal(after_parse, "abc"_cs);
+
+    error err{};
+    assert_equal(string_to_s64(U"21474836472323762375123684526728", nullptr, 0, &err), max_value(s64));
+    assert_equal(err.error_code, 34);
+    err.error_code = 0;
+    assert_equal(string_to_s64("-21474836483591273512365786125723", nullptr, 0, &err), min_value(s64));
+    assert_equal(err.error_code, 34);
+}
+
+define_test(string_to_u32_converts_to_u32)
+{
+    assert_equal(string_to_u32("0"), 0u);
+    assert_equal(string_to_u32(u"123"), 123u);
+    assert_equal(string_to_u32("123"_cs), 123u);
+    assert_equal(string_to_u32(U"123"_cs), 123u);
+    assert_equal(string_to_u32(u8"-123"_cs), (u32)-123);
+
+    const_string after_parse{};
+    assert_equal(string_to_u32("123abc", &after_parse), 123u);
+    assert_equal(after_parse.size, 3);
+    assert_equal(after_parse, "abc"_cs);
+
+    error err{};
+    assert_equal(string_to_u32(U"21474836472323762375123684526728", nullptr, 0, &err), (u32)max_value(u32));
+    assert_equal(err.error_code, 34);
+    err.error_code = 0;
+    assert_equal(string_to_u32("-21474836483591273512365786125723", nullptr, 0, &err), 0u);
+    assert_equal(err.error_code, 34);
 }
 
 #if 0
