@@ -79,6 +79,39 @@ const c32 *utf32_decode(const c32 *str, u32 *cp, int *error)
     return str + 1;
 }
 
+const c8  *utf8_decode_safe (const c8  *str, u32 *cp, int *error)
+{
+    c8 _rest_to_decode[4] = {0};
+    const c8 *rest_to_decode = _rest_to_decode;
+    int len = utf_codepoint_length(str);
+
+    for (int i = 0; i < len; ++i)
+        _rest_to_decode[i] = str[i];
+
+    utf8_decode(rest_to_decode, cp, error);
+
+    return str + len;
+}
+
+const c16 *utf16_decode_safe(const c16 *str, u32 *cp, int *error)
+{
+    c16 _rest_to_decode[2] = {0};
+    const c16 *rest_to_decode = _rest_to_decode;
+    int len = utf_codepoint_length(str);
+
+    for (int i = 0; i < len; ++i)
+        _rest_to_decode[i] = str[i];
+
+    utf16_decode(rest_to_decode, cp, error);
+
+    return str + len;
+}
+
+const c32 *utf32_decode_safe(const c32 *str, u32 *cp, int *error)
+{
+    return utf32_decode(str, cp, error);
+}
+
 static inline s64 _utf8_decode_string(const c8 *u8str, const c8 **end, s64 u8str_size, u32 *out, s64 out_length)
 {
     s64 i = 0;
@@ -181,6 +214,9 @@ s64 utf8_decode_string_safe (const c8 *u8str, s64 u8str_size, u32 *out, s64 out_
         out_size -= ret;
     }
 
+    if (out_size <= 0)
+        return ret;
+
     c8 _rest_to_decode[8] = {0};
     const c8 *rest_to_decode = _rest_to_decode;
     int err = 0;
@@ -188,10 +224,11 @@ s64 utf8_decode_string_safe (const c8 *u8str, s64 u8str_size, u32 *out, s64 out_
     for (int i = 0; i < u8str_size; ++i)
         _rest_to_decode[i] = u8str[i];
 
-    while (*rest_to_decode != '\0' && err == 0)
+    while (*rest_to_decode != '\0' && out_size > 0 && err == 0)
     {
         rest_to_decode = utf8_decode(rest_to_decode, out++, &err);
         ret++;
+        out_size -= 1;
     }
 
     if (err != 0)
@@ -392,6 +429,7 @@ s64 utf8_to_utf16(const c8 *u8str, s64 u8str_size,  c16  *out, s64 out_size)
     s64 size_required = 0;
     s64 u16_index = 0;
     int err = 0;
+    int cp_len = 0;
     const c8 *s = u8str;
 
     u32 cp = 0;
@@ -407,7 +445,8 @@ s64 utf8_to_utf16(const c8 *u8str, s64 u8str_size,  c16  *out, s64 out_size)
         if (u16_index >= out_size)
             break;
 
-        s = utf8_decode(s, &cp, &err);
+        cp_len = utf_codepoint_length(s);
+        s = utf8_decode_safe(s, &cp, &err);
 
         if (err != 0)
             break;
@@ -860,14 +899,28 @@ s32 utf_codepoint_length(const c32 *)
     return 1;
 }
 
-u32 utf_decode(const c8  *str) { int err = 0; u32 ret = 0; utf8_decode (str, &ret, &err); return ret; }
-u32 utf_decode(const c16 *str) { int err = 0; u32 ret = 0; utf16_decode(str, &ret, &err); return ret; }
-u32 utf_decode(const c32 *str) { int err = 0; u32 ret = 0; utf32_decode(str, &ret, &err); return ret; }
+u32 utf_decode(const c8  *str)
+{
+    int err = 0;
+    u32 ret = 0;
+    utf8_decode_safe(str, &ret, &err);
+    return ret;
+}
 
-const c8  *utf_decode(const c8  *str, u32 *cp) { int err = 0; return utf8_decode (str, cp, &err); }
-const c16 *utf_decode(const c16 *str, u32 *cp) { int err = 0; return utf16_decode(str, cp, &err); }
-const c32 *utf_decode(const c32 *str, u32 *cp) { int err = 0; return utf32_decode(str, cp, &err); }
+u32 utf_decode(const c16 *str)
+{
+    int err = 0;
+    u32 ret = 0;
+    utf16_decode_safe(str, &ret, &err);
+    return ret;
+}
 
-const c8  *utf_decode(const c8  *str, u32 *cp, int *error) { return utf8_decode (str, cp, error); }
-const c16 *utf_decode(const c16 *str, u32 *cp, int *error) { return utf16_decode(str, cp, error); }
-const c32 *utf_decode(const c32 *str, u32 *cp, int *error) { return utf32_decode(str, cp, error); }
+u32 utf_decode(const c32 *str) { int err = 0; u32 ret = 0; utf32_decode_safe(str, &ret, &err); return ret; }
+
+const c8  *utf_decode(const c8  *str, u32 *cp) { int err = 0; return utf8_decode_safe(str, cp, &err); }
+const c16 *utf_decode(const c16 *str, u32 *cp) { int err = 0; return utf16_decode_safe(str, cp, &err); }
+const c32 *utf_decode(const c32 *str, u32 *cp) { int err = 0; return utf32_decode_safe(str, cp, &err); }
+
+const c8  *utf_decode(const c8  *str, u32 *cp, int *error) { return utf8_decode_safe (str, cp, error); }
+const c16 *utf_decode(const c16 *str, u32 *cp, int *error) { return utf16_decode_safe(str, cp, error); }
+const c32 *utf_decode(const c32 *str, u32 *cp, int *error) { return utf32_decode_safe(str, cp, error); }

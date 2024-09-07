@@ -512,16 +512,20 @@ declare_string_to_integer(u16);
 declare_string_to_integer(u32);
 declare_string_to_integer(u64);
 
-#define DEFINE_DECIMAL_SIGNATURE(T, NAME) \
-T NAME(const c8     *s, c8 **pos = nullptr);\
-T NAME(const_string  s, c8 **pos = nullptr);\
-T NAME(const string *s, c8 **pos = nullptr);
+#define declare_string_to_decimal(NumberType)\
+    NumberType _string_to_##NumberType(const_string    s, const_string    *next, error *err);\
+    NumberType _string_to_##NumberType(const_u16string s, const_u16string *next, error *err);\
+    NumberType _string_to_##NumberType(const_u32string s, const_u32string *next, error *err);\
+    \
+    template<typename T>\
+    auto string_to_##NumberType(T s, const_string_base<typename decltype(to_const_string(s))::value_type> *next = nullptr, error *err = nullptr)\
+        -> decltype(_string_to_##NumberType(to_const_string(s), next, err))\
+    {\
+        return _string_to_##NumberType(to_const_string(s), next, err);\
+    }
 
-DEFINE_DECIMAL_SIGNATURE(float, to_float);
-DEFINE_DECIMAL_SIGNATURE(double, to_double);
-DEFINE_DECIMAL_SIGNATURE(long double, to_long_double);
-
-#undef DEFINE_DECIMAL_SIGNATURE
+declare_string_to_decimal(float);
+declare_string_to_decimal(double);
 
 // string manipulation
 
@@ -581,9 +585,9 @@ void _string_prepend(u32string *dst, const_u32string other);
 
 #define string_prepend(StrPtrDst, Other) (_string_prepend((StrPtrDst), to_const_string(Other)))
 
-s64 string_index_of(const_string    haystack, c8              needle, s64 offset);
-s64 string_index_of(const_u16string haystack, c16             needle, s64 offset);
-s64 string_index_of(const_u32string haystack, c32             needle, s64 offset);
+s64 string_index_of(const_string    haystack, c8              needle, s64 offset = 0);
+s64 string_index_of(const_u16string haystack, c16             needle, s64 offset = 0);
+s64 string_index_of(const_u32string haystack, c32             needle, s64 offset = 0);
 s64 _string_index_of(const_string    haystack, const_string    needle, s64 offset);
 s64 _string_index_of(const_u16string haystack, const_u16string needle, s64 offset);
 s64 _string_index_of(const_u32string haystack, const_u32string needle, s64 offset);
@@ -616,11 +620,11 @@ auto string_index_of(T haystack, c32 needle, s64 offset = 0)
     return _string_index_of(to_const_string(haystack), needle, offset);
 }
 
-s64 _string_last_index_of(const_string    haystack, c8              needle, s64 offset);
+s64 string_last_index_of(const_string    haystack, c8              needle, s64 offset = max_value(s64));
+s64 string_last_index_of(const_u16string haystack, c16             needle, s64 offset = max_value(s64));
+s64 string_last_index_of(const_u32string haystack, c32             needle, s64 offset = max_value(s64));
 s64 _string_last_index_of(const_string    haystack, const_string    needle, s64 offset);
-s64 _string_last_index_of(const_u16string haystack, c16             needle, s64 offset);
 s64 _string_last_index_of(const_u16string haystack, const_u16string needle, s64 offset);
-s64 _string_last_index_of(const_u32string haystack, c32             needle, s64 offset);
 s64 _string_last_index_of(const_u32string haystack, const_u32string needle, s64 offset);
 
 template<typename T1, typename T2>
@@ -705,6 +709,7 @@ bool string_trim(u32string *s);
 c8  char_to_upper(c8  c);
 c16 char_to_upper(c16 c);
 c32 char_to_upper(c32 c);
+u32  utf_codepoint_to_upper(u32  codepoint);
 void utf_codepoint_to_upper(c8  *codepoint);
 void utf_codepoint_to_upper(c16 *codepoint);
 void utf_codepoint_to_upper(c32 *codepoint);
@@ -831,8 +836,8 @@ void _string_join(const c32       **strings, s64 count, const_u32string delim, u
 void _string_join(const_u32string  *strings, s64 count, const_u32string delim, u32string *out);
 void _string_join(const u32string  *strings, s64 count, const_u32string delim, u32string *out);
 
-template<typename C, typename T>
-auto string_join(const C **strings, s64 count, T delim, string_base<C> *out)
+template<typename X, typename C, typename T>
+auto string_join(X strings, s64 count, T delim, string_base<C> *out)
     -> decltype(_string_join(strings, count, to_const_string(delim), out))
 {
     return _string_join(strings, count, to_const_string(delim), out);
@@ -875,4 +880,3 @@ hash_t hash(const u32string       *str);
 define_comparison_operators(const_string,    const_string);
 define_comparison_operators(const_u16string, const_u16string);
 define_comparison_operators(const_u32string, const_u32string);
-

@@ -46,6 +46,9 @@ extern "C"
 const c8  *utf8_decode (const c8  *str, u32 *cp, int *error);
 const c16 *utf16_decode(const c16 *str, u32 *cp, int *error);
 const c32 *utf32_decode(const c32 *str, u32 *cp, int *error);
+const c8  *utf8_decode_safe (const c8  *str, u32 *cp, int *error);
+const c16 *utf16_decode_safe(const c16 *str, u32 *cp, int *error);
+const c32 *utf32_decode_safe(const c32 *str, u32 *cp, int *error);
 
 // u8str/u16str must be zero padded to a multiple of four bytes.
 // str_buf_size is the total number of elements in the string, regardless
@@ -183,7 +186,7 @@ template<typename C>
 static inline C *_for_utf_decode(C *str, u32 *out_cp, s64 *out_cp_size)
 {
     int size = 0;
-    utf_decode(str, out_cp, /*error*/&size);
+    utf_decode(str, out_cp);
     size = utf_codepoint_length(str);
 
     *out_cp_size = size;

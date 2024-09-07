@@ -1,7 +1,4 @@
 
-// TODO: get rid of this
-#include <stdlib.h>
-
 #include "shl/assert.hpp"
 #include "shl/memory.hpp"
 #include "shl/type_functions.hpp"
@@ -18,7 +15,7 @@
 #if GNU
 #define memcmp __builtin_memcmp
 #else
-int memcmp(const void *s1, const void *s2, size_t n)
+int memcmp(const void *s1, const void *s2, u64 n)
 {
     const u8 *p1 = (const u8*)s1;
     const u8 *p2 = (const u8*)s2;
@@ -34,13 +31,13 @@ int memcmp(const void *s1, const void *s2, size_t n)
 #endif
 
 // https://stackoverflow.com/a/52989329
-static inline void* memmem(const void* haystack, size_t haystack_len,
-    const void* const needle, const size_t needle_len)
+static inline void* memmem(const void* haystack, u64 haystack_len,
+    const void* const needle, const u64 needle_len)
 {
-    if (haystack == NULL) return NULL; // or assert(haystack != NULL);
-    if (haystack_len == 0) return NULL;
-    if (needle == NULL) return NULL; // or assert(needle != NULL);
-    if (needle_len == 0) return NULL;
+    if (haystack == nullptr) return nullptr; // or assert(haystack != nullptr);
+    if (haystack_len == 0) return nullptr;
+    if (needle == nullptr) return nullptr; // or assert(needle != nullptr);
+    if (needle_len == 0) return nullptr;
 
     for (const char* h = (const char*)haystack;
         haystack_len >= needle_len;
@@ -49,7 +46,7 @@ static inline void* memmem(const void* haystack, size_t haystack_len,
             return (void*)h;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 #if Windows
@@ -588,6 +585,17 @@ int utf_codepoint_digit_value(u32 cp)
     return -1;
 }
 
+#define _to_number_utf_decode(str, cp, utf_error)\
+    {\
+        utf_decode(str.c_str, &cp, &utf_error);\
+\
+        if (utf_error)\
+        {\
+            set_error(err, utf_error, "Invalid UTF");\
+            return 0;\
+        }\
+    }
+
 template<typename C>
 static s64 _string_to_integer(const_string_base<C> s, const_string_base<C> *next, int base, s64 number_min, s64 number_max, error *err)
 {
@@ -615,17 +623,6 @@ static s64 _string_to_integer(const_string_base<C> s, const_string_base<C> *next
     end = s;
     u32 cp = 0;
     int utf_error = 0;
-
-#define _to_number_utf_decode(str, cp, utf_error)\
-    {\
-        utf_decode(str.c_str, &cp, &utf_error);\
-\
-        if (utf_error)\
-        {\
-            set_error(err, utf_error, "Invalid UTF");\
-            return 0;\
-        }\
-    }
     _to_number_utf_decode(s, cp, utf_error);
 
     if (cp == (u32)'+')
@@ -736,8 +733,6 @@ static s64 _string_to_integer(const_string_base<C> s, const_string_base<C> *next
     }
 
     return (s64)((is_neg) ? -n : n);
-
-#undef _to_number_utf_decode
 }
 
 #define define_string_to_integer_c(NumberType, CharType)\
@@ -761,14 +756,195 @@ define_string_to_integer(u16);
 define_string_to_integer(u32);
 define_string_to_integer(u64);
 
-#define DEFINE_DECIMAL_BODY(T, NAME, FUNC) \
-    T NAME(const c8     *s, c8 **pos) { return FUNC(s, pos); }\
-    T NAME(const_string  s, c8 **pos) { return FUNC(s.c_str, pos); }\
-    T NAME(const string *s, c8 **pos) { assert(s != nullptr); return FUNC(s->data, pos); }
+template<typename C>
+static double _string_to_decimal(const_string_base<C> s, const_string_base<C> *next, error *err)
+{
+    if (s.size <= 0)
+    {
+        set_error(err, 22 /* einval */, "No conversion was performed");
+        *next = s;
+        return 0.0;
+    }
 
-DEFINE_DECIMAL_BODY(float, to_float, strtof);
-DEFINE_DECIMAL_BODY(double, to_double, strtod);
-DEFINE_DECIMAL_BODY(long double, to_long_double, strtold);
+    const_string_base<C> orig = s;
+    const_string_base<C> pexp{};
+    int sign = 0;
+    int exp_sign = 0;
+
+    double fraction = 0;
+    double double_exp = 0;
+    int exp = 0;
+    int frac_exp = 0;
+    int mant_size = 0;
+    int dec_pt = -1;
+
+    u32 cp = 0;
+    int utf_error = 0;
+    _to_number_utf_decode(s, cp, utf_error);
+
+    if (cp == (u32)'+')
+    {
+        sign = 1;
+        s = utf_advance(s);
+        _to_number_utf_decode(s, cp, utf_error);
+    }
+    else if (cp == (u32)'-')
+    {
+        sign = -1;
+        s = utf_advance(s);
+        _to_number_utf_decode(s, cp, utf_error);
+    }
+
+    int digit = utf_codepoint_digit_value(cp);
+
+    pexp = s;
+
+    while (true)
+    {
+        if (digit == -1)
+        {
+            if ((cp != (u32)'.') || (dec_pt >= 0))
+                break;
+
+            dec_pt = mant_size;
+        }
+
+        mant_size += 1;
+        pexp = utf_advance(pexp);
+        _to_number_utf_decode(pexp, cp, utf_error);
+        digit = utf_codepoint_digit_value(cp);
+    }
+
+    if (dec_pt < 0)
+        dec_pt = mant_size;
+    else
+        mant_size -= 1;
+
+    if (mant_size > 18)
+    {
+        frac_exp = dec_pt - 18;
+        mant_size = 18;
+    }
+    else
+        frac_exp = dec_pt - mant_size;
+
+    if (mant_size == 0)
+    {
+        fraction = 0.0;
+
+        if (next != nullptr)
+            *next = orig;
+
+        return sign < 0 ? -fraction : fraction;
+    }
+    else
+    {
+        s64 frac1 = 0;
+
+        _to_number_utf_decode(s, cp, utf_error);
+
+        while (mant_size > 0)
+        {
+            _to_number_utf_decode(s, cp, utf_error);
+
+            if (cp == (u32)'.')
+            {
+                s = utf_advance(s);
+                _to_number_utf_decode(s, cp, utf_error);
+            }
+
+            digit = utf_codepoint_digit_value(cp);
+
+            frac1 = 10 * frac1 + digit;
+            s = utf_advance(s);
+            mant_size -= 1;
+        }
+
+        fraction = frac1;
+    }
+
+    s = pexp;
+    _to_number_utf_decode(s, cp, utf_error);
+
+    if ((cp == (u32)'E') || (cp == (u32)'e'))
+    {
+        s = utf_advance(s);
+        _to_number_utf_decode(s, cp, utf_error);
+
+        if (cp == (u32)'-')
+        {
+            exp_sign = -1;
+            s = utf_advance(s);
+            _to_number_utf_decode(s, cp, utf_error);
+        }
+        else if (cp == (u32)'+')
+        {
+            s = utf_advance(s);
+            _to_number_utf_decode(s, cp, utf_error);
+            exp_sign = 1;
+        }
+
+        digit = utf_codepoint_digit_value(cp);
+
+        while (digit != -1)
+        {
+            exp = exp * 10 + digit;
+            s = utf_advance(s);
+            _to_number_utf_decode(s, cp, utf_error);
+            digit = utf_codepoint_digit_value(cp);
+        }
+    }
+
+    exp = exp_sign < 0 ? (frac_exp - exp) : (frac_exp + exp);
+
+    if (exp < 0)
+    {
+        exp_sign = -1;
+        exp = -exp;
+    }
+    else
+        exp_sign = 1;
+
+    constexpr int max_exponent = 511;
+    constexpr double exp_pow10[] = { 10.0, 100.0, 1.0e4, 1.0e8, 1.0e16, 1.0e32, 1.0e64, 1.0e128, 1.0e256 };
+
+    if (exp > max_exponent)
+    {
+        exp = max_exponent;
+        set_error(err, 34 /* erange */, "Overflow");
+    }
+
+    double_exp = 1.0;
+
+    for (const double *d = exp_pow10; exp != 0; exp >>= 1, d += 1)
+        if (exp & 01)
+            double_exp *= *d;
+
+    if (exp_sign < 0)
+        fraction /= double_exp;
+    else
+        fraction *= double_exp;
+
+    if (next != nullptr)
+        *next = s;
+
+    return sign < 0 ? -fraction : fraction;
+}
+
+#define define_string_to_decimal_c(NumberType, CharType)\
+NumberType _string_to_##NumberType(const_string_base<CharType> s, const_string_base<CharType> *next, error *err)\
+{\
+    double n = _string_to_decimal(s, next, err);\
+    return (NumberType)n;\
+}
+
+#define define_string_to_decimal(NumberType)\
+    define_string_to_decimal_c(NumberType, c8) \
+    define_string_to_decimal_c(NumberType, c16)\
+    define_string_to_decimal_c(NumberType, c32)\
+
+define_string_to_decimal(float);
+define_string_to_decimal(double);
 
 // manip
 template<typename C>
@@ -991,6 +1167,21 @@ static inline s64 _string_index_of_c(const_string_base<C> haystack, C needle, s6
     return -1;
 }
 
+s64 string_index_of(const_string    haystack, c8              needle, s64 offset)
+{
+    return _string_index_of_c(haystack, needle, offset);
+}
+
+s64 string_index_of(const_u16string haystack, c16             needle, s64 offset)
+{
+    return _string_index_of_c(haystack, needle, offset);
+}
+
+s64 string_index_of(const_u32string haystack, c32             needle, s64 offset)
+{
+    return _string_index_of_c(haystack, needle, offset);
+}
+
 template<typename C>
 static inline s64 _string_index_of_s(const_string_base<C> str, const_string_base<C> needle, s64 offset)
 {
@@ -1036,29 +1227,14 @@ static inline s64 _string_index_of_s(const_string_base<C> str, const_string_base
     }
 }
 
-s64 _string_index_of(const_string    haystack, c8              needle, s64 offset)
-{
-    return _string_index_of_c(haystack, needle, offset);
-}
-
 s64 _string_index_of(const_string    haystack, const_string    needle, s64 offset)
 {
     return _string_index_of_s(haystack, needle, offset);
 }
 
-s64 _string_index_of(const_u16string haystack, c16             needle, s64 offset)
-{
-    return _string_index_of_c(haystack, needle, offset);
-}
-
 s64 _string_index_of(const_u16string haystack, const_u16string needle, s64 offset)
 {
     return _string_index_of_s(haystack, needle, offset);
-}
-
-s64 _string_index_of(const_u32string haystack, c32             needle, s64 offset)
-{
-    return _string_index_of_c(haystack, needle, offset);
 }
 
 s64 _string_index_of(const_u32string haystack, const_u32string needle, s64 offset)
@@ -1069,7 +1245,6 @@ s64 _string_index_of(const_u32string haystack, const_u32string needle, s64 offse
 template<typename C>
 static inline s64 _string_last_index_of_c(const_string_base<C> haystack, C needle, s64 offset)
 {
-    // TODO: UTF
     if (offset < 0)
         return -1;
 
@@ -1083,10 +1258,24 @@ static inline s64 _string_last_index_of_c(const_string_base<C> haystack, C needl
     return -1;
 }
 
+s64 string_last_index_of(const_string    haystack, c8              needle, s64 offset)
+{
+    return _string_last_index_of_c(haystack, needle, offset);
+}
+
+s64 string_last_index_of(const_u16string haystack, c16             needle, s64 offset)
+{
+    return _string_last_index_of_c(haystack, needle, offset);
+}
+
+s64 string_last_index_of(const_u32string haystack, c32             needle, s64 offset)
+{
+    return _string_last_index_of_c(haystack, needle, offset);
+}
+
 template<typename C>
 static inline s64 _string_last_index_of_s(const_string_base<C> str, const_string_base<C> needle, s64 offset)
 {
-    // TODO: UTF
     if (offset < 0)
         return -1;
 
@@ -1119,29 +1308,14 @@ static inline s64 _string_last_index_of_s(const_string_base<C> str, const_string
     return -1;
 }
 
-s64 _string_last_index_of(const_string    haystack, c8              needle, s64 offset)
-{
-    return _string_last_index_of_c(haystack, needle, offset);
-}
-
 s64 _string_last_index_of(const_string    haystack, const_string    needle, s64 offset)
 {
     return _string_last_index_of_s(haystack, needle, offset);
 }
 
-s64 _string_last_index_of(const_u16string haystack, c16             needle, s64 offset)
-{
-    return _string_last_index_of_c(haystack, needle, offset);
-}
-
 s64 _string_last_index_of(const_u16string haystack, const_u16string needle, s64 offset)
 {
     return _string_last_index_of_s(haystack, needle, offset);
-}
-
-s64 _string_last_index_of(const_u32string haystack, c32             needle, s64 offset)
-{
-    return _string_last_index_of_c(haystack, needle, offset);
 }
 
 s64 _string_last_index_of(const_u32string haystack, const_u32string needle, s64 offset)
@@ -1244,69 +1418,65 @@ c8  char_to_upper(c8  c) { return _char_to_upper(c); }
 c16 char_to_upper(c16 c) { return _char_to_upper(c); }
 c32 char_to_upper(c32 c) { return _char_to_upper(c); }
 
+u32 utf_codepoint_to_upper(u32 cp)
+{
+    if (cp >= 'a' && cp <= 'z')
+        return (cp - 'a') + 'A';
+    return cp;
+}
+
 void utf_codepoint_to_upper(c8  *codepoint)
 {
-    // TODO: implement
-    (void)codepoint;
+    u32 cp = utf_codepoint_to_upper(utf_decode(codepoint));
+    utf8_encode(cp, codepoint);
 }
 
 void utf_codepoint_to_upper(c16 *codepoint)
 {
-    // TODO: implement
-    (void)codepoint;
+    u32 cp = utf_codepoint_to_upper(utf_decode(codepoint));
+    utf16_encode(cp, codepoint);
 }
 
 void utf_codepoint_to_upper(c32 *codepoint)
 {
-    // TODO: implement
-    (void)codepoint;
+    u32 cp = utf_codepoint_to_upper(utf_decode(codepoint));
+    utf32_encode(cp, codepoint);
 }
 
 void utf_to_upper(c8  *s, s64 size)
 {
-    // TODO: implement
-    (void)s;
-    (void)size;
-    // for_utf_codepoints(cp, {s, size})
-    //     utf_codepoint_to_upper(cp);
+    auto cs = const_string_base{s, size};
+    for_utf_string(cp, c, cs)
+        utf8_encode(utf_codepoint_to_upper(cp), (c8*)c.c_str);
 }
 
 void utf_to_upper(c16 *s, s64 size)
 {
-    // TODO: implement
-    (void)s;
-    (void)size;
-    // for_utf_codepoints(cp, {s, size})
-    //     utf_codepoint_to_upper(cp);
+    auto cs = const_string_base{s, size};
+    for_utf_string(c, cs)
+        utf_codepoint_to_upper((c8*)c.c_str);
 }
+
 void utf_to_upper(c32 *s, s64 size)
 {
-    // TODO: implement
-    (void)s;
-    (void)size;
-    // for_utf_codepoints(cp, {s, size})
-    //     utf_codepoint_to_upper(cp);
+    auto cs = const_string_base{s, size};
+    for_utf_string(c, cs)
+        utf_codepoint_to_upper((c8*)c.c_str);
 }
+
 void utf_to_upper(string    *s)
 {
-    // TODO: implement
-    (void)s;
-    // for_utf_codepoints(cp, s)
-    //     utf_codepoint_to_upper(cp);
+    utf_to_upper(s->data, s->size);
 }
+
 void utf_to_upper(u16string *s)
 {
-    // TODO: implement
-    (void)s;
-    // for_utf_codepoints(cp, s)
-    //     utf_codepoint_to_upper(cp);
+    utf_to_upper(s->data, s->size);
 }
+
 void utf_to_upper(u32string *s)
 {
-    // TODO: implement
-    (void)s;
-    // for_utf_codepoints(cp, s)
-    //     utf_codepoint_to_upper(cp);
+    utf_to_upper(s->data, s->size);
 }
 
 
@@ -1323,70 +1493,67 @@ c8  char_to_lower(c8  c) { return _char_to_lower(c); }
 c16 char_to_lower(c16 c) { return _char_to_lower(c); }
 c32 char_to_lower(c32 c) { return _char_to_lower(c); }
 
+u32 utf_codepoint_to_lower(u32 cp)
+{
+    if (cp >= 'A' && cp <= 'Z')
+        return (cp - 'A') + 'a';
+    return cp;
+}
+
 void utf_codepoint_to_lower(c8  *codepoint)
 {
-    // TODO: implement
-    (void)codepoint;
+    u32 cp = utf_codepoint_to_lower(utf_decode(codepoint));
+    utf8_encode(cp, codepoint);
 }
 
 void utf_codepoint_to_lower(c16 *codepoint)
 {
-    // TODO: implement
-    (void)codepoint;
+    u32 cp = utf_codepoint_to_lower(utf_decode(codepoint));
+    utf16_encode(cp, codepoint);
 }
 
 void utf_codepoint_to_lower(c32 *codepoint)
 {
-    // TODO: implement
-    (void)codepoint;
+    u32 cp = utf_codepoint_to_lower(utf_decode(codepoint));
+    utf32_encode(cp, codepoint);
 }
 
 void utf_to_lower(c8  *s, s64 size)
 {
-    // TODO: implement
-    (void)s;
-    (void)size;
-    // for_utf_codepoints(cp, {s, size})
-    //     utf_codepoint_to_lower(cp);
+    auto cs = const_string_base{s, size};
+    for_utf_string(cp, c, cs)
+        utf8_encode(utf_codepoint_to_lower(cp), (c8*)c.c_str);
 }
 
 void utf_to_lower(c16 *s, s64 size)
 {
-    // TODO: implement
-    (void)s;
-    (void)size;
-    // for_utf_codepoints(cp, {s, size})
-    //     utf_codepoint_to_lower(cp);
+    auto cs = const_string_base{s, size};
+    for_utf_string(c, cs)
+        utf_codepoint_to_lower((c8*)c.c_str);
 }
+
 void utf_to_lower(c32 *s, s64 size)
 {
-    // TODO: implement
-    (void)s;
-    (void)size;
-    // for_utf_codepoints(cp, {s, size})
-    //     utf_codepoint_to_lower(cp);
+    auto cs = const_string_base{s, size};
+    for_utf_string(c, cs)
+        utf_codepoint_to_lower((c8*)c.c_str);
 }
+
 void utf_to_lower(string    *s)
 {
-    // TODO: implement
-    (void)s;
-    // for_utf_codepoints(cp, s)
-    //     utf_codepoint_to_lower(cp);
+    utf_to_lower(s->data, s->size);
 }
+
 void utf_to_lower(u16string *s)
 {
-    // TODO: implement
-    (void)s;
-    // for_utf_codepoints(cp, s)
-    //     utf_codepoint_to_lower(cp);
+    utf_to_lower(s->data, s->size);
 }
+
 void utf_to_lower(u32string *s)
 {
-    // TODO: implement
-    (void)s;
-    // for_utf_codepoints(cp, s)
-    //     utf_codepoint_to_lower(cp);
+    utf_to_lower(s->data, s->size);
 }
+
 
 template<typename C>
 static inline const_string_base<C> _substring_nocopy(const_string_base<C> str, s64 start, s64 length)
