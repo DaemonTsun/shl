@@ -1248,7 +1248,7 @@ static inline s64 _string_last_index_of_c(const_string_base<C> haystack, C needl
     if (offset < 0)
         return -1;
 
-    if (offset + 1 >= haystack.size)
+    if (offset == max_value(s64) || offset + 1 >= haystack.size)
         offset = haystack.size - 1;
 
     for (s64 i = offset; i >= 0; --i)

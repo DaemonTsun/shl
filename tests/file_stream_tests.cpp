@@ -54,13 +54,13 @@ static string_base<sys_char> get_filepath(const sys_char *file)
     if (exep == nullptr)
         return ret;
 
-    set_string(&ret, exep);
+    string_set(&ret, exep);
 
-    s64 idx = last_index_of(ret, SYS_CHAR('/'));
+    s64 idx = string_last_index_of(ret, SYS_CHAR('/'));
 
 #if Windows
     if (idx < 0)
-        idx = last_index_of(ret, SYS_CHAR('\\'));
+        idx = string_last_index_of(ret, SYS_CHAR('\\'));
 #endif
 
     if (idx < 0)
@@ -69,11 +69,11 @@ static string_base<sys_char> get_filepath(const sys_char *file)
     ret.size = idx;
 
 #if Windows
-    append_string(&ret, SYS_CHAR("\\"));
+    string_append(&ret, SYS_CHAR("\\"));
 #else
-    append_string(&ret, SYS_CHAR("/"));
+    string_append(&ret, SYS_CHAR("/"));
 #endif
-    append_string(&ret, file);
+    string_append(&ret, file);
 
     return ret;
 }

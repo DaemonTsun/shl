@@ -18,11 +18,11 @@ define_test(process_arguments_test)
     set_process_arguments(&p, SYS_CHAR(R"=(echo "hello world"   a\\b\"c\")="));
 
 #if Windows
-    assert_equal(compare_strings(p.start_info.args, LR"=(echo "hello world"   a\\b\"c\")="), 0);
+    assert_equal(string_compare(p.start_info.args, LR"=(echo "hello world"   a\\b\"c\")="), 0);
 #else
-    assert_equal(compare_strings(p.start_info.args[0], "echo"), 0);
-    assert_equal(compare_strings(p.start_info.args[1], R"(hello world)"), 0);
-    assert_equal(compare_strings(p.start_info.args[2], R"(a\b"c")"), 0);
+    assert_equal(string_compare(p.start_info.args[0], "echo"), 0);
+    assert_equal(string_compare(p.start_info.args[1], R"(hello world)"), 0);
+    assert_equal(string_compare(p.start_info.args[2], R"(a\b"c")"), 0);
     assert_equal(p.start_info.args[3], nullptr);
 #endif
 
@@ -35,11 +35,11 @@ define_test(process_arguments_test)
     set_process_arguments(&p, SYS_CHAR(R"=("hello world"   a\\b\"c\")="));
 
 #if Windows
-    assert_equal(compare_strings(p.start_info.args, LR"=("hello world"   a\\b\"c\")="), 0);
+    assert_equal(string_compare(p.start_info.args, LR"=("hello world"   a\\b\"c\")="), 0);
 #else
-    assert_equal(compare_strings(p.start_info.args[0], "echo"), 0);
-    assert_equal(compare_strings(p.start_info.args[1], R"(hello world)"), 0);
-    assert_equal(compare_strings(p.start_info.args[2], R"(a\b"c")"), 0);
+    assert_equal(string_compare(p.start_info.args[0], "echo"), 0);
+    assert_equal(string_compare(p.start_info.args[1], R"(hello world)"), 0);
+    assert_equal(string_compare(p.start_info.args[2], R"(a\b"c")"), 0);
     assert_equal(p.start_info.args[3], nullptr);
 #endif
 
@@ -140,10 +140,10 @@ define_test(process_pipe_test)
 
 #if Windows
     assert_equal(bytes_read, 8);
-    assert_equal(compare_strings(buf, "world!\r\n"), 0);
+    assert_equal(string_compare(buf, "world!\r\n"), 0);
 #else
     assert_equal(bytes_read, 7);
-    assert_equal(compare_strings(buf, "world!\n"), 0);
+    assert_equal(string_compare(buf, "world!\n"), 0);
 #endif
 
     free(&out_pipe);

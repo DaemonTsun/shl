@@ -65,12 +65,9 @@ static inline s64 _string_copy_checked(const C *src, s64 src_size, C *dst, s64 d
     }
 
     s64 ssize = Min(src_size, dst_size);
-    C *ptr = string_copy(src, dst, ssize);
+    string_copy(src, dst, ssize);
 
-    if (ptr == nullptr)
-        return 0;
-
-    return ptr - dst;
+    return ssize;
 }
 
 template<typename C>

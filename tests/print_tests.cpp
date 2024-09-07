@@ -7,5 +7,5 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
     tprint(stdout_handle(), "hello %\n", "world");
     tprint(stderr_handle(), "hello %\n", "world");
 
-    tprint(L"wide hello %\n", L"world");
+    tprint(u"u16 hello %\n", u"world");
 }

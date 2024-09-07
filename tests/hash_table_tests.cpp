@@ -160,7 +160,7 @@ define_test(search_looks_up_first_match_if_hash_is_contained_in_hash_table)
 
     assert_not_equal(res, nullptr);
     assert_equal(res, v);
-    assert_equal(compare_strings(*res, "hello"), 0);
+    assert_equal(string_compare(*res, "hello"), 0);
 
     free(&table);
 }
@@ -236,7 +236,7 @@ define_test(search_or_insert_returns_pointer_to_inserted_element)
     assert_equal(table.size, 1);
     assert_equal(v, v2);
 
-    assert_equal(compare_strings(*v2, "hello"), 0);
+    assert_equal(string_compare(*v2, "hello"), 0);
 
     free(&table);
 }

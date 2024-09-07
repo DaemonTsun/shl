@@ -48,7 +48,7 @@ define_test(io_read_reads_from_pipe)
 
     assert_equal(bytes, 5);
     assert_equal(io_size(p.read, &err), 0);
-    assert_equal(compare_strings(buf, "hello"), 0);
+    assert_equal(string_compare(buf, "hello"), 0);
 
     assert_equal(io_poll_read(p.read), false);
     // bytes = io_read(p.read, buf, 63, &err);
@@ -70,7 +70,7 @@ define_test(read_entire_pipe_reads_everything_in_pipe)
     assert_equal(read_entire_pipe(&p, &contents, &err), true);
     assert_equal(contents.size, 34);
     assert_equal(contents.data[contents.size], '\0');
-    assert_equal(compare_strings(contents, str), 0);
+    assert_equal(string_compare(contents, str), 0);
 
     // nothing left in pipe -> contents = empty
     assert_equal(read_entire_pipe(&p, &contents, &err), true);

@@ -1,5 +1,5 @@
 
-#include <t1/t1.hpp>
+#include "t1/t1.hpp"
 
 #include "shl/string.hpp"
 #include "shl/environment.hpp"
@@ -13,7 +13,7 @@ define_test(set_environment_variable_adds_new_environment_variable)
 
     var = get_environment_variable(SYS_CHAR("SETVAR_SETS_ME"));
     assert_not_equal(var, nullptr);
-    assert_equal(compare_strings(var, SYS_CHAR("abc")), 0);
+    assert_equal(string_compare(var, SYS_CHAR("abc")), 0);
 }
 
 define_test(get_environment_variable_returns_nullptr_when_variable_does_not_exist)
