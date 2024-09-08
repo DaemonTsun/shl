@@ -620,9 +620,14 @@ bool process_start(process *p, error *err)
     case 0:
     {
         // child process
-        if (int nfd = dup2(p->start_info.detail.std_in,  0); nfd < 0) exit_group(-nfd);
-        if (int nfd = dup2(p->start_info.detail.std_out, 1); nfd < 0) exit_group(-nfd);
-        if (int nfd = dup2(p->start_info.detail.std_err, 2); nfd < 0) exit_group(-nfd);
+        if (p->start_info.detail.std_in != 0)
+            if (int nfd = dup3(p->start_info.detail.std_in,  0, /*flags*/ 0); nfd < 0) exit_group(-nfd);
+
+        if (p->start_info.detail.std_out != 1)
+            if (int nfd = dup3(p->start_info.detail.std_out, 1, /*flags*/ 0); nfd < 0) exit_group(-nfd);
+
+        if (p->start_info.detail.std_out != 2)
+            if (int nfd = dup3(p->start_info.detail.std_err, 2, /*flags*/ 0); nfd < 0) exit_group(-nfd);
 
         int ret = execve((char*)p->start_info.path, (char**)p->start_info.args, (char**)p->start_info.environment);
 

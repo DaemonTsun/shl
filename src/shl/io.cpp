@@ -189,7 +189,7 @@ io_handle io_open(const c8 *path, open_mode mode, open_flag flags, open_permissi
     if (is_flag_set(flags, open_flag::Async)) _flags |= O_ASYNC;
     */
 
-    io_handle fd = ::open(path, _flags, _mode);
+    io_handle fd = ::openat(AT_FDCWD, path, _flags, _mode);
 
     if (fd < 0)
     {
