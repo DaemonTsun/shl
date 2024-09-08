@@ -1647,11 +1647,21 @@ void _substring(const_u32string s, s64 start, s64 length, u32string *out, s64 ou
 template<typename C>
 static inline const_string_base<C> _utf_substring_nocopy(const_string_base<C> str, s64 start, s64 length)
 {
-    (void)str;
-    (void)start;
-    (void)length;
-    // TODO: implement
-    return const_string_base<C>{};
+    s64 i_start = 0;
+    s64 i_end = 0;
+
+    for_utf_string(i_utf, i_c, _, __, str)
+    {
+        if (i_utf == start)
+            i_start = i_c;
+
+        i_end = i_c;
+
+        if (i_utf - start >= length)
+            break;
+    }
+
+    return const_string_base<C>{str.c_str + i_start, i_end - i_start};
 }
 
 const_string _utf_substring(const_string s, s64 start, s64 length)

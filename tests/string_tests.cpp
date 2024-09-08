@@ -1491,7 +1491,21 @@ define_test(substring_with_no_out_parameter_returns_slice_to_data)
     assert_equal(output.size, 0);
 }
 
-// TODO: utf_substring tests
+define_test(utf_substring_gets_substring_of_utf_string)
+{
+    // the same indices regardless of UTF
+    const_string str = u8"hello 今日は привет"_cs;
+    const_string substr = utf_substring(str, 6, 3);
+    assert_equal(substr, u8"今日は"_cs);
+
+    const_u16string str16 = u"hello 今日は привет"_cs;
+    const_u16string substr16 = utf_substring(str16, 6, 3);
+    assert_equal(substr16, u"今日は"_cs);
+
+    const_u32string str32 = U"hello 今日は привет"_cs;
+    const_u32string substr32 = utf_substring(str32, 6, 3);
+    assert_equal(substr32, U"今日は"_cs);
+}
 
 define_test(string_replace_does_nothing_on_empty_needle)
 {
