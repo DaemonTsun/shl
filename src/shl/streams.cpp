@@ -20,12 +20,17 @@ bool _read_entire_file_ms(const C *path, memory_stream *out, error *err)
     return ret && free_ret;
 }
 
-bool read_entire_file(const char *path, memory_stream *out, error *err)
+bool read_entire_file(const c8 *path, memory_stream *out, error *err)
 {
     return _read_entire_file_ms(path, out, err);
 }
 
-bool read_entire_file(const wchar_t *path, memory_stream *out, error *err)
+bool read_entire_file(const c16 *path, memory_stream *out, error *err)
+{
+    return _read_entire_file_ms(path, out, err);
+}
+
+bool read_entire_file(const c32 *path, memory_stream *out, error *err)
 {
     return _read_entire_file_ms(path, out, err);
 }
@@ -68,12 +73,17 @@ bool _read_entire_file_s(const C *path, string *out, error *err)
     return ret && free_ret;
 }
 
-bool read_entire_file(const char *path, string *out, error *err)
+bool read_entire_file(const c8 *path, string *out, error *err)
 {
     return _read_entire_file_s(path, out, err);
 }
 
-bool read_entire_file(const wchar_t *path, string *out, error *err)
+bool read_entire_file(const c16 *path, string *out, error *err)
+{
+    return _read_entire_file_s(path, out, err);
+}
+
+bool read_entire_file(const c32 *path, string *out, error *err)
 {
     return _read_entire_file_s(path, out, err);
 }

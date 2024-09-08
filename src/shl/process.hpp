@@ -115,12 +115,17 @@ struct process
 void process_create (process *p);
 void process_destroy(process *p);
 
-void set_process_executable(process *p, const char    *exe);
-void set_process_executable(process *p, const wchar_t *exe);
-void set_process_arguments (process *p, const char    *args);
-void set_process_arguments (process *p, const wchar_t *args);
-void set_process_arguments (process *p, const char    **args, bool raw = false);
-void set_process_arguments (process *p, const wchar_t **args);
+void set_process_executable(process *p, const c8  *exe);
+void set_process_executable(process *p, const c16 *exe);
+void set_process_executable(process *p, const c32 *exe);
+
+void set_process_arguments (process *p, const c8  *args);
+void set_process_arguments (process *p, const c16 *args);
+void set_process_arguments (process *p, const c32 *args);
+
+void set_process_arguments (process *p, const c8  **args, bool raw = false);
+void set_process_arguments (process *p, const c16 **args);
+void set_process_arguments (process *p, const c32 **args);
 
 void set_process_io(process *p, io_handle  in, io_handle  out, io_handle  err_out);
 void get_process_io(process *p, io_handle *in, io_handle *out, io_handle *err_out);

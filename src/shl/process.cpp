@@ -224,7 +224,7 @@ void process_destroy(process *p)
 #endif
 }
 
-void set_process_executable(process *p, const char *exe)
+void set_process_executable(process *p, const c8 *exe)
 {
     assert(p != nullptr);
 
@@ -242,25 +242,38 @@ void set_process_executable(process *p, const char *exe)
 #endif
 }
 
-void set_process_executable(process *p, const wchar_t *exe)
+void set_process_executable(process *p, const c16 *exe)
 {
     assert(p != nullptr);
 
     _free_process_start_info_path(&p->start_info);
 
 #if Windows
-    p->start_info.path = exe;
+    p->start_info.path = (const wchar_t*)exe;
     p->start_info._free_exe_path = false;
 #else
     sys_string path{};
-    string_set(&path, char_cast(exe));
+    string_set(&path, exe);
     p->start_info.path = path.data;
     p->start_info._free_exe_path = true;
     p->start_info._free_exe_path_size = path.reserved_size * sizeof(sys_char);
 #endif
 }
 
-void set_process_arguments(process *p, const char *args)
+void set_process_executable(process *p, const c32 *exe)
+{
+    assert(p != nullptr);
+
+    _free_process_start_info_path(&p->start_info);
+
+    sys_string path{};
+    string_set(&path, exe);
+    p->start_info.path = path.data;
+    p->start_info._free_exe_path = true;
+    p->start_info._free_exe_path_size = path.reserved_size * sizeof(sys_char);
+}
+
+void set_process_arguments(process *p, const c8 *args)
 {
     assert(p != nullptr);
 
@@ -291,7 +304,7 @@ void set_process_arguments(process *p, const char *args)
 #endif
 }
 
-void set_process_arguments(process *p, const wchar_t *args)
+void set_process_arguments(process *p, const c16 *args)
 {
     assert(p != nullptr);
 
@@ -313,7 +326,7 @@ void set_process_arguments(process *p, const wchar_t *args)
     *p->start_info._free_args_sizes = cmdline.reserved_size * sizeof(sys_char);
 #else
     sys_string sargs{};
-    string_set(&sargs, char_cast(args));
+    string_set(&sargs, args);
     array<sys_char*> _args{};
     array<s64> _sizes{};
     _cmdline_to_args(sargs.data, p->start_info.path, &_args, &_sizes);
@@ -325,7 +338,41 @@ void set_process_arguments(process *p, const wchar_t *args)
 #endif
 }
 
-void set_process_arguments(process *p, const char **args, [[maybe_unused]] bool raw)
+void set_process_arguments(process *p, const c32 *args)
+{
+    assert(p != nullptr);
+
+    _free_process_start_info_arguments(&p->start_info);
+
+    if (args == nullptr)
+    {
+        p->start_info.args = nullptr;
+        p->start_info._free_args = false;
+        return;
+    }
+
+#if Windows
+    sys_string cmdline{};
+    string_set(&cmdline, args);
+    p->start_info.args = cmdline.data;
+    p->start_info._free_args = true;
+    p->start_info._free_args_sizes = alloc<s64>();
+    *p->start_info._free_args_sizes = cmdline.reserved_size * sizeof(sys_char);
+#else
+    sys_string sargs{};
+    string_set(&sargs, args);
+    array<sys_char*> _args{};
+    array<s64> _sizes{};
+    _cmdline_to_args(sargs.data, p->start_info.path, &_args, &_sizes);
+
+    p->start_info.args = (const sys_char**)_args.data;
+    p->start_info._free_args = true;
+    p->start_info._free_args_sizes = _sizes.data;
+    dealloc(sargs.data, sargs.reserved_size);
+#endif
+}
+
+void set_process_arguments(process *p, const c8 **args, [[maybe_unused]] bool raw)
 {
     assert(p != nullptr);
 
@@ -363,7 +410,7 @@ void set_process_arguments(process *p, const char **args, [[maybe_unused]] bool 
         u64 arg_count = _get_argument_count(args);
 
         // we add the name of the executable
-        const char *exe_name = _get_exe_name(p->start_info.path);
+        const c8 *exe_name = _get_exe_name(p->start_info.path);
 
         if (exe_name != nullptr)
         {
@@ -381,7 +428,7 @@ void set_process_arguments(process *p, const char **args, [[maybe_unused]] bool 
 
         if (_args.data != nullptr)
         {
-            add_at_end(&_args, (char *)nullptr);
+            add_at_end(&_args, (c8 *)nullptr);
             *add_at_end(&_sizes) = 0;
 
             p->start_info.args = (const sys_char**)_args.data;
@@ -397,7 +444,7 @@ void set_process_arguments(process *p, const char **args, [[maybe_unused]] bool 
 #endif
 }
 
-void set_process_arguments(process *p, const wchar_t **args)
+void set_process_arguments(process *p, const c16 **args)
 {
     assert(p != nullptr);
 
@@ -428,7 +475,65 @@ void set_process_arguments(process *p, const wchar_t **args)
     for (u64 i = 0; i < arg_count; ++i)
     {
         sys_string tmp{};
-        string_set(&tmp, char_cast(args[i]));
+        string_set(&tmp, args[i]);
+        add_at_end(&_args, tmp.data);
+        add_at_end(&_args_sizes, tmp.reserved_size);
+    }
+
+    if (_args.data != nullptr)
+    {
+        add_at_end(&_args, (char *)nullptr);
+
+        p->start_info.args = (const sys_char**)_args.data;
+        p->start_info._free_args = true;
+        p->start_info._free_args_sizes = _args_sizes.data;
+    }
+    else
+    {
+        p->start_info.args = nullptr;
+        p->start_info._free_args = false;
+        p->start_info._free_args_sizes = nullptr;
+    }
+#endif
+}
+
+void set_process_arguments(process *p, const c32 **args)
+{
+    assert(p != nullptr);
+
+#if Windows
+    if (args == nullptr)
+    {
+        p->start_info.args = nullptr;
+        p->start_info._free_args = false;
+        return;
+    }
+
+    u32string _cmdline{};
+    _args_to_cmdline(args, &_cmdline);
+
+    sys_string cmdline{};
+    string_set(&cmdline, &_cmdline);
+    p->start_info.args = cmdline.data;
+    p->start_info._free_args = true;
+    p->start_info._free_args_sizes = alloc<s64>();
+    *p->start_info._free_args_sizes = cmdline.reserved_size * sizeof(sys_char);
+
+    free(&_cmdline);
+#else
+    array<sys_char*> _args{};
+    array<s64> _args_sizes{};
+    u64 arg_count = _get_argument_count(args);
+
+    const char *exe_name = _get_exe_name(p->start_info.path);
+
+    if (exe_name != nullptr)
+        add_at_end(&_args, strdup(exe_name));
+
+    for (u64 i = 0; i < arg_count; ++i)
+    {
+        sys_string tmp{};
+        string_set(&tmp, args[i]);
         add_at_end(&_args, tmp.data);
         add_at_end(&_args_sizes, tmp.reserved_size);
     }

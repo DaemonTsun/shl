@@ -207,7 +207,7 @@ define_test(search_by_hash_searches_entry_by_hash)
     assert_equal(v3, v);
     assert_equal(v3, v2);
 
-    u32 *v4 = search_by_hash(&table, "abc"_h); // _h string literal hash operator
+    u32 *v4 = search_by_hash(&table, "abc"_hash); // _hash string literal hash operator
     assert_equal(v4, v);
     assert_equal(v4, v2);
     assert_equal(v4, v3);

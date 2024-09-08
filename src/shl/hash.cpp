@@ -12,11 +12,11 @@ hash_t hash_data(const void *data, u64 size, u32 seed)
     return MurmurHash3_x86_32(reinterpret_cast<const char*>(data), static_cast<u32>(size) /*WHY*/, seed);
 }
 
-hash_t hash(const char *string)
+hash_t hash(const c8 *string)
 {
     u64 size = 0;
 
-    const char *c = string;
+    const c8 *c = string;
     while(*c != '\0')
     {
         size++;
@@ -26,18 +26,32 @@ hash_t hash(const char *string)
     return hash_data(reinterpret_cast<const void*>(string), size);
 }
 
-hash_t hash(const wchar_t *string)
+hash_t hash(const c16 *string)
 {
     u64 size = 0;
 
-    const wchar_t *c = string;
+    const c16 *c = string;
     while(*c != '\0')
     {
         size++;
         c++;
     }
 
-    return hash_data(reinterpret_cast<const void*>(string), size * sizeof(wchar_t));
+    return hash_data(reinterpret_cast<const void*>(string), size * sizeof(c16));
+}
+
+hash_t hash(const c32 *string)
+{
+    u64 size = 0;
+
+    const c32 *c = string;
+    while(*c != '\0')
+    {
+        size++;
+        c++;
+    }
+
+    return hash_data(reinterpret_cast<const void*>(string), size * sizeof(c32));
 }
 
 hash_t hash(const bool *v)
@@ -105,12 +119,7 @@ hash_t hash(const void **v)
     return hash_data(reinterpret_cast<const void*>(v), sizeof(const void*));
 }
 
-hash_t operator""_h(const char    *str, u64 size)
-{
-    return hash_data(str, size);
-}
+hash_t operator""_hash(const c8  *str, u64 size) { return hash_data((void*)str, size); }
+hash_t operator""_hash(const c16 *str, u64 size) { return hash_data((void*)str, size * sizeof(c16)); }
+hash_t operator""_hash(const c32 *str, u64 size) { return hash_data((void*)str, size * sizeof(c32)); }
 
-hash_t operator""_h(const wchar_t *str, u64 size)
-{
-    return hash_data(str, size);
-}

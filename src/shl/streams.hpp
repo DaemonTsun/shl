@@ -32,11 +32,13 @@ write(stream or io or pipe, String) writes the string String to the stream
 #include "shl/string.hpp"
 #include "shl/error.hpp"
 
-bool read_entire_file(const char *path, memory_stream *out, error *err = nullptr);
-bool read_entire_file(const wchar_t *path, memory_stream *out, error *err = nullptr);
+bool read_entire_file(const c8  *path, memory_stream *out, error *err = nullptr);
+bool read_entire_file(const c16 *path, memory_stream *out, error *err = nullptr);
+bool read_entire_file(const c32 *path, memory_stream *out, error *err = nullptr);
 bool read_entire_file(file_stream *stream, memory_stream *out, error *err = nullptr);
-bool read_entire_file(const char *path, string *out, error *err = nullptr);
-bool read_entire_file(const wchar_t *path, string *out, error *err = nullptr);
+bool read_entire_file(const c8  *path, string *out, error *err = nullptr);
+bool read_entire_file(const c16 *path, string *out, error *err = nullptr);
+bool read_entire_file(const c32 *path, string *out, error *err = nullptr);
 bool read_entire_file(file_stream *stream, string *out, error *err = nullptr);
 
 // these only return false on error, not if nothing was read, e.g. if at

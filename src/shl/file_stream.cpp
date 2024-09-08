@@ -19,49 +19,73 @@
 
 #include "shl/file_stream.hpp"
 
-bool init(file_stream *stream, const char *path, error *err)
+bool init(file_stream *stream, const c8 *path, error *err)
 {
     assert(stream != nullptr);
     return init(stream, io_open(path, err));
 }
 
-bool init(file_stream *stream, const char *path, open_mode mode, error *err)
+bool init(file_stream *stream, const c8 *path, open_mode mode, error *err)
 {
     assert(stream != nullptr);
     return init(stream, io_open(path, mode, err));
 }
 
-bool init(file_stream *stream, const char *path, open_mode mode, open_flag flags, error *err)
+bool init(file_stream *stream, const c8 *path, open_mode mode, open_flag flags, error *err)
 {
     assert(stream != nullptr);
     return init(stream, io_open(path, mode, flags, err));
 }
 
-bool init(file_stream *stream, const char *path, open_mode mode, open_flag flags, open_permission permissions, error *err)
+bool init(file_stream *stream, const c8 *path, open_mode mode, open_flag flags, open_permission permissions, error *err)
 {
     assert(stream != nullptr);
     return init(stream, io_open(path, mode, flags, permissions, err));
 }
 
-bool init(file_stream *stream, const wchar_t *path, error *err)
+bool init(file_stream *stream, const c16 *path, error *err)
 {
     assert(stream != nullptr);
     return init(stream, io_open(path, err));
 }
 
-bool init(file_stream *stream, const wchar_t *path, open_mode mode, error *err)
+bool init(file_stream *stream, const c16 *path, open_mode mode, error *err)
 {
     assert(stream != nullptr);
     return init(stream, io_open(path, mode, err));
 }
 
-bool init(file_stream *stream, const wchar_t *path, open_mode mode, open_flag flags, error *err)
+bool init(file_stream *stream, const c16 *path, open_mode mode, open_flag flags, error *err)
 {
     assert(stream != nullptr);
     return init(stream, io_open(path, mode, flags, err));
 }
 
-bool init(file_stream *stream, const wchar_t *path, open_mode mode, open_flag flags, open_permission permissions, error *err)
+bool init(file_stream *stream, const c16 *path, open_mode mode, open_flag flags, open_permission permissions, error *err)
+{
+    assert(stream != nullptr);
+    return init(stream, io_open(path, mode, flags, permissions, err));
+}
+
+bool init(file_stream *stream, const c32 *path, error *err)
+{
+    assert(stream != nullptr);
+    return init(stream, io_open(path, err));
+}
+
+bool init(file_stream *stream, const c32 *path, open_mode mode, error *err)
+{
+    assert(stream != nullptr);
+    return init(stream, io_open(path, mode, err));
+}
+
+bool init(file_stream *stream, const c32 *path, open_mode mode, open_flag flags, error *err)
+{
+    assert(stream != nullptr);
+    return init(stream, io_open(path, mode, flags, err));
+}
+
+bool init(file_stream *stream, const c32 *path, open_mode mode, open_flag flags, open_permission permissions, error *err)
 {
     assert(stream != nullptr);
     return init(stream, io_open(path, mode, flags, permissions, err));

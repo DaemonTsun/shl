@@ -18,7 +18,13 @@ remove_const(T)     gets the type T without const.
 
 is_same(T1, T2)     is true if T1 and T2 are the same type, false otherwise.
 is_signed(T)        is true if T is a signed number type.
+
+if_type(Cond, TrueType, FalseType)
+    Evaluates to TrueType at compile time if Cond is true, FalseType otherwise.
+
 forward<T>(x)       "forwards" x.
+
+
 */
 
 // update 01.10.2023: MSVC incorrectly handles __underlying_type, so we need

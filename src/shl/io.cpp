@@ -1,5 +1,5 @@
 
-#include "shl/string_encoding.hpp"
+#include "shl/string.hpp"
 #include "shl/memory.hpp"
 #include "shl/io.hpp"
 
@@ -130,22 +130,22 @@ static void _get_CreateFile_params(_CreateFile_params *out, open_mode mode, open
 }
 #endif
 
-io_handle io_open(const char *path, error *err)
+io_handle io_open(const c8 *path, error *err)
 {
     return io_open(path, open_mode_default, open_flag_default, open_permission_default, err);
 }
 
-io_handle io_open(const char *path, open_mode mode, error *err)
+io_handle io_open(const c8 *path, open_mode mode, error *err)
 {
     return io_open(path, mode, open_flag_default, open_permission_default, err);
 }
 
-io_handle io_open(const char *path, open_mode mode, open_flag flags, error *err)
+io_handle io_open(const c8 *path, open_mode mode, open_flag flags, error *err)
 {
     return io_open(path, mode, flags, open_permission_default, err);
 }
 
-io_handle io_open(const char *path, open_mode mode, open_flag flags, open_permission permissions, error *err)
+io_handle io_open(const c8 *path, open_mode mode, open_flag flags, open_permission permissions, error *err)
 {
 #if Windows
     _CreateFile_params p{};
@@ -201,28 +201,28 @@ io_handle io_open(const char *path, open_mode mode, open_flag flags, open_permis
 #endif
 }
 
-io_handle io_open(const wchar_t *path, error *err)
+io_handle io_open(const c16 *path, error *err)
 {
     return io_open(path, open_mode_default, open_flag_default, open_permission_default, err);
 }
 
-io_handle io_open(const wchar_t *path, open_mode mode, error *err)
+io_handle io_open(const c16 *path, open_mode mode, error *err)
 {
     return io_open(path, mode, open_flag_default, open_permission_default, err);
 }
 
-io_handle io_open(const wchar_t *path, open_mode mode, open_flag flags, error *err)
+io_handle io_open(const c16 *path, open_mode mode, open_flag flags, error *err)
 {
     return io_open(path, mode, flags, open_permission_default, err);
 }
 
-io_handle io_open(const wchar_t *path, open_mode mode, open_flag flags, open_permission permissions, error *err)
+io_handle io_open(const c16 *path, open_mode mode, open_flag flags, open_permission permissions, error *err)
 {
 #if Windows
     _CreateFile_params p{};
     _get_CreateFile_params(&p, mode, flags, permissions);
 
-    io_handle h = CreateFileW(path,
+    io_handle h = CreateFileW((const wchar_t*)path,
                               p._access,
                               p._share,
                               nullptr,
@@ -235,20 +235,36 @@ io_handle io_open(const wchar_t *path, open_mode mode, open_flag flags, open_per
 
     return h;
 #else
-    s64 wchar_count = _string_len(path);
-    char *tmp = nullptr;
-    s64 char_count = (string_conversion_bytes_required(tmp, path, wchar_count) / sizeof(wchar_t)) + 1;
-    tmp = ::alloc<char>(char_count);
-
-    ::fill_memory((void*)tmp, 0, char_count);
-    string_convert(path, wchar_count, tmp, char_count);
+    string conv{};
+    string_set(&conv, path);
+    defer { free(&conv); };
     
-    io_handle ret = ::io_open(tmp, mode, flags, permissions, err);
-
-    dealloc_T<char>(tmp, char_count);
-
-    return ret;
+    return ::io_open(conv.data, mode, flags, permissions, err);
 #endif
+}
+
+io_handle io_open(const c32 *path, error *err)
+{
+    return io_open(path, open_mode_default, open_flag_default, open_permission_default, err);
+}
+
+io_handle io_open(const c32 *path, open_mode mode, error *err)
+{
+    return io_open(path, mode, open_flag_default, open_permission_default, err);
+}
+
+io_handle io_open(const c32 *path, open_mode mode, open_flag flags, error *err)
+{
+    return io_open(path, mode, flags, open_permission_default, err);
+}
+
+io_handle io_open(const c32 *path, open_mode mode, open_flag flags, open_permission permissions, error *err)
+{
+    string conv{};
+    string_set(&conv, path);
+    defer { free(&conv); };
+    
+    return ::io_open(conv.data, mode, flags, permissions, err);
 }
 
 bool io_close(io_handle h, error *err)

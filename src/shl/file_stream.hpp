@@ -221,14 +221,19 @@ struct file_stream
 };
 
 // default mode is writing and reading
-bool init(file_stream *stream, const char *path, error *err = nullptr);
-bool init(file_stream *stream, const char *path, open_mode mode, error *err = nullptr);
-bool init(file_stream *stream, const char *path, open_mode mode, open_flag flags, error *err = nullptr);
-bool init(file_stream *stream, const char *path, open_mode mode, open_flag flags, open_permission permissions, error *err = nullptr);
-bool init(file_stream *stream, const wchar_t *path, error *err = nullptr);
-bool init(file_stream *stream, const wchar_t *path, open_mode mode, error *err = nullptr);
-bool init(file_stream *stream, const wchar_t *path, open_mode mode, open_flag flags, error *err = nullptr);
-bool init(file_stream *stream, const wchar_t *path, open_mode mode, open_flag flags, open_permission permissions, error *err = nullptr);
+bool init(file_stream *stream, const c8 *path, error *err = nullptr);
+bool init(file_stream *stream, const c8 *path, open_mode mode, error *err = nullptr);
+bool init(file_stream *stream, const c8 *path, open_mode mode, open_flag flags, error *err = nullptr);
+bool init(file_stream *stream, const c8 *path, open_mode mode, open_flag flags, open_permission permissions, error *err = nullptr);
+bool init(file_stream *stream, const c16 *path, error *err = nullptr);
+bool init(file_stream *stream, const c16 *path, open_mode mode, error *err = nullptr);
+bool init(file_stream *stream, const c16 *path, open_mode mode, open_flag flags, error *err = nullptr);
+bool init(file_stream *stream, const c16 *path, open_mode mode, open_flag flags, open_permission permissions, error *err = nullptr);
+bool init(file_stream *stream, const c32 *path, error *err = nullptr);
+bool init(file_stream *stream, const c32 *path, open_mode mode, error *err = nullptr);
+bool init(file_stream *stream, const c32 *path, open_mode mode, open_flag flags, error *err = nullptr);
+bool init(file_stream *stream, const c32 *path, open_mode mode, open_flag flags, open_permission permissions, error *err = nullptr);
+
 bool init(file_stream *stream, io_handle handle, error *err = nullptr);
 bool free(file_stream *stream, error *err = nullptr);
 

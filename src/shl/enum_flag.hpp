@@ -9,27 +9,26 @@ Defines the macro enum_flag which defines operators and functions:
      unset_flag  - unsets a flag
 
 Example:
+    enum class Attributes
+    {
+        None        = 0,
+        Floating    = 1,
+        Liquid      = 2,
+        Blue        = 4
+    };
 
-enum class Attributes
-{
-    None        = 0,
-    Floating    = 1,
-    Liquid      = 2,
-    Blue        = 4
-};
+    enum_flag(Attributes);
 
-enum_flag(Attributes);
+    void ...()
+    {
+        Attributes attrs = Attributes::None;
 
-void ...()
-{
-    Attributes attrs = Attributes::None;
+        set_flag(attrs, Attributes::Liquid);
+        set_flag(attrs, Attributes::Blue);
 
-    set_flag(attrs, Attributes::Liquid);
-    set_flag(attrs, Attributes::Blue);
-
-    if (is_flag_set(attrs, Attributes::Blue))
-        printf("Blue attribute is indeed set.\n");
-}
+        if (is_flag_set(attrs, Attributes::Blue))
+            printf("Blue attribute is indeed set.\n");
+    }
 
 */
 

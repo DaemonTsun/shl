@@ -46,6 +46,7 @@ io_is_pipe(h)   returns whether h is a pipe or not.
 */
 
 #include "shl/platform.hpp"
+#include "shl/string_encoding.hpp"
 #include "shl/number_types.hpp"
 #include "shl/enum_flag.hpp"
 #include "shl/error.hpp"
@@ -116,14 +117,18 @@ enum_flag(open_flag);
 
 constexpr open_flag open_flag_default = open_flag::None;
 
-io_handle io_open(const char *path, error *err = nullptr);
-io_handle io_open(const char *path, open_mode mode, error *err = nullptr);
-io_handle io_open(const char *path, open_mode mode, open_flag flags, error *err = nullptr);
-io_handle io_open(const char *path, open_mode mode, open_flag flags, open_permission permissions, error *err = nullptr);
-io_handle io_open(const wchar_t *path, error *err = nullptr);
-io_handle io_open(const wchar_t *path, open_mode mode, error *err = nullptr);
-io_handle io_open(const wchar_t *path, open_mode mode, open_flag flags, error *err = nullptr);
-io_handle io_open(const wchar_t *path, open_mode mode, open_flag flags, open_permission permissions, error *err = nullptr);
+io_handle io_open(const c8 *path, error *err = nullptr);
+io_handle io_open(const c8 *path, open_mode mode, error *err = nullptr);
+io_handle io_open(const c8 *path, open_mode mode, open_flag flags, error *err = nullptr);
+io_handle io_open(const c8 *path, open_mode mode, open_flag flags, open_permission permissions, error *err = nullptr);
+io_handle io_open(const c16 *path, error *err = nullptr);
+io_handle io_open(const c16 *path, open_mode mode, error *err = nullptr);
+io_handle io_open(const c16 *path, open_mode mode, open_flag flags, error *err = nullptr);
+io_handle io_open(const c16 *path, open_mode mode, open_flag flags, open_permission permissions, error *err = nullptr);
+io_handle io_open(const c32 *path, error *err = nullptr);
+io_handle io_open(const c32 *path, open_mode mode, error *err = nullptr);
+io_handle io_open(const c32 *path, open_mode mode, open_flag flags, error *err = nullptr);
+io_handle io_open(const c32 *path, open_mode mode, open_flag flags, open_permission permissions, error *err = nullptr);
 
 bool io_close(io_handle h, error *err = nullptr);
 

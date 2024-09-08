@@ -4,6 +4,17 @@
 /* allocator_arena.hpp
 
 Defines arena and arena_allocator.
+Example usage:
+
+    arena a{};
+    init(&a, 4096);
+
+    allocator al = arena_alloc(&arena);
+    int *x = (int*)allocator_alloc(al, sizeof(int));
+    // use x...
+    allocator_dealloc(al, x, sizeof(int));
+
+    free(&a);
 */
 
 #include "shl/allocator.hpp"

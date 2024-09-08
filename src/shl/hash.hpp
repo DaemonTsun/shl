@@ -26,6 +26,9 @@ Implementation of murmur3 is in murmur_hash.hpp.
 
 #include "shl/number_types.hpp"
 
+typedef char     c8;
+typedef char16_t c16;
+typedef char32_t c32;
 typedef u32 hash_t;
 
 hash_t hash_data(const void *data, u64 size);
@@ -40,8 +43,9 @@ hash_t hash_raw(const T *t)
 template<typename T>
 using hash_function = hash_t (*)(const T*);
 
-hash_t hash(const char *string); // string, NOT char. please do not use.
-hash_t hash(const wchar_t *string); // string, NOT wchar_t. please do not use.
+hash_t hash(const c8  *string); // string, NOT char. please do not use.
+hash_t hash(const c16 *string);
+hash_t hash(const c32 *string);
 hash_t hash(const bool *v);
 hash_t hash(const u8  *v);
 hash_t hash(const u16 *v);
@@ -56,5 +60,6 @@ hash_t hash(const double *v);
 hash_t hash(const long double *v);
 hash_t hash(const void **v);
 
-hash_t operator""_h(const char    *str, u64 size);
-hash_t operator""_h(const wchar_t *str, u64 size);
+hash_t operator""_hash(const c8  *str, u64 size);
+hash_t operator""_hash(const c16 *str, u64 size);
+hash_t operator""_hash(const c32 *str, u64 size);

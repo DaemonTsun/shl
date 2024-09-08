@@ -2,145 +2,313 @@
 
 /* string.hpp
 
-string utility header
+String utility header.
 
-TODO: new docs
-defines const_string and const_wstring, basically const char pointers with
-size attached to them. const_strings are not guaranteed to be null terminated,
-but in most cases will be (e.g. string literals). can be explicitly converted
-to const C *, where C is char in the case of const_string, or wchar_t in the
-case of const_wstring.
+Types:
+const_string, const_u16string, const_u32string
+    Structs containing pointers to const string data, as well as a size which is the
+    number of units in the string.
+    const_string    is UTF-8,
+    const_u16string is UTF-16,
+    const_u32string is UTF-32.
 
-to construct a const_string, either initialize with const_string{ptr, size},
-use the string literal suffix _cs, or use to_const_string(...), such as:
+    const_string & co aren't guaranteed to be null terminated and are often
+    used as "slices" to strings.
 
-    const_string mystr = "hello world!"_cs;
-    const char *cstr = mystr.c_str;
-    s64 size = mystr.size; // or string_length(mystr);
+    To construct a const_string, either initialize with const_string{ptr, size},
+    use the string literal suffix _cs, or use to_const_string(...), such as:
 
-    const_string mystr2 = to_const_string("hello");
+        const_string mystr = "hello world!"_cs;
+        const char *cstr = mystr.c_str;
+        s64 size = mystr.size; // or string_length(mystr);
 
-to_const_string converts from character pointers (optionally including a size),
-other const_strings, or strings to a const_string.
+        const_string mystr2 = to_const_string("hello");
 
-since const_strings are relatively lightweight, they can be copied and don't
-need to be referenced (they're essentially just a pointer with a size).
-const_strings also don't own the string they point to, and as such don't
-need to be freed.
+    Using the _cs string literal suffix operator on a wchar_t string literal
+    (e.g. L"hello"_cs) will yield either a const_u16string or const_u32string,
+    depending on the size of wchar_t.
 
-string and wstring are also defined here. basically dynamic character arrays
-with common string functions. always guaranteed to be null terminated (unless
-you explicitly change that). can be implicitly converted to const_string.
-can be explicitly converted to const C *, where C is char in the case of
-string, and wchar_t in the case of wstring.
+    Since const_strings are relatively lightweight, they can be copied and don't
+    need to be referenced (they're essentially just a pointer with a size).
+    const_strings also don't own the string they point to, and as such don't
+    need to be freed.
 
-to construct a string, either use init(&str, ...) or use the _s suffix for
-string literals, such as:
+string, u16string, u32string
+    Modifiable strings with memory management.
+    Contain a pointer to their data, unit count, reserved unit count and an allocator.
+    string    is UTF-8,
+    u16string is UTF-16,
+    u32string is UTF-32.
 
-     string mystr = "hello world!"_s;                    // copy of string literal
-     const char *cstr = static_cast<const char*>(mystr); // or mystr.data;
-     s64 size = string_length(&mystr);
-     free(&mystr);                                       // every string must be freed.
+    string & co are null-terminated and can be implicitly converted to const_string & co.
+    These manage memory, and as such need to be free'd.
+
+    To construct a string, either use init(&str, ...) or use the _s suffix for
+    string literals, such as:
+
+         string mystr = u8"hello world!"_s;                    // copy of string literal
+         const char *cstr = mystr.data;
+         const_string cs = to_const_string(&mystr);
+         s64 size = string_length(&mystr);
+         free(&mystr);                                       // every string must be freed.
 
 
-string/character functions
+String/Character functions
+--------------------------
+(for more comprehensive usage, see tests/string_tests.cpp)
 
-c = character, s = string, n = number
+init(string *str, ...)
+    Initialized a string. See implementation for parameters, but function accepts pretty much
+    anything.
 
-init(s, ...)         initializes a string
-string_reserve(s, N) allocates enough memory to store at least N+1 characters
-clear(s)             sets string size to 0, but does not deallocate anything
-free(s)              frees the string object, deallocating memory
+free(string *str)
+    Frees the string, deallocating memory.
 
-is_space(c)              true if c is a whitespace character
-is_newline(c)            true if c is a newline character
-is_alpha(c)              true if c is an alphabet character
-is_digit(c)              true if c is a digit
-is_bin_digit(c)          true if c is a binary digit (0 or 1)
-is_oct_digit(c)          true if c is an octal digit (0-7)
-is_hex_digit(c)          true if c is a hexadecimal digit
-is_alphanum(c)           true if is_digit(c) || is_alpha(c)
-is_upper(c)              true if c is an uppercase letter
-is_lower(c)              true if c is an lowercase letter
+string_data(...)
+    Returns a pointer to the string data of the parameter given. Accepts pointers, strings,
+    const_strings, string literals, etc.
 
-string_is_empty(s)              true if s an empty string, but not nullptr
-string_is_null_or_empty(s)      true if s is nullptr or an empty string
-string_is_blank(s)              true if s is nullptr, an empty string or only contains
-                         whitespaces
+string_reserve(string *str, s64 size)
+    Allocates enough memory in str to store at least size+1 characters.
+    Does nothing if str can already hold size+1 characters.
+    (currently) allocates in powers of two.
 
-string_length(s)            returns the length of the string
-string_compare(s1, s2)     compares two strings
-string_compare(s1, s2, n)  compares two strings, up to n characters
+clear(string *str)
+    Sets string size to 0, but does not deallocate anything and does not
+    clear any memory... wait...
 
-string_begins_with(s, prefix)   returns true if prefix is a prefix of s
-string_ends_with(s, suffix)     returns true if suffix is a suffix of s
+utf_advance(const_string str)
+    Advances the string str by one codepoint and returns it.
 
-to_int(s)           converts the string to an int
-to_long(s)          converts the string to a long
-to_long_long(s)     you get the idea
-...
-to_float(s)         converts the string to a float
-...
+Character / Codepoint functions
+is_space(u32 cp)
+    Returns true if cp is a whitespace codepoint.
+is_space(const_string str)
+    Returns true if str contains only whitespace codepoints.
 
-string_set(dest, src)      sets dest to a copy of src
-                           can also convert between char types 
+is_newline(u32 cp) 
+    Returns true if cp is a newline codepoint.
+is_newline(const_string str) 
+    Returns true if str contains only newline codepoints.
 
-string_copy(src, dest)           copies one string to another
-string_copy(src, dest, n)        copies one string to another, up to n characters
-string_copy(src, dest, n, off)   copies one string to another, up to n characters, starting in
-                                 dest at offset off
-string_copy(src)    copies string src and returns a new string instance of the copied string.
-string_copy(src, n) copies string src, up to n characters,
-                    and returns a new string instance of the copied string.
+is_alpha(u32 cp)
+    Returns true if cp is an alphabet codepoint.
+is_alpha(const_string str)
+    Returns true if str contains only alphabet codepoints.
 
-string_append(dest, other)  appends the string other to the string dest
-prepend_string(dest, other) prepends the string other to the string dest
+is_digit(u32 cp)
+    Returns true if cp is a digit codepoint.
+is_digit(const_string str)
+    Returns true if str contains only digit codepoints.
 
-string_index_of(haystack, needle[, offset]) returns the index of the first occurrence of needle
-                                     [starting at offset] within the string haystack, or
-                                     -1 if needle was not found.
+is_bin_digit(u32 cp)
+    Returns true if cp is a binary digit codepoint.
+is_bin_digit(const_string str)
+    Returns true if str contains only binary digit codepoints.
 
-string_last_index_of(haystack, needle[, offset]) returns the index of the last occurrence of needle
-                                             [ending at offset, moving towards the beginning]
-                                             within the string haystack, or
-                                             -1 if needle was not found.
+is_oct_digit(u32 cp)
+    Returns true if cp is a octal digit codepoint.
+is_oct_digit(const_string str)
+    Returns true if str contains only octal digit codepoints.
 
-contains(haystack, needle) returns true if haystack contains needle, false if not.
+is_hex_digit(u32 cp)
+    Returns true if cp is a hexadecimal digit codepoint.
+is_hex_digit(const_string str)
+    Returns true if str contains only hexadecimal digit codepoints.
 
-trim_left(s)                 trims whitespaces from the left of string s, in-place
-trim_right(s)                trims whitespaces from the right of string s, in-place
-trim(s)                      trims whitespaces from the left and right of string s, in-place
-to_upper(c/s)                converts the given character or string to upper case
-to_lower(c/s)                converts the given character or string to upper case
+is_alphanum(u32 cp)
+    Returns true if cp is an alphabet or digit codepoint.
+is_alphanum(const_string str)
+    Returns true if str contains only alphabet or digit codepoints.
 
-substring(src, start[, length]) returns a slice (not a copy) of the substring of src
-                                starting at start, up to length characters.
+is_upper(u32 cp)
+    Returns true if cp is an upper case alphabetical codepoint.
+is_upper(const_string str)
+    Returns true if str only contains upper case alphabetical codepoint.
 
-substring(const_string src, s64 start, s64 length, string out, s64 out_start)
-         copies src, starting at start, for up to length characters, into out,
-         starting at out_start.
-         allocates more memory in out if out does not have enough to fit
-         out_start + length characters.
+is_lower(u32 cp)
+    Returns true if cp is an lower case alphabetical codepoint.
+is_lower(const_string str)
+    Returns true if str only contains lower case alphabetical codepoint.
 
-string_replace(str, needle, replacement[, offset]) replaces the first occurrence of needle
-                                            with replacement [starting at offset] in
-                                            str.
+string_length(...)
+    Returns the number of units, not codepoints, not including null at the end,
+    of the given parameter. Accepts most strings as parameter.
+    Constexpr for string literals.
 
-string_replace_all(str, needle, replacement[, offset]) replaces all occurrences of needle
-                                                with replacement [starting at offset] in
-                                                str.
+to_const_string(...)
+    Returns a const_string of the parameter. Accepts most of anything that
+    can be a const_string.
+    Constexpr for string literals.
 
-string_split(str, delim, out_arr) splits the string str by string or character delimiter delim
-                           and stores const_strings (pointing to memory inside str) in
-                           the array out_arr. resets the size of out_arr.
 
-string_join(strings*, N, delim, out) joins strings together, separated by delim, and writes
-                              the output to out. strings is a pointer to N
-                              strings (const char**, const_string*, string*, etc.).
-string_join(string array, delim, out) same thing as above, except strings is a pointer to an
-                               array of strings.
+NOTE: starting here, functions may have just a "Str" parameter, these are
+      (usually) templated functions that accept anything that can become a
+      const_string, or are overloaded to accept any string.
 
-resolve_environment_variables(*str, aliases = false)
+string_is_empty(Str)
+    Returns true if Str is an empty string (size 0), but not nullptr.
+
+string_is_null_or_empty(Str)
+    Returns true if Str is nullptr or an empty string.
+
+string_is_blank(Str)
+    Returns true if Str is nullptr, an empty string or only contains
+    whitespaces.
+
+string_utf_length(Str)
+    Returns the number of UTF codepoints in the string.
+
+string_compare(Str s1, Str s2[, s64 n])
+    Compares two strings s1 and s2, optionally up to n units.
+    Returns 0 if s1 and s2 are equivalent, non-zero otherwise.
+
+string_begins_with(Str s, Str prefix)
+    Returns true if prefix is a prefix of s.
+
+string_ends_with(Str s, Str suffix)
+    Returns true if suffix is a suffix of s.
+
+utf_codepoint_digit_value(u32 cp)
+    Returns the digit value (0-9) of the given codepoint, or -1 if
+    cp is not a digit (or is not implemented).
+
+string_to_s32(Str s, const_string *next = nullptr, int base = 0, error *err = nullptr)
+    Converts s into an s32.
+    Parses the string similarly to strtol, using base as base.
+    On error, next is set to s, returns 0 and sets err to the error according to strtol.
+    Otherwise, returns the parsed number and sets next to after the string s.
+
+string_to_s8 (...)
+string_to_s16(...)
+string_to_s64(...)
+string_to_u8 (...)   all same as string_to_s32, but different number type
+string_to_u16(...)
+string_to_u32(...)
+string_to_u64(...)
+
+string_to_float(Str s, const_string *next = nullptr, error *err = nullptr)
+    Converts s into a float.
+    Parses the string similarly to strtod, using base as base.
+    On error, next is set to s, returns 0 and sets err to the error according to strtod.
+    Otherwise, returns the parsed number and sets next to after the string s.
+
+string_to_double(...) same as string_to_float
+
+string_set(string *dest, Str src)
+    Copies src into dest, discarding anything in dest before setting.
+    NOTE: string_set may also convert between UTF types, e.g.:
+
+    string s{}; 
+    string_set(&s, U"hello world"); // UTF-32 string literal
+
+string_copy(Str src, string *dest[, s64 n, s64 dest_offset])
+    Copies string from src to dest, optionally up to n units, optionally starting
+    within dest at dest_offset.
+    Does not clear dest before copying, so src is copied directly into dest.
+
+string_copy(Str src[, s64 n])
+    Returns a string copy of src, optionally up to n units.
+
+string_append(string *dest, Str other)
+    Appends the string other to the string dest, allocating more memory if
+    necessary.
+
+string_prepend(string *dest, Str other)
+    Prepends the string other to the string dest, allocating more memory if
+    necessary.
+
+string_index_of(Str haystack, Str needle[, offset])
+    Returns the unit index of the first occurrence of needle,
+    optionally starting at offset, within the string haystack,
+    or -1 if needle was not found.
+
+string_last_index_of(haystack, needle[, offset])
+    Returns the unit index of the last occurrence of needle,
+    optionally ending at offset (moving towards the beginning),
+    within the string haystack, or -1 if needle was not found.
+
+contains(Str haystack, Str needle)
+    Returns true if haystack contains needle, false if not.
+
+string_trim_left(string *s)
+    Trims whitespaces from the left of string s, in-place.
+    Returns true if anything was trimmed.
+
+string_trim_right(string *s)
+    Trims whitespaces from the right of string s, in-place.
+    Returns true if anything was trimmed.
+
+string_trim(string *s)
+    Trims whitespaces from the left and right of string s, in-place.
+    Returns true if anything was trimmed.
+
+char_to_upper(c8/c16/c32)
+    Converts the given character or string to upper case.
+    NOTE: using character types is probably not what you want when dealing with UTF.
+
+char_to_lower(c8/c16/c32)
+    Converts the given character or string to upper case.
+
+utf_codepoint_to_upper(c32 cp)
+    Returns the upper case UTF codepoint of cp, or cp if cp is already
+    upper case or does not have an upper case (or is not implemented).
+
+utf_codepoint_to_upper(c8* / c16* / c32* )
+    Changes the given UTF-8/16/32 codepoint from lower case to upper case.
+    Only a single codepoint is affected.
+
+utf_to_upper(string *s)
+    Converts the entire string s to upper case.
+
+utf_codepoint_to_lower(c32 cp)
+    Returns the lower case UTF codepoint of cp, or cp if cp is already
+    lower case or does not have an lower case (or is not implemented).
+
+utf_codepoint_to_lower(c8* / c16* / c32* )
+    Changes the given UTF-8/16/32 codepoint from upper case to lower case.
+    Only a single codepoint is affected.
+
+utf_to_lower(string *s)
+    Converts the entire string s to lower case.
+
+substring(Str src, s64 start[, s64 length])
+    Returns a slice (not a copy) of the substring of src, starting at
+    unit start, up to length units.
+
+substring(Str src, s64 start, s64 length, string *out[, s64 out_start])
+     Copies src, starting at unit start, for up to length units, into out,
+     starting at unit out_start.
+     Allocates more memory in out if out does not have enough to fit
+     out_start + length units.
+
+utf_substring(Str src, s64 start[, s64 length])
+    Returns a slice (not a copy) of the substring of src, starting at
+    codepoint start, up to length codepoints.
+
+utf_substring(Str src, s64 start, s64 length, string *out[, s64 out_start])
+     Copies src, starting at codepoint start, for up to length codepoints, into out,
+     starting at codepoint out_start.
+     Allocates more memory in out if out does not have enough to fit
+     out_start + length codepoints.
+
+string_replace(string *str, Str needle, Str replacement[, s64 offset])
+    Replaces the first occurrence of needle with replacement [starting at offset] in
+    str.
+
+string_replace_all(string *str, Str needle, Str replacement[, s64 offset])
+    Replaces the all occurrences of needle with replacement [starting at offset] in
+    str.
+
+string_split(Str s, Str delim, array<const_string> *out)
+    Splits Str by delimiter delim and stores slices (const_string, pointing into str)
+    in the array out. Resets the size of out.
+
+string_join(Str* strings, s64 n, Str delim, string *out)
+    Joins strings together, separated by delim, and writes the output to out.
+    strings is a pointer to N strings (const char**, const_string*, string*, etc.).
+
+resolve_environment_variables(string *str, bool aliases = false)
     Replaces "$Varname" parts of str with the contents of environment variables,
     e.g. "hello $HOST" replaces "$HOST" with the HOST environment variable
     (assuming the HOST environment variable is set on the system).
@@ -152,10 +320,31 @@ resolve_environment_variables(*str, aliases = false)
     On Windows:
         HOME    -> gets replaced by the USERPROFILE environment variable
 
-resolve_environment_variables(*cstr, N, aliases = false)
-    C string alternative which writes at most N characters.
 
-hash(str) returns a 32 bit hash of the string.
+hash(Str)
+    Returns a 32 bit hash of the string.
+
+
+Iterating a UTF string:
+The for_utf_string macro may be used to iterate over a UTF string, yielding:
+    The current codepoint in the UTF format of the string,
+    the decoded codepoint,
+    the unit index within the string where the codepoint is at and
+    the UTF index.
+
+    Example:
+    const_string uts = u8"今日は привет"_cs;
+
+    for_utf_string(i_utf, i_str, cp, c, uts)
+    {
+        // i_utf is the UTF index
+        // i_str is the unit index
+        // cp is the decoded codepoint
+        // c is a const_string containing only the current codepoint
+        tprint("%#2s %#2s 0x%08x %: ", i_str, i_utf, cp, c.size);
+        put(c);
+        put("\n");
+    }
 */
 
 #include "shl/hash.hpp"
@@ -170,7 +359,7 @@ struct const_string_base
 {
     typedef C value_type;
 
-    const C *c_str; // TODO: rename to data
+    const C *c_str;
     s64 size; // size in units, not codepoints or "chars"
 
     operator bool() const { return c_str != nullptr; }
@@ -218,6 +407,7 @@ typedef string_base<c8>  string;
 typedef string_base<c16> u16string;
 typedef string_base<c32> u32string;
 
+// These aren't technically supported anyway.
 static inline auto char_cast(const_string_base<wchar_t> str) { return const_string_base<wc_utf_type>{char_cast(str.c_str), str.size}; }
 static inline auto char_cast(string_base<wchar_t> *str) { return (string_base<wc_utf_type>*)str; }
 

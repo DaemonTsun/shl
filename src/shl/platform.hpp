@@ -6,8 +6,8 @@
 Defines simpler platform preprocessor constants for the platform the
 program is being compiled on.
 
-Also defines the sys_char type which is wchar_t on Windows, char on
-anything else.
+Also defines the sys_char type which is char16_t on Windows (if UNICODE is set),
+and char on anything else.
 
 For compiler information, see <shl/compiler.hpp>
 */
@@ -24,7 +24,7 @@ typedef char sys_char;
 #define Mac 0
 
 #if defined(UNICODE)
-typedef wchar_t sys_char;
+typedef char16_t sys_char;
 #define SYS_CHAR(x) L##x
 #else
 typedef char sys_char;
