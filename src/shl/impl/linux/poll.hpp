@@ -2,6 +2,7 @@
 #pragma once
 
 #include "shl/number_types.hpp"
+#include "shl/impl/linux/syscalls.hpp"
 
 #ifndef POLLIN
 #  define POLLIN        0x0001 
@@ -26,4 +27,6 @@ struct poll_fd
     short returned_events;
 };
 
+#if defined(SYS_poll)
 sys_int poll(poll_fd *fds, int count, int timeout_milliseconds);
+#endif

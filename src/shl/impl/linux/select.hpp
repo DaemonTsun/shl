@@ -6,12 +6,16 @@ Linux system calls 'select' and 'pselect6'.
 */
 #pragma once
 
+#include "shl/impl/linux/syscalls.hpp"
 #include "shl/number_types.hpp"
 
 struct fd_set;
 struct timespan; // in shl/time.hpp
 
+#if defined(SYS_select)
 sys_int select(int fd_count, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, timespan *timeout);
+#endif
+
 sys_int pselect6(int fd_count, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, timespan *timeout, void *sigmask);
 
 typedef long int fd_mask;

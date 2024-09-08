@@ -1,7 +1,7 @@
 
-#include "shl/impl/linux/syscalls.hpp"
 #include "shl/impl/linux/io.hpp"
 
+#if defined(SYS_open)
 int open(const char *path, int flags, int mode)
 {
     return (int)(sys_int)linux_syscall3(SYS_open,
@@ -9,6 +9,7 @@ int open(const char *path, int flags, int mode)
         (void*)(sys_int)flags,
         (void*)(sys_int)mode);
 }
+#endif
 
 int openat(int dir_fd, const char *path, int flags, int mode)
 {
@@ -121,18 +122,22 @@ sys_int lseek(int fd, sys_int offset, int origin)
         (void*)(sys_int)origin);
 }
 
+#if defined(SYS_dup)
 int dup(int oldfd)
 {
     return (int)(sys_int)linux_syscall1(SYS_dup,
                                         (void*)(sys_int)oldfd);
 }
+#endif
 
+#if defined(SYS_dup2)
 int dup2(int oldfd, int newfd)
 {
     return (int)(sys_int)linux_syscall2(SYS_dup2,
                                         (void*)(sys_int)oldfd,
                                         (void*)(sys_int)newfd);
 }
+#endif
 
 int dup3(int oldfd, int newfd, int flags)
 {

@@ -6,6 +6,7 @@ Linux filesystem syscalls, structs and constants.
 
 #pragma once
 
+#include "shl/impl/linux/syscalls.hpp"
 #include "shl/number_types.hpp"
 
 // mode to check with access
@@ -16,7 +17,9 @@ Linux filesystem syscalls, structs and constants.
 #  define R_OK  4
 #endif
 
+#if defined(SYS_access)
 sys_int access(const char *path, int mode);
+#endif
 // faccessat
 
 // AT* definitions and flags
@@ -70,7 +73,9 @@ sys_int getcwd(char *buf, sys_int buf_size);
 sys_int chdir(const char *path);
 sys_int fchdir(int fd);
 
+#if defined(SYS_rename)
 sys_int rename(const char *oldpath, const char *newpath);
+#endif
 sys_int renameat(int oldfd, const char *oldpath, int newfd, const char *newpath);
 
 // flags for renameat2
@@ -82,26 +87,43 @@ sys_int renameat(int oldfd, const char *oldpath, int newfd, const char *newpath)
 
 sys_int renameat2(int oldfd, const char *oldpath, int newfd, const char *newpath, int flags);
 
+#if defined(SYS_mkdir)
 sys_int mkdir(const char *path, int mode);
+#endif
 sys_int mkdirat(int fd, const char *path, int mode);
-sys_int rmdir(const char *path);
 
+#if defined(SYS_rmdir)
+sys_int rmdir(const char *path);
+#endif
+
+#if defined(SYS_link)
 sys_int link(const char *path, const char *newpath);
+#endif
 sys_int linkat(int oldfd, const char *oldpath, int newfd, const char *newpath, int flags);
+#if defined(SYS_unlink)
 sys_int unlink(const char *path);
+#endif
 sys_int unlinkat(int fd, const char *path, int flags);
 
+#if defined(SYS_symlink)
 sys_int symlink(const char *target, const char *symlinkpath);
+#endif
 sys_int symlinkat(const char *target, int symlinkfd, const char *symlinkpath);
 
+#if defined(SYS_readlink)
 sys_int readlink(const char *path, char *buf, sys_int buf_size);
+#endif
 sys_int readlinkat(int fd, const char *path, char *buf, sys_int buf_size);
 
+#if defined(SYS_chmod)
 sys_int chmod(const char *path, int mode);
+#endif
 sys_int fchmod(int fd, int mode);
 sys_int fchmodat(int fd, const char *path, int mode, int flags);
 
+#if defined(SYS_chown)
 sys_int chown(const char *path, int owner, int group);
+#endif
 sys_int fchown(int fd, int owner, int group);
 sys_int fchownat(int fd, const char *path, int owner, int group, int flags);
 

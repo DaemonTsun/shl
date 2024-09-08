@@ -6,6 +6,7 @@ Linux io syscalls, structs and constants.
 
 #pragma once
 
+#include "shl/impl/linux/syscalls.hpp"
 #include "shl/number_types.hpp"
 
 // open flags
@@ -66,7 +67,10 @@ Linux io syscalls, structs and constants.
 #  define S_IXOTH 00001
 #endif
 
+#if defined(SYS_open)
 int open(const char *path, int flags, int mode);
+#endif
+
 int openat(int dir_fd, const char *path, int flags, int mode);
 sys_int close(int fd);
 sys_int read(int fd, void *buf, sys_int size);
@@ -108,8 +112,12 @@ sys_int pwritev2(int fd, vec_buf *vbufs, sys_int count, sys_int offset, int flag
 
 sys_int lseek(int fd, sys_int offset, int origin);
 
+#if defined(SYS_dup)
 int dup(int oldfd);
+#endif
+#if defined(SYS_dup2)
 int dup2(int oldfd, int newfd);
+#endif
 int dup3(int oldfd, int newfd, int flags); // can specify O_CLOEXEC
 
 sys_int sendfile(int out_fd, int in_fd, sys_int *offset, sys_int count);

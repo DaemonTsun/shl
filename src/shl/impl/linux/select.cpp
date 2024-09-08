@@ -1,9 +1,9 @@
 
-#include "shl/impl/linux/syscalls.hpp"
 #include "shl/impl/linux/select.hpp"
 #include "shl/time.hpp"
 #include "shl/print.hpp"
 
+#if defined(SYS_select)
 sys_int select(int fd_count, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, timespan *timeout)
 {
     return (sys_int)linux_syscall5(SYS_select,
@@ -13,6 +13,7 @@ sys_int select(int fd_count, fd_set *readfds, fd_set *writefds, fd_set *exceptfd
                                   (void*)exceptfds,
                                   (void*)timeout);
 }
+#endif
 
 sys_int pselect6(int fd_count, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, timespan *timeout, void *sigmask)
 {

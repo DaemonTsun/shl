@@ -1,15 +1,16 @@
 
 #include "shl/impl/linux/inotify.hpp"
-#include "shl/impl/linux/syscalls.hpp"
 
+#if defined(SYS_inotify_init)
 sys_int inotify_init()
 {
     return (sys_int)linux_syscall(SYS_inotify_init);
 }
+#endif
 
 sys_int inotify_init1(int flags)
 {
-    return (sys_int)linux_syscall1(SYS_inotify_init,
+    return (sys_int)linux_syscall1(SYS_inotify_init1,
                                    (void*)(sys_int)flags);
 }
 

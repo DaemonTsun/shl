@@ -5,6 +5,7 @@ Linux inotify syscalls.
  */
 #pragma once
 
+#include "shl/impl/linux/syscalls.hpp"
 #include "shl/number_types.hpp"
 #include "shl/macros.hpp"
 
@@ -64,7 +65,9 @@ static inline const char *inotify_event_name(inotify_event *ev)
 #define IN_ISDIR        0x40000000 // event happened on a directory
 #define IN_ONESHOT      0x80000000 // only send event once
 
+#if defined(SYS_inotify_init)
 sys_int inotify_init();
+#endif
 sys_int inotify_init1(int flags);
 sys_int inotify_add_watch(int watcher_fd, const char *path, u32 mask);
 sys_int inotify_rm_watch(int watcher_fd, int watched_fd);
