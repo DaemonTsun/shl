@@ -607,7 +607,7 @@ bool process_start(process *p, error *err)
         return false;
     }
 #else
-    int id = fork();
+    int id = clone_fork();
 
     if (id < 0)
     {

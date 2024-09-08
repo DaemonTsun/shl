@@ -10,5 +10,8 @@ int fork();
 #endif
 int execve(char *path, char **argv, char **env);
 
+// prefer to use this, some architectures (e.g. aarch64) don't support fork
+int clone_fork();
+
 int getpid();
 int getppid();

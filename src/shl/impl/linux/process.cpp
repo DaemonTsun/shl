@@ -1,6 +1,7 @@
 
 #include "shl/number_types.hpp"
 #include "shl/impl/linux/process.hpp"
+#include "shl/impl/linux/thread.hpp"
 
 #if defined(SYS_fork)
 int fork()
@@ -15,6 +16,16 @@ int execve(char *path, char **argv, char **env)
                                         (void*)path,
                                         (void*)argv,
                                         (void*)env);
+}
+
+int clone_fork()
+{
+    return (int)(sys_int)linux_syscall5(SYS_clone,
+            (void*)(sys_int)(17),
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr);
 }
 
 int getpid()
