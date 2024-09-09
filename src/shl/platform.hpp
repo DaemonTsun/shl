@@ -24,7 +24,7 @@ typedef char sys_char;
 #define Mac 0
 
 #if defined(UNICODE)
-typedef char16_t sys_char;
+typedef wchar_t sys_char;
 #define SYS_CHAR(x) L##x
 #else
 typedef char sys_char;

@@ -4,10 +4,9 @@
 #include "shl/type_functions.hpp"
 #include "shl/process.hpp"
 
-#define LIT(C, Literal)\
-    inline_const_if(is_same(C, char), Literal, L##Literal)
+using sys_utf_char = if_type(is_same(sys_char, wchar_t), wc_utf_type, sys_char);
 
-typedef string_base<sys_char> sys_string;
+typedef string_base<sys_utf_char> sys_string;
 
 #if Windows
 #include <tlhelp32.h> // CreateToolhelp32Snapshot
@@ -135,7 +134,7 @@ void _args_to_cmdline(const C **args, string_base<C> *cmdline)
     if (arg_count > 0)
     {
         string_append(cmdline, string_literal(C, "\""));
-        join(args, arg_count, string_literal(C, "\" \""), cmdline);
+        string_join(args, arg_count, string_literal(C, "\" \""), cmdline);
         string_append(cmdline, string_literal(C, "\""));
     }
 }
@@ -233,7 +232,7 @@ void set_process_executable(process *p, const c8 *exe)
 #if Windows
     sys_string path{};
     string_set(&path, exe);
-    p->start_info.path = path.data;
+    p->start_info.path = (sys_char*)path.data;
     p->start_info._free_exe_path = true;
     p->start_info._free_exe_path_size = path.reserved_size * sizeof(sys_char);
 #else
@@ -249,7 +248,7 @@ void set_process_executable(process *p, const c16 *exe)
     _free_process_start_info_path(&p->start_info);
 
 #if Windows
-    p->start_info.path = (const wchar_t*)exe;
+    p->start_info.path = (const sys_char*)exe;
     p->start_info._free_exe_path = false;
 #else
     sys_string path{};
@@ -268,7 +267,7 @@ void set_process_executable(process *p, const c32 *exe)
 
     sys_string path{};
     string_set(&path, exe);
-    p->start_info.path = path.data;
+    p->start_info.path = (sys_char*)path.data;
     p->start_info._free_exe_path = true;
     p->start_info._free_exe_path_size = path.reserved_size * sizeof(sys_char);
 }
@@ -289,7 +288,7 @@ void set_process_arguments(process *p, const c8 *args)
 #if Windows
     sys_string cmdline{};
     string_set(&cmdline, args);
-    p->start_info.args = cmdline.data;
+    p->start_info.args = (sys_char*)cmdline.data;
     p->start_info._free_args = true;
     p->start_info._free_args_sizes = alloc<s64>();
     *p->start_info._free_args_sizes = cmdline.reserved_size * sizeof(sys_char);
@@ -319,8 +318,8 @@ void set_process_arguments(process *p, const c16 *args)
 
 #if Windows
     // we need to copy this because args must be modifiable. thanks windows.
-    sys_string cmdline = copy_string(args);
-    p->start_info.args = cmdline.data;
+    sys_string cmdline = string_copy(args);
+    p->start_info.args = (sys_char*)cmdline.data;
     p->start_info._free_args = true;
     p->start_info._free_args_sizes = alloc<s64>();
     *p->start_info._free_args_sizes = cmdline.reserved_size * sizeof(sys_char);
@@ -354,7 +353,7 @@ void set_process_arguments(process *p, const c32 *args)
 #if Windows
     sys_string cmdline{};
     string_set(&cmdline, args);
-    p->start_info.args = cmdline.data;
+    p->start_info.args = (sys_char*)cmdline.data;
     p->start_info._free_args = true;
     p->start_info._free_args_sizes = alloc<s64>();
     *p->start_info._free_args_sizes = cmdline.reserved_size * sizeof(sys_char);
@@ -389,7 +388,7 @@ void set_process_arguments(process *p, const c8 **args, [[maybe_unused]] bool ra
 
     sys_string cmdline{};
     string_set(&cmdline, &_cmdline);
-    p->start_info.args = cmdline.data;
+    p->start_info.args = (sys_char*)cmdline.data;
     p->start_info._free_args = true;
     p->start_info._free_args_sizes = alloc<s64>();
     *p->start_info._free_args_sizes = cmdline.reserved_size * sizeof(sys_char);
@@ -458,7 +457,7 @@ void set_process_arguments(process *p, const c16 **args)
 
     sys_string cmdline{};
     _args_to_cmdline(args, &cmdline);
-    p->start_info.args = cmdline.data;
+    p->start_info.args = (sys_char*)cmdline.data;
     p->start_info._free_args = true;
     p->start_info._free_args_sizes = alloc<s64>();
     *p->start_info._free_args_sizes = cmdline.reserved_size * sizeof(sys_char);
@@ -514,7 +513,7 @@ void set_process_arguments(process *p, const c32 **args)
 
     sys_string cmdline{};
     string_set(&cmdline, &_cmdline);
-    p->start_info.args = cmdline.data;
+    p->start_info.args = (sys_char*)cmdline.data;
     p->start_info._free_args = true;
     p->start_info._free_args_sizes = alloc<s64>();
     *p->start_info._free_args_sizes = cmdline.reserved_size * sizeof(sys_char);

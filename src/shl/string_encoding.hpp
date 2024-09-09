@@ -10,11 +10,16 @@ u8"abc"  ->  utf8  string
  u"abc"  ->  utf16 string
  U"abc"  ->  utf32 string... isn't C++ amazing
 
-Types:
+Types (from char_types.hpp):
     c8  - utf8 unit type
     c16 - utf16 unit type
     c32 - utf32 unit type
     wc_utf_type - either c16 or c32, whichever is the size of wchar_t
+
+Additionaly defines sys_utf_char, which is sys_char if sys_char is one of
+c8, c16 or c32, or becomes wc_utf_type if sys_char is wchar_t.
+NOTE: We can't make sys_char a c8/c16/c32 because then it wouldn't be a
+      "system character" anymore.
 
 Functions:
 utf8_decode(c8 *string, u32 *cp, int *error)
@@ -147,15 +152,8 @@ utf_decode(c32 *str, u32 *cp, int *error)
 #pragma once
 
 #include "shl/number_types.hpp"
-#include "shl/type_functions.hpp"
-
-typedef char     c8;
-typedef char16_t c16;
-typedef char32_t c32;
-
-#define is_char_type(T) (is_same(T, c8) || is_same(T, c16) || is_same(T, c32))
-
-using wc_utf_type = if_type((sizeof(wchar_t) == sizeof(c16)), c16, c32);
+#include "shl/char_types.hpp"
+#include "shl/platform.hpp"
 
 #define UNICODE_MAX 0x10ffff
 
@@ -171,6 +169,9 @@ using wc_utf_type = if_type((sizeof(wchar_t) == sizeof(c16)), c16, c32);
 #define UTF16_SURROGATE_LOW             0xdc00
 #define UTF16_CODEPOINT_OFFSET          0x10000
 #define UTF16_CODEPOINT_MASK            0x03ff
+
+using sys_utf_char = if_type(is_same(sys_char, wchar_t), wc_utf_type, sys_char);
+#define SYS_UTF_CHAR(x) ((const sys_utf_char*)SYS_CHAR(x))
 
 extern "C"
 {
