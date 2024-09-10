@@ -19,12 +19,14 @@
 #include "shl/streams.hpp"
 
 // cmake copies these next to test executable
-#define TXT_FILE SYS_UTF_CHAR("file_stream_text_data.txt") // 1024 bytes
-#define BIN_FILE SYS_UTF_CHAR("file_stream_binary_data.bin") // 12 bytes
+#define TXT_FILE SYS_CHAR("file_stream_text_data.txt") // 1024 bytes
+#define BIN_FILE SYS_CHAR("file_stream_binary_data.bin") // 12 bytes
+
+typedef string_base<sys_char> sys_string;
 
 sys_string bin_file;
 
-static const sys_utf_char *get_executable_path()
+static const sys_char *get_executable_path()
 {
     static sys_char pth[4096] = {0};
 #if Windows
@@ -33,32 +35,32 @@ static const sys_utf_char *get_executable_path()
     assert(len > 0 && len < 4095);
     pth[len] = '\0';
 
-    return (const sys_utf_char*)pth;
+    return pth;
 #else
 
     if (readlink("/proc/self/exe", pth, 4095) < 0)
         return nullptr;
     
-    return (const sys_utf_char*)pth;
+    return pth;
 #endif
 }
 
-static sys_string get_filepath(const sys_utf_char *file)
+static string_base<sys_char> get_filepath(const sys_char *file)
 {
-    sys_string ret{};
+    string_base<sys_char> ret{};
 
-    const sys_utf_char *exep = (const sys_utf_char*)get_executable_path();
+    const sys_char *exep = get_executable_path();
 
     if (exep == nullptr)
         return ret;
 
     string_set(&ret, exep);
 
-    s64 idx = string_last_index_of(ret, SYS_UTF_CHAR('/'));
+    s64 idx = string_last_index_of(ret, SYS_CHAR('/'));
 
 #if Windows
     if (idx < 0)
-        idx = string_last_index_of(ret, SYS_UTF_CHAR('\\'));
+        idx = string_last_index_of(ret, SYS_CHAR('\\'));
 #endif
 
     if (idx < 0)
@@ -67,9 +69,9 @@ static sys_string get_filepath(const sys_utf_char *file)
     ret.size = idx;
 
 #if Windows
-    string_append(&ret, SYS_UTF_CHAR("\\"));
+    string_append(&ret, SYS_CHAR("\\"));
 #else
-    string_append(&ret, SYS_UTF_CHAR("/"));
+    string_append(&ret, SYS_CHAR("/"));
 #endif
     string_append(&ret, file);
 

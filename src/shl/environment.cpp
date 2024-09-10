@@ -3,8 +3,6 @@
 #include "shl/number_types.hpp"
 #include "shl/environment.hpp"
 
-using sys_utf_char = if_type(is_same(sys_char, wchar_t), wc_utf_type, sys_char);
-
 #if Windows
 #include <windows.h>
 #else
@@ -21,15 +19,13 @@ const sys_char *get_environment_variable(const sys_char *name, error *err)
     return get_environment_variable(name, len, err);
 }
 
-const sys_char *get_environment_variable(const sys_char *_name, s64 name_len, [[maybe_unused]] error *err)
+const sys_char *get_environment_variable(const sys_char *name, s64 name_len, [[maybe_unused]] error *err)
 {
     if (name_len == 0)
         return nullptr;
 
-    const sys_utf_char *name = (const sys_utf_char*)_name;
-
 #if Windows
-    const sys_utf_char *vars = (const sys_utf_char*)GetEnvironmentStrings();
+    const sys_char *vars = GetEnvironmentStrings();
 
     if (vars == nullptr)
     {
@@ -39,7 +35,7 @@ const sys_char *get_environment_variable(const sys_char *_name, s64 name_len, [[
 
     while (*vars != '\0')
     {
-        const sys_utf_char *varline = vars;
+        const sys_char *varline = vars;
         
         while (*vars != '=' && *vars != '\0')
             vars++;
@@ -61,7 +57,7 @@ const sys_char *get_environment_variable(const sys_char *_name, s64 name_len, [[
             continue;
         }
 
-        if (string_compare(varline, name, equals - 1) != 0)
+        if (compare_strings(varline, name, equals - 1) != 0)
         {
             while (*vars != '\0')
                 vars++;
@@ -70,7 +66,7 @@ const sys_char *get_environment_variable(const sys_char *_name, s64 name_len, [[
             continue;
         }
 
-        return (const sys_char*)(varline + equals + 1);
+        return varline + equals + 1;
     }
 
     return nullptr;

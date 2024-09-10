@@ -7,12 +7,10 @@
 #include "shl/string.hpp"
 #include "shl/async_io.hpp"
 
-using sys_utf_char = if_type(is_same(sys_char, wchar_t), wc_utf_type, sys_char);
-#define SYS_UTF_CHAR(x) ((const sys_utf_char*)SYS_CHAR(x))
-typedef string_base<sys_utf_char> sys_string;
+typedef string_base<sys_char> sys_string;
 
 // cmake copies these next to test executable
-#define HELLO_WORLD_TXT SYS_UTF_CHAR("hello_world.txt")
+#define HELLO_WORLD_TXT SYS_CHAR("hello_world.txt")
 
 const sys_char *get_executable_path()
 {
@@ -33,22 +31,22 @@ const sys_char *get_executable_path()
 #endif
 }
 
-sys_string get_filepath(const sys_utf_char *file)
+sys_string get_filepath(const sys_char *file)
 {
     sys_string ret{};
 
-    const sys_utf_char *exep = (const sys_utf_char*)get_executable_path();
+    const sys_char *exep = get_executable_path();
 
     if (exep == nullptr)
         return ret;
 
     string_set(&ret, exep);
 
-    s64 idx = string_last_index_of(ret, SYS_UTF_CHAR('/'));
+    s64 idx = string_last_index_of(ret, SYS_CHAR('/'));
 
 #if Windows
     if (idx < 0)
-        idx = string_last_index_of(ret, SYS_UTF_CHAR('\\'));
+        idx = string_last_index_of(ret, SYS_CHAR('\\'));
 #endif
 
     if (idx < 0)
@@ -57,9 +55,9 @@ sys_string get_filepath(const sys_utf_char *file)
     ret.size = idx;
 
 #if Windows
-    string_append(&ret, SYS_UTF_CHAR("\\"));
+    string_append(&ret, SYS_CHAR("\\"));
 #else
-    string_append(&ret, SYS_UTF_CHAR("/"));
+    string_append(&ret, SYS_CHAR("/"));
 #endif
     string_append(&ret, file);
 

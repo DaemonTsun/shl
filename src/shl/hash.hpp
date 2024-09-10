@@ -25,8 +25,10 @@ Implementation of murmur3 is in murmur_hash.hpp.
  */
 
 #include "shl/number_types.hpp"
-#include "shl/char_types.hpp"
 
+typedef char     c8;
+typedef char16_t c16;
+typedef char32_t c32;
 typedef u32 hash_t;
 
 hash_t hash_data(const void *data, u64 size);

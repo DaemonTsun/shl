@@ -21,7 +21,7 @@ define_test(utf8_decode_decodes_utf8_to_32bit_codepoints)
 
 define_test(utf8_decode_decodes_utf8_to_32bit_codepoints2)
 {
-    u8 _input[] = {(u8)0xd0, (u8)0x9f};
+    c8 _input[] = {(c8)0xd0, (c8)0x9f};
     const c8 *input = (const c8*)_input;
     u32 cp = 0;
     int error = 0;

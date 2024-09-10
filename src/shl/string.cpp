@@ -860,7 +860,7 @@ static double _string_to_decimal(const_string_base<C> s, const_string_base<C> *n
             mant_size -= 1;
         }
 
-        fraction = (double)frac1;
+        fraction = frac1;
     }
 
     s = pexp;
@@ -2006,18 +2006,16 @@ void _string_join(const u32string  *strings, s64 count, const_u32string delim, u
     _string_join_s(strings, count, delim, out);
 }
 
-using sys_utf_char = if_type(is_same(sys_char, wchar_t), wc_utf_type, sys_char);
-
 template<typename C>
 static inline bool _get_converted_environment_variable(const C *name, s64 namesize, C **outbuf, s64 *outsize, sys_char **sysbuf, s64 *syssize)
 {
     if constexpr (sizeof(C) == sizeof(sys_char))
     {
-        *outbuf = const_cast<sys_utf_char*>((const sys_utf_char*)get_environment_variable((const sys_char*)name, namesize));
+        *outbuf = const_cast<C*>(get_environment_variable(name, namesize));
     }
     else
     {
-        s64 char_count = string_conversion_bytes_required((sys_utf_char*)nullptr, name, namesize) / sizeof(sys_char);
+        s64 char_count = string_conversion_bytes_required((sys_char*)nullptr, name, namesize) / sizeof(sys_char);
 
         if (char_count < 0)
             return false;
@@ -2030,9 +2028,9 @@ static inline bool _get_converted_environment_variable(const C *name, s64 namesi
             fill_memory((void*)*sysbuf, 0, (*syssize) * sizeof(sys_char));
         }
 
-        string_convert(name, namesize, (sys_utf_char*)*sysbuf, *syssize);
+        string_convert(name, namesize, *sysbuf, *syssize);
 
-        const sys_utf_char *envvar = (const sys_utf_char*)get_environment_variable(*sysbuf, namesize);
+        const sys_char *envvar = get_environment_variable(*sysbuf, namesize);
         s64 envvar_size = string_length(envvar);
 
         if (envvar != nullptr)

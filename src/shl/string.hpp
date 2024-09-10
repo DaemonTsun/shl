@@ -406,7 +406,6 @@ struct string_base
 typedef string_base<c8>  string;
 typedef string_base<c16> u16string;
 typedef string_base<c32> u32string;
-typedef string_base<sys_utf_char> sys_string;
 
 // These aren't technically supported anyway.
 static inline auto char_cast(const_string_base<wchar_t> str) { return const_string_base<wc_utf_type>{char_cast(str.c_str), str.size}; }

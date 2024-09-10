@@ -7,7 +7,7 @@
 #include "shl/string.hpp"
 #include "shl/array.hpp"
 
-#define WIN_CMD  SYS_UTF_CHAR("C:\\Windows\\System32\\cmd.exe")
+#define WIN_CMD  L"C:\\Windows\\System32\\cmd.exe"
 #define UNIX_ECHO "/usr/bin/echo"
 
 define_test(process_arguments_test)
@@ -15,10 +15,10 @@ define_test(process_arguments_test)
     process p{};
     process_create(&p);
 
-    set_process_arguments(&p, SYS_UTF_CHAR(R"=(echo "hello world"   a\\b\"c\")="));
+    set_process_arguments(&p, SYS_CHAR(R"=(echo "hello world"   a\\b\"c\")="));
 
 #if Windows
-    assert_equal(string_compare((const sys_utf_char*)p.start_info.args, SYS_UTF_CHAR(R"=(echo "hello world"   a\\b\"c\")=")), 0);
+    assert_equal(string_compare(p.start_info.args, LR"=(echo "hello world"   a\\b\"c\")="), 0);
 #else
     assert_equal(string_compare(p.start_info.args[0], "echo"), 0);
     assert_equal(string_compare(p.start_info.args[1], R"(hello world)"), 0);
@@ -31,12 +31,11 @@ define_test(process_arguments_test)
     // ON LINUX: if the executable path is set, the name of the executable
     // is preprended to be the first argument of the argument list.
     // Does not apply to Windows.
-    set_process_executable(&p, SYS_UTF_CHAR("/usr/bin/echo"));
-    set_process_arguments(&p, SYS_UTF_CHAR(R"=("hello world"   a\\b\"c\")="));
+    set_process_executable(&p, SYS_CHAR("/usr/bin/echo"));
+    set_process_arguments(&p, SYS_CHAR(R"=("hello world"   a\\b\"c\")="));
 
 #if Windows
-    int res = string_compare((const sys_utf_char*)p.start_info.args, SYS_UTF_CHAR(R"=("hello world"   a\\b\"c\")="));
-    assert_equal(res, 0);
+    assert_equal(string_compare(p.start_info.args, LR"=("hello world"   a\\b\"c\")="), 0);
 #else
     assert_equal(string_compare(p.start_info.args[0], "echo"), 0);
     assert_equal(string_compare(p.start_info.args[1], R"(hello world)"), 0);
@@ -57,7 +56,7 @@ define_test(process_test)
 
 #if Windows
     set_process_executable(&p, WIN_CMD);
-    set_process_arguments(&p, SYS_UTF_CHAR("/c echo hello world"));
+    set_process_arguments(&p, L"/c echo hello world");
 #else
     set_process_executable(&p, UNIX_ECHO);
     set_process_arguments(&p, "hello world");
@@ -75,10 +74,10 @@ define_test(process_test)
     set_process_executable(&p, WIN_CMD);
 
     // when using args, last arg must be nullptr
-    const c16 *args[] = {
-        u"/c",
-        u"echo",
-        u"hello world",
+    const sys_char *args[] = {
+        L"/c",
+        L"echo",
+        L"hello world",
         nullptr
     }; 
 
@@ -117,11 +116,11 @@ define_test(process_pipe_test)
     set_handle_inheritance(out_pipe.read, false);
 
 #if Windows
-    const sys_utf_char *cmd = WIN_CMD;
-    const sys_utf_char *args = SYS_UTF_CHAR("/c echo world!");
+    const sys_char *cmd = WIN_CMD;
+    const sys_char *args = L"/c echo world!";
 #else
-    const sys_utf_char *cmd = UNIX_ECHO;
-    const sys_utf_char *args[] = {"world!", nullptr};
+    const sys_char *cmd = UNIX_ECHO;
+    const sys_char *args[] = {"world!", nullptr};
 #endif
 
     set_process_executable(&p, cmd);
@@ -159,11 +158,11 @@ define_test(process_stop_stops_process)
     error err{};
 
 #if Windows
-    const sys_utf_char *cmd = (const sys_utf_char*)WIN_CMD;
-    const sys_utf_char *args = nullptr;
+    const sys_char *cmd = WIN_CMD;
+    const sys_char *args = nullptr;
 #else
-    const sys_utf_char *cmd = "/usr/bin/cat";
-    const sys_utf_char *args[] = {"-", nullptr};
+    const sys_char *cmd = "/usr/bin/cat";
+    const sys_char *args[] = {"-", nullptr};
 #endif
 
     pipe_t pip{};
