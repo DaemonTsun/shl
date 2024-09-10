@@ -25,7 +25,7 @@ const sys_char *get_environment_variable(const sys_char *name, s64 name_len, [[m
         return nullptr;
 
 #if Windows
-    const sys_char *vars = GetEnvironmentStrings();
+    const sys_char *vars = (const sys_char*)GetEnvironmentStrings();
 
     if (vars == nullptr)
     {
@@ -57,7 +57,7 @@ const sys_char *get_environment_variable(const sys_char *name, s64 name_len, [[m
             continue;
         }
 
-        if (compare_strings(varline, name, equals - 1) != 0)
+        if (string_compare(varline, name, equals - 1) != 0)
         {
             while (*vars != '\0')
                 vars++;
@@ -114,7 +114,8 @@ bool set_environment_variable(const sys_char *name, const sys_char *value, bool 
     if (!overwrite && get_environment_variable(name, err) != nullptr)
         return false;
 
-    if (!SetEnvironmentVariable(name, value))
+    if (!SetEnvironmentVariable((const sys_native_char*)name,
+                                (const sys_native_char*)value))
     {
         set_GetLastError_error(err);
         return false;

@@ -47,7 +47,7 @@ bool _CreatePipeEx(LPHANDLE out_read,
         preferred_size = 4096;
 
     read_handle = CreateNamedPipe(
-        pipe_name,
+        (const sys_native_char*)pipe_name,
         PIPE_ACCESS_INBOUND | read_mode,
         PIPE_TYPE_BYTE | PIPE_WAIT,
         1,
@@ -61,7 +61,7 @@ bool _CreatePipeEx(LPHANDLE out_read,
         return false;
 
     write_handle = CreateFile(
-        pipe_name,
+        (const sys_native_char*)pipe_name,
         GENERIC_WRITE,
         0,
         attrs,

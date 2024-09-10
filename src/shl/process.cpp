@@ -135,7 +135,7 @@ void _args_to_cmdline(const C **args, string_base<C> *cmdline)
     if (arg_count > 0)
     {
         string_append(cmdline, string_literal(C, "\""));
-        join(args, arg_count, string_literal(C, "\" \""), cmdline);
+        string_join(args, arg_count, string_literal(C, "\" \""), cmdline);
         string_append(cmdline, string_literal(C, "\""));
     }
 }
@@ -249,7 +249,7 @@ void set_process_executable(process *p, const c16 *exe)
     _free_process_start_info_path(&p->start_info);
 
 #if Windows
-    p->start_info.path = (const wchar_t*)exe;
+    p->start_info.path = exe;
     p->start_info._free_exe_path = false;
 #else
     sys_string path{};
@@ -319,7 +319,7 @@ void set_process_arguments(process *p, const c16 *args)
 
 #if Windows
     // we need to copy this because args must be modifiable. thanks windows.
-    sys_string cmdline = copy_string(args);
+    sys_string cmdline = string_copy(args);
     p->start_info.args = cmdline.data;
     p->start_info._free_args = true;
     p->start_info._free_args_sizes = alloc<s64>();
@@ -592,8 +592,8 @@ bool process_start(process *p, error *err)
     assert(p != nullptr);
 
 #if Windows
-    if (!CreateProcess(p->start_info.path,
-                       p->start_info.args,
+    if (!CreateProcess((const sys_native_char*)p->start_info.path,
+                       (sys_native_char*)p->start_info.args,
                        nullptr,
                        nullptr,
                        p->start_info.inherit_handles,

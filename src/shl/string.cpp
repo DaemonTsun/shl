@@ -860,7 +860,7 @@ static double _string_to_decimal(const_string_base<C> s, const_string_base<C> *n
             mant_size -= 1;
         }
 
-        fraction = frac1;
+        fraction = (double)frac1;
     }
 
     s = pexp;

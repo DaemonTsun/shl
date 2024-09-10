@@ -7,7 +7,7 @@
 #include "shl/string.hpp"
 #include "shl/array.hpp"
 
-#define WIN_CMD  L"C:\\Windows\\System32\\cmd.exe"
+#define WIN_CMD  SYS_CHAR("C:\\Windows\\System32\\cmd.exe")
 #define UNIX_ECHO "/usr/bin/echo"
 
 define_test(process_arguments_test)
@@ -18,7 +18,7 @@ define_test(process_arguments_test)
     set_process_arguments(&p, SYS_CHAR(R"=(echo "hello world"   a\\b\"c\")="));
 
 #if Windows
-    assert_equal(string_compare(p.start_info.args, LR"=(echo "hello world"   a\\b\"c\")="), 0);
+    assert_equal(string_compare(p.start_info.args, SYS_CHAR(R"=(echo "hello world"   a\\b\"c\")=")), 0);
 #else
     assert_equal(string_compare(p.start_info.args[0], "echo"), 0);
     assert_equal(string_compare(p.start_info.args[1], R"(hello world)"), 0);
@@ -35,7 +35,7 @@ define_test(process_arguments_test)
     set_process_arguments(&p, SYS_CHAR(R"=("hello world"   a\\b\"c\")="));
 
 #if Windows
-    assert_equal(string_compare(p.start_info.args, LR"=("hello world"   a\\b\"c\")="), 0);
+    assert_equal(string_compare(p.start_info.args, SYS_CHAR(R"=("hello world"   a\\b\"c\")=")), 0);
 #else
     assert_equal(string_compare(p.start_info.args[0], "echo"), 0);
     assert_equal(string_compare(p.start_info.args[1], R"(hello world)"), 0);
@@ -56,7 +56,7 @@ define_test(process_test)
 
 #if Windows
     set_process_executable(&p, WIN_CMD);
-    set_process_arguments(&p, L"/c echo hello world");
+    set_process_arguments(&p, SYS_CHAR("/c echo hello world"));
 #else
     set_process_executable(&p, UNIX_ECHO);
     set_process_arguments(&p, "hello world");
@@ -75,9 +75,9 @@ define_test(process_test)
 
     // when using args, last arg must be nullptr
     const sys_char *args[] = {
-        L"/c",
-        L"echo",
-        L"hello world",
+        SYS_CHAR("/c"),
+        SYS_CHAR("echo"),
+        SYS_CHAR("hello world"),
         nullptr
     }; 
 
@@ -117,7 +117,7 @@ define_test(process_pipe_test)
 
 #if Windows
     const sys_char *cmd = WIN_CMD;
-    const sys_char *args = L"/c echo world!";
+    const sys_char *args = SYS_CHAR("/c echo world!");
 #else
     const sys_char *cmd = UNIX_ECHO;
     const sys_char *args[] = {"world!", nullptr};

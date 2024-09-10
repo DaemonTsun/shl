@@ -15,6 +15,11 @@ Types:
     c16 - utf16 unit type
     c32 - utf32 unit type
     wc_utf_type - either c16 or c32, whichever is the size of wchar_t
+    sys_native_char - since sys_char is one of c8, c16 or c32, OS functions may not
+                      accept sys_char.
+                      In this case, anything sys_char may be cast to sys_native_char,
+                      which will be accepted by OS functions.
+
 
 Functions:
 utf8_decode(c8 *string, u32 *cp, int *error)
@@ -147,15 +152,14 @@ utf_decode(c32 *str, u32 *cp, int *error)
 #pragma once
 
 #include "shl/number_types.hpp"
+#include "shl/char_types.hpp"
+#include "shl/platform.hpp"
 #include "shl/type_functions.hpp"
-
-typedef char     c8;
-typedef char16_t c16;
-typedef char32_t c32;
 
 #define is_char_type(T) (is_same(T, c8) || is_same(T, c16) || is_same(T, c32))
 
 using wc_utf_type = if_type((sizeof(wchar_t) == sizeof(c16)), c16, c32);
+using sys_native_char = if_type(sizeof(sys_char) == sizeof(wchar_t), wchar_t, c8);
 
 #define UNICODE_MAX 0x10ffff
 
