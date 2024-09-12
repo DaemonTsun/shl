@@ -773,13 +773,23 @@ void _string_append(string    *dst, const_string    other);
 void _string_append(u16string *dst, const_u16string other);
 void _string_append(u32string *dst, const_u32string other);
 
-#define string_append(StrPtrDst, Other) (_string_append((StrPtrDst), to_const_string(Other)))
+template<typename C, typename T>
+auto string_append(string_base<C> *dst, T src)
+    -> decltype(_string_append(dst, to_const_string(src)))
+{
+    return _string_append(dst, to_const_string(src));
+}
 
 void _string_prepend(string    *dst, const_string    other);
 void _string_prepend(u16string *dst, const_u16string other);
 void _string_prepend(u32string *dst, const_u32string other);
 
-#define string_prepend(StrPtrDst, Other) (_string_prepend((StrPtrDst), to_const_string(Other)))
+template<typename C, typename T>
+auto string_prepend(string_base<C> *dst, T src)
+    -> decltype(_string_prepend(dst, to_const_string(src)))
+{
+    return _string_prepend(dst, to_const_string(src));
+}
 
 s64 string_index_of(const_string    haystack, c8              needle, s64 offset = 0);
 s64 string_index_of(const_u16string haystack, c16             needle, s64 offset = 0);
