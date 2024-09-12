@@ -731,7 +731,12 @@ void _string_set(u32string *dst, const_string    src);
 void _string_set(u32string *dst, const_u16string src);
 void _string_set(u32string *dst, const_u32string src);
 
-#define string_set(StrPtr, Src) (_string_set((StrPtr), to_const_string(Src)))
+template<typename C, typename T>
+auto string_set(string_base<C> *dst, T src)
+    -> decltype(_string_set(dst, to_const_string(src)))
+{
+    return _string_set(dst, to_const_string(src));
+}
 
 c8  *string_copy(const c8  *src, c8  *dst);
 c8  *string_copy(const c8  *src, c8  *dst, s64 n);
