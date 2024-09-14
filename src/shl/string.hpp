@@ -671,13 +671,23 @@ bool _string_begins_with(const_string    s, const_string    prefix);
 bool _string_begins_with(const_u16string s, const_u16string prefix);
 bool _string_begins_with(const_u32string s, const_u32string prefix);
 
-#define string_begins_with(S, Prefix) (_string_begins_with(to_const_string(S), to_const_string(Prefix)))
+template<typename T1, typename T2>
+auto string_begins_with(T1 s1, T2 s2)
+    -> decltype(_string_begins_with(to_const_string(s1), to_const_string(s2)))
+{
+    return _string_begins_with(to_const_string(s1), to_const_string(s2));
+}
 
 bool _string_ends_with(const_string    s, const_string    prefix);
 bool _string_ends_with(const_u16string s, const_u16string prefix);
 bool _string_ends_with(const_u32string s, const_u32string prefix);
 
-#define string_ends_with(S, Prefix) (_string_ends_with(to_const_string(S), to_const_string(Prefix)))
+template<typename T1, typename T2>
+auto string_ends_with(T1 s1, T2 s2)
+    -> decltype(_string_ends_with(to_const_string(s1), to_const_string(s2)))
+{
+    return _string_ends_with(to_const_string(s1), to_const_string(s2));
+}
 
 // returns -1 if invalid
 int utf_codepoint_digit_value(u32 cp);
