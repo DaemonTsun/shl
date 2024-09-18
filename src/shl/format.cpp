@@ -1,6 +1,6 @@
 
 #include "shl/string_encoding.hpp"
-#include "shl/at_exit.hpp"
+#include "shl/exit.hpp"
 #include "shl/bits.hpp"
 #include "shl/format.hpp"
 

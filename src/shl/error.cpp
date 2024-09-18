@@ -6,7 +6,7 @@
 #include "shl/platform.hpp"
 #include "shl/error.hpp"
 #include "shl/ring_buffer.hpp"
-#include "shl/at_exit.hpp"
+#include "shl/exit.hpp"
 
 #if Windows
 #include <windows.h>

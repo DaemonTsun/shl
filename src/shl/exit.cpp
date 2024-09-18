@@ -1,12 +1,39 @@
 
-#include <stdlib.h>
+#include <stdlib.h> // atexit
 
 #include "shl/array.hpp"
-#include "shl/at_exit.hpp"
+#include "shl/exit.hpp"
+#include "shl/platform.hpp"
+
+#if Windows
+#  include <windows.h>
+#elif Linux
+#  include "shl/impl/linux/exit.hpp"
+#endif
+
+// TODO: once we don't use libc anymore, add atexit callbacks to these.
+[[noreturn]] void exit_thread(int status)
+{
+#if Windows
+    ExitThread((DWORD)status);
+#else
+    exit(status);
+#endif
+}
+
+[[noreturn]] void exit_process(int status)
+{
+#if Windows
+    ExitProcess((DWORD)status);
+#else
+    exit_group(status);
+#endif
+}
 
 typedef array<exit_function_t> _exit_function_container;
 
 _exit_function_container *_get_exit_functions(bool free_functions);
+int atexit(void (*function)(void));
 
 static void _atexit_callback()
 {
