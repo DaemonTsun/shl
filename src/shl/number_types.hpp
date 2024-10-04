@@ -31,6 +31,8 @@ works fine.
 Also mostly just used in syscalls, this header defines the 'sys_int' and 'sys_uint'
 types which are of the size of the architecture, expected in syscalls.
 
+Also defines define_explicit_number_type which may be used to define an enum number type
+with arithmetic operators.
 */
 
 #include "shl/architecture.hpp"
@@ -151,3 +153,36 @@ define_min_value(double, DOUBLE_MIN);
 #ifndef offset_of
 #define offset_of(st, m) ((s64)&(((st *)0)->m))
 #endif
+
+// custom types
+#define define_explicit_number_type(T, Base)\
+    enum T : Base;\
+    constexpr inline Base value(T x)            { return (Base)x; }\
+    constexpr inline T operator+ (T x)          { return (T)(+(Base)x); }\
+    constexpr inline T operator- (T x)          { return (T)(-(Base)x); }\
+    constexpr inline T operator~ (T x)          { return (T)(~(Base)x); }\
+    constexpr inline bool operator!(T x)        { return (T)(!(Base)x); }\
+    constexpr inline T operator+ (T l, T r)     { return (T)((Base)l +  (Base)r); }\
+    constexpr inline T operator- (T l, T r)     { return (T)((Base)l -  (Base)r); }\
+    constexpr inline T operator* (T l, T r)     { return (T)((Base)l *  (Base)r); }\
+    constexpr inline T operator/ (T l, T r)     { return (T)((Base)l /  (Base)r); }\
+    constexpr inline T operator% (T l, T r)     { return (T)((Base)l %  (Base)r); }\
+    constexpr inline T operator& (T l, T r)     { return (T)((Base)l &  (Base)r); }\
+    constexpr inline T operator| (T l, T r)     { return (T)((Base)l |  (Base)r); }\
+    constexpr inline T operator^ (T l, T r)     { return (T)((Base)l ^  (Base)r); }\
+    constexpr inline T operator<<(T l, T r)     { return (T)((Base)l << (Base)r); }\
+    constexpr inline T operator>>(T l, T r)     { return (T)((Base)l >> (Base)r); }\
+    constexpr inline T &operator+= (T &l, T r)  { return l = l +  r; }\
+    constexpr inline T &operator-= (T &l, T r)  { return l = l -  r; }\
+    constexpr inline T &operator*= (T &l, T r)  { return l = l *  r; }\
+    constexpr inline T &operator/= (T &l, T r)  { return l = l /  r; }\
+    constexpr inline T &operator%= (T &l, T r)  { return l = l %  r; }\
+    constexpr inline T &operator&= (T &l, T r)  { return l = l &  r; }\
+    constexpr inline T &operator|= (T &l, T r)  { return l = l |  r; }\
+    constexpr inline T &operator^= (T &l, T r)  { return l = l ^  r; }\
+    constexpr inline T &operator<<=(T &l, T r)  { return l = l << r; }\
+    constexpr inline T &operator>>=(T &l, T r)  { return l = l >> r; }\
+    constexpr inline T &operator++(T &x)        { return x += (T)1; }\
+    constexpr inline T &operator--(T &x)        { return x -= (T)1; }\
+    constexpr inline T operator++(T &x, int)    { T tmp = x; ++x; return tmp; }\
+    constexpr inline T operator--(T &x, int)    { T tmp = x; --x; return tmp; }
