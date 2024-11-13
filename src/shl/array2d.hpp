@@ -10,7 +10,7 @@ struct array2d
     s32 height;
     array<T> entries;
 
-    T *operator[](s64 row) { return entries->data + row * this->width; }
+    T *operator[](s64 row) { return entries.data + row * this->width; }
 };
 
 template<typename T>
