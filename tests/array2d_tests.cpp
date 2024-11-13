@@ -53,6 +53,31 @@ define_test(index_operator_gets_nth_row)
     free(&arr);
 }
 
+define_test(at_gets_element_at_coordinates)
+{
+    array2d<int> arr;
+
+    init(&arr, 2, 3);
+
+    // index operator is y first, x second
+    arr[0][0] = 0;
+    arr[0][1] = 1;
+    arr[1][0] = 2;
+    arr[1][1] = 3;
+    arr[2][0] = 4;
+    arr[2][1] = 5;
+
+    // at function is x first, y second
+    assert_equal(*at(&arr, 0, 0), 0);
+    assert_equal(*at(&arr, 1, 0), 1);
+    assert_equal(*at(&arr, 0, 1), 2);
+    assert_equal(*at(&arr, 1, 1), 3);
+    assert_equal(*at(&arr, 0, 2), 4);
+    assert_equal(*at(&arr, 1, 2), 5);
+
+    free(&arr);
+}
+
 define_test(for_array2d_iterates_array2d)
 {
     array2d<int> arr;

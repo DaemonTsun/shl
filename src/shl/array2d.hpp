@@ -1,6 +1,57 @@
 
 #pragma once
 
+/* array2d.hpp
+
+Contiguous dynamic two dimensional memory structure.
+Keeps index integrity upon resizing the dimensions of the array, e.g.
+
+    array2d<int> arr;
+    init(&arr, 2, 3);
+
+    1 2
+    3 4
+    5 6
+
+    upon resizing to 4, 4 (resize(&arr, 4, 4)), arr looks like this:
+
+    1 2 0 0
+    3 4 0 0
+    5 6 0 0
+    0 0 0 0
+
+    memory of new elements is always filled with zeroes.
+
+An array2d may also be iterated:
+
+    for_array2d(x, y, cell, &arr)
+        *cell = x + y;
+
+    Where x and y are the coordinates of the element, and cell is a pointer
+    to the element within arr.
+
+Index operator yields the row (i.e. uses the y coordinate), so using the example
+array above:
+    arr[2] gives a pointer to the values of arr, starting at value 5
+
+    arr[2][0] == 5
+    arr[2][1] == 6
+
+at(*arr2d, x, y)
+    Returns a pointer to the element at arr[y][x].
+
+resize<Free>(*arr2d, new_width, new_height)
+    Resizes arr2d to be new_width x new_height in size.
+    If template parameter <Free> is true, calls free() on all elements removed
+    in the resizing process.
+    The memory of any new elements is filled with zeroes.
+
+free<Free>(*arr2d)
+    Frees the memory of arr2d.
+    If template parameter <Free> is true, calls free() on all elements before
+    deallocating the memory of arr2d.
+*/
+
 #include "shl/array.hpp"
 
 template<typename T>
@@ -58,9 +109,22 @@ void free(array2d<T> *arr)
 {
     assert(arr != nullptr);
 
-    if constexpr (FreeValues) free_values(arr);
+    if constexpr (FreeValues)
+        free_values(arr);
 
     free(&arr->entries);
+}
+
+template<typename T>
+inline T *at(array2d<T> *arr, s32 x, s32 y)
+{
+    assert(arr != nullptr);
+    assert(x >= 0);
+    assert(x < arr->width);
+    assert(y >= 0);
+    assert(y < arr->height);
+
+    return arr->operator[](y) + x;
 }
 
 template<bool FreeValues = false, typename T>

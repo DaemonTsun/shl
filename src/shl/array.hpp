@@ -107,27 +107,37 @@ remove_elements(*arr, pos, N)
     the array and keeps the reserved memory.
     Use shrink_to_fit to remove the excess memory.
 
-reserve(*arr, N) If number of allocated elements in arr is smaller than N,
-                 allocates enough elements for arr to store N total elements
-                 and sets arr.reserved_size accordingly.
-                 arr.size is untouched.
-                 Cannot make arr smaller.
+reserve(*arr, N)
+    If number of allocated elements in arr is smaller than N,
+    allocates enough elements for arr to store N total elements
+    and sets arr.reserved_size accordingly.
+    arr.size is untouched.
+    Cannot make arr smaller.
 
-reserve_exp2(*arr, N) Same as reserve, but if it allocates, it allocates
-                      up to the next power of 2 to store at least N elements.
+reserve_exp2(*arr, N)
+    Same as reserve, but if it allocates, it allocates
+    up to the next power of 2 to store at least N elements.
 
-resize(*arr, N) Sets the size of the array to contain exactly N elements.
+resize<Free>(*arr, N)
+    Sets the size of the array to contain exactly N elements.
+    Will reallocate if the reserved size is not exactly N elements, regardless of if
+    there is enough space to hold at least N elements.
+    If <Free> is true, calls free() on all elements out of range of N, which are lost
+    in the reallocation.
 
-shrink_to_fit(*arr) Reallocates to only use as much memory as required
-                    to store all the elements in the array if
-                    more memory is being used.
-                    Does nothing if arr.size == arr.reserved_size.
+shrink_to_fit(*arr)
+    Reallocates to only use as much memory as required
+    to store all the elements in the array if
+    more memory is being used.
+    Does nothing if arr.size == arr.reserved_size.
 
-at(*arr, N) Returns a pointer to the Nth element in the array.
+at(*arr, N)
+    Returns a pointer to the Nth element in the array.
 
-clear(*arr) Simply sets arr.size to 0, no memory is deallocated and
-            reserved memory is kept.
-            Use free(*arr) to deallocate memory.
+clear(*arr)
+    Simply sets arr.size to 0, no memory is deallocated and
+    reserved memory is kept.
+    Use free(*arr) to deallocate memory.
 
 array_data(*arr) Returns arr.data, pointer to the first element.
 array_size(*arr) Returns arr.size.
@@ -581,6 +591,7 @@ template<typename T>
 T *at(array<T> *arr, s64 index)
 {
     assert(arr != nullptr);
+    assert(index >= 0);
     assert(index < arr->size);
 
     return arr->data + index;
@@ -590,6 +601,7 @@ template<typename T>
 const T *at(const array<T> *arr, s64 index)
 {
     assert(arr != nullptr);
+    assert(index >= 0);
     assert(index < arr->size);
 
     return arr->data + index;
