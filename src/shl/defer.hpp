@@ -47,4 +47,5 @@ _deferrer<F> operator*(_defer, F f)
 #define _DEFER2(X) zz_defer##X
 #define _DEFER(X) _DEFER2(X)
 #define defer auto _DEFER(__LINE__) = _defer{} * [&]()
+#define static_defer static auto _DEFER(__LINE__) = _defer{} * []()
 #endif
