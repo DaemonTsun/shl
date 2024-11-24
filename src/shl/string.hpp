@@ -588,12 +588,29 @@ constexpr const_string to_const_string(const c8 (&s)[N])
 }
 
 template<u64 N>
-static inline const_u16string to_const_string(const c16 (&s)[N])
+constexpr const_u16string to_const_string(const c16 (&s)[N])
 { return const_u16string{s, (s64)N-1}; }
 
 template<u64 N>
-static inline const_u32string to_const_string(const c32 (&s)[N])
+constexpr const_u32string to_const_string(const c32 (&s)[N])
 { return const_u32string{s, (s64)N-1}; }
+
+/* Since to_const_string will take the entire buffer of a char array,
+   use this to only get a string up to the first null character (not including the
+   null character).
+   UB if there is no null character, I suppose.
+*/
+template<s64 N>
+inline const_string to_nullterm_const_string(const c8 (&s)[N])
+{ return const_string{s, string_length((const c8*)s)}; }
+
+template<s64 N>
+inline const_u16string to_nullterm_const_string(const c16 (&s)[N])
+{ return const_u16string{s, string_length((const c16*)s)}; }
+
+template<s64 N>
+inline const_u32string to_nullterm_const_string(const c32 (&s)[N])
+{ return const_u32string{s, string_length((const c32*)s)}; }
 
 template<typename C>
 inline const_string_base<C> to_const_string(const string_base<C> *s)

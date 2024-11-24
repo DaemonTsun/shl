@@ -63,6 +63,16 @@ define_test(s_suffix_constructs_string_from_literal)
     free(&str3);
 }
 
+define_test(to_nullterm_const_string_constructs_null_terminated_const_string)
+{
+    char str1[256] = "hello";
+    const_string cs1 = to_const_string(str1);
+    const_string cs2 = to_nullterm_const_string(str1);
+
+    assert_equal(cs1.size, 255);
+    assert_equal(cs2.size, 5);
+}
+
 define_test(init_initializes_empty_string)
 {
     string str;
