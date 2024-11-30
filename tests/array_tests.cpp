@@ -882,6 +882,37 @@ define_test(for_array_iterates_indices_and_values)
     free(&arr2);
 }
 
+define_test(for_array_reverse_iterates_in_reverse)
+{
+    array<int> arr1;
+    array<int> arr2;
+
+    init(&arr1, 3);
+    init(&arr2, 3);
+
+    arr1[0] = 1;
+    arr1[1] = 2;
+    arr1[2] = 3;
+    int i = 0;
+
+    for_array_reverse(v, &arr1)
+    {
+        arr2[i] = *v;
+        i += 1;
+    }
+
+    assert_equal(arr1[0], 1);
+    assert_equal(arr1[1], 2);
+    assert_equal(arr1[2], 3);
+    
+    assert_equal(arr2[0], 3);
+    assert_equal(arr2[1], 2);
+    assert_equal(arr2[2], 1);
+
+    free(&arr1);
+    free(&arr2);
+}
+
 define_test(hash_hashes_array)
 {
     array<int> arr1;
