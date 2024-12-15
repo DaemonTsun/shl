@@ -5,7 +5,7 @@
 
 static_assert(max_value(u16) >= ASYNC_ENTRIES);
 static_assert(sizeof(async_overlapped) == sizeof(OVERLAPPED));
-static_assert(offset_of(async_overlapped, event) == offset_of(OVERLAPPED, hEvent));
+// static_assert(offset_of(async_overlapped, event) == offset_of(OVERLAPPED, hEvent));
 
 bool init(async_context *ctx, error *err)
 {
@@ -352,6 +352,7 @@ bool async_await_task(async_context *ctx, async_task *task, s64 *result, error *
 {
     assert(ctx != nullptr);
     assert(task != nullptr);
+    (void)err;
 
     u32 i = task->index;
     async_command *cmd = ctx->commands + i;

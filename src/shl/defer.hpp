@@ -29,7 +29,7 @@ thread_local_exec { Code; };
 
 */
 
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable : 4623) // implicitly deleted constructor
 #pragma warning(disable : 4626) // implicitly deleted assignment operator
@@ -47,7 +47,7 @@ template <class F> struct _deferrer
     // UPDATE: MSVC doesn't support this. I'm not surprised.
     // constexpr operator bool() { return true; }
 };
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_MSC_VER)
 #pragma warning(pop) 
 #endif
 
@@ -66,7 +66,7 @@ _deferrer<F> operator*(_defer, F f)
 #endif
 
 // exec
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable : 4623) // implicitly deleted constructor
 #pragma warning(disable : 4626) // implicitly deleted assignment operator
@@ -79,7 +79,7 @@ template <class F> struct _d_executer
         f();
     }
 };
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_MSC_VER)
 #pragma warning(pop) 
 #endif
 

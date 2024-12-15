@@ -740,7 +740,7 @@ int get_parent_process_id()
 
     int tries = 0;
 
-    while (entry.th32ProcessID != current_pid && tries < 100)
+    while ((int)entry.th32ProcessID != current_pid && tries < 100)
     {
         if (!Process32Next(snapshot, &entry))
         {
@@ -753,7 +753,7 @@ int get_parent_process_id()
 
     CloseHandle(snapshot);
 
-    if (entry.th32ProcessID != current_pid)
+    if ((int)entry.th32ProcessID != current_pid)
         return -1;
 
     return entry.th32ParentProcessID;

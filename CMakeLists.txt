@@ -20,8 +20,6 @@ add_lib(shl STATIC
     CPP_VERSION 20
     CPP_WARNINGS ALL EXTRA SANE FATAL
                  @GNU -Werror
-    LIBRARIES
-        @Windows mincore.lib # for VirtualAlloc2 in ring_buffer.cpp
     TESTS "${ROOT}/tests"
     )
 

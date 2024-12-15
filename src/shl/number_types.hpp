@@ -37,50 +37,54 @@ with arithmetic operators.
 
 #include "shl/architecture.hpp"
 
-#if Wordsize == 64 && !defined(_MSC_VER)
-#define S64_LIT(c) c ## L
-#define U64_LIT(c) c ## UL
+#if Wordsize == 64 && !defined(_WIN32)
+#  define S64_LIT(c) c ## L
+#  define U64_LIT(c) c ## UL
 #else
-#define S64_LIT(c) c ## LL
-#define U64_LIT(c) c ## ULL
+#  define S64_LIT(c) c ## LL
+#  define U64_LIT(c) c ## ULL
 #endif
 
 #if defined(_MSC_VER)
 #  if (_MSC_VER >= 1300)
-typedef unsigned __int8     u8;
-typedef unsigned __int16    u16;
-typedef unsigned __int32    u32;
-typedef   signed __int8     s8;
-typedef   signed __int16    s16;
-typedef   signed __int32    s32;
+    typedef unsigned __int8     u8;
+    typedef unsigned __int16    u16;
+    typedef unsigned __int32    u32;
+    typedef   signed __int8     s8;
+    typedef   signed __int16    s16;
+    typedef   signed __int32    s32;
 #  else // old MSVC
-typedef unsigned char       u8;
-typedef unsigned short      u16;
-typedef unsigned int        u32;
-typedef   signed char       s8;
-typedef   signed short      s16;
-typedef   signed int        s32;
+    typedef unsigned char       u8;
+    typedef unsigned short      u16;
+    typedef unsigned int        u32;
+    typedef   signed char       s8;
+    typedef   signed short      s16;
+    typedef   signed int        s32;
 #  endif
 
 typedef unsigned __int64    u64;
 typedef   signed __int64    s64;
 #else // not MSVC
 
-// Linux
-typedef unsigned char       u8;
-typedef unsigned short      u16;
-typedef unsigned int        u32;
-typedef   signed char       s8;
-typedef   signed short      s16;
-typedef   signed int        s32;
+    typedef unsigned char       u8;
+    typedef unsigned short      u16;
+    typedef unsigned int        u32;
+    typedef   signed char       s8;
+    typedef   signed short      s16;
+    typedef   signed int        s32;
 
-#  if Wordsize == 64
-typedef unsigned long int   u64;
-typedef   signed long int   s64;
-#  else
-typedef unsigned long long int u64;
-typedef   signed long long int s64;
-#  endif
+#  if defined(_WIN32) || defined(_WIN64)
+    typedef unsigned long long int u64;
+    typedef   signed long long int s64;
+#  else // else linux
+#    if Wordsize == 64
+        typedef unsigned long int   u64;
+        typedef   signed long int   s64;
+#    else
+        typedef unsigned long long int u64;
+        typedef   signed long long int s64;
+#    endif
+#endif // end if windows
 #endif
 
 // sysint

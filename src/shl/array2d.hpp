@@ -206,9 +206,9 @@ bool resize(array2d<T> *arr, s32 width, s32 height)
         if constexpr (FreeValues)
         {
             s64 offset = height * width;
-            s64 count = oldheight * oldwidth - offset;
+            s64 count2 = oldheight * oldwidth - offset;
 
-            for (s64 i = 0; i < count; ++i)
+            for (s64 i = 0; i < count2; ++i)
                 free(entries->data + offset + i);
         }
     }

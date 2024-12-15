@@ -16,7 +16,11 @@
 void get_time(timespan *t)
 {
     timespec _t;
+#if defined(__MINGW32__)
+    clock_gettime(CLOCK_REALTIME, &_t);
+#else
 	timespec_get(&_t, TIME_UTC);
+#endif
     t->seconds = _t.tv_sec;
     t->nanoseconds = _t.tv_nsec;
 }

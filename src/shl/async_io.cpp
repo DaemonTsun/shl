@@ -120,6 +120,8 @@ async_task *async_write_gather(io_handle h, io_buffer *buffers, s64 buffer_count
 async_task *async_sleep(s64 seconds, s64 nanoseconds)
 {
 #if Windows
+    (void)seconds;
+    (void)nanoseconds;
     // TODO: implement
     return nullptr;
 #elif Linux

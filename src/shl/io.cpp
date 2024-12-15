@@ -390,6 +390,7 @@ static void _set_timeval(u32 ms, timespan *t)
 bool io_poll_read(io_handle h, u32 timeout_ms, error *err)
 {
 #if Windows
+    (void)timeout_ms;
     DWORD ret;
 
     if (!PeekNamedPipe(h, nullptr, 0, nullptr, &ret, nullptr))
@@ -426,6 +427,9 @@ bool io_poll_read(io_handle h, u32 timeout_ms, error *err)
 bool io_poll_write(io_handle h, u32 timeout_ms, error *err)
 {
 #if Windows
+    (void)h;
+    (void)timeout_ms;
+    (void)err;
     // is there such a thing?
 #else
     timespan t{};
