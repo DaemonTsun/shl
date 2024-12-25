@@ -19,7 +19,7 @@ add_lib(shl STATIC
     GENERATE_TARGET_HEADER "${ROOT}/src/shl/shl_info.hpp"
     CPP_VERSION 20
     CPP_WARNINGS ALL EXTRA SANE FATAL
-                 @GNU -Werror
+        @GNU -Werror
     TESTS "${ROOT}/tests"
     )
 
