@@ -41,11 +41,16 @@ static error_buffer *_get_error_buffer()
 }
 
 // TODO: get rid of this
+#if defined (_MSC_VER)
+#  include <stdio.h>
+#  include <string.h>
+#else
 extern "C"
 {
 char *strerror(int code);
 int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 }
+#endif
 
 const char *errno_error_message(int error_code)
 {
