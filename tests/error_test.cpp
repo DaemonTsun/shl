@@ -1,7 +1,7 @@
 
-#include <string.h>
 #include <t1/t1.hpp>
 
+#include "shl/string.hpp"
 #include "shl/error.hpp"
 
 define_test(format_error_message_formats_error_message)
@@ -64,5 +64,66 @@ define_test(format_error_does_nothing_on_nullptr)
 
     assert_equal(err, nullptr);
 }
+
+define_test(set_error_sets_multiple_errors)
+{
+    error err1{};
+    error err2{};
+    set_error(&err1, 1, "hello");
+    set_error(&err2, 2, "world");
+
+    assert_equal(err1.what, "hello");
+    assert_equal(err1.error_code, 1);
+    assert_equal(err2.what, "world");
+    assert_equal(err2.error_code, 2);
+}
+
+define_test(format_error_sets_multiple_errors)
+{
+    error err1{};
+    error err2{};
+    format_error(&err1, 1, "hello %d", 10);
+    format_error(&err2, 2, "world %d", 20);
+
+    assert_equal(to_const_string(err1.what), "hello 10"_cs);
+    assert_equal(to_const_string(err2.what), "world 20"_cs);
+}
+
+#ifndef NDEBUG
+define_test(set_error_keeps_trace)
+{
+    error err{};
+
+    set_error(&err, 5, "a");
+    set_error(&err, 6, "b");
+
+    // since err is not cleared, err is the deepest error set
+    assert_equal(to_const_string(err.what), "a"_cs);
+    assert_equal(err.error_code, 5);
+
+    assert_not_equal(err.trace, nullptr);
+    
+    // probably don't do this, just for test
+    error *err_trace = (error*)((error*)err.trace)->trace;
+    assert_equal(to_const_string(err_trace->what), "b"_cs);
+    assert_equal(err_trace->error_code, 6);
+
+    for_error_trace(frame, e, &err)
+    {
+        printf("[%lld][%s:%lu %s] %d: %s\n", frame, e->file, e->line, e->function, e->error_code, e->what);
+
+        if (frame == 0)
+        {
+            assert_equal(e->what, "a");
+            assert_equal(e->error_code, 5);
+        }
+        else if (frame == 1)
+        {
+            assert_equal(e->what, "b");
+            assert_equal(e->error_code, 6);
+        }
+    }
+}
+#endif
 
 define_default_test_main();

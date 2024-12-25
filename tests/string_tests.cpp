@@ -670,11 +670,12 @@ define_test(string_to_s32_returns_min_and_max_values_on_under_and_overflow)
     error err{};
     assert_equal(string_to_s32("23462378461237461284343671423467", nullptr, 0, &err), max_value(s32));
     assert_equal(err.error_code, 34); // erange
-    err.error_code = 0;
+
+    err = {};
 
     assert_equal(string_to_s32("-4245726572678265123528918418923", nullptr, 0, &err), min_value(s32));
     assert_equal(err.error_code, 34);
-    err.error_code = 0;
+    err = {};
 }
 
 define_test(string_to_s32_returns_0_on_invalid_input)
@@ -688,7 +689,7 @@ define_test(string_to_s32_returns_0_on_invalid_input)
     assert_equal(after_parse.c_str, (const c8*)nullptr);
     assert_equal(after_parse.size, 0);
 
-    err.error_code = 0;
+    err = {};
 
     const_string input = "xyz"_cs;
     ret = string_to_s32(input, &after_parse, 10, &err);
@@ -717,7 +718,7 @@ define_test(string_to_s8_converts_to_s8)
     error err{};
     assert_equal(string_to_s8(U"2147483647", nullptr, 0, &err), max_value(s8));
     assert_equal(err.error_code, 34);
-    err.error_code = 0;
+    err = {};
     assert_equal(string_to_s8("-2147483648", nullptr, 0, &err), min_value(s8));
     assert_equal(err.error_code, 34);
 }
@@ -738,7 +739,9 @@ define_test(string_to_s16_converts_to_s16)
     error err{};
     assert_equal(string_to_s16(U"2147483647", nullptr, 0, &err), max_value(s16));
     assert_equal(err.error_code, 34);
-    err.error_code = 0;
+
+    err = {};
+
     assert_equal(string_to_s16("-2147483648", nullptr, 0, &err), min_value(s16));
     assert_equal(err.error_code, 34);
 }
@@ -759,7 +762,9 @@ define_test(string_to_s64_converts_to_s64)
     error err{};
     assert_equal(string_to_s64(U"21474836472323762375123684526728", nullptr, 0, &err), max_value(s64));
     assert_equal(err.error_code, 34);
-    err.error_code = 0;
+
+    err = {};
+
     assert_equal(string_to_s64("-21474836483591273512365786125723", nullptr, 0, &err), min_value(s64));
     assert_equal(err.error_code, 34);
 }
@@ -780,7 +785,7 @@ define_test(string_to_u32_converts_to_u32)
     error err{};
     assert_equal(string_to_u32(U"21474836472323762375123684526728", nullptr, 0, &err), (u32)max_value(u32));
     assert_equal(err.error_code, 34);
-    err.error_code = 0;
+    err = {};
     assert_equal(string_to_u32("-21474836483591273512365786125723", nullptr, 0, &err), 0u);
     assert_equal(err.error_code, 34);
 }

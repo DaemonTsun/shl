@@ -1,10 +1,11 @@
 
 #include <stdarg.h>
-#include <string.h>
-#include <stdio.h> // vsnprintf
+#include <stddef.h> // size_t
 
 #include "shl/platform.hpp"
 #include "shl/error.hpp"
+#include "shl/defer.hpp"
+#include "shl/memory.hpp"
 #include "shl/ring_buffer.hpp"
 #include "shl/exit.hpp"
 
@@ -13,50 +14,48 @@
 #endif
 
 #define ERROR_RING_BUFFER_MIN_SIZE 4096
+#define ERROR_TRACES_COUNT          128
 
 struct error_buffer
 {
     ring_buffer buffer;
     s64 offset;
+
+#ifndef NDEBUG
+    s64 next_trace_index;
+    error traces[ERROR_TRACES_COUNT];
+#endif
 };
 
-void _error_buffer_cleanup();
-
-error_buffer *_get_error_buffer(bool free_buffer = false)
+static error_buffer *_get_error_buffer()
 {
     static error_buffer _buf{};
 
-    if (free_buffer && _buf.buffer.data != nullptr)
-    {
-        free(&_buf.buffer);
-        _buf.offset = 0;
-    }
-    else if (!free_buffer && _buf.buffer.data == nullptr)
-    {
-        if (!init(&_buf.buffer, ERROR_RING_BUFFER_MIN_SIZE, 2))
-            return nullptr;
-
-        ::register_exit_function(_error_buffer_cleanup);
-    }
+    static_exec  {
+        fill_memory(&_buf, 0);
+        init(&_buf.buffer, ERROR_RING_BUFFER_MIN_SIZE, 2);
+    };
+    static_defer { free(&_buf.buffer); };
 
     return &_buf;
 }
 
-void _error_buffer_cleanup()
+// TODO: get rid of this
+extern "C"
 {
-    _get_error_buffer(true);
+char *strerror(int code);
+int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 }
 
-const char *_errno_error_message(int error_code)
+const char *errno_error_message(int error_code)
 {
-    // TODO: get rid of this
     return strerror(error_code);
 }
 
-const char *_windows_error_message(int error_code)
+const char *windows_error_message(int error_code)
 {
 #if Windows
-    error_buffer *_buf = _get_error_buffer(false);
+    error_buffer *_buf = _get_error_buffer();
 
     if (_buf == nullptr)
         return nullptr;
@@ -72,9 +71,7 @@ const char *_windows_error_message(int error_code)
 
     _buf->offset += count;
     _buf->buffer.data[_buf->offset] = '\0';
-
-    while (_buf->offset >= _buf->buffer.size)
-        _buf->offset -= _buf->buffer.size;
+    _buf->offset = (_buf->offset + 1) & (_buf->buffer.size - 1);
 
     return ret;
 #else
@@ -85,9 +82,9 @@ const char *_windows_error_message(int error_code)
 #endif
 }
 
-const char *vformat_error_message(const char *format, va_list args)
+static const char *_vformat_error_message(const char *format, va_list args)
 {
-    error_buffer *_buf = _get_error_buffer(false);
+    error_buffer *_buf = _get_error_buffer();
 
     if (_buf == nullptr)
         return nullptr;
@@ -97,9 +94,7 @@ const char *vformat_error_message(const char *format, va_list args)
 
     _buf->offset += count;
     _buf->buffer.data[_buf->offset] = '\0';
-
-    while (_buf->offset >= _buf->buffer.size)
-        _buf->offset -= _buf->buffer.size;
+    _buf->offset = (_buf->offset + 1) & (_buf->buffer.size - 1);
 
     return ret;
 }
@@ -108,8 +103,63 @@ const char *format_error_message(const char *format, ...)
 {
     va_list argptr;
     va_start(argptr, format);
-    const char *ret = vformat_error_message(format, argptr);
+    const char *ret = _vformat_error_message(format, argptr);
     va_end(argptr);
 
     return ret;
 }
+
+#ifndef NDEBUG
+// this is only defined in debug builds
+static error *_get_next_error_trace()
+{
+    error_buffer *buf = _get_error_buffer();
+
+    error *ret = buf->traces + buf->next_trace_index;
+    buf->next_trace_index = (buf->next_trace_index + 1) & (ERROR_TRACES_COUNT - 1);
+
+    return ret;
+}
+
+// this is only defined in debug builds
+void _set_error(error *err, int error_code, const char *message,
+                const char *file, const char *function, unsigned long line)
+{
+    if (err == nullptr)
+        return;
+
+    error *next = _get_next_error_trace();
+
+    if (err->trace != nullptr)
+    {
+        error *last = (error*)err->trace;
+
+        int i = 0;
+
+        while (last->trace != nullptr && i < ERROR_TRACES_COUNT)
+        {
+            last = (error*)last->trace;
+            i += 1;
+        }
+
+        if (i >= ERROR_TRACES_COUNT)
+            last->trace = nullptr;
+
+        last->trace = next;
+    }
+
+    fill_memory(next, 0);
+    next->error_code = error_code;
+    next->what = message;
+    next->file = file;
+    next->function = function;
+    next->line = line;
+    next->trace = nullptr;
+
+    if (err->trace == nullptr)
+    {
+        *err = *next;
+        err->trace = next;
+    }
+}
+#endif

@@ -229,7 +229,7 @@ define_test(streams_read_entire_file_yields_error_on_nonexistent_path)
     memory_stream ms{};
     defer { free(&ms); };
 
-    error err;
+    error err{};
 
     assert_equal(read_entire_file("abc", &ms, &err), false);
 

@@ -1,6 +1,7 @@
 
 /* async_io.hpp
 
+THIS IS BEING REWRITTEN, DO NOT USE
 Low-level async functions.
 
 TODO: docs
